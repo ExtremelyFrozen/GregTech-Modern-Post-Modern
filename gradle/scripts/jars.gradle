@@ -28,10 +28,10 @@ afterEvaluate {
                 'MixinConfigs': 'gtceu.mixins.json',
                 'Specification-Title': project.name,
                 'Specification-Version': mod_version,
-                'Specification-Vendor': 'GregTechCEu Team',
+                'Specification-Vendor': 'ExtremelyFrozen Team',
                 'Implementation-Title': base.archivesName,
                 'Implementation-Version': version,
-                'Implementation-Vendor': 'GregTechCEu Team',
+                'Implementation-Vendor': 'ExtremelyFrozen Team',
         ])
     }
 }
