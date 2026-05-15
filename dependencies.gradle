@@ -3,6 +3,9 @@ dependencies {
 
     testJarJar(testApi(libs.testframework.get()))
 
+    jarJar(api(libs.jackson.get()))
+    jarJar(api(libs.zstd.get()))
+
     jarJar(api(forge.ldlib.get()))
 
     // Registrate
