@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common;
 
+import com.google.gson.JsonElement;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
@@ -30,6 +31,11 @@ import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.misc.forge.QuantumFluidHandlerItemStack;
+import com.gregtechceu.gtceu.api.pattern.structurepredicate.BlockPredicate;
+import com.gregtechceu.gtceu.api.pattern.structurepredicate.BlockTagPredicate;
+import com.gregtechceu.gtceu.api.pattern.structurepredicate.RestrictedPredicate;
+import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicate;
+import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicateType;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntCircuitIngredient;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntProviderFluidIngredient;
@@ -78,6 +84,9 @@ import com.gregtechceu.gtceu.utils.input.SyncedKeyMappings;
 
 import com.lowdragmc.lowdraglib.gui.factory.UIFactory;
 
+import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.mojang.serialization.JsonOps;
+import journeymap.common.helpers.NeoForgeHooks;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -89,6 +98,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
@@ -101,6 +111,7 @@ import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.IntersectionIngredient;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
@@ -124,9 +135,7 @@ import com.tterrag.registrate.util.nullness.NonNullConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.gregtechceu.gtceu.common.registry.GTRegistration.REGISTRATE;
@@ -225,6 +234,8 @@ public class CommonProxy {
         SyncedKeyMappings.init();
         MachineOwner.init();
         ChestGenHooks.init();
+
+        StructurePredicateType.init();
     }
 
     @ApiStatus.Internal
@@ -386,7 +397,20 @@ public class CommonProxy {
     }
 
     @SubscribeEvent
-    public static void loadComplete(FMLLoadCompleteEvent event) {}
+    public static void loadComplete(FMLLoadCompleteEvent event) {
+        RestrictedPredicate data = RestrictedPredicate.builder()
+                .base(new BlockTagPredicate(List.of(Tags.Blocks.COBBLESTONES))
+                        .or(new BlockPredicate(List.of(
+                                Blocks.COMMAND_BLOCK))))
+                .exactCount(5)
+                .minCountByLayer(10)
+                .maxCountByLayer(20)
+                .build();
+        System.out.println(data.candidates().stream().map(BlockInfo::getBlockState).toList());
+        JsonElement json = StructurePredicate.CODEC.encodeStart(JsonOps.INSTANCE, data).getOrThrow();
+        System.out.println(json);
+        System.exit(0);
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
