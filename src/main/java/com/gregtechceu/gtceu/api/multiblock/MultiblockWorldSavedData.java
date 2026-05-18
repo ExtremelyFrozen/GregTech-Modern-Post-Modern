@@ -95,7 +95,7 @@ public class MultiblockWorldSavedData extends SavedData {
 
     /**
      * add a async logic runnable
-     * 
+     *
      * @param controller controller
      */
     public void addAsyncLogic(MultiblockControllerMachine controller) {
@@ -105,7 +105,7 @@ public class MultiblockWorldSavedData extends SavedData {
 
     /**
      * remove async controller
-     * 
+     *
      * @param controller controller
      */
     public void removeAsyncLogic(MultiblockControllerMachine controller) {
