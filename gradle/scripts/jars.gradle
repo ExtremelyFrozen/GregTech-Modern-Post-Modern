@@ -1,3 +1,7 @@
+test {
+    failOnNoDiscoveredTests = false
+}
+
 tasks.register('slimJar', Jar) {
     dependsOn("classes")
     archiveClassifier = "slim"
