@@ -3,8 +3,16 @@ dependencies {
 
     testJarJar(testApi(libs.testframework.get()))
 
-    jarJar(api(libs.jackson.get()))
+    jarJar(api(libs.jackson.dataformat.get()))
+    jarJar(api(libs.jackson.annotations.get()))
+    jarJar(api(libs.jackson.core.get()))
+    jarJar(api(libs.jackson.databind.get()))
     jarJar(api(libs.zstd.get()))
+    additionalRuntimeClasspath(libs.jackson.dataformat)
+    additionalRuntimeClasspath(libs.jackson.annotations)
+    additionalRuntimeClasspath(libs.jackson.core)
+    additionalRuntimeClasspath(libs.jackson.databind)
+    additionalRuntimeClasspath(libs.zstd)
 
     jarJar(api(forge.ldlib.get()))
 

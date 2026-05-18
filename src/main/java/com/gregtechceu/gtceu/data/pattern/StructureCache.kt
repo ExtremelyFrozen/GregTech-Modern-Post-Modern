@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.data.pattern
 
+import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.multiblock.FactoryMultiBlockPattern
 
 import net.minecraft.resources.ResourceLocation
@@ -30,6 +31,7 @@ object StructureCache {
 
     @JvmStatic
     fun loadAsync() {
+        GTCEu.LOGGER.info("Loading pattern...")
         if (futureCache != null) return
 
         futureCache = CompletableFuture.supplyAsync({
@@ -55,10 +57,11 @@ object StructureCache {
                     }
                 }
             } catch (e: Exception) {
-                throw RuntimeException("异步加载结构定义失败", e)
+                throw RuntimeException("Asynchronous loading of structure definition failed", e)
             }
             Collections.unmodifiableMap(map)
         }, VIRTUAL_THREAD_EXECUTOR)
+        GTCEu.LOGGER.info("Loading data: ${futureCache!!.join().size}")
     }
 
     @Throws(IOException::class)
@@ -86,7 +89,7 @@ object StructureCache {
                                         map.put(ResourceLocation.fromNamespaceAndPath(modid, name), def)
                                     }
                                 } catch (e: IOException) {
-                                    throw UncheckedIOException("加载结构文件失败: $file", e)
+                                    throw UncheckedIOException("Failed to load structure file: $file", e)
                                 }
                             }
                     }
@@ -99,8 +102,7 @@ object StructureCache {
 
     fun get(id: ResourceLocation): FactoryMultiBlockPattern? {
         val f: CompletableFuture<MutableMap<ResourceLocation, FactoryMultiBlockPattern>>? = futureCache
-        checkNotNull(f) { "请先调用 loadAsync()" }
-        return f.join()[id]
+        return f!!.join()[id]
     }
 
     @Throws(IOException::class)
