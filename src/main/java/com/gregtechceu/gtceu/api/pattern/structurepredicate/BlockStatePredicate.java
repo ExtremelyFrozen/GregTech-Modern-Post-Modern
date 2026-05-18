@@ -5,11 +5,13 @@ import com.gregtechceu.gtceu.api.pattern.predicates.PredicateStates;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -34,6 +36,11 @@ public record BlockStatePredicate(List<BlockState> blockStates) implements Struc
     @Override
     public List<BlockInfo> candidates() {
         return blockStates.stream().map(BlockInfo::new).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<Block> blockCandidates() {
+        return blockStates.stream().map(BlockState::getBlock).distinct().toList();
     }
 
     @Override

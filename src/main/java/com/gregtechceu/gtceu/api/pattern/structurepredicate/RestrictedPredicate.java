@@ -7,6 +7,7 @@ import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.world.level.block.Block;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -15,6 +16,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -58,6 +60,11 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
     @Override
     public List<BlockInfo> candidates() {
         return predicate.candidates();
+    }
+
+    @Override
+    public @Unmodifiable List<Block> blockCandidates() {
+        return predicate.blockCandidates();
     }
 
     @Override

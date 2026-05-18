@@ -8,11 +8,14 @@ import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.common.util.Lazy;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -48,6 +51,15 @@ public final class FluidTagPredicate implements StructurePredicate {
     @Override
     public List<BlockInfo> candidates() {
         return candidates.get().stream().map(FluidPredicate::blockInfoFromFluid).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<Block> blockCandidates() {
+        return candidates.get().stream()
+                .map(FluidPredicate::blockStateFromFluid)
+                .map(BlockState::getBlock)
+                .distinct()
+                .toList();
     }
 
     @Override

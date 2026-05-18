@@ -4,6 +4,8 @@ import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
+import net.minecraft.world.level.block.Block;
+
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -31,6 +33,11 @@ public record ConcatenatedPredicate(List<StructurePredicate> predicates) impleme
     @Override
     public @Unmodifiable List<BlockInfo> candidates() {
         return predicates.stream().flatMap(p -> p.candidates().stream()).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<Block> blockCandidates() {
+        return predicates.stream().flatMap(p -> p.blockCandidates().stream()).toList();
     }
 
     @Override

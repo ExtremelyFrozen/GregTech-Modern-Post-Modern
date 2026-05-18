@@ -6,10 +6,13 @@ import com.gregtechceu.gtceu.api.pattern.predicates.PredicateFluids;
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -39,11 +42,24 @@ public record FluidPredicate(List<Fluid> fluids) implements StructurePredicate {
     }
 
     @Override
+    public @Unmodifiable List<Block> blockCandidates() {
+        return fluids.stream()
+                .map(FluidPredicate::blockStateFromFluid)
+                .map(BlockState::getBlock)
+                .distinct()
+                .toList();
+    }
+
+    @Override
     public boolean test(MultiblockState multiblockState, boolean mutateCount) {
         return fluids.contains(multiblockState.getBlockState().getFluidState().getType());
     }
 
+    static BlockState blockStateFromFluid(Fluid fluid) {
+        return fluid.defaultFluidState().createLegacyBlock();
+    }
+
     static BlockInfo blockInfoFromFluid(Fluid fluid) {
-        return new BlockInfo(fluid.defaultFluidState().createLegacyBlock());
+        return new BlockInfo(blockStateFromFluid(fluid));
     }
 }

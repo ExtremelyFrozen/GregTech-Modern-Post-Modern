@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -35,6 +36,11 @@ public record BlockPredicate(List<Block> blocks) implements StructurePredicate {
     @Override
     public List<BlockInfo> candidates() {
         return blocks.stream().map(BlockInfo::new).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<Block> blockCandidates() {
+        return blocks;
     }
 
     @Override

@@ -16,6 +16,7 @@ import net.neoforged.neoforge.common.util.Lazy;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -54,6 +55,11 @@ public final class BlockTagPredicate implements StructurePredicate {
     @Override
     public List<BlockInfo> candidates() {
         return candidates.get().stream().map(BlockInfo::new).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<Block> blockCandidates() {
+        return candidates.get();
     }
 
     @Override

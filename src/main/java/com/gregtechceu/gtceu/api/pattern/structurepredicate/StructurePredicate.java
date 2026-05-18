@@ -6,6 +6,8 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
+import net.minecraft.world.level.block.Block;
+
 import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,6 +29,11 @@ public interface StructurePredicate {
 
     @Unmodifiable
     default List<BlockInfo> candidates() {
+        return List.of();
+    }
+
+    @Unmodifiable
+    default List<Block> blockCandidates() {
         return List.of();
     }
 
