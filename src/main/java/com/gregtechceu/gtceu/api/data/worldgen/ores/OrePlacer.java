@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 
 /**
  * Responsible for placing ores of surrounding veins for the current chunk.
- * 
+ *
  * <p>
  * Surrounding veins are resolved from the {@link OreGenCache} and placed using each block position's
  * {@link OreBlockPlacer}.
@@ -36,7 +36,7 @@ public class OrePlacer {
 
     /**
      * Place the contents of all surrounding ore veins in the current chunk.
-     * 
+     *
      * <p>
      * Consumes the current chunk for all of the relevant veins, allowing the cache to unload the vein,
      * once all of its chunks have been generated.

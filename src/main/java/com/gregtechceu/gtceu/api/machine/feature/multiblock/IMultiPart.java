@@ -41,7 +41,7 @@ public interface IMultiPart extends IMachineFeature, IFancyUIMachine {
 
     /**
      * Get this MultiPart's controllers
-     * 
+     *
      * @return An Unmodifiable View of the part's controllers
      */
     @UnmodifiableView
@@ -118,7 +118,7 @@ public interface IMultiPart extends IMachineFeature, IFancyUIMachine {
 
     /**
      * Override it to modify recipe on the fly e.g. applying overclock, change chance, etc
-     * 
+     *
      * @param recipe recipe from detected from GTRecipeType
      * @return modified recipe.
      *         null -- this recipe is unavailable
@@ -129,7 +129,7 @@ public interface IMultiPart extends IMachineFeature, IFancyUIMachine {
 
     /**
      * Add text to the multiblock's screen.
-     * 
+     *
      * @param textList the text list to add to.
      */
     default void addMultiText(List<Component> textList) {}

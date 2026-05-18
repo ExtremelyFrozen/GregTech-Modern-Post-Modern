@@ -33,7 +33,7 @@ public class SyncDataHolder {
 
     /**
      * Instructs the sync system that this field has been updated and must be synced with clients.
-     * 
+     *
      * @param fieldName The field that has changed.
      */
     public void markClientSyncFieldDirty(String fieldName) {

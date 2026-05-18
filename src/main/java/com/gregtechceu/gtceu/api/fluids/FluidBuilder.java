@@ -141,7 +141,7 @@ public class FluidBuilder {
 
     /**
      * Converts a density value in g/cm^3 to an MC fluid density by comparison to air's density.
-     * 
+     *
      * @param density the density to convert
      * @return the MC integer density
      */
@@ -185,7 +185,7 @@ public class FluidBuilder {
 
     /**
      * Converts viscosity in Poise to MC viscosity
-     * 
+     *
      * @param viscosity the viscosity to convert
      * @return the converted value
      */
@@ -213,7 +213,7 @@ public class FluidBuilder {
 
     /**
      * Mark this fluid as having a custom still texture
-     * 
+     *
      * @return this
      */
     public FluidBuilder customStill() {

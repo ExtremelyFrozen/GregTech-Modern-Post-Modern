@@ -46,7 +46,7 @@ public class InputSeparationTest {
 
     /**
      * Retrieves the busses for this specific template and force a multiblock structure check
-     * 
+     *
      * @param helper the GameTestHelper
      * @return the busses, in the BusHolder record.
      */

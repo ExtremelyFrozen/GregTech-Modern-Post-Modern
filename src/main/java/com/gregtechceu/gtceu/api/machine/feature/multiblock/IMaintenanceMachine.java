@@ -29,7 +29,7 @@ public interface IMaintenanceMachine extends IMultiPart {
 
     /**
      * Sets this Maintenance Hatch as being duct taped
-     * 
+     *
      * @param isTaped is the state of the hatch being taped or not
      */
     void setTaped(boolean isTaped);

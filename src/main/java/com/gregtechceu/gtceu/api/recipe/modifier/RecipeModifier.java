@@ -21,7 +21,7 @@ public interface RecipeModifier {
 
     /**
      * Get the ModifierFunction for the given state
-     * 
+     *
      * @param machine the machine which is requesting the modifier
      * @param recipe  the recipe - will not be mutated
      * @return A {@link ModifierFunction} describing how the recipe should be modified
@@ -32,7 +32,7 @@ public interface RecipeModifier {
 
     /**
      * Gets the ModifierFunction for the given state and immediately applies it to the passed recipe
-     * 
+     *
      * @param machine the machine which is requesting the modified recipe
      * @param recipe  the recipe to be modified - will not be mutated
      * @return A new {@link GTRecipe} which is the modified version of the argument, or {@code null} if the modifier
@@ -45,7 +45,7 @@ public interface RecipeModifier {
 
     /**
      * Utility method that logs the incorrect use of a RecipeModifier
-     * 
+     *
      * @param type   the class of machine that is required by the RecipeModifier
      * @param actual the actual machine that was passed to the RecipeModifier
      * @return {@link ModifierFunction#NULL}

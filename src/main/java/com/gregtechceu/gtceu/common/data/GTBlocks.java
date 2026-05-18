@@ -1436,7 +1436,7 @@ public class GTBlocks {
 
     /**
      * kinda nasty block property copy function because one doesn't exist.
-     * 
+     *
      * @param props the props to copy
      * @return a shallow copy of the block properties like {@link BlockBehaviour.Properties#ofFullCopy(BlockBehaviour)}
      *         does

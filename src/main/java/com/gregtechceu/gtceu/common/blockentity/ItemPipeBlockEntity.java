@@ -113,7 +113,7 @@ public class ItemPipeBlockEntity extends PipeBlockEntity<ItemPipeType, ItemPipeP
      * every time the transferred variable is accessed this method should be called
      * if 20 ticks passed since the last access it will reset it
      * this method is equal to
-     * 
+     *
      * @code {
      *       if (++time % 20 == 0) {
      *       this.transferredItems = 0;

@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 /**
  * Used for caching ore veins between generated chunks.
- * 
+ *
  * <p>
  * Uses the {@link OreGenerator} to generate new veins in case no vein is cached for a queried chunk.
  */

@@ -23,7 +23,7 @@ import java.util.Objects;
 
 /**
  * A BlockEntity that manages sync and save data via the {@code ISyncManaged} syncdata system.
- * 
+ *
  * @see ISyncManaged
  */
 public abstract class ManagedSyncBlockEntity extends BlockEntity implements ISyncManaged {

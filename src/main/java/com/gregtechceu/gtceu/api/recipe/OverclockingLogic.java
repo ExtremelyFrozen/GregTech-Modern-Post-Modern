@@ -44,7 +44,7 @@ public interface OverclockingLogic {
 
     /**
      * Create a standard OverclockingLogic using either {@link #standardOC} or {@link #subTickParallelOC}
-     * 
+     *
      * @param durationFactor the duration factor to use when overclocking
      * @param voltageFactor  the voltage factor to use when overclocking
      * @param subtick        whether the OverclockingLogic should apply subtick parallels or not
@@ -57,7 +57,7 @@ public interface OverclockingLogic {
 
     /**
      * Determines overclocking parameters from the given arguments, runs the overclock, and returns a ModifierFunction
-     * 
+     *
      * @param machine        machine
      * @param recipe         recipe
      * @param maxVoltage     max overclock voltage
@@ -111,7 +111,7 @@ public interface OverclockingLogic {
      * <li>Multiplies {@code duration} by {@code durationFactor}
      * <li>Limit {@code duration} to {@code 1} tick, and stop overclocking early if needed
      * </ol>
-     * 
+     *
      * @param params         the overclocking parameters
      * @param maxVoltage     the maximum voltage allowed to be overclocked to
      * @param durationFactor the factor to multiply duration by
@@ -152,7 +152,7 @@ public interface OverclockingLogic {
      * <li>Multiply {@code EUt} by {@code durationFactor} and maintain {@code duration} at {@code 1} tick for
      * overclocks that would have {@code duration < 1}
      * </ol>
-     * 
+     *
      * @param params         the overclocking parameters
      * @param maxVoltage     the maximum voltage allowed to be overclocked to
      * @param durationFactor the factor to multiply duration by
@@ -203,7 +203,7 @@ public interface OverclockingLogic {
      * overclocks that would have {@code duration < 1}
      * <li>Parallel amount per overclock is {@code 1 / durationFactor}
      * </ol>
-     * 
+     *
      * @param params         the overclocking parameters
      * @param maxVoltage     the maximum voltage allowed to be overclocked to
      * @param durationFactor the factor to multiply duration by
@@ -262,7 +262,7 @@ public interface OverclockingLogic {
      * <li>The maximum amount of perfect OCs is determined by {@link #getCoilDiscountAmount(int, int)}, divided
      * by 2.
      * </ol>
-     * 
+     *
      * @param params      the overclocking parameters
      * @param maxVoltage  the maximum voltage allowed to be overclocked to
      * @param recipeTemp  the temperature required by the recipe
@@ -312,7 +312,7 @@ public interface OverclockingLogic {
 
     /**
      * Finds the coil discount amount based on the recipe temp.
-     * 
+     *
      * @param recipeTemp  the required temperature of the recipe
      * @param machineTemp the temperature provided by the machine
      * @return the amount of EU/t discounts to apply

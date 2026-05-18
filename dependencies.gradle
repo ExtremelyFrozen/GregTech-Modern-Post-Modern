@@ -3,6 +3,10 @@ dependencies {
 
     testJarJar(testApi(libs.testframework.get()))
 
+
+    jarJar(forge.kotlinforforge.get())
+    api(forge.kotlinforforge)
+
     jarJar(api(forge.ldlib.get()))
 
     // Registrate
@@ -109,10 +113,6 @@ dependencies {
 
 //    extraLocalRuntime(forge.gamestages)
     extraLocalRuntime(forge.bookshelf) {
-        transitive = false
-    }
-
-    extraLocalRuntime(forge.kotlinforforge) {
         transitive = false
     }
     extraLocalRuntime(forge.observable)

@@ -26,7 +26,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
  * <p>
  * By default, this class assumes all resources exist and does not check any references' validity.
  * To enable actual checking, you may use a try-with-resources statement like this:
- * 
+ *
  * <pre>{@code
  * try (var helper = RuntimeExistingFileHelper.INSTANCE.activeHelper()) {
  *     // If you don't use a try-with-resources or try-finally block to
