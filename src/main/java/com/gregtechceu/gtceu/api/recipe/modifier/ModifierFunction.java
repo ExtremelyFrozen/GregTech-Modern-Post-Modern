@@ -64,7 +64,7 @@ public interface ModifierFunction {
 
     /**
      * Applies this modifier to the passed recipe
-     * 
+     *
      * @param recipe the GTRecipe to apply the modifier to
      * @return A new GTRecipe object with modifications, or null if the recipe should be cancelled
      */
@@ -74,7 +74,7 @@ public interface ModifierFunction {
 
     /**
      * Returns a composed function that first applies {@code before} to its input, then applies this function.
-     * 
+     *
      * @param before the function to apply first
      * @return The composed function of {@code this.apply(before.apply(recipe))}
      */
@@ -84,7 +84,7 @@ public interface ModifierFunction {
 
     /**
      * Returns a composed function that first applies this function to its input, then applies {@code after}
-     * 
+     *
      * @param after the function to apply second
      * @return The composed function of {@code after.apply(this.apply(recipe))}
      */
@@ -111,7 +111,7 @@ public interface ModifierFunction {
      * <p>
      * You should do that by setting the other parameters.
      * </p>
-     * 
+     *
      * @return A new {@link ModifierFunction.FunctionBuilder} instance
      */
     static FunctionBuilder builder() {
@@ -167,7 +167,7 @@ public interface ModifierFunction {
          * <p>
          * You should do that by setting the other parameters.
          * </p>
-         * 
+         *
          * @return A new {@link ModifierFunction} from the params of this builder
          */
         public ModifierFunction build() {

@@ -11,14 +11,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents an object that provides a set of methods for encoding/decoding a value of type {@code <T>} into a
  * {@link Tag}
- * 
+ *
  * @param <T> The type which this transformer can encode
  */
 public interface ValueTransformer<T> {
 
     /**
      * A record holding information about the context from which this value transformer is currently being invoked.
-     * 
+     *
      * @param holder       The sync object which holds the specific field being serialized by this transformer.
      * @param type         An object describing the type of the field currently being serialized/deserialized.
      * @param currentValue The current value (if any) of the field currently being serialized/deserialized.

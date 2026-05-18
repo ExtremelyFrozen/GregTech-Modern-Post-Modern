@@ -288,7 +288,7 @@ public class MiscRecipeLoader {
          * .inputFluids(Polyethylene.getFluid(L))
          * .outputItems(GTMachines.MONITOR_SCREEN)
          * .save(provider);
-         * 
+         *
          * ASSEMBLER_RECIPES.recipeBuilder("central_monitor").duration(100).EUt(VA[HV])
          * .inputItems(COVER_SCREEN)
          * .inputItems(CraftingComponent.HULL.getIngredient(3))
@@ -307,7 +307,7 @@ public class MiscRecipeLoader {
          * .outputItems(COVER_DIGITAL_INTERFACE)
          * .save(provider);
          * \
-         * 
+         *
          */
         // todo digital interface cover
         /*
@@ -317,7 +317,7 @@ public class MiscRecipeLoader {
          * .inputFluids(Polyethylene.getFluid(L))
          * .outputItems(COVER_DIGITAL_INTERFACE_WIRELESS)
          * .save(provider);
-         * 
+         *
          * ASSEMBLER_RECIPES.recipeBuilder("plugin_text").duration(80).EUt(400)
          * .inputItems(COVER_SCREEN)
          * .inputItems(circuit, Tier.LV)
@@ -325,7 +325,7 @@ public class MiscRecipeLoader {
          * .inputFluids(Polyethylene.getFluid(L))
          * .outputItems(PLUGIN_TEXT)
          * .save(provider);
-         * 
+         *
          * ASSEMBLER_RECIPES.recipeBuilder("plugin_online_pic").duration(80).EUt(400)
          * .inputItems(COVER_SCREEN)
          * .inputItems(circuit, Tier.LV)
@@ -333,7 +333,7 @@ public class MiscRecipeLoader {
          * .inputFluids(Polyethylene.getFluid(L))
          * .outputItems(PLUGIN_ONLINE_PIC)
          * .save(provider);
-         * 
+         *
          * ASSEMBLER_RECIPES.recipeBuilder("plugin_fake_gui").duration(80).EUt(400)
          * .inputItems(COVER_SCREEN)
          * .inputItems(circuit, Tier.LV)
@@ -341,7 +341,7 @@ public class MiscRecipeLoader {
          * .inputFluids(Polyethylene.getFluid(L))
          * .outputItems(PLUGIN_FAKE_GUI)
          * .save(provider);
-         * 
+         *
          * ASSEMBLER_RECIPES.recipeBuilder("plugin_advanced_monitor").duration(80).EUt(400)
          * .inputItems(COVER_SCREEN)
          * .inputItems(circuit, Tier.HV)
@@ -361,7 +361,7 @@ public class MiscRecipeLoader {
          * .inputFluids(Polyethylene.getFluid(L))
          * .outputItems(WIRELESS)
          * .save(provider);
-         * 
+         *
          * ASSEMBLER_RECIPES.recipeBuilder("camera_upgrade").duration(100).EUt(VA[LV])
          * .inputItems(ELECTRIC_PISTON_LV, 2)
          * .inputItems(EMITTER_LV)

@@ -78,7 +78,7 @@ public class SimpleGeneratorMachine extends WorkableTieredMachine
      * <p>
      * Recipe is fast parallelized up to {@code desiredEUt / recipeEUt} times.
      * </p>
-     * 
+     *
      * @param machine a {@link SimpleGeneratorMachine}
      * @param recipe  recipe
      * @return A {@link ModifierFunction} for the given Simple Generator

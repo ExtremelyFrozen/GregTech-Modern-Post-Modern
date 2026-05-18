@@ -14,7 +14,7 @@ import java.util.Collection;
 
 /**
  * Interface for FluidHandlerItemStacks which handle GT's unique fluid mechanics
- * 
+ *
  * @see FluidAttribute
  * @see FluidAttributes
  * @see IAttributedFluid

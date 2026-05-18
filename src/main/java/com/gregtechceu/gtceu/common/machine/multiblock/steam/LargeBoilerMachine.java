@@ -193,7 +193,7 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
      * Does not modify recipe. Real recipe duration is determined by
      * {@link LargeBoilerRecipeLogic#modifyFuelBurnTime(int)}
      * </p>
-     * 
+     *
      * @param machine a {@link LargeBoilerMachine}
      * @param recipe  recipe
      * @return A {@link ModifierFunction} for the given Large Boiler and recipe

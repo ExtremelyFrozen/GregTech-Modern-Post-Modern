@@ -342,13 +342,13 @@ public class MachineRecipeLoader {
          * .inputFluids(Concrete.getFluid(L))
          * .outputItems(MetaBlocks.ASPHALT.getItemVariant(BlockAsphalt.BlockType.ASPHALT))
          * .duration(60).EUt(16).save(provider);
-         * 
+         *
          * MIXER_RECIPES.recipeBuilder()
          * .inputItems(dust, Charcoal)
          * .inputFluids(Concrete.getFluid(L))
          * .outputItems(MetaBlocks.ASPHALT.getItemVariant(BlockAsphalt.BlockType.ASPHALT))
          * .duration(60).EUt(16).save(provider);
-         * 
+         *
          * MIXER_RECIPES.recipeBuilder()
          * .inputItems(dust, Carbon)
          * .inputFluids(Concrete.getFluid(L))

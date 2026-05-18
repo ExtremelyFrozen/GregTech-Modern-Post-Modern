@@ -93,7 +93,7 @@ public final class ValueTransformers {
      * Registers a {@link ValueTransformer} for the given class or interface.
      * If registering a type with generic arguments, instead use {@code registerTransformerSupplier} to create a new
      * transformer instance for each set of generic type arguments.
-     * 
+     *
      * @param type        The class to register this {@link ValueTransformer} for
      * @param transformer The transformer being registered
      */

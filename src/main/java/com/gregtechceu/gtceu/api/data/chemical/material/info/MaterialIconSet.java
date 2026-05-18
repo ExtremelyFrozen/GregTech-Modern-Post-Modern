@@ -70,7 +70,7 @@ public class MaterialIconSet {
 
     /**
      * Create a new MaterialIconSet which is a root
-     * 
+     *
      * @param name          the name of the iconset
      * @param parentIconset the parent iconset, should be null if this should be a root iconset
      * @param isRootIconset true if this should be a root iconset, otherwise false

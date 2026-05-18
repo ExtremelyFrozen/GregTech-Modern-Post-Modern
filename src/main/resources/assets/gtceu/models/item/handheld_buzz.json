@@ -1,6 +1,6 @@
 {
-    "parent": "item/generated",
-    "display": {
+	"parent": "item/generated",
+	"display": {
 		"thirdperson_righthand": {
 			"rotation": [45, -90, 0],
 			"translation": [0, -1.75, -3.5]

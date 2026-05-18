@@ -19,7 +19,7 @@ public interface IGTAddon {
 
     /**
      * This runs after GTCEu has set up it's content. Set up GT loading-dependent (but NOT ones dependent on
-     * 
+     *
      * @apiNote DO NOT REGISTER ANY OF YOUR OWN CONTENT HERE, AS IF YOU DO, IT'LL REGISTER AS IF GTCEu REGISTERED IT
      *          AND YOUR DATAGEN AND EVENTS WILL <b><i>NOT</i></b> WORK AS EXPECTED, IF AT ALL.
      */
@@ -53,7 +53,7 @@ public interface IGTAddon {
 
     /**
      * Does this addon require high-tier content to be enabled?
-     * 
+     *
      * @return if this addon requires highTier.
      */
     default boolean requiresHighTier() {

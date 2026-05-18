@@ -25,7 +25,7 @@ afterEvaluate {
     tasks.withType(org.gradle.jvm.tasks.Jar).configureEach {
         destinationDirectory = file('build/libs/')
         manifest.attributes([
-                'MixinConfigs': 'gtceu.mixins.json',
+                'MixinConfigs': 'gtpm.mixins.json',
                 'Specification-Title': project.name,
                 'Specification-Version': mod_version,
                 'Specification-Vendor': 'ExtremelyFrozen Team',

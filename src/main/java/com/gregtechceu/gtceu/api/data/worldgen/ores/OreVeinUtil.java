@@ -47,11 +47,11 @@ public class OreVeinUtil {
 
     /**
      * Resolves a vein's center for the supplied chunk position.
-     * 
+     *
      * <p>
      * Note that depending on the config value for the random vein offset, its actual
      * center may be outside the supplied chunk.
-     * 
+     *
      * @return The origin of the vein to be generated.<br>
      *         {@code Optional.empty()} if no vein should exist for the specified chunk.
      */

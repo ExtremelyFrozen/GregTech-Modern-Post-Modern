@@ -32,7 +32,7 @@ public interface IClientCache {
 
     /**
      * Save a dimension-specific file.
-     * 
+     *
      * @param prefix The prefix of the file
      * @param dim    The dimension id to be saved
      * @return The NBT to be written to disk, or <code>null</code> to save nothing
@@ -41,7 +41,7 @@ public interface IClientCache {
 
     /**
      * Save a non-dimension-specific file.
-     * 
+     *
      * @param name The name of the file
      * @return The NBT to be written to disk, or <code>null</code> to save nothing
      */
@@ -49,7 +49,7 @@ public interface IClientCache {
 
     /**
      * Read data from a dimension-specific file into the cache.
-     * 
+     *
      * @param prefix The prefix of the file
      * @param dim    The dimension the data belongs to
      * @param data   The NBT data contained in the file
@@ -58,7 +58,7 @@ public interface IClientCache {
 
     /**
      * Read data from a non-dimension-specific file into the cache.
-     * 
+     *
      * @param name The name of the file
      * @param data The NBT data contained in the file
      */
@@ -74,7 +74,7 @@ public interface IClientCache {
     /**
      * Register a set of per-dimension files for your cache.
      * If you only call this once, you may ignore the <code>prefix</code> argument in dimension-specific methods.
-     * 
+     *
      * @param prefix Files will be named <code>prefix + "DIM" + dimensionID</code>
      */
     default void addDimFiles(String prefix) {
@@ -84,7 +84,7 @@ public interface IClientCache {
     /**
      * Register a single file for your cache.
      * If you only call this once, you may ignore the <code>name</code> argument in non-dimension-specific methods.
-     * 
+     *
      * @param name The name of the file
      */
     default void addSingleFile(String name) {

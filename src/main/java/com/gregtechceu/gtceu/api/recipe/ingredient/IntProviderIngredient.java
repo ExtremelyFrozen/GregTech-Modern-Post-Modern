@@ -99,7 +99,7 @@ public class IntProviderIngredient implements ICustomIngredient, IRangedIngredie
     /**
      * Gets a usable {@link ItemStack ItemStack[]} from this {@link IntProviderIngredient}.
      * If this ingredient has not yet had its {@link IntProviderIngredient#sampledCount} rolled, rolls it.
-     * 
+     *
      * @return a {@link ItemStack ItemStack[]} with count {@link IntProviderIngredient#sampledCount}
      */
     public ItemStack[] getItemStacks() {
@@ -151,7 +151,7 @@ public class IntProviderIngredient implements ICustomIngredient, IRangedIngredie
      * Gets a {@link ItemStack} containing the maximum possible output from this {@link IntProviderIngredient}.
      * Mainly used for things like Recipe provider simulations to see if there is enough inventory space to handle
      * the recipe output.
-     * 
+     *
      * @return a {@link ItemStack} with count {@link IntProvider#getMaxValue()}
      */
     public @NotNull ItemStack getMaxSizeStack() {
@@ -163,7 +163,7 @@ public class IntProviderIngredient implements ICustomIngredient, IRangedIngredie
      * If this ingredient has not yet had its {@link IntProviderIngredient#sampledCount} rolled, rolls it and returns
      * the roll.
      * If it has, returns the existing roll.
-     * 
+     *
      * @param random {@link RandomSource}, must be threadsafe, usually called using {@link GTValues#RNG}.
      * @return the count rolled
      */

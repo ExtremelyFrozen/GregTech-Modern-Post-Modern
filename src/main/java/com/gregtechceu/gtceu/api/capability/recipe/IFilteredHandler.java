@@ -16,7 +16,7 @@ public interface IFilteredHandler<K> extends Predicate<K> {
 
     /**
      * Test an ingredient for filtering & priority.
-     * 
+     *
      * @param ingredient the ingredient
      * @return {@code true} if the input argument matches the predicate,
      *         otherwise {@code false}

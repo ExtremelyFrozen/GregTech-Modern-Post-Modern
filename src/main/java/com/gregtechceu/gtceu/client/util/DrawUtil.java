@@ -66,7 +66,7 @@ public class DrawUtil {
 
     /**
      * Converts an (A)RGB integer color into an array of floats, for use in GL calls
-     * 
+     *
      * @return float[]{R, G, B, A}
      */
     public static float[] floats(int argb) {
