@@ -2,13 +2,14 @@ package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 
-import com.google.common.collect.ImmutableList;
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
+
+import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
-import org.jetbrains.annotations.Unmodifiable;
 
 public record ConcatenatedPredicate(List<StructurePredicate> predicates) implements StructurePredicate {
 

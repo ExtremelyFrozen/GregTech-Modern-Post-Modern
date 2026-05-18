@@ -1,25 +1,23 @@
 package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
-import com.gregtechceu.gtceu.api.pattern.error.SinglePredicateError;
 import com.gregtechceu.gtceu.api.pattern.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.Accessors;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
-import org.jspecify.annotations.Nullable;
 
 public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer> minCount,
                                   Optional<Integer> maxCount, Optional<Integer> minCountByLayer,
@@ -68,24 +66,24 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
     }
 
     private boolean testGlobal(MultiblockState multiblockState, boolean mutateCount) {
-//        if (minCount.isEmpty() && maxCount.isEmpty()) return true;
-//        boolean base = predicate.test(multiblockState, mutateCount);
-//        Object2IntOpenHashMap<SimplePredicate> globalCount = multiblockState.getGlobalCount();
-//        int count = mutateCount ? globalCount.mergeInt(this, base ? 1 : 0, Integer::sum) : globalCount.getInt(this);
-//        if (maxCount.isEmpty() || count <= maxCount.get()) return base;
-//        multiblockState.setError(new SinglePredicateError(this, 0));
-//        return false;
+        // if (minCount.isEmpty() && maxCount.isEmpty()) return true;
+        // boolean base = predicate.test(multiblockState, mutateCount);
+        // Object2IntOpenHashMap<SimplePredicate> globalCount = multiblockState.getGlobalCount();
+        // int count = mutateCount ? globalCount.mergeInt(this, base ? 1 : 0, Integer::sum) : globalCount.getInt(this);
+        // if (maxCount.isEmpty() || count <= maxCount.get()) return base;
+        // multiblockState.setError(new SinglePredicateError(this, 0));
+        // return false;
         return true; // FIXME
     }
 
     private boolean testLayer(MultiblockState multiblockState, boolean mutateCount) {
-//        if (minCountByLayer.isEmpty() && maxCountByLayer.isEmpty()) return true;
-//        boolean base = predicate.test(multiblockState, mutateCount);
-//        Object2IntOpenHashMap<SimplePredicate> layerCount = multiblockState.getLayerCount();
-//        int count = mutateCount ? layerCount.mergeInt(this, base ? 1 : 0, Integer::sum) : layerCount.getInt(this);
-//        if (maxCountByLayer.isEmpty() || count <= maxCountByLayer.get()) return base;
-//        multiblockState.setError(new SinglePredicateError(this, 2));
-//        return false;
+        // if (minCountByLayer.isEmpty() && maxCountByLayer.isEmpty()) return true;
+        // boolean base = predicate.test(multiblockState, mutateCount);
+        // Object2IntOpenHashMap<SimplePredicate> layerCount = multiblockState.getLayerCount();
+        // int count = mutateCount ? layerCount.mergeInt(this, base ? 1 : 0, Integer::sum) : layerCount.getInt(this);
+        // if (maxCountByLayer.isEmpty() || count <= maxCountByLayer.get()) return base;
+        // multiblockState.setError(new SinglePredicateError(this, 2));
+        // return false;
         return true; // FIXME
     }
 

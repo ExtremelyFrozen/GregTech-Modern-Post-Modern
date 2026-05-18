@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
+
 import com.mojang.serialization.MapCodec;
 
 public enum AirPredicate implements StructurePredicate {

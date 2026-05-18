@@ -8,9 +8,9 @@ import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
-import org.jetbrains.annotations.Unmodifiable;
 
 public interface StructurePredicate {
 

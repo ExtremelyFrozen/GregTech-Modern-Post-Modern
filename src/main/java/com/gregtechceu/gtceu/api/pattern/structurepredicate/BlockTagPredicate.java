@@ -3,23 +3,24 @@ package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 import com.gregtechceu.gtceu.api.pattern.predicates.PredicateBlockTag;
 
+import com.lowdragmc.lowdraglib.utils.BlockInfo;
+
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.common.util.Lazy;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.common.util.Lazy;
-import org.jspecify.annotations.Nullable;
 
 import static com.gregtechceu.gtceu.api.pattern.structurepredicate.Util.oneOrMore;
 

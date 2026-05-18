@@ -3,15 +3,16 @@ package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 import com.gregtechceu.gtceu.api.pattern.predicates.PredicateBlocks;
 
+import com.lowdragmc.lowdraglib.utils.BlockInfo;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.*;
-import net.minecraft.world.level.block.Blocks;
 
 import static com.gregtechceu.gtceu.api.pattern.structurepredicate.Util.oneOrMore;
 

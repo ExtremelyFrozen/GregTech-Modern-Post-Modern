@@ -3,13 +3,14 @@ package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 import com.gregtechceu.gtceu.api.pattern.predicates.PredicateFluidTag;
 
+import com.lowdragmc.lowdraglib.utils.BlockInfo;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.common.util.Lazy;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jspecify.annotations.Nullable;

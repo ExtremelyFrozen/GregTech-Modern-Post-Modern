@@ -3,10 +3,11 @@ package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 import com.gregtechceu.gtceu.api.pattern.predicates.PredicateFluids;
 
+import com.lowdragmc.lowdraglib.utils.BlockInfo;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.material.Fluid;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 

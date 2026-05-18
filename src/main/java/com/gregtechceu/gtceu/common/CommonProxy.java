@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common;
 
-import com.google.gson.JsonElement;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
@@ -31,10 +30,6 @@ import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.misc.forge.QuantumFluidHandlerItemStack;
-import com.gregtechceu.gtceu.api.pattern.structurepredicate.BlockPredicate;
-import com.gregtechceu.gtceu.api.pattern.structurepredicate.BlockTagPredicate;
-import com.gregtechceu.gtceu.api.pattern.structurepredicate.RestrictedPredicate;
-import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicate;
 import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicateType;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntCircuitIngredient;
@@ -47,13 +42,47 @@ import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.fluid.CustomFluidMapIn
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.fluid.FluidDataComponentMapIngredient;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.fluid.FluidStackMapIngredient;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.fluid.FluidTagMapIngredient;
-import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.item.*;
+import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.item.CustomItemMapIngredient;
+import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.item.ItemDataComponentMapIngredient;
+import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.item.ItemStackMapIngredient;
+import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.item.ItemTagMapIngredient;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
-import com.gregtechceu.gtceu.common.block.*;
-import com.gregtechceu.gtceu.common.data.*;
+import com.gregtechceu.gtceu.common.block.CableBlock;
+import com.gregtechceu.gtceu.common.block.DuctPipeBlock;
+import com.gregtechceu.gtceu.common.block.FluidPipeBlock;
+import com.gregtechceu.gtceu.common.block.ItemPipeBlock;
+import com.gregtechceu.gtceu.common.block.LaserPipeBlock;
+import com.gregtechceu.gtceu.common.block.OpticalPipeBlock;
+import com.gregtechceu.gtceu.common.data.GTAttachmentTypes;
+import com.gregtechceu.gtceu.common.data.GTBlockEntities;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
-import com.gregtechceu.gtceu.common.data.item.*;
+import com.gregtechceu.gtceu.common.data.GTCommandArguments;
+import com.gregtechceu.gtceu.common.data.GTCovers;
+import com.gregtechceu.gtceu.common.data.GTCreativeModeTabs;
+import com.gregtechceu.gtceu.common.data.GTDamageTypes;
+import com.gregtechceu.gtceu.common.data.GTDimensionMarkers;
+import com.gregtechceu.gtceu.common.data.GTElements;
+import com.gregtechceu.gtceu.common.data.GTEntityTypes;
+import com.gregtechceu.gtceu.common.data.GTFeatures;
+import com.gregtechceu.gtceu.common.data.GTFluids;
+import com.gregtechceu.gtceu.common.data.GTItems;
+import com.gregtechceu.gtceu.common.data.GTMachines;
+import com.gregtechceu.gtceu.common.data.GTMaterialBlocks;
+import com.gregtechceu.gtceu.common.data.GTMaterialItems;
+import com.gregtechceu.gtceu.common.data.GTMaterials;
+import com.gregtechceu.gtceu.common.data.GTMobEffects;
+import com.gregtechceu.gtceu.common.data.GTParticleTypes;
+import com.gregtechceu.gtceu.common.data.GTRecipeCapabilities;
+import com.gregtechceu.gtceu.common.data.GTRecipeCategories;
+import com.gregtechceu.gtceu.common.data.GTRecipeConditions;
+import com.gregtechceu.gtceu.common.data.GTRecipeSerializers;
+import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
+import com.gregtechceu.gtceu.common.data.GTSoundEntries;
+import com.gregtechceu.gtceu.common.data.GTToolBehaviors;
+import com.gregtechceu.gtceu.common.data.GTToolTiers;
+import com.gregtechceu.gtceu.common.data.GTValueProviderTypes;
+import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import com.gregtechceu.gtceu.common.data.materials.GTFoods;
 import com.gregtechceu.gtceu.common.fluid.potion.BottleItemFluidHandler;
@@ -74,7 +103,7 @@ import com.gregtechceu.gtceu.data.pack.GTDynamicDataPack;
 import com.gregtechceu.gtceu.data.pack.GTDynamicResourcePack;
 import com.gregtechceu.gtceu.data.pack.GTPackSource;
 import com.gregtechceu.gtceu.data.placeholder.GTPlaceholders;
-import com.gregtechceu.gtceu.data.recipe.*;
+import com.gregtechceu.gtceu.data.recipe.GTIngredientTypes;
 import com.gregtechceu.gtceu.integration.cctweaked.CCTweakedPlugin;
 import com.gregtechceu.gtceu.integration.kjs.GTCEuStartupEvents;
 import com.gregtechceu.gtceu.integration.kjs.events.MaterialModificationEventJS;
@@ -84,9 +113,6 @@ import com.gregtechceu.gtceu.utils.input.SyncedKeyMappings;
 
 import com.lowdragmc.lowdraglib.gui.factory.UIFactory;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
-import com.mojang.serialization.JsonOps;
-import journeymap.common.helpers.NeoForgeHooks;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -98,7 +124,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
@@ -111,7 +136,6 @@ import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.IntersectionIngredient;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
@@ -120,7 +144,12 @@ import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.BlockEntityTypeAddBlocksEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper;
-import net.neoforged.neoforge.fluids.crafting.*;
+import net.neoforged.neoforge.fluids.crafting.CompoundFluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.DataComponentFluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.FluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.IntersectionFluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SingleFluidIngredient;
+import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import net.neoforged.neoforge.registries.DataPackRegistryEvent;
 import net.neoforged.neoforge.registries.ModifyRegistriesEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
@@ -397,20 +426,7 @@ public class CommonProxy {
     }
 
     @SubscribeEvent
-    public static void loadComplete(FMLLoadCompleteEvent event) {
-        RestrictedPredicate data = RestrictedPredicate.builder()
-                .base(new BlockTagPredicate(List.of(Tags.Blocks.COBBLESTONES))
-                        .or(new BlockPredicate(List.of(
-                                Blocks.COMMAND_BLOCK))))
-                .exactCount(5)
-                .minCountByLayer(10)
-                .maxCountByLayer(20)
-                .build();
-        System.out.println(data.candidates().stream().map(BlockInfo::getBlockState).toList());
-        JsonElement json = StructurePredicate.CODEC.encodeStart(JsonOps.INSTANCE, data).getOrThrow();
-        System.out.println(json);
-        System.exit(0);
-    }
+    public static void loadComplete(FMLLoadCompleteEvent event) {}
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
