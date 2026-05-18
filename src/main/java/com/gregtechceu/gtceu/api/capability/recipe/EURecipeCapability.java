@@ -127,7 +127,7 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
 
     /**
      * Creates a {@code List<Content>} with the specified EU
-     * 
+     *
      * @param eu EU/t value to put in the Content
      * @return Singleton list of a new Content with the given EU value
      */
@@ -138,7 +138,7 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
 
     /**
      * Puts an EU Singleton Content in the given content map
-     * 
+     *
      * @param contents content map
      * @param eu       EU value to put inside content map
      */

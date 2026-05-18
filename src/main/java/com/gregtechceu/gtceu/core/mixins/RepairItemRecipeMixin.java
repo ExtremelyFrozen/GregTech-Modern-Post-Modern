@@ -30,7 +30,7 @@ public abstract class RepairItemRecipeMixin extends CustomRecipe {
 
     /**
      * It's a hack to prevent the tool from being returned
-     * 
+     *
      * @param container the input inventory
      */
     @Override

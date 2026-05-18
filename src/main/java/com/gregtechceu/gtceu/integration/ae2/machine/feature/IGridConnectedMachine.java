@@ -36,7 +36,7 @@ public interface IGridConnectedMachine extends IMachineFeature, IGridConnectedBl
 
     /**
      * Update me network connection status.
-     * 
+     *
      * @return the updated status.
      */
     default boolean updateMEStatus() {

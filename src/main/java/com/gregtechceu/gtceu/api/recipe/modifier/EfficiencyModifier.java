@@ -31,7 +31,7 @@ public class EfficiencyModifier implements RecipeModifier {
 
     /**
      * Creates an Efficiency Modifier with the given parameters
-     * 
+     *
      * @param baseMultiplier base duration multiplier to be applied to the recipe
      * @param efficiency     multiplier to be applied per consecutive recipe run
      * @param hardCap        limit on how low the duration can be multiplied
@@ -53,7 +53,7 @@ public class EfficiencyModifier implements RecipeModifier {
      * Efficiency recipe modifier
      * <p>
      * Duration will be multiplied by <code>base × efficiency<sup>runs</sup></code>
-     * 
+     *
      * @param machine an {@link IRecipeLogicMachine}
      * @param recipe  recipe
      * @return Efficiency Modifier

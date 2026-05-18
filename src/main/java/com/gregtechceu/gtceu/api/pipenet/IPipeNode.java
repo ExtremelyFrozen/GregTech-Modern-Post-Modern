@@ -33,7 +33,7 @@ public interface IPipeNode<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     /**
      * If tube is set to block connection from the specific side
-     * 
+     *
      * @param side face
      */
     default boolean isBlocked(Direction side) {
@@ -52,7 +52,7 @@ public interface IPipeNode<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     /**
      * set to block connection from the specific side
-     * 
+     *
      * @param side      face
      * @param isBlocked is blocked
      */
@@ -71,7 +71,7 @@ public interface IPipeNode<PipeType extends Enum<PipeType> & IPipeType<NodeDataT
 
     /**
      * If node is connected to the specific side
-     * 
+     *
      * @param side face
      */
     default boolean isConnected(Direction side) {

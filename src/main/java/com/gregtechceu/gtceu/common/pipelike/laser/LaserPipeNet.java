@@ -92,7 +92,7 @@ public class LaserPipeNet extends PipeNet<LaserPipeProperties> {
 
         /**
          * Gets the handler if it exists
-         * 
+         *
          * @param world the world to get the handler from
          * @return the handler
          */

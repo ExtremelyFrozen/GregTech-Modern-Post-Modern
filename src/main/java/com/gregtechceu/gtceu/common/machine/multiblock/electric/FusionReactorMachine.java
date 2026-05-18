@@ -159,7 +159,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
      * apply {@link FusionReactorMachine#FUSION_OC} to the recipe.
      * Otherwise, the recipe is rejected.
      * </p>
-     * 
+     *
      * @param machine a {@link FusionReactorMachine}
      * @param recipe  recipe
      * @return A {@link ModifierFunction} for the given Fusion Reactor and recipe

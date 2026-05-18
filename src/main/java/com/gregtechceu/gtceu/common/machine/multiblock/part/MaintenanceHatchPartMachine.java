@@ -148,7 +148,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
 
     /**
      * Fixes the maintenance problems of this hatch's Multiblock Controller
-     * 
+     *
      * @param entityPlayer the player performing the fixing
      */
     private void fixMaintenanceProblems(@Nullable Player entityPlayer) {

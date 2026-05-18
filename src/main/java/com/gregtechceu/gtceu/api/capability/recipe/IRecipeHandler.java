@@ -57,7 +57,7 @@ public interface IRecipeHandler<K> extends IFilteredHandler<K> {
     /**
      * Returns {@code true} if this {@code IRecipeHandler} has content to be searched.
      * The main use of this is differentiating circuit inventories from item inventories
-     * 
+     *
      * @return {@code true} if this {@code IRecipeHandler} has content to be searched
      */
     default boolean shouldSearchContent() {

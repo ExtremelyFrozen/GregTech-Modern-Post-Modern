@@ -51,7 +51,7 @@ public class GTTransferUtils {
 
     /**
      * Get the ItemHandler Capability from the given block
-     * 
+     *
      * @param level Level of block
      * @param pos   BlockPos of block
      * @param side  Side of block
@@ -90,7 +90,7 @@ public class GTTransferUtils {
 
     /**
      * Transfer fluids with the given filter
-     * 
+     *
      * @param source        FluidHandler to drain from
      * @param dest          FluidHandler to fill
      * @param filter        Filter to test FluidStacks
@@ -120,7 +120,7 @@ public class GTTransferUtils {
 
     /**
      * Transfer items with the given filter
-     * 
+     *
      * @param source        ItemHandler to extract from
      * @param dest          ItemHandler to insert into
      * @param filter        Filter to test ItemStacks

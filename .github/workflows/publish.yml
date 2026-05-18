@@ -101,8 +101,8 @@ jobs:
 #          modrinth-id: 7tG215v7
 #          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 #          files: |
-#            ./gtceu-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar
-#            ./!(gtceu-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar)
+#            ./gtpm-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar
+#            ./!(gtpm-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar)
 #          name: 'GregTech CEu ${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}'
 #          version: 'mc${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}'
 #          version-type: ${{ env.VERSION_TYPE }}
@@ -134,8 +134,8 @@ jobs:
 #          curseforge-id: 890405
 #          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 #          files: |
-#            ./gtceu-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar
-#            ./!(gtceu-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar)
+#            ./gtpm-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar
+#            ./!(gtpm-${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}.jar)
 #          name: 'GregTech CEu ${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}'
 #          version: 'mc${{ env.MC_VERSION }}-${{ needs.build.outputs.ver }}'
 #          version-type: ${{ env.VERSION_TYPE }}

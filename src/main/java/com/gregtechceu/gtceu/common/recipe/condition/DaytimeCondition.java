@@ -19,35 +19,35 @@ import org.jetbrains.annotations.NotNull;
 public class DaytimeCondition extends RecipeCondition<DaytimeCondition> {
 
     // spotless:off
-    public static final MapCodec<DaytimeCondition> CODEC = RecipeCondition.simpleCodec(DaytimeCondition::new);
-    // spotless:off
+	public static final MapCodec<DaytimeCondition> CODEC = RecipeCondition.simpleCodec(DaytimeCondition::new);
+	// spotless:off
 
-    public DaytimeCondition(boolean isReverse) {
-        super(isReverse);
-    }
+	public DaytimeCondition(boolean isReverse) {
+		super(isReverse);
+	}
 
-    @Override
-    public RecipeConditionType<DaytimeCondition> getType() {
-        return GTRecipeConditions.DAYTIME;
-    }
+	@Override
+	public RecipeConditionType<DaytimeCondition> getType() {
+		return GTRecipeConditions.DAYTIME;
+	}
 
-    @Override
-    public Component getTooltips() {
-        if (isReverse) {
-            return Component.translatable("recipe.condition.daytime.night.tooltip");
-        } else {
-            return Component.translatable("recipe.condition.daytime.day.tooltip");
-        }
-    }
+	@Override
+	public Component getTooltips() {
+		if (isReverse) {
+			return Component.translatable("recipe.condition.daytime.night.tooltip");
+		} else {
+			return Component.translatable("recipe.condition.daytime.day.tooltip");
+		}
+	}
 
-    @Override
-    public boolean testCondition(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
-        Level level = recipeLogic.machine.self().getLevel();
-        return level != null && level.isDay();
-    }
+	@Override
+	public boolean testCondition(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
+		Level level = recipeLogic.machine.self().getLevel();
+		return level != null && level.isDay();
+	}
 
-    @Override
-    public DaytimeCondition createTemplate() {
-        return new DaytimeCondition();
-    }
+	@Override
+	public DaytimeCondition createTemplate() {
+		return new DaytimeCondition();
+	}
 }

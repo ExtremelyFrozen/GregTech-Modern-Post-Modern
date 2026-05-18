@@ -131,7 +131,7 @@ public class OverlayedItemHandler {
 
         /**
          * Storage of this ItemStack elsewhere will require copying it
-         * 
+         *
          * @return the stored ItemStack
          */
         @NotNull

@@ -39,7 +39,7 @@ public class GTMatrixUtils {
 
     /**
      * This method isn't pure, {@code from} will be modified!
-     * 
+     *
      * @param from the original vector
      * @param to   the wanted vector
      * @return the axis of rotation to make {@code from} point in the direction of {@code to}
@@ -81,7 +81,7 @@ public class GTMatrixUtils {
     /**
      * Transforms the {@code matrix} and all {@code additional} vectors such that the {@code from} vector will be on the
      * {@code to} vector's axis
-     * 
+     *
      * @param matrix     the matrix to transform
      * @param from       the original vector
      * @param to         the destination vector
