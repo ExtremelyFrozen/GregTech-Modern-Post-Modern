@@ -143,7 +143,7 @@ public class TraceabilityPredicate {
 
     /**
      * Sets the Minimum and Maximum limit to the passed value
-     * 
+     *
      * @param limit The Maximum and Minimum limit
      */
     public TraceabilityPredicate setExactLimit(int limit) {

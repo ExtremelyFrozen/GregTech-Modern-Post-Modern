@@ -206,7 +206,7 @@ public class PowerlessJetpack implements IArmorLogic, IJetpack, IItemHUDProvider
     /*
      * @Override
      * public ISpecialArmor.ArmorProperties getProperties(EntityLivingBase player, @NotNull ItemStack armor,
-     * 
+     *
      * @NotNull DamageSource source, double damage,
      * EntityEquipmentSlot equipmentSlot) {
      * int damageLimit = (int) Math.min(Integer.MAX_VALUE, burnTimer * 1.0 / 32 * 25.0);

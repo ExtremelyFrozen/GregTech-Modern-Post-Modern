@@ -160,7 +160,7 @@ public class GTRecipeTypeUI {
 
     /**
      * Auto layout UI template for recipes.
-     * 
+     *
      * @param progressSupplier progress. To create a JEI / REI UI, use the para {@link ProgressWidget#JEIProgress}.
      */
     public WidgetGroup createUITemplate(DoubleSupplier progressSupplier,

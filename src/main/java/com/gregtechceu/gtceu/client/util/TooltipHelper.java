@@ -19,7 +19,7 @@ public class TooltipHelper {
 
     /**
      * Returns a continually changing rainbow TextColor
-     * 
+     *
      * @param speed degrees of hue change per tick
      * @return Rainbow TextColor
      */

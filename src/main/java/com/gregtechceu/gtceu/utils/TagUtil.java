@@ -15,7 +15,7 @@ public class TagUtil {
 
     /**
      * Creates a tag under the {@code c} or {@code minecraft} namespace
-     * 
+     *
      * @param vanilla Whether to use vanilla namespace instead of common
      * @return Tag {@code #c:path} or {@code #minecraft:path}
      */
@@ -27,7 +27,7 @@ public class TagUtil {
 
     /**
      * Creates a tag under the {@code gtceu} namespace
-     * 
+     *
      * @return {@code #gtceu:path}
      */
     public static <T> TagKey<T> createModTag(ResourceKey<? extends Registry<T>> registryKey, String path) {
@@ -36,7 +36,7 @@ public class TagUtil {
 
     /**
      * Creates a block tag under the {@code c} namespace
-     * 
+     *
      * @return Block tag {@code #c:path}
      */
     public static TagKey<Block> createBlockTag(String path) {
@@ -45,7 +45,7 @@ public class TagUtil {
 
     /**
      * Creates a block tag under the {@code c} or {@code minecraft} namespace
-     * 
+     *
      * @param vanilla Whether to use vanilla namespace instead of common
      * @return Block tag {@code #c:path} or {@code #minecraft:path}
      */
@@ -64,7 +64,7 @@ public class TagUtil {
 
     /**
      * Creates an item tag under the {@code c} namespace
-     * 
+     *
      * @return Item tag {@code #c:path}
      */
     public static TagKey<Item> createItemTag(String path) {
@@ -73,7 +73,7 @@ public class TagUtil {
 
     /**
      * Creates an item tag under the {@code c} or {@code minecraft} namespace
-     * 
+     *
      * @param vanilla Whether to use vanilla namespace instead of common
      * @return Item tag {@code #c:path} or {@code #minecraft:path}
      */
@@ -83,7 +83,7 @@ public class TagUtil {
 
     /**
      * Creates an item tag under the {@code gtceu} namespace
-     * 
+     *
      * @return Item tag {@code #gtceu:path}
      */
     public static TagKey<Item> createModItemTag(String path) {
@@ -92,7 +92,7 @@ public class TagUtil {
 
     /**
      * Creates a fluid tag under the {@code c} namespace
-     * 
+     *
      * @return Fluid tag {@code #c:path}
      */
     public static TagKey<Fluid> createFluidTag(String path) {

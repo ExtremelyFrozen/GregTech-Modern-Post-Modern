@@ -36,10 +36,10 @@ import java.util.*;
  * <p>
  * <strong style="font-size:17">NOTE:</strong><br>
  * You must also initialize the models in an {@link RegisterDynamicResourcesEvent} listener as such:
- * 
+ *
  * <pre>
  * {@code
- * 
+ *
  * // in a @EventBusSubscriber-annotated class
  * @SubscribeEvent
  * public static void registerDynamicAssets(RegisterDynamicResourcesEvent event) {
@@ -50,7 +50,7 @@ import java.util.*;
  * }
  * }
  * </pre>
- * 
+ *
  * Remember to replace {@code YourBlocks.YOUR_PIPE_BLOCKS.values()} with a reference to your pipe block collection!
  * </p>
  *
@@ -59,7 +59,7 @@ import java.util.*;
  * cables),
  * you should <strong>NOT</strong> use {@link #dynamicModel()} and instead set the model with
  * {@link GTBlockBuilder#gtBlockstate(NonNullBiConsumer)} as such:
- * 
+ *
  * <pre>
  * {@code
  *     // on your pipe block builder
@@ -72,7 +72,7 @@ import java.util.*;
  *              ...more builder things...
  * }
  * </pre>
- * 
+ *
  * This makes the pipe model(s) be generated for you without having to process them at runtime.
  *
  */
@@ -172,7 +172,7 @@ public class PipeModel {
 
     /**
      * Override this to change the actual model {@link #block this.block} will use.
-     * 
+     *
      * @return A model builder for the block's actual model.
      * @see #getOrCreateCenterElement()
      * @see #getOrCreateConnectionElement()
@@ -195,7 +195,7 @@ public class PipeModel {
 
     /**
      * Override this to change the center element's model.
-     * 
+     *
      * @return A model builder for the center element's model.
      * @see #getOrCreateBlockModel()
      * @see #getOrCreateConnectionElement()
@@ -214,7 +214,7 @@ public class PipeModel {
      * By default, this is rotated & used for all connected sides of the pipe.<br>
      * Note that that is not a hard requirement, and that you may set a model per side in
      * {@link #getOrCreateBlockModel()}.
-     * 
+     *
      * @return A model builder for the connection element's model.
      * @see #getOrCreateBlockModel()
      * @see #getOrCreateCenterElement()
@@ -232,7 +232,7 @@ public class PipeModel {
     /**
      * Override this to change the item model.<br>
      * By default, this creates a version of the pipe block model with the north & south sides 'connected'.
-     * 
+     *
      * @return The item model builder.
      * @see #getOrCreateBlockModel()
      */
@@ -249,7 +249,7 @@ public class PipeModel {
      * By default, this creates a simple block state with no properties.<br>
      * The activable pipes (laser & optical) use this to add a model for the
      * {@link GTBlockStateProperties#ACTIVE "active"} state of the blocks.
-     * 
+     *
      * @return The block state generator, usually a {@link MultiVariantGenerator}.
      * @see #getOrCreateBlockModel()
      * @see ActivablePipeModel#createBlockState()
@@ -267,7 +267,7 @@ public class PipeModel {
 
     /**
      * Creates an item model based on the block model that extends to the north/south end of the block space.
-     * 
+     *
      * @param name The resulting model's path.
      * @param min  The minimum X/Y coordinate.
      * @param max  The maximum X/Y coordinate.
@@ -421,7 +421,7 @@ public class PipeModel {
         /**
          * This is a callback for modifying a block element face builder in ways not supported by "basic" API.<br>
          * For example, you can make faces emissive, like {@link ActivablePipeModel#makePartModelElement}.
-         * 
+         *
          * @param face    The normal direction of this face.
          * @param texture The texture of the face, usually in {@code #reference} format.
          *                <b>Note that the String does NOT begin with {@code #}</b>.

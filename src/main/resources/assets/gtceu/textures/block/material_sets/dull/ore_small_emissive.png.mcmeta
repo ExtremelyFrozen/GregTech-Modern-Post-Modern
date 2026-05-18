@@ -1,10 +1,10 @@
 {
-    "ctm": {
-        "ctm_version": 1,
-        "layer": "BLOOM",
-        "gtceu": true,
-        "extra": {
-            "light": 15
-        }
-    }
+	"ctm": {
+		"ctm_version": 1,
+		"layer": "BLOOM",
+		"gtceu": true,
+		"extra": {
+			"light": 15
+		}
+	}
 }

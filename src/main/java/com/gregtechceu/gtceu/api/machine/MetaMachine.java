@@ -196,14 +196,14 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     /**
      * Applies item stack component data when this machine is placed.
-     * 
+     *
      * @param componentInput Component Input
      */
     protected void applyImplicitComponents(DataComponentInput componentInput) {}
 
     /**
      * Saves this machine's data to item stack components.
-     * 
+     *
      * @param components Component Builder
      */
     public void collectImplicitComponents(DataComponentMap.Builder components) {}

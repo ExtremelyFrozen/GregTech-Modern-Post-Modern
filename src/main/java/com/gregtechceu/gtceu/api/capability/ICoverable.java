@@ -106,7 +106,7 @@ public interface ICoverable extends ITickSubscription, ISyncManaged, ICopyable {
      * <br>
      * Use {@link ICoverable#removeCover(boolean, Direction, Player)} and
      * {@link ICoverable#placeCoverOnSide(Direction, ItemStack, CoverDefinition, ServerPlayer)} instead
-     * 
+     *
      * @param coverBehavior the cover to set, or {@code null} to remove an existing cover
      * @param side          the side to set the cover for
      */

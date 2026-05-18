@@ -17,7 +17,7 @@ public class KJSRecipeKeyEvent {
 
     /**
      * Use this to register new components for KJS to use!
-     * 
+     *
      * @param cap the recipe capability you're adding a KJS binding for.
      * @param key the component, like {@link GTRecipeComponents#ITEM}
      */

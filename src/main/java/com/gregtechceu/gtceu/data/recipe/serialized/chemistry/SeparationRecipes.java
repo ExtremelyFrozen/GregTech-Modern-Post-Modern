@@ -89,7 +89,7 @@ public class SeparationRecipes {
          * float saturationModifier = itemFood.getSaturationModifier(itemStack);
          * if (healAmount > 0) {
          * FluidStack outputStack = Methane.getFluid(Math.round(9 * healAmount * (1.0f + saturationModifier)));
-         * 
+         *
          * CENTRIFUGE_RECIPES.recipeBuilder().duration(144).EUt(5)
          * .inputItems(itemStack)
          * .outputFluids(outputStack)

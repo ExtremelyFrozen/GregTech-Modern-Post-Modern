@@ -34,7 +34,7 @@ public class OverlayedTankHandler {
 
     /**
      * Simulate fluid filling to the tanks
-     * 
+     *
      * @param fluid  {@link FluidStack} with the fluid to attempt to 'fill' - stack amount does not matter
      * @param amount Actual amount of fluid to attempt to 'fill'
      * @return Amount of fluid that could potentially be filled into these tanks
@@ -99,7 +99,7 @@ public class OverlayedTankHandler {
 
         /**
          * 'Fill' this Overlayed Tank as much as is allowed
-         * 
+         *
          * @param fluid  FluidStack with the fluid to attempt to 'fill'; stack amount does not matter
          * @param amount Actual amount of fluid to attempt to 'fill'
          * @return Amount of fluid that could potentially be filled into this tank
@@ -137,7 +137,7 @@ public class OverlayedTankHandler {
 
         /**
          * Searches {@link OverlayedTank#stacks} for a FluidStack equivalent to the passed {@code fluid} <br>
-         * 
+         *
          * @param fluid A FluidStack with the fluid to search for
          * @return If {@code sameFluidFill} is false, then the first matching stack found. Otherwise, the first non-full
          *         stack. If no matching stack is found, then {@link FluidStack#EMPTY}

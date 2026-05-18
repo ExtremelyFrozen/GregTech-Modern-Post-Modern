@@ -48,7 +48,7 @@ public class DistillationTowerMachine extends WorkableElectricMultiblockMachine
 
     /**
      * Construct DT Machine
-     * 
+     *
      * @param holder  BlockEntity holder
      * @param yOffset The Y difference between the controller and the first fluid output
      */

@@ -304,7 +304,7 @@ public class ToolProperty implements IMaterialProperty {
 
         /**
          * Add a default enchantment to tools made of this Material.
-         * 
+         *
          * @param enchantment The default enchantment, applied on crafting the tool.
          * @param level       The level of the enchantment.
          */

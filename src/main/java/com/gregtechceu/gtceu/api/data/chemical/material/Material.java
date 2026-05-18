@@ -667,7 +667,7 @@ public class Material {
 
         /**
          * Add a liquid for this material.
-         * 
+         *
          * @throws IllegalArgumentException If a {@link FluidStorageKeys#LIQUID LIQUID} has
          *                                  already been added to this Material.
          *
@@ -713,7 +713,7 @@ public class Material {
 
         /**
          * Add a plasma for this material.
-         * 
+         *
          * @throws IllegalArgumentException If a {@link FluidStorageKeys#PLASMA PLASMA} has
          *                                  already been added to this Material.
          *
@@ -757,7 +757,7 @@ public class Material {
 
         /**
          * Add a gas for this material.
-         * 
+         *
          * @throws IllegalArgumentException If a {@link FluidStorageKeys#GAS GAS} has
          *                                  already been added to this Material.
          *
@@ -1424,7 +1424,7 @@ public class Material {
          * <br>
          *
          * Sample usage:
-         * 
+         *
          * <pre>{@code
          *     .blast(b -> b
          *         .temp(1750)
