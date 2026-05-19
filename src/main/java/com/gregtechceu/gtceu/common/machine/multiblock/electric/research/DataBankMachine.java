@@ -157,12 +157,12 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
                 if (consumed == energyToConsume) {
                     getRecipeLogic().setStatus(RecipeLogic.Status.WORKING);
                 } else {
-                    getRecipeLogic().setWaiting(Component.translatable("gtceu.recipe_logic.insufficient_in")
+                    getRecipeLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
                             .append(": ").append(EURecipeCapability.CAP.getName()));
                 }
             }
         } else {
-            getRecipeLogic().setWaiting(Component.translatable("gtceu.recipe_logic.insufficient_in").append(": ")
+            getRecipeLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in").append(": ")
                     .append(EURecipeCapability.CAP.getName()));
         }
         updateTickSubscription();
@@ -173,9 +173,9 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
         MultiblockDisplayText.builder(textList, isFormed())
                 .setWorkingStatus(true, isActive() && isWorkingEnabled()) // transform into two-state system for display
                 .setWorkingStatusKeys(
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.data_bank.providing")
+                        "gtpm.multiblock.idling",
+                        "gtpm.multiblock.idling",
+                        "gtpm.multiblock.data_bank.providing")
                 .addEnergyUsageExactLine(getEnergyUsage())
                 .addWorkingStatusLine();
     }

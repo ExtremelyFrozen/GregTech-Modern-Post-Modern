@@ -1,0 +1,8 @@
+{
+    "comparator_output": 1,
+    "description": {
+        "translate": "item.gtpm.sus_record.desc"
+    },
+    "length_in_seconds": 820.0,
+    "sound_event": "gtpm:sus"
+}

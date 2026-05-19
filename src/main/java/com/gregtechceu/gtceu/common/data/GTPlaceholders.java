@@ -650,7 +650,7 @@ public class GTPlaceholders {
                                 }
                             }
                             default -> throw new PlaceholderException(Component
-                                    .translatable("gtceu.computer_monitor_cover.error.bf_invalid", i).getString());
+                                    .translatable("gtpm.computer_monitor_cover.error.bf_invalid", i).getString());
                         }
                     } catch (Exception e) {
 
@@ -682,7 +682,7 @@ public class GTPlaceholders {
 
                 Component displayName = bindingData.getBoundPlayerName(ctx.level());
                 if (displayName == null) {
-                    displayName = Component.translatable("gtceu.tooltip.player_name.placeholder_processor");
+                    displayName = Component.translatable("gtpm.tooltip.player_name.placeholder_processor");
                 }
 
                 if (!(ctx.level() instanceof ServerLevel serverLevel)) {

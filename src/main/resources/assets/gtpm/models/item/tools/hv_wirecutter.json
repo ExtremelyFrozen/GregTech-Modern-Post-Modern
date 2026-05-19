@@ -1,0 +1,7 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/tools/electric_wirecutter_base_hv",
+		"layer1": "gtpm:item/tools/electric_wirecutter_head"
+	}
+}

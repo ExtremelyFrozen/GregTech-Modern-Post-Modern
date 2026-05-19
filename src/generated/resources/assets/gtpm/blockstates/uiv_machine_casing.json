@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/uiv_machine_casing"
+        }
+    }
+}

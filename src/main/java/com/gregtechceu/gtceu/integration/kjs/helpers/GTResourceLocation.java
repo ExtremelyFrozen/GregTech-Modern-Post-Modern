@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.UnaryOperator;
 
 /**
- * Exists to indicate that a ResourceLocation would use gtceu: namespace by default when written as plain string. Should
+ * Exists to indicate that a ResourceLocation would use gtpm: namespace by default when written as plain string. Should
  * only be used as an argument in gt's registry methods
  */
 public record GTResourceLocation(ResourceLocation wrapped) {

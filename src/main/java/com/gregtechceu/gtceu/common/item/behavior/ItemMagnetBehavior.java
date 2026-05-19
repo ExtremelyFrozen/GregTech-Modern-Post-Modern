@@ -349,7 +349,7 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
 
         @Override
         public @NotNull IGuiTexture getIcon() {
-            return new ResourceTexture("gtceu:textures/item/" + name + ".png");
+            return new ResourceTexture("gtpm:textures/item/" + name + ".png");
         }
 
         @Override

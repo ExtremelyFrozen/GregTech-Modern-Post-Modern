@@ -167,13 +167,13 @@ public class PotionFluidHelper {
 
             if (durationMax.getSeconds() <= 60) {
                 time = GTMath.saturatedCast(durationMax.getSeconds());
-                unit = Component.translatable("item.gtceu.battery.charge_unit.second");
+                unit = Component.translatable("item.gtpm.battery.charge_unit.second");
             } else if (durationMax.toMinutes() <= 60) {
                 time = GTMath.saturatedCast(durationMax.toMinutes());
-                unit = Component.translatable("item.gtceu.battery.charge_unit.minute");
+                unit = Component.translatable("item.gtpm.battery.charge_unit.minute");
             } else {
                 time = GTMath.saturatedCast(durationMax.toHours());
-                unit = Component.translatable("item.gtceu.battery.charge_unit.hour");
+                unit = Component.translatable("item.gtpm.battery.charge_unit.hour");
             }
 
             return Component.literal(FormattingUtil.formatNumbers(time)).append(unit);

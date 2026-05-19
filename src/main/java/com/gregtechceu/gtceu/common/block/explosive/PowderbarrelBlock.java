@@ -32,7 +32,7 @@ public class PowderbarrelBlock extends GTExplosiveBlock {
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip,
                                 TooltipFlag flag) {
-        tooltip.add(Component.translatable("block.gtceu.powderbarrel.drops_tooltip"));
+        tooltip.add(Component.translatable("block.gtpm.powderbarrel.drops_tooltip"));
         super.appendHoverText(stack, context, tooltip, flag);
     }
 }

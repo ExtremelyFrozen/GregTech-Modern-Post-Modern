@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:item/generated",
+    "textures": {
+        "layer0": "gtpm:item/crystal_processor_computer"
+    }
+}

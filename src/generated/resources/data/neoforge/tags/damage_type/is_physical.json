@@ -1,6 +1,6 @@
 {
     "values": [
-        "gtceu:heat",
-        "gtceu:turbine"
+        "gtpm:heat",
+        "gtpm:turbine"
     ]
 }

@@ -1,0 +1,9 @@
+{
+	"parent": "gtpm:item/material_sets/shiny/ingot",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/shiny/ingot",
+		"layer1": "gtpm:item/material_sets/shiny/ingot_secondary",
+		"layer2": "gtpm:item/material_sets/shiny/ingot_overlay",
+		"layer3": "gtpm:item/material_sets/shiny/ingot_hot_overlay"
+	}
+}

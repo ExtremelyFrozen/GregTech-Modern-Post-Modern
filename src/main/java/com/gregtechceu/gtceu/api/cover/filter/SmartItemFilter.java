@@ -121,7 +121,7 @@ public class SmartItemFilter implements ItemFilter {
 
         @Override
         public IGuiTexture getIcon() {
-            return new ResourceTexture("gtceu:textures/block/machines/" + name + "/overlay_front.png");
+            return new ResourceTexture("gtpm:textures/block/machines/" + name + "/overlay_front.png");
         }
 
         @Override

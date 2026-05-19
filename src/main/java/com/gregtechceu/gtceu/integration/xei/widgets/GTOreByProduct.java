@@ -296,10 +296,10 @@ public class GTOreByProduct {
             float chance = 100 * (float) entry.chance / entry.maxChance;
             if (entry.tierChanceBoost != 0) {
                 float boost = entry.tierChanceBoost / 100.0f;
-                tooltips.add(FormattingUtil.formatPercentage2Places("gtceu.gui.content.chance_base", chance));
-                tooltips.add(FormattingUtil.formatPercentage2Places("gtceu.gui.content.chance_tier_boost_plus", boost));
+                tooltips.add(FormattingUtil.formatPercentage2Places("gtpm.gui.content.chance_base", chance));
+                tooltips.add(FormattingUtil.formatPercentage2Places("gtpm.gui.content.chance_tier_boost_plus", boost));
             } else {
-                tooltips.add(FormattingUtil.formatPercentage2Places("gtceu.gui.content.chance_no_boost", chance));
+                tooltips.add(FormattingUtil.formatPercentage2Places("gtpm.gui.content.chance_no_boost", chance));
             }
         }
     }

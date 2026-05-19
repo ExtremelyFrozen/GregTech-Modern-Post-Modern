@@ -1,0 +1,32 @@
+{
+    "values": [
+        "gtpm:lv_robot_arm",
+        "gtpm:mv_robot_arm",
+        "gtpm:hv_robot_arm",
+        "gtpm:ev_robot_arm",
+        "gtpm:iv_robot_arm",
+        "gtpm:luv_robot_arm",
+        "gtpm:zpm_robot_arm",
+        "gtpm:uv_robot_arm",
+        {
+            "id": "gtpm:uhv_robot_arm",
+            "required": false
+        },
+        {
+            "id": "gtpm:uev_robot_arm",
+            "required": false
+        },
+        {
+            "id": "gtpm:uiv_robot_arm",
+            "required": false
+        },
+        {
+            "id": "gtpm:uxv_robot_arm",
+            "required": false
+        },
+        {
+            "id": "gtpm:opv_robot_arm",
+            "required": false
+        }
+    ]
+}

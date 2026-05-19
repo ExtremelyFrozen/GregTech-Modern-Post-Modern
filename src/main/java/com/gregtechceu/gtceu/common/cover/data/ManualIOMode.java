@@ -26,6 +26,6 @@ public enum ManualIOMode implements EnumSelectorWidget.SelectableEnum {
 
     @Override
     public IGuiTexture getIcon() {
-        return new ResourceTexture("gtceu:textures/gui/icon/manual_io_mode/" + localeName + ".png");
+        return new ResourceTexture("gtpm:textures/gui/icon/manual_io_mode/" + localeName + ".png");
     }
 }

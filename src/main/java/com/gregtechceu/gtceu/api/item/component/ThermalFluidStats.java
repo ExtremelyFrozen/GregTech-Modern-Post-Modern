@@ -69,23 +69,23 @@ public class ThermalFluidStats implements IItemComponent, IComponentCapability, 
                                 TooltipFlag isAdvanced) {
         FluidUtil.getFluidContained(stack).ifPresentOrElse(tank -> {
             tooltipComponents
-                    .add(Component.translatable("gtceu.universal.tooltip.fluid_stored", tank.getHoverName(),
+                    .add(Component.translatable("gtpm.universal.tooltip.fluid_stored", tank.getHoverName(),
                             tank.getAmount()));
             TooltipsHandler.appendFluidTooltips(tank, tooltipComponents::add, isAdvanced, context);
         }, () -> {
-            tooltipComponents.add(Component.translatable("gtceu.universal.tooltip.fluid_storage_capacity",
+            tooltipComponents.add(Component.translatable("gtpm.universal.tooltip.fluid_storage_capacity",
                     FormattingUtil.formatNumbers(capacity)));
         });
         if (GTUtil.isShiftDown()) {
-            tooltipComponents.add(Component.translatable("gtceu.fluid_pipe.max_temperature",
+            tooltipComponents.add(Component.translatable("gtpm.fluid_pipe.max_temperature",
                     FormattingUtil.formatTemperature(maxFluidTemperature)));
-            if (gasProof) tooltipComponents.add(Component.translatable("gtceu.fluid_pipe.gas_proof"));
-            else tooltipComponents.add(Component.translatable("gtceu.fluid_pipe.not_gas_proof"));
-            if (plasmaProof) tooltipComponents.add(Component.translatable("gtceu.fluid_pipe.plasma_proof"));
-            if (cryoProof) tooltipComponents.add(Component.translatable("gtceu.fluid_pipe.cryo_proof"));
-            if (acidProof) tooltipComponents.add(Component.translatable("gtceu.fluid_pipe.acid_proof"));
+            if (gasProof) tooltipComponents.add(Component.translatable("gtpm.fluid_pipe.gas_proof"));
+            else tooltipComponents.add(Component.translatable("gtpm.fluid_pipe.not_gas_proof"));
+            if (plasmaProof) tooltipComponents.add(Component.translatable("gtpm.fluid_pipe.plasma_proof"));
+            if (cryoProof) tooltipComponents.add(Component.translatable("gtpm.fluid_pipe.cryo_proof"));
+            if (acidProof) tooltipComponents.add(Component.translatable("gtpm.fluid_pipe.acid_proof"));
         } else if (gasProof || cryoProof || plasmaProof || acidProof) {
-            tooltipComponents.add(Component.translatable("gtceu.tooltip.fluid_pipe_hold_shift"));
+            tooltipComponents.add(Component.translatable("gtpm.tooltip.fluid_pipe_hold_shift"));
         }
     }
 }

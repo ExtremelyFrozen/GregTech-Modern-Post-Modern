@@ -86,18 +86,18 @@ public interface IPropertyFluidFilter extends Predicate<FluidStack> {
     default void appendTooltips(@NotNull List<Component> tooltip, boolean showToolsInfo, boolean showTemperatureInfo) {
         if (GTUtil.isShiftDown()) {
             if (showTemperatureInfo)
-                tooltip.add(Component.translatable("gtceu.fluid_pipe.max_temperature",
+                tooltip.add(Component.translatable("gtpm.fluid_pipe.max_temperature",
                         FormattingUtil.formatTemperature(getMaxFluidTemperature())));
-            if (isGasProof()) tooltip.add(Component.translatable("gtceu.fluid_pipe.gas_proof"));
-            else tooltip.add(Component.translatable("gtceu.fluid_pipe.not_gas_proof"));
-            if (isPlasmaProof()) tooltip.add(Component.translatable("gtceu.fluid_pipe.plasma_proof"));
-            if (isCryoProof()) tooltip.add(Component.translatable("gtceu.fluid_pipe.cryo_proof"));
+            if (isGasProof()) tooltip.add(Component.translatable("gtpm.fluid_pipe.gas_proof"));
+            else tooltip.add(Component.translatable("gtpm.fluid_pipe.not_gas_proof"));
+            if (isPlasmaProof()) tooltip.add(Component.translatable("gtpm.fluid_pipe.plasma_proof"));
+            if (isCryoProof()) tooltip.add(Component.translatable("gtpm.fluid_pipe.cryo_proof"));
             getContainedAttributes().forEach(a -> a.appendContainerTooltips(tooltip::add));
         } else if (isGasProof() || isCryoProof() || isPlasmaProof() || !getContainedAttributes().isEmpty()) {
             if (showToolsInfo) {
-                tooltip.add(Component.translatable("gtceu.tooltip.tool_fluid_hold_shift"));
+                tooltip.add(Component.translatable("gtpm.tooltip.tool_fluid_hold_shift"));
             } else {
-                tooltip.add(Component.translatable("gtceu.tooltip.fluid_pipe_hold_shift"));
+                tooltip.add(Component.translatable("gtpm.tooltip.fluid_pipe_hold_shift"));
             }
         }
     }

@@ -1,0 +1,9 @@
+{
+    "type": "neoforge:add_features",
+    "biomes": "#minecraft:is_overworld",
+    "features": [
+        "gtpm:red_granite_blob",
+        "gtpm:marble_blob"
+    ],
+    "step": "underground_ores"
+}

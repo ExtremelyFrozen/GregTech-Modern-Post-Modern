@@ -27,19 +27,19 @@ public final class SyncedKeyMappings {
 
     // GT keymappings
     public static final SyncedKeyMapping ARMOR_MODE_SWITCH = SyncedKeyMapping.createConfigurable(
-            "gtceu.key.armor_mode_switch", KeyConflictContext.IN_GAME, InputConstants.KEY_M);
+            "gtpm.key.armor_mode_switch", KeyConflictContext.IN_GAME, InputConstants.KEY_M);
     public static final SyncedKeyMapping ARMOR_HOVER = SyncedKeyMapping.createConfigurable(
-            "gtceu.key.armor_hover", KeyConflictContext.IN_GAME, InputConstants.KEY_H);
+            "gtpm.key.armor_hover", KeyConflictContext.IN_GAME, InputConstants.KEY_H);
     public static final SyncedKeyMapping JETPACK_ENABLE = SyncedKeyMapping.createConfigurable(
-            "gtceu.key.enable_jetpack", KeyConflictContext.IN_GAME, InputConstants.KEY_G);
+            "gtpm.key.enable_jetpack", KeyConflictContext.IN_GAME, InputConstants.KEY_G);
     public static final SyncedKeyMapping BOOTS_ENABLE = SyncedKeyMapping.createConfigurable(
-            "gtceu.key.enable_boots", KeyConflictContext.IN_GAME, InputConstants.KEY_PERIOD);
+            "gtpm.key.enable_boots", KeyConflictContext.IN_GAME, InputConstants.KEY_PERIOD);
     public static final SyncedKeyMapping ARMOR_CHARGING = SyncedKeyMapping.createConfigurable(
-            "gtceu.key.armor_charging", KeyConflictContext.IN_GAME, InputConstants.KEY_N);
+            "gtpm.key.armor_charging", KeyConflictContext.IN_GAME, InputConstants.KEY_N);
     public static final SyncedKeyMapping TOOL_AOE_CHANGE = SyncedKeyMapping.createConfigurable(
-            "gtceu.key.tool_aoe_change", KeyConflictContext.IN_GAME, InputConstants.KEY_V);
+            "gtpm.key.tool_aoe_change", KeyConflictContext.IN_GAME, InputConstants.KEY_V);
     public static final SyncedKeyMapping STEP_ASSIST_ENABLE = SyncedKeyMapping.createConfigurable(
-            "gtceu.key.enable_step_assist", KeyConflictContext.IN_GAME,
+            "gtpm.key.enable_step_assist", KeyConflictContext.IN_GAME,
             InputConstants.KEY_APOSTROPHE);
 
     public static void init() {

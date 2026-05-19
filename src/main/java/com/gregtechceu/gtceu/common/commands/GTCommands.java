@@ -49,19 +49,19 @@ public class GTCommands {
         return SharedSuggestionProvider.suggestResource(findNotOwnedCapesFor(ctx), builder);
     };
     public static final DynamicCommandExceptionType ERROR_NO_SUCH_CAPE = new DynamicCommandExceptionType(
-            id -> Component.translatable("command.gtceu.cape.failure.does_not_exist", id));
+            id -> Component.translatable("command.gtpm.cape.failure.does_not_exist", id));
 
     private static final SimpleCommandExceptionType ERROR_GIVE_FAILED = new SimpleCommandExceptionType(
-            Component.translatable("command.gtceu.cape.give.failed"));
+            Component.translatable("command.gtpm.cape.give.failed"));
     private static final SimpleCommandExceptionType ERROR_TAKE_FAILED = new SimpleCommandExceptionType(
-            Component.translatable("command.gtceu.cape.take.failed"));
+            Component.translatable("command.gtpm.cape.take.failed"));
     private static final Dynamic2CommandExceptionType ERROR_USE_FAILED = new Dynamic2CommandExceptionType(
-            (player, cape) -> Component.translatable("command.gtceu.cape.use.failed", player, cape));
+            (player, cape) -> Component.translatable("command.gtpm.cape.use.failed", player, cape));
 
     private static final Dynamic2CommandExceptionType VEIN_PLACE_FAILURE = new Dynamic2CommandExceptionType(
-            (id, sourcePos) -> Component.translatable("command.gtceu.place_vein.failure", id, sourcePos));
+            (id, sourcePos) -> Component.translatable("command.gtpm.place_vein.failure", id, sourcePos));
     private static final DynamicCommandExceptionType ERROR_INVALID_VEIN = new DynamicCommandExceptionType(
-            id -> Component.translatableEscape("command.gtceu.place_vein.invalid", id));
+            id -> Component.translatableEscape("command.gtpm.place_vein.invalid", id));
 
     // spotless:off
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext) {
@@ -199,7 +199,7 @@ public class GTCommands {
                 }
             }
             if (playerSuccesses > 0) {
-                player.sendSystemMessage(Component.translatable("gtceu.chat.cape"));
+                player.sendSystemMessage(Component.translatable("gtpm.chat.cape"));
             }
         }
 
@@ -208,12 +208,12 @@ public class GTCommands {
         }
         if (targets.size() == 1) {
             source.sendSuccess(() -> Component.translatable(
-                    "command.gtceu.cape.give.success.single", capes.size(),
+                    "command.gtpm.cape.give.success.single", capes.size(),
                     targets.iterator().next().getDisplayName()),
                     true);
         } else {
             source.sendSuccess(() -> Component.translatable(
-                    "command.gtceu.cape.give.success.multiple", capes.size(), targets.size()),
+                    "command.gtpm.cape.give.success.multiple", capes.size(), targets.size()),
                     true);
         }
         CapeRegistry.save();
@@ -238,12 +238,12 @@ public class GTCommands {
         }
         if (targets.size() == 1) {
             source.sendSuccess(() -> Component.translatable(
-                    "command.gtceu.cape.take.success.single", capes.size(),
+                    "command.gtpm.cape.take.success.single", capes.size(),
                     targets.iterator().next().getDisplayName()),
                     true);
         } else {
             source.sendSuccess(() -> Component.translatable(
-                    "command.gtceu.cape.take.success.multiple", capes.size(), targets.size()),
+                    "command.gtpm.cape.take.success.multiple", capes.size(), targets.size()),
                     true);
         }
         CapeRegistry.save();
@@ -255,11 +255,11 @@ public class GTCommands {
         if (CapeRegistry.setActiveCape(player.getUUID(), cape)) {
             if (cape != null) {
                 source.sendSuccess(() -> Component.translatable(
-                        "command.gtceu.cape.use.success", player.getDisplayName(), cape.toString()),
+                        "command.gtpm.cape.use.success", player.getDisplayName(), cape.toString()),
                         true);
             } else {
                 source.sendSuccess(() -> Component.translatable(
-                        "command.gtceu.cape.use.success.none", player.getDisplayName()),
+                        "command.gtpm.cape.use.success.none", player.getDisplayName()),
                         true);
             }
             return 1;
@@ -293,7 +293,7 @@ public class GTCommands {
                 placer.placeVein(pos, random, access, generated.get(), AlwaysTrueTest.INSTANCE);
                 level.getChunk(pos.x, pos.z).setUnsaved(true);
             }
-            context.getSource().sendSuccess(() -> Component.translatable("command.gtceu.place_vein.success",
+            context.getSource().sendSuccess(() -> Component.translatable("command.gtpm.place_vein.success",
                     id.toString(), sourcePos.toString()), true);
         }
 

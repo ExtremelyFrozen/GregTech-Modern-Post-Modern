@@ -159,8 +159,8 @@ public class EntityDamageBehavior implements IToolBehavior<EntityDamageBehavior>
                                @NotNull TooltipFlag flag) {
         // noinspection OptionalIsPresent
         if (mobType.isPresent()) {
-            tooltip.add(Component.translatable("item.gtceu.tool.behavior.damage_boost",
-                    Component.translatable("item.gtceu.tool.behavior.damage_boost_" + mobType.get())));
+            tooltip.add(Component.translatable("item.gtpm.tool.behavior.damage_boost",
+                    Component.translatable("item.gtpm.tool.behavior.damage_boost_" + mobType.get())));
         }
     }
 

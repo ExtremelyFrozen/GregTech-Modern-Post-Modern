@@ -13,9 +13,9 @@ public record CleanroomType(String name, String translationKey) {
 
     private static final Map<String, CleanroomType> CLEANROOM_TYPES = new Object2ObjectOpenHashMap<>();
 
-    public static final CleanroomType CLEANROOM = new CleanroomType("cleanroom", "gtceu.recipe.cleanroom.display_name");
+    public static final CleanroomType CLEANROOM = new CleanroomType("cleanroom", "gtpm.recipe.cleanroom.display_name");
     public static final CleanroomType STERILE_CLEANROOM = new CleanroomType("sterile_cleanroom",
-            "gtceu.recipe.cleanroom_sterile.display_name");
+            "gtpm.recipe.cleanroom_sterile.display_name");
 
     public static final Codec<CleanroomType> CODEC = Codec.stringResolver(CleanroomType::name, CLEANROOM_TYPES::get);
 

@@ -1,0 +1,10 @@
+{
+	"loader": "neoforge:fluid_container",
+	"parent": "neoforge:item/default",
+	"textures": {
+		"base": "gtpm:item/liquid_fuel_jetpack/base",
+		"fluid": "gtpm:item/liquid_fuel_jetpack/overlay",
+		"cover": "gtpm:item/liquid_fuel_jetpack/base"
+	},
+	"fluid": "minecraft:empty"
+}

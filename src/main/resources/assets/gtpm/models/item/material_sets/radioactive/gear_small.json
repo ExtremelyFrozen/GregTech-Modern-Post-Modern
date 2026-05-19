@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/gear_small",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/gear_small_secondary"
+	}
+}

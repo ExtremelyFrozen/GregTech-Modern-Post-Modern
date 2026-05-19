@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/shiny/spring_small",
+	"textures": {
+		"layer2": "gtpm:item/material_sets/bright/spring_small_overlay"
+	}
+}

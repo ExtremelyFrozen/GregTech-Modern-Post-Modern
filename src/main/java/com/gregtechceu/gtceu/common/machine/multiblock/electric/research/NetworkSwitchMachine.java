@@ -115,9 +115,9 @@ public class NetworkSwitchMachine extends DataBankMachine implements IOpticalCom
         MultiblockDisplayText.builder(textList, isFormed())
                 .setWorkingStatus(true, isActive() && isWorkingEnabled()) // transform into two-state system for display
                 .setWorkingStatusKeys(
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.data_bank.providing")
+                        "gtpm.multiblock.idling",
+                        "gtpm.multiblock.idling",
+                        "gtpm.multiblock.data_bank.providing")
                 .addEnergyUsageExactLine(getEnergyUsage())
                 .addComputationUsageLine(computationHandler.getMaxCWUtForDisplay())
                 .addWorkingStatusLine();

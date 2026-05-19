@@ -1,0 +1,7 @@
+{
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "gtpm:item/battery.hull.lv.su",
+		"layer1": "gtpm:item/battery.su.lv.sulfuricacid/8"
+	}
+}

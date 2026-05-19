@@ -63,6 +63,6 @@ public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<Bed
     @NotNull
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.jei.bedrock_ore_diagram");
+        return Component.translatable("gtpm.jei.bedrock_ore_diagram");
     }
 }

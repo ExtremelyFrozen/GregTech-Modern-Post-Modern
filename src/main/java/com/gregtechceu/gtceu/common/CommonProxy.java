@@ -459,7 +459,7 @@ public class CommonProxy {
             // Clear old data
             GTDynamicResourcePack.clearClient();
 
-            event.addRepositorySource(new GTPackSource("gtceu:dynamic_assets",
+            event.addRepositorySource(new GTPackSource("gtpm:dynamic_assets",
                     event.getPackType(),
                     Pack.Position.BOTTOM,
                     GTDynamicResourcePack::new));
@@ -469,7 +469,7 @@ public class CommonProxy {
 
             // LOADING MOVED TO ReloadableServerResourcesMixin
 
-            event.addRepositorySource(new GTPackSource("gtceu:dynamic_data",
+            event.addRepositorySource(new GTPackSource("gtpm:dynamic_data",
                     event.getPackType(),
                     Pack.Position.BOTTOM,
                     GTDynamicDataPack::new));

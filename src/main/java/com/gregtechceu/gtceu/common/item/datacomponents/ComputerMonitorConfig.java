@@ -44,6 +44,6 @@ public record ComputerMonitorConfig(@With List<String> lines, @With List<String>
 
     @Override
     public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
-        tooltipAdder.accept(Component.translatable("gtceu.tooltip.computer_monitor_config"));
+        tooltipAdder.accept(Component.translatable("gtpm.tooltip.computer_monitor_config"));
     }
 }

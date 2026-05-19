@@ -456,7 +456,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
             var maxVoltage = getMaxVoltage();
             if (maxVoltage > 0) {
                 String voltageName = GTValues.VNF[GTUtil.getFloorTierByVoltage(maxVoltage)];
-                textList.add(Component.translatable("gtceu.multiblock.max_energy_per_tick", maxVoltage, voltageName));
+                textList.add(Component.translatable("gtpm.multiblock.max_energy_per_tick", maxVoltage, voltageName));
             }
 
             if (cleanroomType != null) {
@@ -464,38 +464,38 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
             }
 
             if (!isWorkingEnabled()) {
-                textList.add(Component.translatable("gtceu.multiblock.work_paused"));
+                textList.add(Component.translatable("gtpm.multiblock.work_paused"));
 
             } else if (isActive()) {
-                textList.add(Component.translatable("gtceu.multiblock.running"));
+                textList.add(Component.translatable("gtpm.multiblock.running"));
                 int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
                 double maxInSec = (float) recipeLogic.getDuration() / 20.0f;
                 double currentInSec = (float) recipeLogic.getProgress() / 20.0f;
                 textList.add(
-                        Component.translatable("gtceu.multiblock.progress", String.format("%.2f", (float) currentInSec),
+                        Component.translatable("gtpm.multiblock.progress", String.format("%.2f", (float) currentInSec),
                                 String.format("%.2f", (float) maxInSec), currentProgress));
             } else {
-                textList.add(Component.translatable("gtceu.multiblock.idling"));
+                textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
             if (recipeLogic.isWaiting()) {
-                textList.add(Component.translatable("gtceu.multiblock.waiting")
+                textList.add(Component.translatable("gtpm.multiblock.waiting")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }
 
             if (cleanroomProviderTrait.isActive()) {
-                textList.add(Component.translatable("gtceu.multiblock.cleanroom.clean_state"));
+                textList.add(Component.translatable("gtpm.multiblock.cleanroom.clean_state"));
             } else {
-                textList.add(Component.translatable("gtceu.multiblock.cleanroom.dirty_state"));
+                textList.add(Component.translatable("gtpm.multiblock.cleanroom.dirty_state"));
             }
-            textList.add(Component.translatable("gtceu.multiblock.cleanroom.clean_amount", this.cleanAmount));
-            textList.add(Component.translatable("gtceu.multiblock.dimensions.0"));
-            textList.add(Component.translatable("gtceu.multiblock.dimensions.1", lDist + rDist + 1, hDist + 1,
+            textList.add(Component.translatable("gtpm.multiblock.cleanroom.clean_amount", this.cleanAmount));
+            textList.add(Component.translatable("gtpm.multiblock.dimensions.0"));
+            textList.add(Component.translatable("gtpm.multiblock.dimensions.1", lDist + rDist + 1, hDist + 1,
                     fDist + bDist + 1));
         } else {
-            Component tooltip = Component.translatable("gtceu.multiblock.invalid_structure.tooltip")
+            Component tooltip = Component.translatable("gtpm.multiblock.invalid_structure.tooltip")
                     .withStyle(ChatFormatting.GRAY);
-            textList.add(Component.translatable("gtceu.multiblock.invalid_structure")
+            textList.add(Component.translatable("gtpm.multiblock.invalid_structure")
                     .withStyle(Style.EMPTY.withColor(ChatFormatting.RED)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
         }
@@ -518,8 +518,8 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
         if (mode == PortableScannerBehavior.DisplayMode.SHOW_ALL ||
                 mode == PortableScannerBehavior.DisplayMode.SHOW_MACHINE_INFO) {
             return Collections.singletonList(Component.translatable(
-                    cleanroomProviderTrait.isActive() ? "gtceu.multiblock.cleanroom.clean_state" :
-                            "gtceu.multiblock.cleanroom.dirty_state"));
+                    cleanroomProviderTrait.isActive() ? "gtpm.multiblock.cleanroom.clean_state" :
+                            "gtpm.multiblock.cleanroom.dirty_state"));
         }
         return new ArrayList<>();
     }

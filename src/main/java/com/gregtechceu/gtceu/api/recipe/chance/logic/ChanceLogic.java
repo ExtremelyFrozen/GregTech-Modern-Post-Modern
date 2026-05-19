@@ -65,7 +65,7 @@ public abstract class ChanceLogic {
 
         @Override
         public @NotNull Component getTranslation() {
-            return Component.translatable("gtceu.chance_logic.or");
+            return Component.translatable("gtpm.chance_logic.or");
         }
 
         @Override
@@ -103,7 +103,7 @@ public abstract class ChanceLogic {
 
         @Override
         public @NotNull Component getTranslation() {
-            return Component.translatable("gtceu.chance_logic.and");
+            return Component.translatable("gtpm.chance_logic.and");
         }
 
         @Override
@@ -145,7 +145,7 @@ public abstract class ChanceLogic {
 
         @Override
         public @NotNull Component getTranslation() {
-            return Component.translatable("gtceu.chance_logic.first");
+            return Component.translatable("gtpm.chance_logic.first");
         }
 
         @Override
@@ -241,7 +241,7 @@ public abstract class ChanceLogic {
 
         @Override
         public @NotNull Component getTranslation() {
-            return Component.translatable("gtceu.chance_logic.xor");
+            return Component.translatable("gtpm.chance_logic.xor");
         }
 
         @Override
@@ -265,7 +265,7 @@ public abstract class ChanceLogic {
 
         @Override
         public @NotNull Component getTranslation() {
-            return Component.translatable("gtceu.chance_logic.none");
+            return Component.translatable("gtpm.chance_logic.none");
         }
 
         @Override

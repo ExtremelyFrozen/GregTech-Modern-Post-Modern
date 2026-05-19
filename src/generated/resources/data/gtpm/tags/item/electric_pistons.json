@@ -1,0 +1,32 @@
+{
+    "values": [
+        "gtpm:lv_electric_piston",
+        "gtpm:mv_electric_piston",
+        "gtpm:hv_electric_piston",
+        "gtpm:ev_electric_piston",
+        "gtpm:iv_electric_piston",
+        "gtpm:luv_electric_piston",
+        "gtpm:zpm_electric_piston",
+        "gtpm:uv_electric_piston",
+        {
+            "id": "gtpm:uhv_electric_piston",
+            "required": false
+        },
+        {
+            "id": "gtpm:uev_electric_piston",
+            "required": false
+        },
+        {
+            "id": "gtpm:uiv_electric_piston",
+            "required": false
+        },
+        {
+            "id": "gtpm:uxv_electric_piston",
+            "required": false
+        },
+        {
+            "id": "gtpm:opv_electric_piston",
+            "required": false
+        }
+    ]
+}

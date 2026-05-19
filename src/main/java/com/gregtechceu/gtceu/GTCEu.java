@@ -35,15 +35,15 @@ import java.nio.file.Path;
 @Mod(GTCEu.MOD_ID)
 public class GTCEu {
 
-    public static final String MOD_ID = "gtceu";
+    public static final String MOD_ID = "gtpm";
     private static final ResourceLocation TEMPLATE_LOCATION = ResourceLocation.fromNamespaceAndPath(MOD_ID, "");
     public static final Codec<ResourceLocation> GTCEU_ID = Codec.STRING.comapFlatMap(
             str -> ResourceLocation.read(appendIdString(str)),
             s -> s.getNamespace().equals(MOD_ID) ? s.getPath() : s.toString());
 
-    public static final String NAME = "GTCEu";
+    public static final String NAME = "GTPM";
     public static final Logger LOGGER = LogManager.getLogger(NAME);
-    public static final Path GTCEU_FOLDER = getGameDir().resolve("gtceu");
+    public static final Path GTCEU_FOLDER = getGameDir().resolve("gtpm");
 
     @ApiStatus.Internal
     public static IEventBus gtModBus;

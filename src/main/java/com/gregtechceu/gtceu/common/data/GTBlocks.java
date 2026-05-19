@@ -1191,8 +1191,8 @@ public class GTBlocks {
                 public void appendHoverText(@NotNull ItemStack stack, @NotNull Item.TooltipContext context,
                                             @NotNull List<Component> tooltip, @NotNull TooltipFlag isAdvanced) {
                     super.appendHoverText(stack, context, tooltip, isAdvanced);
-                    tooltip.add(1, Component.translatable("tile.gtceu.brittle_charcoal.tooltip.0"));
-                    tooltip.add(2, Component.translatable("tile.gtceu.brittle_charcoal.tooltip.1"));
+                    tooltip.add(1, Component.translatable("tile.gtpm.brittle_charcoal.tooltip.0"));
+                    tooltip.add(2, Component.translatable("tile.gtpm.brittle_charcoal.tooltip.1"));
                 }
             })
             .build()

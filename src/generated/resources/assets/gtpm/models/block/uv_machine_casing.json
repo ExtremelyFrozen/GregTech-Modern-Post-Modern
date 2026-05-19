@@ -1,0 +1,8 @@
+{
+    "parent": "gtpm:block/cube/tinted/bottom_top",
+    "textures": {
+        "bottom": "gtpm:block/casings/voltage/uv/bottom",
+        "side": "gtpm:block/casings/voltage/uv/side",
+        "top": "gtpm:block/casings/voltage/uv/top"
+    }
+}

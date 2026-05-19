@@ -107,7 +107,7 @@ public class TooltipsHandler {
                     if (remainder != 0) {
                         fluidAmount += String.format(" + %d mB", remainder);
                     }
-                    tooltips.accept(Component.translatable("gtceu.gui.fluid_amount").withStyle(ChatFormatting.GRAY)
+                    tooltips.accept(Component.translatable("gtpm.gui.fluid_amount").withStyle(ChatFormatting.GRAY)
                             .append(Component.literal(fluidAmount)));
                 }
             }
@@ -116,20 +116,20 @@ public class TooltipsHandler {
         if (fluid instanceof GTFluid attributedFluid) {
             FluidState state = attributedFluid.getState();
             switch (state) {
-                case LIQUID -> tooltips.accept(Component.translatable("gtceu.fluid.state_liquid"));
-                case GAS -> tooltips.accept(Component.translatable("gtceu.fluid.state_gas"));
-                case PLASMA -> tooltips.accept(Component.translatable("gtceu.fluid.state_plasma"));
+                case LIQUID -> tooltips.accept(Component.translatable("gtpm.fluid.state_liquid"));
+                case GAS -> tooltips.accept(Component.translatable("gtpm.fluid.state_gas"));
+                case PLASMA -> tooltips.accept(Component.translatable("gtpm.fluid.state_plasma"));
             }
             attributedFluid.getAttributes().forEach(a -> a.appendFluidTooltips(tooltips));
         } else {
-            String key = "gtceu.fluid.state_" + (fluidType.isLighterThanAir() ? "gas" : "liquid");
+            String key = "gtpm.fluid.state_" + (fluidType.isLighterThanAir() ? "gas" : "liquid");
             tooltips.accept(Component.translatable(key));
         }
 
-        tooltips.accept(Component.translatable("gtceu.fluid.temperature",
+        tooltips.accept(Component.translatable("gtpm.fluid.temperature",
                 FormattingUtil.formatTemperature(fluidType.getTemperature())));
         if (fluidType.getTemperature() < FluidConstants.CRYOGENIC_FLUID_THRESHOLD) {
-            tooltips.accept(Component.translatable("gtceu.fluid.temperature.cryogenic"));
+            tooltips.accept(Component.translatable("gtpm.fluid.temperature.cryogenic"));
         }
     }
 }

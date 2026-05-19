@@ -26,7 +26,7 @@ public class ParallelProvider implements IBlockComponentProvider, IServerDataPro
             if (!blockAccessor.getServerData().getBoolean("exact") && parallel > 1) {
                 Component parallels = Component.literal(FormattingUtil.formatNumbers(parallel))
                         .withStyle(ChatFormatting.DARK_PURPLE);
-                String key = "gtceu.multiblock.parallel";
+                String key = "gtpm.multiblock.parallel";
                 iTooltip.add(Component.translatable(key, parallels));
             } else {
                 int batch = blockAccessor.getServerData().getInt("batch");
@@ -35,25 +35,25 @@ public class ParallelProvider implements IBlockComponentProvider, IServerDataPro
                 if (totalRuns == 1) return;
                 Component runs = Component.literal(FormattingUtil.formatNumbers(totalRuns))
                         .withStyle(ChatFormatting.DARK_PURPLE);
-                String key = "gtceu.multiblock.total_runs";
+                String key = "gtpm.multiblock.total_runs";
                 iTooltip.add(Component.translatable(key, runs));
 
                 if (parallel > 1) {
                     Component parallels = Component.literal(FormattingUtil.formatNumbers(parallel))
                             .withStyle(ChatFormatting.DARK_PURPLE);
-                    String keyParallel = "gtceu.multiblock.parallel.exact";
+                    String keyParallel = "gtpm.multiblock.parallel.exact";
                     iTooltip.add(Component.translatable(keyParallel, parallels));
                 }
                 if (batch > 1) {
                     Component batches = Component.literal(FormattingUtil.formatNumbers(batch))
                             .withStyle(ChatFormatting.DARK_PURPLE);
-                    String keyBatch = "gtceu.multiblock.batch_enabled";
+                    String keyBatch = "gtpm.multiblock.batch_enabled";
                     iTooltip.add(Component.translatable(keyBatch, batches));
                 }
                 if (subtickParallel > 1) {
                     Component subticks = Component.literal(FormattingUtil.formatNumbers(subtickParallel))
                             .withStyle(ChatFormatting.DARK_PURPLE);
-                    String keySubtick = "gtceu.multiblock.subtick_parallels";
+                    String keySubtick = "gtpm.multiblock.subtick_parallels";
                     iTooltip.add(Component.translatable(keySubtick, subticks));
                 }
             }

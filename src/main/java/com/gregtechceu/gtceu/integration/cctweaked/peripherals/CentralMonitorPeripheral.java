@@ -18,7 +18,7 @@ public class CentralMonitorPeripheral implements GenericPeripheral {
 
     @Override
     public String id() {
-        return "gtceu:central_monitor";
+        return "gtpm:central_monitor";
     }
 
     @LuaFunction

@@ -53,19 +53,19 @@ public class AutoOutputItemConfigHandler implements IDirectionalConfigHandler {
 
                 if (side == null) {
                     setButtonTexture(TEXTURE_OFF);
-                    setHoverTooltips(LangHandler.getMultiLang("gtceu.gui.item_auto_output.unselected")
+                    setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.item_auto_output.unselected")
                             .toArray(Component[]::new));
                 } else if (trait.getItemOutputDirection() == side) {
                     if (trait.isAutoOutputItems()) {
                         setButtonTexture(TEXTURE_AUTO);
-                        setHoverTooltips("gtceu.gui.item_auto_output.enabled");
+                        setHoverTooltips("gtpm.gui.item_auto_output.enabled");
                     } else {
                         setButtonTexture(TEXTURE_OUTPUT);
-                        setHoverTooltips("gtceu.gui.item_auto_output.disabled");
+                        setHoverTooltips("gtpm.gui.item_auto_output.disabled");
                     }
                 } else {
                     setButtonTexture(TEXTURE_OFF);
-                    setHoverTooltips(LangHandler.getMultiLang("gtceu.gui.item_auto_output.other_direction")
+                    setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.item_auto_output.other_direction")
                             .toArray(Component[]::new));
                 }
             }
@@ -74,7 +74,7 @@ public class AutoOutputItemConfigHandler implements IDirectionalConfigHandler {
         group.addWidget(new ToggleButtonWidget(
                 19, 0, 18, 18, GuiTextures.BUTTON_ITEM_OUTPUT,
                 trait::allowsItemInputFromOutputSide, trait::setAllowItemInputFromOutputSide)
-                .setShouldUseBaseBackground().setTooltipText("gtceu.gui.item_auto_output.allow_input"));
+                .setShouldUseBaseBackground().setTooltipText("gtpm.gui.item_auto_output.allow_input"));
 
         return group;
     }
@@ -134,7 +134,7 @@ public class AutoOutputItemConfigHandler implements IDirectionalConfigHandler {
 
     @Override
     public void addAdditionalUIElements(WidgetGroup parent) {
-        LabelWidget text = new LabelWidget(4, 4, "gtceu.gui.auto_output.name") {
+        LabelWidget text = new LabelWidget(4, 4, "gtpm.gui.auto_output.name") {
 
             @Override
             public boolean isVisible() {

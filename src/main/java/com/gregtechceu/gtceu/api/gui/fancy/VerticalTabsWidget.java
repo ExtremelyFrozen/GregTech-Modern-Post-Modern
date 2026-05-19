@@ -15,7 +15,7 @@ public class VerticalTabsWidget extends TabsWidget {
 
     public VerticalTabsWidget(Consumer<IFancyUIProvider> onTabClick, int x, int y, int width, int height) {
         super(onTabClick, x, y, width, height);
-        ResourceTexture tabsLeft = new ResourceTexture("gtceu:textures/gui/tab/tabs_left.png");
+        ResourceTexture tabsLeft = new ResourceTexture("gtpm:textures/gui/tab/tabs_left.png");
         setTabTexture(tabsLeft.getSubTexture(0, 1 / 3f, 0.5f, 1 / 3f));
         setTabHoverTexture(tabsLeft.getSubTexture(0.5f, 1 / 3f, 0.5f, 1 / 3f));
         setTabPressedTexture(tabsLeft.getSubTexture(0.5f, 1 / 3f, 0.5f, 1 / 3f));

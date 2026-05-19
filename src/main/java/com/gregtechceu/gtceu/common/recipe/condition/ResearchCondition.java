@@ -43,7 +43,7 @@ public class ResearchCondition extends RecipeCondition<ResearchCondition> {
 
     @Override
     public Component getTooltips() {
-        return Component.translatable("gtceu.recipe.research");
+        return Component.translatable("gtpm.recipe.research");
     }
 
     @Override

@@ -1,0 +1,8 @@
+{
+    "parent": "gtpm:block/machine/template/sided/sided",
+    "textures": {
+        "bottom": "gtpm:block/casings/voltage/iv/bottom",
+        "side": "gtpm:block/casings/voltage/iv/side",
+        "top": "gtpm:block/casings/voltage/iv/top"
+    }
+}

@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/metallic/rod",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/rod_secondary"
+	}
+}

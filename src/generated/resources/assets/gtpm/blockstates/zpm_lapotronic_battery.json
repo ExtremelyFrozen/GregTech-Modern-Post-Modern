@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/zpm_lapotronic_battery"
+        }
+    }
+}

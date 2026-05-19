@@ -1,0 +1,63 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:lp_steam_solid_boiler",
+    "multipart": [
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/generators/boiler/coal/overlay_front",
+                        "overlay_front_emissive": "gtpm:block/generators/boiler/coal/overlay_front_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "idle"
+            }
+        },
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/generators/boiler/coal/overlay_front_active",
+                        "overlay_front_emissive": "gtpm:block/generators/boiler/coal/overlay_front_active_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "working"
+            }
+        },
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/generators/boiler/coal/overlay_front_active",
+                        "overlay_front_emissive": "gtpm:block/generators/boiler/coal/overlay_front_active_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "waiting"
+            }
+        },
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/generators/boiler/coal/overlay_front",
+                        "overlay_front_emissive": "gtpm:block/generators/boiler/coal/overlay_front_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "suspend"
+            }
+        }
+    ]
+}

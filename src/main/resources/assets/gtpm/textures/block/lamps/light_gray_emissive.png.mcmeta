@@ -1,0 +1,8 @@
+{
+	"ldlib": {
+		"connection": "gtpm:block/lamps/light_gray_ctm_emissive"
+	},
+	"shimmer": {
+		"bloom": true
+	}
+}

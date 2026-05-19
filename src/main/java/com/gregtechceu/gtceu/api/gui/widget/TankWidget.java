@@ -284,16 +284,16 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
             tooltips.add(fluidStack.getHoverName());
             if (!isPhantom && showAmount) {
                 tooltips.add(
-                        Component.translatable("gtceu.fluid.amount",
+                        Component.translatable("gtpm.fluid.amount",
                                 FormattingUtil.formatNumbers(fluidStack.getAmount()),
                                 FormattingUtil.formatNumbers(lastTankCapacity)));
             }
             TooltipsHandler.appendFluidTooltips(fluidStack, tooltips::add,
                     TooltipFlag.NORMAL, Item.TooltipContext.of(gui.entityPlayer.level()));
         } else {
-            tooltips.add(Component.translatable("gtceu.fluid.empty"));
+            tooltips.add(Component.translatable("gtpm.fluid.empty"));
             if (!isPhantom && showAmount) {
-                tooltips.add(Component.translatable("gtceu.fluid.amount", 0,
+                tooltips.add(Component.translatable("gtpm.fluid.amount", 0,
                         FormattingUtil.formatNumbers(lastTankCapacity)));
             }
         }

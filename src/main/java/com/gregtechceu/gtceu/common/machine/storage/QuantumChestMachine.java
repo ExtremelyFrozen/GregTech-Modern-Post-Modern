@@ -239,7 +239,7 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         var group = new WidgetGroup(0, 0, 109, 63);
         var importItems = createImportItems();
         group.addWidget(new ImageWidget(4, 4, 81, 55, GuiTextures.DISPLAY))
-                .addWidget(new LabelWidget(8, 8, "gtceu.machine.quantum_chest.items_stored"))
+                .addWidget(new LabelWidget(8, 8, "gtpm.machine.quantum_chest.items_stored"))
                 .addWidget(new LabelWidget(8, 18, () -> FormattingUtil.formatNumbers(storedAmount))
                         .setTextColor(-1)
                         .setDropShadow(true))
@@ -269,15 +269,15 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
                         GuiTextures.BUTTON_ITEM_OUTPUT, this.autoOutput::isAutoOutputItems,
                         this.autoOutput::setAllowAutoOutputItems)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.item_auto_output.tooltip"))
+                        .setTooltipText("gtpm.gui.item_auto_output.tooltip"))
                 .addWidget(new ToggleButtonWidget(22, 41, 18, 18,
                         GuiTextures.BUTTON_LOCK, this::isLocked, this::setLocked)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.item_lock.tooltip"))
+                        .setTooltipText("gtpm.gui.item_lock.tooltip"))
                 .addWidget(new ToggleButtonWidget(40, 41, 18, 18,
                         GuiTextures.BUTTON_VOID, () -> isVoiding, (b) -> isVoiding = b)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.item_voiding_partial.tooltip"));
+                        .setTooltipText("gtpm.gui.item_voiding_partial.tooltip"));
         group.setBackground(GuiTextures.BACKGROUND_INVERSE);
         return group;
     }

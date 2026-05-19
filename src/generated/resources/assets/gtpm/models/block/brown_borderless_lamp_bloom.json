@@ -1,0 +1,6 @@
+{
+    "parent": "gtpm:block/lamp_borderless",
+    "textures": {
+        "active": "gtpm:block/lamps/brown_borderless_emissive"
+    }
+}

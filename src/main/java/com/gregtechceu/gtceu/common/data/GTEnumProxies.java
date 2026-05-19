@@ -13,7 +13,7 @@ public class GTEnumProxies {
 
     public static final EnumProxy<Boat.Type> RUBBER_BOAT_PROXY = new EnumProxy<>(Boat.Type.class,
             (Supplier<Block>) () -> GTBlocks.RUBBER_PLANK.get(),
-            "gtceu:rubber",
+            "gtpm:rubber",
             (Supplier<Item>) () -> GTItems.RUBBER_BOAT.get(),
             (Supplier<Item>) () -> GTItems.RUBBER_CHEST_BOAT.get(),
             (Supplier<Item>) () -> Items.STICK,
@@ -21,7 +21,7 @@ public class GTEnumProxies {
 
     public static final EnumProxy<Boat.Type> TREATED_WOOD_BOAT_PROXY = new EnumProxy<>(Boat.Type.class,
             (Supplier<Block>) () -> GTBlocks.TREATED_WOOD_PLANK.get(),
-            "gtceu:treated_wood",
+            "gtpm:treated_wood",
             (Supplier<Item>) () -> GTItems.TREATED_WOOD_BOAT.get(),
             (Supplier<Item>) () -> GTItems.TREATED_WOOD_CHEST_BOAT.get(),
             (Supplier<Item>) () -> Items.STICK,

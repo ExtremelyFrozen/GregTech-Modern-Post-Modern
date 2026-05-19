@@ -1,0 +1,6 @@
+{
+  "parent": "gtpm:item/material_sets/shiny/dust",
+  "textures": {
+    "layer2": "gtpm:item/material_sets/bright/dust_overlay"
+  }
+}

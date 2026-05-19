@@ -57,11 +57,11 @@ public class TitleBarWidget extends WidgetGroup {
         buttonGroup.setBackground(GuiTextures.TITLE_BAR_BACKGROUND);
         buttonGroup.addWidget(this.backButton = new ButtonWidget(0, BORDER_SIZE, BTN_WIDTH, HEIGHT - BORDER_SIZE,
                 new TextTexture(" <").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor()), onBackClicked)
-                .setHoverTooltips("gtceu.gui.title_bar.back"));
+                .setHoverTooltips("gtpm.gui.title_bar.back"));
         buttonGroup.addWidget(this.menuButton = new ButtonWidget(width - BTN_WIDTH, BORDER_SIZE, BTN_WIDTH,
                 HEIGHT - BORDER_SIZE,
                 new TextTexture("+").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor()), onMenuClicked)
-                .setHoverTooltips("gtceu.gui.title_bar.page_switcher"));
+                .setHoverTooltips("gtpm.gui.title_bar.page_switcher"));
 
         addWidget(this.mainSection = new WidgetGroup(BTN_WIDTH, 0, width, HEIGHT));
         mainSection.setBackground(GuiTextures.TITLE_BAR_BACKGROUND);

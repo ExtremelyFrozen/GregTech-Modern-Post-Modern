@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class GTBlockstateProvider extends RegistrateBlockstateProvider {
 
-    public static final String Z_ROT_PROPERTY_NAME = "gtceu:z";
+    public static final String Z_ROT_PROPERTY_NAME = "gtpm:z";
     private static final VariantProperty<VariantProperties.Rotation> X_ROT = VariantProperties.X_ROT;
     private static final VariantProperty<VariantProperties.Rotation> Y_ROT = VariantProperties.Y_ROT;
     private static final VariantProperty<VariantProperties.Rotation> Z_ROT = new VariantProperty<>(Z_ROT_PROPERTY_NAME,

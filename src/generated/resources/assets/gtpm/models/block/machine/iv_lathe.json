@@ -1,0 +1,41 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:iv_lathe",
+    "variants": {
+        "recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/iv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/lathe/overlay_front"
+                }
+            }
+        },
+        "recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/iv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/lathe/overlay_front"
+                }
+            }
+        },
+        "recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/iv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/lathe/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/machines/lathe/overlay_front_active_emissive"
+                }
+            }
+        },
+        "recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/iv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/lathe/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/machines/lathe/overlay_front_active_emissive"
+                }
+            }
+        }
+    }
+}

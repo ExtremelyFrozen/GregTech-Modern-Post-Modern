@@ -90,21 +90,21 @@ public class MedicalConditionCommands {
 		int count = tracker.getMedicalConditions().size();
 		if (count == 0) {
 			target.sendSystemMessage(
-					Component.translatable("command.gtceu.medical_condition.get.empty", target.getName()));
+					Component.translatable("command.gtpm.medical_condition.get.empty", target.getName()));
 		} else {
 			target.sendSystemMessage(
-					Component.translatable("command.gtceu.medical_condition.get", target.getName()));
+					Component.translatable("command.gtpm.medical_condition.get", target.getName()));
 		}
 		for (var entry : tracker.getMedicalConditions().object2FloatEntrySet()) {
-			String langKey = "command.gtceu.medical_condition.get.element";
+			String langKey = "command.gtpm.medical_condition.get.element";
 			if (entry.getKey().maxProgression * 2 <= entry.getFloatValue() &&
 					entry.getKey().canBePermanent) {
-				langKey = "command.gtceu.medical_condition.get.element.permanent";
+				langKey = "command.gtpm.medical_condition.get.element.permanent";
 			}
 			float time = entry.getFloatValue();
 			target.sendSystemMessage(
 					Component.translatable(langKey,
-							Component.translatable("gtceu.medical_condition." + entry.getKey().name),
+							Component.translatable("gtpm.medical_condition." + entry.getKey().name),
 							(int) (time / 60), (int) (time % 60)));
 		}
 		return count;

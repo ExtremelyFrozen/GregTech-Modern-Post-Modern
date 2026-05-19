@@ -33,7 +33,7 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine {
         return new ModularUI(176, 166, this, entityPlayer)
                 .background(GuiTextures.BACKGROUND)
                 .widget(new ImageWidget(7, 16, 81, 55, GuiTextures.DISPLAY))
-                .widget(new LabelWidget(11, 20, "gtceu.gui.fluid_amount"))
+                .widget(new LabelWidget(11, 20, "gtpm.gui.fluid_amount"))
                 .widget(new LabelWidget(11, 30, () -> String.valueOf(tank.getFluidInTank(0).getAmount()))
                         .setTextColor(-1).setDropShadow(true))
                 .widget(new LabelWidget(6, 6, getBlockState().getBlock().getDescriptionId()))
@@ -42,7 +42,7 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine {
                 .widget(new ToggleButtonWidget(7, 53, 18, 18,
                         GuiTextures.BUTTON_FLUID_OUTPUT, this::isWorkingEnabled, this::setWorkingEnabled)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_auto_input.tooltip"))
+                        .setTooltipText("gtpm.gui.fluid_auto_input.tooltip"))
                 .widget(UITemplate.bindPlayerInventory(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 84, true));
     }
 

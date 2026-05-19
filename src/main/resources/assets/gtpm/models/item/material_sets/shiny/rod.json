@@ -1,0 +1,8 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/shiny/rod",
+		"layer1": "gtpm:item/material_sets/shiny/rod_secondary",
+		"layer2": "gtpm:item/material_sets/shiny/rod_overlay"
+	}
+}

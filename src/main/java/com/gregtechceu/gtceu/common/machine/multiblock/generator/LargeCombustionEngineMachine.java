@@ -195,8 +195,8 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
         builder.addFuelNeededLine(getRecipeFluidInputInfo(), recipeLogic.getDuration());
 
         if (isFormed && isOxygenBoosted) {
-            final var key = isExtreme() ? "gtceu.multiblock.large_combustion_engine.liquid_oxygen_boosted" :
-                    "gtceu.multiblock.large_combustion_engine.oxygen_boosted";
+            final var key = isExtreme() ? "gtpm.multiblock.large_combustion_engine.liquid_oxygen_boosted" :
+                    "gtpm.multiblock.large_combustion_engine.oxygen_boosted";
             builder.addCustom(tl -> tl.add(Component.translatable(key).withStyle(ChatFormatting.AQUA)));
         }
 
@@ -224,7 +224,7 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
         super.attachTooltips(tooltipsPanel);
         tooltipsPanel.attachTooltips(new IFancyTooltip.Basic(
                 () -> GuiTextures.INDICATOR_NO_STEAM.get(false),
-                () -> List.of(Component.translatable("gtceu.multiblock.large_combustion_engine.obstructed")
+                () -> List.of(Component.translatable("gtpm.multiblock.large_combustion_engine.obstructed")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED))),
                 this::isIntakesObstructed,
                 () -> null));

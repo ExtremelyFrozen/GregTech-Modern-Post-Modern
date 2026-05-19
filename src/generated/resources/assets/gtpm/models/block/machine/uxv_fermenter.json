@@ -1,0 +1,57 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:uxv_fermenter",
+    "variants": {
+        "recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/uxv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/fermenter/overlay_front",
+                    "overlay_front_emissive": "gtpm:block/machines/fermenter/overlay_front_emissive",
+                    "overlay_side": "gtpm:block/machines/fermenter/overlay_side",
+                    "overlay_side_emissive": "gtpm:block/machines/fermenter/overlay_side_emissive",
+                    "overlay_top": "gtpm:block/machines/fermenter/overlay_top"
+                }
+            }
+        },
+        "recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/uxv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/fermenter/overlay_front_paused",
+                    "overlay_front_emissive": "gtpm:block/machines/fermenter/overlay_front_paused_emissive",
+                    "overlay_side": "gtpm:block/machines/fermenter/overlay_side",
+                    "overlay_side_emissive": "gtpm:block/machines/fermenter/overlay_side_emissive",
+                    "overlay_top": "gtpm:block/machines/fermenter/overlay_top"
+                }
+            }
+        },
+        "recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/uxv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/fermenter/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/machines/fermenter/overlay_front_active_emissive",
+                    "overlay_side": "gtpm:block/machines/fermenter/overlay_side_active",
+                    "overlay_side_emissive": "gtpm:block/machines/fermenter/overlay_side_active_emissive",
+                    "overlay_top": "gtpm:block/machines/fermenter/overlay_top_active",
+                    "overlay_top_emissive": "gtpm:block/machines/fermenter/overlay_top_active_emissive"
+                }
+            }
+        },
+        "recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/uxv",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/fermenter/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/machines/fermenter/overlay_front_active_emissive",
+                    "overlay_side": "gtpm:block/machines/fermenter/overlay_side_active",
+                    "overlay_side_emissive": "gtpm:block/machines/fermenter/overlay_side_active_emissive",
+                    "overlay_top": "gtpm:block/machines/fermenter/overlay_top_active",
+                    "overlay_top_emissive": "gtpm:block/machines/fermenter/overlay_top_active_emissive"
+                }
+            }
+        }
+    }
+}

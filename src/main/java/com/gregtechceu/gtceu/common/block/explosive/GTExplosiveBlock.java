@@ -166,10 +166,10 @@ public abstract class GTExplosiveBlock extends Block {
                                 TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         if (explodeOnMine) {
-            tooltip.add(Component.translatable("block.gtceu.explosive.breaking_tooltip"));
+            tooltip.add(Component.translatable("block.gtpm.explosive.breaking_tooltip"));
         }
         if (!canRedstoneActivate) {
-            tooltip.add(Component.translatable("block.gtceu.explosive.lighting_tooltip"));
+            tooltip.add(Component.translatable("block.gtpm.explosive.lighting_tooltip"));
         }
     }
 }

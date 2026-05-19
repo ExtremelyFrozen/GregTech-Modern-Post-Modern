@@ -314,14 +314,14 @@ public class JourneymapRenderer extends GenericMapRenderer {
         @Override
         public void onOverlayMenuPopup(UIState mapState, Point2D.Double mousePosition, BlockPos blockPosition,
                                        ModPopupMenu modPopupMenu) {
-            modPopupMenu.addMenuItem("button.gtceu.mark_as_depleted.name", (b) -> {
+            modPopupMenu.addMenuItem("button.gtpm.mark_as_depleted.name", (b) -> {
                 if (oreVein != null) {
                     oreVein.depleted(!oreVein.depleted());
                 } else if (fluidInfo != null) {
                     fluidInfo.left(0);
                 }
             });
-            modPopupMenu.addMenuItem("button.gtceu.toggle_waypoint.name", (b) -> {
+            modPopupMenu.addMenuItem("button.gtpm.toggle_waypoint.name", (b) -> {
                 if (oreVein != null) {
                     Material firstMaterial = oreVein.definition().value().veinGenerator().getAllMaterials().getFirst();
                     int color = firstMaterial.getMaterialARGB();

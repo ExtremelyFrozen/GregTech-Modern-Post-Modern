@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "active=false": {
+            "model": "gtpm:block/fusion_coil"
+        },
+        "active=true": {
+            "model": "gtpm:block/fusion_coil_active"
+        }
+    }
+}

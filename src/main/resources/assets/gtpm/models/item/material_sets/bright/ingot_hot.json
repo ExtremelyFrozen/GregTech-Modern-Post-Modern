@@ -1,0 +1,9 @@
+{
+	"parent": "gtpm:item/material_sets/bright/ingot",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/bright/ingot",
+		"layer1": "gtpm:item/material_sets/bright/ingot_secondary",
+		"layer2": "gtpm:item/material_sets/bright/ingot_overlay",
+		"layer3": "gtpm:item/material_sets/bright/ingot_hot_overlay"
+	}
+}

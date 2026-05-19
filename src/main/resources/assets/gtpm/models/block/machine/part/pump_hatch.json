@@ -1,0 +1,11 @@
+{
+	"parent": "gtpm:block/machine/template/part/hatch_machine_emissive",
+	"textures": {
+		"bottom": "gtpm:block/casings/pump_deck/bottom",
+		"top": "gtpm:block/casings/pump_deck/top",
+		"side": "#top",
+
+		"overlay": "gtpm:block/overlay/machine/overlay_fluid_hatch_output",
+		"overlay_emissive": "gtpm:block/overlay/machine/overlay_pipe_out_emissive"
+	}
+}

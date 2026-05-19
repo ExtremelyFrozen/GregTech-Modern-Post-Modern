@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/palladium_substation_casing"
+        }
+    }
+}

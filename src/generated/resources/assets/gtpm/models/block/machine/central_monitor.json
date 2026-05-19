@@ -1,0 +1,91 @@
+{
+    "parent": "minecraft:block/block",
+    "dynamic_renders": [
+        {
+            "type": "gtpm:central_monitor"
+        }
+    ],
+    "loader": "gtpm:machine",
+    "machine": "gtpm:central_monitor",
+    "texture_overrides": {
+        "all": "gtpm:block/casings/solid/machine_casing_frost_proof"
+    },
+    "variants": {
+        "is_formed=false,recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front"
+                }
+            }
+        },
+        "is_formed=false,recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front"
+                }
+            }
+        },
+        "is_formed=false,recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/central_monitor/overlay_front_active_emissive"
+                }
+            }
+        },
+        "is_formed=false,recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/central_monitor/overlay_front_active_emissive"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/central_monitor/overlay_front_active_emissive"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof",
+                    "overlay_front": "gtpm:block/multiblock/central_monitor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/central_monitor/overlay_front_active_emissive"
+                }
+            }
+        }
+    }
+}

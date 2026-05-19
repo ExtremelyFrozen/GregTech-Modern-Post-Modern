@@ -1,0 +1,32 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:long_distance_item_pipeline_endpoint",
+    "replaceable_textures": [
+        "bottom",
+        "top",
+        "side"
+    ],
+    "variants": {
+        "is_formed=false": {
+            "model": {
+                "parent": "gtpm:block/machine/part/long_distance_item_pipeline_endpoint",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        },
+        "is_formed=true": {
+            "model": {
+                "parent": "gtpm:block/machine/part/long_distance_item_pipeline_endpoint",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/void_hazard_sign_block"
+        }
+    }
+}

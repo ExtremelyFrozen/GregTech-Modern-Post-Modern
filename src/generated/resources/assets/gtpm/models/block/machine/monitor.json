@@ -1,0 +1,18 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:monitor",
+    "replaceable_textures": [
+        "all"
+    ],
+    "variants": {
+        "": {
+            "model": {
+                "parent": "gtpm:block/machine/part/computer_monitor",
+                "textures": {
+                    "all": "gtpm:block/casings/solid/machine_casing_frost_proof"
+                }
+            }
+        }
+    }
+}

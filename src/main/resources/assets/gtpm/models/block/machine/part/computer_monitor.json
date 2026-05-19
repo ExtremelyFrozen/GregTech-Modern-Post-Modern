@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:block/overlay/front_all",
+	"textures": {
+		"overlay": "gtpm:block/overlay/machine/overlay_monitor"
+	}
+}

@@ -1,0 +1,7 @@
+{
+    "values": [
+        "gtpm:lv_sodium_battery",
+        "gtpm:lv_lithium_battery",
+        "gtpm:lv_cadmium_battery"
+    ]
+}

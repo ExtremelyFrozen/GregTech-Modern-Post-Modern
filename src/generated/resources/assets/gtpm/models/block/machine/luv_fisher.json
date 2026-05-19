@@ -1,0 +1,19 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:luv_fisher",
+    "variants": {
+        "": {
+            "model": {
+                "parent": "gtpm:block/overlay/2_layer/top_emissive",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/luv/bottom",
+                    "overlay": "gtpm:block/overlay/machine/overlay_screen",
+                    "overlay_emissive": "gtpm:block/overlay/machine/overlay_qtank_emissive",
+                    "side": "gtpm:block/casings/voltage/luv/side",
+                    "top": "gtpm:block/casings/voltage/luv/top"
+                }
+            }
+        }
+    }
+}

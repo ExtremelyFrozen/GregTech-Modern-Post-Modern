@@ -1,0 +1,7 @@
+{
+	"parent": "gtpm:block/cube_2_layer/tinted_both/all_translucent",
+	"textures": {
+		"bot_all": "gtpm:block/material_sets/lignite/raw_ore_block",
+		"top_all": "gtpm:block/material_sets/lignite/raw_ore_block_secondary"
+	}
+}

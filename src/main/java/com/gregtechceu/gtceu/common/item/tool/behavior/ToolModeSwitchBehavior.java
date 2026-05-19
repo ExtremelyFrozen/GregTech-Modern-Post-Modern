@@ -122,9 +122,9 @@ public class ToolModeSwitchBehavior implements IToolBehavior<ToolModeSwitchBehav
 
     public enum ModeType implements StringRepresentable {
 
-        ITEM("item", Component.translatable("gtceu.mode.item")),
-        FLUID("fluid", Component.translatable("gtceu.mode.fluid")),
-        BOTH("both", Component.translatable("gtceu.mode.both"));
+        ITEM("item", Component.translatable("gtpm.mode.item")),
+        FLUID("fluid", Component.translatable("gtpm.mode.fluid")),
+        BOTH("both", Component.translatable("gtpm.mode.both"));
 
         public static final Codec<ModeType> CODEC = StringRepresentable.fromEnum(ModeType::values);
         public static final StreamCodec<ByteBuf, ModeType> STREAM_CODEC = ByteBufCodecs.BYTE
