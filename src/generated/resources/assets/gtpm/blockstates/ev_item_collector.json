@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/machine/ev_item_collector"
+        }
+    }
+}

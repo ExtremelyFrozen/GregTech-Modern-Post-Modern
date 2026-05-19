@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/laser_safe_engraving_casing"
+        }
+    }
+}

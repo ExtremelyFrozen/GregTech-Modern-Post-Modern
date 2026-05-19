@@ -1,8 +1,8 @@
 {
     "values": [
-        "gtceu:superconducting_coil",
-        "gtceu:fusion_coil",
-        "gtceu:fusion_casing",
-        "gtceu:reinforced_stone"
+        "gtpm:superconducting_coil",
+        "gtpm:fusion_coil",
+        "gtpm:fusion_casing",
+        "gtpm:reinforced_stone"
     ]
 }

@@ -59,16 +59,18 @@ public class CombinedDirectionalConfigurator extends WidgetGroup {
 
     @Override
     public void initWidget() {
-        super.initWidget();
+        if (imageWidget == null && sceneWidget == null) {
+            addWidget(imageWidget = new ImageWidget(0, 0, width, height, GuiTextures.BACKGROUND_INVERSE));
+            addWidget(sceneWidget = createSceneWidget());
 
-        addWidget(imageWidget = new ImageWidget(0, 0, width, height, GuiTextures.BACKGROUND_INVERSE));
-        addWidget(sceneWidget = createSceneWidget());
+            for (IDirectionalConfigHandler configHandler : configHandlers) {
+                configHandler.addAdditionalUIElements(this);
+            }
 
-        for (IDirectionalConfigHandler configHandler : configHandlers) {
-            configHandler.addAdditionalUIElements(this);
+            addConfigWidgets(sceneWidget);
         }
 
-        addConfigWidgets(sceneWidget);
+        super.initWidget();
     }
 
     private SceneWidget createSceneWidget() {

@@ -265,7 +265,7 @@ public class GTRecipeTypeUI {
                                                         .collect(Collectors.toList()));
                                     }
                                 }
-                            }).setHoverTooltips("gtceu.recipe_type.show_recipes"));
+                            }).setHoverTooltips("gtpm.recipe_type.show_recipes"));
                 }
             }
 

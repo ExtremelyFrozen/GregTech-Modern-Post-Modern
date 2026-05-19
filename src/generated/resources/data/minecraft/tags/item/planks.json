@@ -1,7 +1,7 @@
 {
     "values": [
-        "gtceu:rubber_planks",
-        "gtceu:treated_wood_plate",
-        "gtceu:wood_plate"
+        "gtpm:rubber_planks",
+        "gtpm:treated_wood_plate",
+        "gtpm:wood_plate"
     ]
 }

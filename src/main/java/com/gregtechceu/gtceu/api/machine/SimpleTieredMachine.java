@@ -168,7 +168,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
     private IFancyConfigurator createAutoOutputFluidConfigurator() {
         return createAutoOutputConfigurator(
                 GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON,
-                "gtceu.gui.fluid_auto_output",
+                "gtpm.gui.fluid_auto_output",
                 this.autoOutput::isAutoOutputFluids,
                 (cd, nextState) -> this.autoOutput.setAllowAutoOutputFluids(nextState));
     }
@@ -176,7 +176,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
     private IFancyConfigurator createAutoOutputItemConfigurator() {
         return createAutoOutputConfigurator(
                 GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON,
-                "gtceu.gui.item_auto_output",
+                "gtpm.gui.item_auto_output",
                 this.autoOutput::isAutoOutputItems,
                 (cd, nextState) -> this.autoOutput.setAllowAutoOutputItems(nextState));
     }
@@ -257,7 +257,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
             slotWidget.setHandlerSlot(machine.chargerInventory, 0);
             slotWidget.setCanPutItems(true);
             slotWidget.setCanTakeItems(true);
-            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtceu.gui.charger_slot.tooltip",
+            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
                     GTValues.VNF[machine.getTier()], GTValues.VNF[machine.getTier()]).toArray(Component[]::new));
         });
     }
@@ -275,7 +275,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
             slotWidget.setCanPutItems(false);
             slotWidget.setCanTakeItems(false);
             slotWidget.setHoverTooltips(
-                    LangHandler.getMultiLang("gtceu.gui.configurator_slot.tooltip").toArray(Component[]::new));
+                    LangHandler.getMultiLang("gtpm.gui.configurator_slot.tooltip").toArray(Component[]::new));
         });
     }
 

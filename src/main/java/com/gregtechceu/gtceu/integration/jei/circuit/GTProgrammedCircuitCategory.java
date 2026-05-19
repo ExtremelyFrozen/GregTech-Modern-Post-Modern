@@ -37,7 +37,7 @@ public class GTProgrammedCircuitCategory extends ModularUIRecipeCategory<GTProgr
 
     @Override
     public @NotNull Component getTitle() {
-        return Component.translatable("gtceu.jei.programmed_circuit");
+        return Component.translatable("gtpm.jei.programmed_circuit");
     }
 
     public static class GTProgrammedCircuitWrapper extends ModularWrapper<GTProgrammedCircuitWidget> {

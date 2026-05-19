@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/tool_head_screwdriver",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/tool_head_screwdriver_secondary"
+	}
+}

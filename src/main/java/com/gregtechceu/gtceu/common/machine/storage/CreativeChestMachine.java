@@ -83,23 +83,23 @@ public class CreativeChestMachine extends QuantumChestMachine {
                 .setClearSlotOnRightClick(true)
                 .setMaxStackSize(1)
                 .setBackgroundTexture(GuiTextures.SLOT));
-        group.addWidget(new LabelWidget(7, 9, "gtceu.creative.chest.item"));
+        group.addWidget(new LabelWidget(7, 9, "gtpm.creative.chest.item"));
         group.addWidget(new ImageWidget(7, 48, 154, 14, GuiTextures.DISPLAY));
         group.addWidget(new TextFieldWidget(9, 50, 152, 10, () -> String.valueOf(itemsPerCycle), this::setItemsPerCycle)
                 .setMaxStringLength(11)
                 .setNumbersOnly(1, Integer.MAX_VALUE));
-        group.addWidget(new LabelWidget(7, 28, "gtceu.creative.chest.ipc"));
+        group.addWidget(new LabelWidget(7, 28, "gtpm.creative.chest.ipc"));
         group.addWidget(new ImageWidget(7, 85, 154, 14, GuiTextures.DISPLAY));
         group.addWidget(new TextFieldWidget(9, 87, 152, 10, () -> String.valueOf(ticksPerCycle), this::setTicksPerCycle)
                 .setMaxStringLength(11)
                 .setNumbersOnly(1, Integer.MAX_VALUE));
-        group.addWidget(new LabelWidget(7, 65, "gtceu.creative.chest.tpc"));
+        group.addWidget(new LabelWidget(7, 65, "gtpm.creative.chest.tpc"));
         group.addWidget(new SwitchWidget(7, 101, 162, 20, (clickData, value) -> setWorkingEnabled(value))
                 .setTexture(
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtceu.creative.activity.off")),
+                                new TextTexture("gtpm.creative.activity.off")),
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtceu.creative.activity.on")))
+                                new TextTexture("gtpm.creative.activity.on")))
                 .setPressed(isWorkingEnabled()));
 
         return group;

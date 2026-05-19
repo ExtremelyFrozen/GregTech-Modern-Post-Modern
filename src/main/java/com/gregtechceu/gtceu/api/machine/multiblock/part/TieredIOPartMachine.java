@@ -43,9 +43,9 @@ public class TieredIOPartMachine extends TieredPartMachine implements IControlla
     @Override
     public PageGroupingData getPageGroupingData() {
         return switch (this.io) {
-            case IN -> new PageGroupingData("gtceu.multiblock.page_switcher.io.import", 1);
-            case OUT -> new PageGroupingData("gtceu.multiblock.page_switcher.io.export", 2);
-            case BOTH -> new PageGroupingData("gtceu.multiblock.page_switcher.io.both", 3);
+            case IN -> new PageGroupingData("gtpm.multiblock.page_switcher.io.import", 1);
+            case OUT -> new PageGroupingData("gtpm.multiblock.page_switcher.io.export", 2);
+            case BOTH -> new PageGroupingData("gtpm.multiblock.page_switcher.io.both", 3);
             case NONE -> null;
         };
     }

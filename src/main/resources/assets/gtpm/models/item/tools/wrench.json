@@ -1,0 +1,8 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/void",
+		"layer1": "gtpm:item/tools/wrench",
+		"layer2": "gtpm:item/tools/wrench_overlay"
+	}
+}

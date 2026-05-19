@@ -1,0 +1,24 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:lv_buffer",
+    "replaceable_textures": [
+        "bottom",
+        "top",
+        "side"
+    ],
+    "variants": {
+        "": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/single",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "overlay": "gtpm:block/overlay/machine/overlay_buffer",
+                    "overlay_emissive": "gtpm:block/overlay/machine/overlay_buffer_emissive",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        }
+    }
+}

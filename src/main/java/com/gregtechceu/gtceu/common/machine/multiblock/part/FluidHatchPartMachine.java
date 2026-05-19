@@ -301,7 +301,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
 
             group.addWidget(new ToggleButtonWidget(7, 40, 18, 18,
                     GuiTextures.BUTTON_LOCK, this.tank::isLocked, this.tank::setLocked)
-                    .setTooltipText("gtceu.gui.fluid_lock.tooltip")
+                    .setTooltipText("gtpm.gui.fluid_lock.tooltip")
                     .setShouldUseBaseBackground())
                     // ...and add the actual tank widget separately.
                     .addWidget(new TankWidget(tank.getStorages()[0], 67, 22, 18, 18, true, io.support(IO.IN))
@@ -311,7 +311,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
                     .setShowAmount(true).setDrawHoverTips(true).setBackground(GuiTextures.FLUID_SLOT));
         }
 
-        group.addWidget(new LabelWidget(8, 8, "gtceu.gui.fluid_amount"))
+        group.addWidget(new LabelWidget(8, 8, "gtpm.gui.fluid_amount"))
                 .addWidget(new LabelWidget(8, 18, () -> getFluidAmountText(tankWidget)))
                 .addWidget(new LabelWidget(8, 28, () -> getFluidNameText(tankWidget).getString()));
 

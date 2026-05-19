@@ -12,10 +12,10 @@ import lombok.Getter;
  */
 public enum IO implements EnumSelectorWidget.SelectableEnum {
 
-    IN("gtceu.io.import", "import"),
-    OUT("gtceu.io.export", "export"),
-    BOTH("gtceu.io.both", "both"),
-    NONE("gtceu.io.none", "none");
+    IN("gtpm.io.import", "import"),
+    OUT("gtpm.io.export", "export"),
+    BOTH("gtpm.io.both", "both"),
+    NONE("gtpm.io.none", "none");
 
     @Getter
     public final String tooltip;
@@ -24,7 +24,7 @@ public enum IO implements EnumSelectorWidget.SelectableEnum {
 
     IO(String tooltip, String textureName) {
         this.tooltip = tooltip;
-        this.icon = new ResourceTexture("gtceu:textures/gui/icon/io_mode/" + textureName + ".png");
+        this.icon = new ResourceTexture("gtpm:textures/gui/icon/io_mode/" + textureName + ".png");
     }
 
     public boolean support(IO io) {

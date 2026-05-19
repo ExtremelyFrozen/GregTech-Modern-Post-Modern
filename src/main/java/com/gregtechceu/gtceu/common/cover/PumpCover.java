@@ -307,7 +307,7 @@ public class PumpCover extends CoverBehavior implements IIOCover, IUICover, ICon
 
     private List<Component> getBucketModeTooltip(BucketMode mode, String langKey) {
         return List.of(
-                Component.translatable(langKey).append(Component.translatable("gtceu.gui.content.units.per_tick")));
+                Component.translatable(langKey).append(Component.translatable("gtpm.gui.content.units.per_tick")));
     }
 
     private int getCurrentBucketModeTransferRate() {

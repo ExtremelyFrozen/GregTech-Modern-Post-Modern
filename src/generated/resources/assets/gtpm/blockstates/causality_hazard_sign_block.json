@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/causality_hazard_sign_block"
+        }
+    }
+}

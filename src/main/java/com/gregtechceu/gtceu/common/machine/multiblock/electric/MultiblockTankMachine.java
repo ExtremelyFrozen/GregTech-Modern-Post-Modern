@@ -67,7 +67,7 @@ public class MultiblockTankMachine extends MultiblockControllerMachine implement
         group.setBackground(GuiTextures.BACKGROUND_INVERSE);
 
         group.addWidget(new ImageWidget(4, 4, 82, 55, GuiTextures.DISPLAY));
-        group.addWidget(new LabelWidget(8, 8, "gtceu.gui.fluid_amount"));
+        group.addWidget(new LabelWidget(8, 8, "gtpm.gui.fluid_amount"));
         group.addWidget(new LabelWidget(8, 18, this::getFluidLabel).setTextColor(-1).setDropShadow(true));
         group.addWidget(new TankWidget(tank.getStorages()[0], 68, 23, true, true)
                 .setBackground(GuiTextures.FLUID_SLOT));

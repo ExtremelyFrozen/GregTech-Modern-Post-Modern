@@ -1,0 +1,32 @@
+{
+    "values": [
+        "gtpm:lv_electric_motor",
+        "gtpm:mv_electric_motor",
+        "gtpm:hv_electric_motor",
+        "gtpm:ev_electric_motor",
+        "gtpm:iv_electric_motor",
+        "gtpm:luv_electric_motor",
+        "gtpm:zpm_electric_motor",
+        "gtpm:uv_electric_motor",
+        {
+            "id": "gtpm:uhv_electric_motor",
+            "required": false
+        },
+        {
+            "id": "gtpm:uev_electric_motor",
+            "required": false
+        },
+        {
+            "id": "gtpm:uiv_electric_motor",
+            "required": false
+        },
+        {
+            "id": "gtpm:uxv_electric_motor",
+            "required": false
+        },
+        {
+            "id": "gtpm:opv_electric_motor",
+            "required": false
+        }
+    ]
+}

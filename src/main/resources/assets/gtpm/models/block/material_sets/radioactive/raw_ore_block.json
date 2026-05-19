@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:block/material_sets/metallic/raw_ore_block",
+	"textures": {
+		"top_all": "gtpm:block/material_sets/radioactive/raw_ore_block_secondary"
+	}
+}

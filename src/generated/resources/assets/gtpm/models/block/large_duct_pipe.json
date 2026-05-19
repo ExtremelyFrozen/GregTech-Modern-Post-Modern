@@ -1,0 +1,55 @@
+{
+    "parent": "gtpm:block/pipe/large_duct_pipe/center",
+    "loader": "gtpm:pipe",
+    "parts": {
+        "center": {
+            "model": "gtpm:block/pipe/large_duct_pipe/center"
+        },
+        "down": {
+            "model": "gtpm:block/pipe/large_duct_pipe/connection"
+        },
+        "east": {
+            "model": "gtpm:block/pipe/large_duct_pipe/connection",
+            "x": 90,
+            "y": 270
+        },
+        "north": {
+            "model": "gtpm:block/pipe/large_duct_pipe/connection",
+            "x": 90,
+            "y": 180
+        },
+        "south": {
+            "model": "gtpm:block/pipe/large_duct_pipe/connection",
+            "x": 90
+        },
+        "up": {
+            "model": "gtpm:block/pipe/large_duct_pipe/connection",
+            "x": 180
+        },
+        "west": {
+            "model": "gtpm:block/pipe/large_duct_pipe/connection",
+            "x": 90,
+            "y": 90
+        }
+    },
+    "restrictors": {
+        "down": {
+            "model": "gtpm:block/pipe/restrictor/down/thickness_12.0"
+        },
+        "east": {
+            "model": "gtpm:block/pipe/restrictor/east/thickness_12.0"
+        },
+        "north": {
+            "model": "gtpm:block/pipe/restrictor/north/thickness_12.0"
+        },
+        "south": {
+            "model": "gtpm:block/pipe/restrictor/south/thickness_12.0"
+        },
+        "up": {
+            "model": "gtpm:block/pipe/restrictor/up/thickness_12.0"
+        },
+        "west": {
+            "model": "gtpm:block/pipe/restrictor/west/thickness_12.0"
+        }
+    }
+}

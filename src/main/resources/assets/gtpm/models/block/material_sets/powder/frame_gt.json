@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:block/cube/tinted/all_0",
+	"textures": {
+		"all": "gtpm:block/material_sets/powder/frame_gt"
+	}
+}

@@ -58,7 +58,7 @@ public class GTOreProcessingDisplayCategory extends ModularUIDisplayCategory<GTO
     @NotNull
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.jei.ore_processing_diagram");
+        return Component.translatable("gtpm.jei.ore_processing_diagram");
     }
 
     public static void registerDisplays(DisplayRegistry registry) {

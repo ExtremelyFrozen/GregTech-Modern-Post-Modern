@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:block/overlay/front",
+	"textures": {
+		"overlay": "gtpm:block/cover/pump"
+	}
+}

@@ -203,7 +203,7 @@ public class PlaceholderHandler {
                 TextTextureWidget placeholderName = new TextTextureWidget(0, y, 80, 15, placeholder);
                 placeholderName.getTextTexture().type = TextTexture.TextType.LEFT;
                 placeholderName.setHoverTooltips(GTStringUtils
-                        .toImmutable(LangHandler.getSingleOrMultiLang("gtceu.placeholder_info." + placeholder)));
+                        .toImmutable(LangHandler.getSingleOrMultiLang("gtpm.placeholder_info." + placeholder)));
                 placeholderReference.addWidget(placeholderName);
                 y += 15;
             }
@@ -213,7 +213,7 @@ public class PlaceholderHandler {
                 280, 0,
                 160, 15,
                 GTStringUtils.componentsToString(
-                        LangHandler.getMultiLang("gtceu.gui.computer_monitor_cover.placeholder_reference")));
+                        LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.placeholder_reference")));
         placeholderReferenceLabel.getTextTexture().type = TextTexture.TextType.LEFT;
         WidgetGroup out = new WidgetGroup();
         out.addWidget(placeholderReferenceLabel);

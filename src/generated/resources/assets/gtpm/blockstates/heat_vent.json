@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "active=false": {
+            "model": "gtpm:block/variant/heat_vent"
+        },
+        "active=true": {
+            "model": "gtpm:block/variant/heat_vent_active"
+        }
+    }
+}

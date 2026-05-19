@@ -1,0 +1,7 @@
+{
+	"parent": "gtpm:item/material_sets/dull/dust_pure",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/fine/dust",
+		"layer1": "gtpm:item/material_sets/fine/dust_secondary"
+	}
+}

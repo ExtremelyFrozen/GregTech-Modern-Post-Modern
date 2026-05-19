@@ -1,0 +1,7 @@
+{
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "gtpm:item/battery.hull.lv",
+		"layer1": "gtpm:item/battery.re.lv.cadmium/3"
+	}
+}

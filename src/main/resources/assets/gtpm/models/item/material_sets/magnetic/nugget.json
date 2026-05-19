@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/metallic/nugget",
+	"textures": {
+		"layer2": "gtpm:item/material_sets/magnetic/magnetic_overlay"
+	}
+}

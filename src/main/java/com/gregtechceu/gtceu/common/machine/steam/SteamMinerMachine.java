@@ -180,33 +180,33 @@ public class SteamMinerMachine extends SteamWorkableMachine implements IControll
 
     void addDisplayText(List<Component> textList) {
         int workingArea = IMiner.getWorkingArea(getRecipeLogic().getCurrentRadius());
-        textList.add(Component.translatable("gtceu.machine.miner.startx", this.getRecipeLogic().getX()));
-        textList.add(Component.translatable("gtceu.machine.miner.starty", this.getRecipeLogic().getY()));
-        textList.add(Component.translatable("gtceu.machine.miner.startz", this.getRecipeLogic().getZ()));
-        textList.add(Component.translatable("gtceu.universal.tooltip.working_area", workingArea, workingArea));
+        textList.add(Component.translatable("gtpm.machine.miner.startx", this.getRecipeLogic().getX()));
+        textList.add(Component.translatable("gtpm.machine.miner.starty", this.getRecipeLogic().getY()));
+        textList.add(Component.translatable("gtpm.machine.miner.startz", this.getRecipeLogic().getZ()));
+        textList.add(Component.translatable("gtpm.universal.tooltip.working_area", workingArea, workingArea));
         if (this.getRecipeLogic().isDone())
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.done")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.done")
                     .withStyle(ChatFormatting.GREEN));
         else if (this.getRecipeLogic().isWorking())
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.working")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.working")
                     .withStyle(ChatFormatting.GOLD));
         else if (!this.isWorkingEnabled())
-            textList.add(Component.translatable("gtceu.multiblock.work_paused"));
+            textList.add(Component.translatable("gtpm.multiblock.work_paused"));
         if (getRecipeLogic().isInventoryFull())
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.invfull")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.invfull")
                     .withStyle(ChatFormatting.RED));
         if (exhaustVentTrait.isVentingBlocked())
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.vent")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.vent")
                     .withStyle(ChatFormatting.RED));
         else if (!drainInput(true))
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.steam")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.steam")
                     .withStyle(ChatFormatting.RED));
     }
 
     void addDisplayText2(List<Component> textList) {
-        textList.add(Component.translatable("gtceu.machine.miner.minex", this.getRecipeLogic().getMineX()));
-        textList.add(Component.translatable("gtceu.machine.miner.miney", this.getRecipeLogic().getMineY()));
-        textList.add(Component.translatable("gtceu.machine.miner.minez", this.getRecipeLogic().getMineZ()));
+        textList.add(Component.translatable("gtpm.machine.miner.minex", this.getRecipeLogic().getMineX()));
+        textList.add(Component.translatable("gtpm.machine.miner.miney", this.getRecipeLogic().getMineY()));
+        textList.add(Component.translatable("gtpm.machine.miner.minez", this.getRecipeLogic().getMineZ()));
     }
 
     @Override
@@ -227,7 +227,7 @@ public class SteamMinerMachine extends SteamWorkableMachine implements IControll
                 mode == PortableScannerBehavior.DisplayMode.SHOW_MACHINE_INFO) {
             int workingArea = IMiner.getWorkingArea(getRecipeLogic().getCurrentRadius());
             return Collections.singletonList(
-                    Component.translatable("gtceu.universal.tooltip.working_area", workingArea, workingArea));
+                    Component.translatable("gtpm.universal.tooltip.working_area", workingArea, workingArea));
         }
         return new ArrayList<>();
     }

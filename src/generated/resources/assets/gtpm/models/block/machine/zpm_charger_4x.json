@@ -1,0 +1,42 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:zpm_charger_4x",
+    "variants": {
+        "charger_state=finished": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/sided",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/zpm/bottom",
+                    "overlay_front": "gtpm:block/machines/charger/overlay_charger_finished",
+                    "overlay_front_emissive": "gtpm:block/machines/charger/overlay_charger_finished_emissive",
+                    "side": "gtpm:block/casings/voltage/zpm/side",
+                    "top": "gtpm:block/casings/voltage/zpm/top"
+                }
+            }
+        },
+        "charger_state=idle": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/sided",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/zpm/bottom",
+                    "overlay_front": "gtpm:block/machines/charger/overlay_charger_idle",
+                    "side": "gtpm:block/casings/voltage/zpm/side",
+                    "top": "gtpm:block/casings/voltage/zpm/top"
+                }
+            }
+        },
+        "charger_state=running": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/sided",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/zpm/bottom",
+                    "overlay_front": "gtpm:block/machines/charger/overlay_charger_running",
+                    "overlay_front_emissive": "gtpm:block/machines/charger/overlay_charger_running_emissive",
+                    "side": "gtpm:block/casings/voltage/zpm/side",
+                    "top": "gtpm:block/casings/voltage/zpm/top"
+                }
+            }
+        }
+    }
+}

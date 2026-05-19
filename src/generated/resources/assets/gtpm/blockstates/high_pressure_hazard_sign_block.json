@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/high_pressure_hazard_sign_block"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/metallic/plate_dense",
+	"textures": {
+		"layer2": "gtpm:item/material_sets/magnetic/magnetic_overlay"
+	}
+}

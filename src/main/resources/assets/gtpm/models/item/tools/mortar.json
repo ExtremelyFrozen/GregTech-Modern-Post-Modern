@@ -1,0 +1,8 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/tools/mortar_base",
+		"layer1": "gtpm:item/tools/mortar",
+		"layer2": "gtpm:item/tools/mortar_overlay"
+	}
+}

@@ -27,7 +27,7 @@ public enum FilterMode implements EnumSelectorWidget.SelectableEnum {
 
     @Override
     public IGuiTexture getIcon() {
-        return new ResourceTexture("gtceu:textures/gui/icon/filter_mode/" + localeName + ".png");
+        return new ResourceTexture("gtpm:textures/gui/icon/filter_mode/" + localeName + ".png");
     }
 
     public boolean filters(IO io) {

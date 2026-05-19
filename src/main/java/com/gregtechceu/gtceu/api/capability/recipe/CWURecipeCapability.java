@@ -39,11 +39,11 @@ public class CWURecipeCapability extends RecipeCapability<Integer> {
         if (perTick) {
             int cwu = contents.stream().map(Content::getContent).mapToInt(CWURecipeCapability.CAP::of).sum();
             group.addWidget(new LabelWidget(3 - xOffset, yOffset.addAndGet(10),
-                    LocalizationUtils.format("gtceu.recipe.computation_per_tick", FormattingUtil.formatNumbers(cwu))));
+                    LocalizationUtils.format("gtpm.recipe.computation_per_tick", FormattingUtil.formatNumbers(cwu))));
         }
         if (recipe.data.getBoolean("duration_is_total_cwu")) {
             group.addWidget(new LabelWidget(3 - xOffset, yOffset.addAndGet(10),
-                    LocalizationUtils.format("gtceu.recipe.total_computation",
+                    LocalizationUtils.format("gtpm.recipe.total_computation",
                             FormattingUtil.formatNumbers(recipe.duration))));
         }
     }

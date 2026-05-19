@@ -1,0 +1,6 @@
+{
+    "parent": "gtpm:block/lamp_borderless_off",
+    "textures": {
+        "inactive": "gtpm:block/lamps/magenta_off_borderless"
+    }
+}

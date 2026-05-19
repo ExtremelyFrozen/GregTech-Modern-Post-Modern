@@ -208,7 +208,7 @@ public class DistillationTowerMachine extends WorkableElectricMultiblockMachine
             }
 
             if (!applyFluidOutputs(recipe, FluidAction.SIMULATE, machine.getVoidingMode())) {
-                return ActionResult.fail(Component.translatable("gtceu.recipe_logic.insufficient_out")
+                return ActionResult.fail(Component.translatable("gtpm.recipe_logic.insufficient_out")
                         .append(": ")
                         .append(FluidRecipeCapability.CAP.getName()), FluidRecipeCapability.CAP, IO.OUT);
             }
@@ -257,7 +257,7 @@ public class DistillationTowerMachine extends WorkableElectricMultiblockMachine
                 return ActionResult.SUCCESS;
             }
 
-            return ActionResult.fail(Component.translatable("gtceu.recipe_logic.insufficient_out")
+            return ActionResult.fail(Component.translatable("gtpm.recipe_logic.insufficient_out")
                     .append(": ")
                     .append(FluidRecipeCapability.CAP.getName()), FluidRecipeCapability.CAP, IO.OUT);
         }

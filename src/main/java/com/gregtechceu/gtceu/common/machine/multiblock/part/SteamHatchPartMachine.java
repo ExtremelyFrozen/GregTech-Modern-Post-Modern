@@ -36,7 +36,7 @@ public class SteamHatchPartMachine extends FluidHatchPartMachine {
         return new ModularUI(176, 166, this, entityPlayer)
                 .background(GuiTextures.BACKGROUND_STEAM.get(IS_STEEL))
                 .widget(new ImageWidget(7, 16, 81, 55, GuiTextures.DISPLAY_STEAM.get(IS_STEEL)))
-                .widget(new LabelWidget(11, 20, "gtceu.gui.fluid_amount"))
+                .widget(new LabelWidget(11, 20, "gtpm.gui.fluid_amount"))
                 .widget(new LabelWidget(11, 30, () -> tank.getFluidInTank(0).getAmount() + "").setTextColor(-1)
                         .setDropShadow(true))
                 .widget(new LabelWidget(6, 6, getBlockState().getBlock().getDescriptionId()))

@@ -9,7 +9,7 @@ import dan200.computercraft.api.peripheral.GenericPeripheral;
 public class WorkablePeripheral implements GenericPeripheral {
 
     public String id() {
-        return "gtceu:workable";
+        return "gtpm:workable";
     }
 
     @LuaFunction

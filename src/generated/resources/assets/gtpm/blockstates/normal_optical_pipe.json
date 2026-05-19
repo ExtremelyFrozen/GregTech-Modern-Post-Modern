@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "active=false": {
+            "model": "gtpm:block/normal_optical_pipe"
+        },
+        "active=true": {
+            "model": "gtpm:block/normal_optical_pipe_active"
+        }
+    }
+}

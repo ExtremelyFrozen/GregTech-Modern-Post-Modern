@@ -1,0 +1,9 @@
+{
+	"loader": "neoforge:fluid_container",
+	"parent": "neoforge:item/default",
+	"textures": {
+		"base": "gtpm:item/titanium_fluid_cell/base",
+		"fluid": "gtpm:item/titanium_fluid_cell/overlay"
+	},
+	"fluid": "minecraft:empty"
+}

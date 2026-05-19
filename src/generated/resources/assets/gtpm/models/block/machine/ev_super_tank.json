@@ -1,0 +1,22 @@
+{
+    "parent": "minecraft:block/block",
+    "dynamic_renders": [
+        {
+            "type": "gtpm:quantum_tank_fluid"
+        }
+    ],
+    "loader": "gtpm:machine",
+    "machine": "gtpm:ev_super_tank",
+    "variants": {
+        "": {
+            "model": {
+                "parent": "gtpm:block/machine/template/quantum/quantum_tank",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/ev/bottom",
+                    "side": "gtpm:block/casings/voltage/ev/side",
+                    "top": "gtpm:block/casings/voltage/ev/top"
+                }
+            }
+        }
+    }
+}

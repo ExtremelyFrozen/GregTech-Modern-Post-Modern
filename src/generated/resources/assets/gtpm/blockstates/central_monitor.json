@@ -1,0 +1,114 @@
+{
+    "variants": {
+        "facing=down,upwards_facing=east": {
+            "gtpm:z": 90,
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 90
+        },
+        "facing=down,upwards_facing=north": {
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 90
+        },
+        "facing=down,upwards_facing=south": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 90
+        },
+        "facing=down,upwards_facing=west": {
+            "gtpm:z": 270,
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 90
+        },
+        "facing=east,upwards_facing=east": {
+            "gtpm:z": 270,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 90
+        },
+        "facing=east,upwards_facing=north": {
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 90
+        },
+        "facing=east,upwards_facing=south": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 90
+        },
+        "facing=east,upwards_facing=west": {
+            "gtpm:z": 90,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 90
+        },
+        "facing=north,upwards_facing=east": {
+            "gtpm:z": 270,
+            "model": "gtpm:block/machine/central_monitor"
+        },
+        "facing=north,upwards_facing=north": {
+            "model": "gtpm:block/machine/central_monitor"
+        },
+        "facing=north,upwards_facing=south": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/central_monitor"
+        },
+        "facing=north,upwards_facing=west": {
+            "gtpm:z": 90,
+            "model": "gtpm:block/machine/central_monitor"
+        },
+        "facing=south,upwards_facing=east": {
+            "gtpm:z": 270,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 180
+        },
+        "facing=south,upwards_facing=north": {
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 180
+        },
+        "facing=south,upwards_facing=south": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 180
+        },
+        "facing=south,upwards_facing=west": {
+            "gtpm:z": 90,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 180
+        },
+        "facing=up,upwards_facing=east": {
+            "gtpm:z": 90,
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 270
+        },
+        "facing=up,upwards_facing=north": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 270
+        },
+        "facing=up,upwards_facing=south": {
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 270
+        },
+        "facing=up,upwards_facing=west": {
+            "gtpm:z": 270,
+            "model": "gtpm:block/machine/central_monitor",
+            "x": 270
+        },
+        "facing=west,upwards_facing=east": {
+            "gtpm:z": 270,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 270
+        },
+        "facing=west,upwards_facing=north": {
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 270
+        },
+        "facing=west,upwards_facing=south": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 270
+        },
+        "facing=west,upwards_facing=west": {
+            "gtpm:z": 90,
+            "model": "gtpm:block/machine/central_monitor",
+            "y": 270
+        }
+    }
+}

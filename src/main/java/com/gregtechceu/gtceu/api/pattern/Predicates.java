@@ -231,7 +231,7 @@ public class Predicates {
                     var stats = entry.getKey();
                     Object currentCoil = blockWorldState.getMatchContext().getOrPut("CoilType", stats);
                     if (!currentCoil.equals(stats)) {
-                        blockWorldState.setError(new PatternStringError("gtceu.multiblock.pattern.error.coils"));
+                        blockWorldState.setError(new PatternStringError("gtpm.multiblock.pattern.error.coils"));
                         return false;
                     }
                     return true;
@@ -243,7 +243,7 @@ public class Predicates {
                 .sorted(Comparator.comparingInt(value -> value.getKey().getTier()))
                 .map(coil -> BlockInfo.fromBlockState(coil.getValue().get().defaultBlockState()))
                 .toArray(BlockInfo[]::new))
-                .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.coils"));
+                .addTooltips(Component.translatable("gtpm.multiblock.pattern.error.coils"));
     }
 
     public static TraceabilityPredicate cleanroomFilters() {
@@ -254,7 +254,7 @@ public class Predicates {
                     var stats = entry.getKey();
                     Object currentCoil = blockWorldState.getMatchContext().getOrPut("FilterType", stats);
                     if (!currentCoil.equals(stats)) {
-                        blockWorldState.setError(new PatternStringError("gtceu.multiblock.pattern.error.filters"));
+                        blockWorldState.setError(new PatternStringError("gtpm.multiblock.pattern.error.filters"));
                         return false;
                     }
                     return true;
@@ -264,7 +264,7 @@ public class Predicates {
         }, () -> GTCEuAPI.CLEANROOM_FILTERS.values().stream()
                 .map(blockSupplier -> BlockInfo.fromBlockState(blockSupplier.get().defaultBlockState()))
                 .toArray(BlockInfo[]::new))
-                .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.filters"));
+                .addTooltips(Component.translatable("gtpm.multiblock.pattern.error.filters"));
     }
 
     public static TraceabilityPredicate powerSubstationBatteries() {
@@ -289,7 +289,7 @@ public class Predicates {
                 .sorted(Comparator.comparingInt(entry -> entry.getKey().getTier()))
                 .map(entry -> new BlockInfo(entry.getValue().get().defaultBlockState(), null))
                 .toArray(BlockInfo[]::new))
-                .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.batteries"));
+                .addTooltips(Component.translatable("gtpm.multiblock.pattern.error.batteries"));
     }
 
     public static TraceabilityPredicate dataHatchPredicate(TraceabilityPredicate def) {

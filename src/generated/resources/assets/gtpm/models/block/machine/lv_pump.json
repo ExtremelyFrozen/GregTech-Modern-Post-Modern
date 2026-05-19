@@ -1,0 +1,17 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:lv_pump",
+    "variants": {
+        "": {
+            "model": {
+                "parent": "gtpm:block/machine/template/pump_machine",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        }
+    }
+}

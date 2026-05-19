@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/cube_bottom_top",
+    "textures": {
+        "bottom": "gtpm:block/casings/steam/bronze/bottom",
+        "side": "gtpm:block/casings/steam/bronze/side",
+        "top": "gtpm:block/casings/steam/bronze/top"
+    }
+}

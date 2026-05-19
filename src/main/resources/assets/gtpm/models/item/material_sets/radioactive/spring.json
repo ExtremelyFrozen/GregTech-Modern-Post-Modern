@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/spring",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/spring_secondary"
+	}
+}

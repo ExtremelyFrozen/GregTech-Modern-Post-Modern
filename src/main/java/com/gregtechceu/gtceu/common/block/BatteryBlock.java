@@ -34,9 +34,9 @@ public class BatteryBlock extends Block {
                                 TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         if (this.data.getTier() == -1) {
-            tooltip.add(Component.translatable("block.gtceu.substation_capacitor.tooltip_empty"));
+            tooltip.add(Component.translatable("block.gtpm.substation_capacitor.tooltip_empty"));
         } else {
-            tooltip.add(Component.translatable("block.gtceu.substation_capacitor.tooltip_filled",
+            tooltip.add(Component.translatable("block.gtpm.substation_capacitor.tooltip_filled",
                     FormattingUtil.formatNumbers(this.data.getCapacity())));
         }
     }

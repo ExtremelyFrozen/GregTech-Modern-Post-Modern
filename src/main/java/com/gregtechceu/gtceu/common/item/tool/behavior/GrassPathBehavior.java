@@ -111,7 +111,7 @@ public class GrassPathBehavior implements IToolBehavior<GrassPathBehavior> {
     @Override
     public void addInformation(@NotNull ItemStack stack, Item.TooltipContext Level, @NotNull List<Component> tooltip,
                                @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.gtceu.tool.behavior.grass_path"));
+        tooltip.add(Component.translatable("item.gtpm.tool.behavior.grass_path"));
     }
 
     @Override

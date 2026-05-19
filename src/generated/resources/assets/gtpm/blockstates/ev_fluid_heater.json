@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=east": {
+            "model": "gtpm:block/machine/ev_fluid_heater",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/ev_fluid_heater"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/ev_fluid_heater",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/ev_fluid_heater",
+            "y": 270
+        }
+    }
+}

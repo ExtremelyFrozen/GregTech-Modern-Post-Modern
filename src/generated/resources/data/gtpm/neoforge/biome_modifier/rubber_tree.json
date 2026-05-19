@@ -1,0 +1,6 @@
+{
+    "type": "neoforge:add_features",
+    "biomes": "#gtpm:has_rubber_tree",
+    "features": "gtpm:rubber_tree",
+    "step": "vegetal_decoration"
+}

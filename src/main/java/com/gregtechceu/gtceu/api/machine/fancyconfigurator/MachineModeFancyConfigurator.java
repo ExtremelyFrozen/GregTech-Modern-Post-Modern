@@ -29,7 +29,7 @@ public class MachineModeFancyConfigurator implements IFancyUIProvider {
 
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.gui.machinemode.title");
+        return Component.translatable("gtpm.gui.machinemode.title");
     }
 
     @Override
@@ -59,7 +59,7 @@ public class MachineModeFancyConfigurator implements IFancyUIProvider {
     @Override
     public List<Component> getTabTooltips() {
         List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.translatable("gtceu.gui.machinemode.tab_tooltip"));
+        tooltip.add(Component.translatable("gtpm.gui.machinemode.tab_tooltip"));
         return tooltip;
     }
 

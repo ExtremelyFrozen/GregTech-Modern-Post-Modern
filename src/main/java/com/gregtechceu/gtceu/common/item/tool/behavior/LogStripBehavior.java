@@ -101,7 +101,7 @@ public class LogStripBehavior implements IToolBehavior<LogStripBehavior> {
     @Override
     public void addInformation(@NotNull ItemStack stack, Item.TooltipContext Level, @NotNull List<Component> tooltip,
                                @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.gtceu.tool.behavior.strip_log"));
+        tooltip.add(Component.translatable("item.gtpm.tool.behavior.strip_log"));
     }
 
     @Override

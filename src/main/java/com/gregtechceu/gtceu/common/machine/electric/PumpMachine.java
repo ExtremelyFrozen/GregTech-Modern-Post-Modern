@@ -533,7 +533,7 @@ public class PumpMachine extends TieredEnergyMachine implements IUIMachine {
         return new ModularUI(176, 166, this, entityPlayer)
                 .background(GuiTextures.BACKGROUND)
                 .widget(new ImageWidget(7, 16, 81, 55, GuiTextures.DISPLAY))
-                .widget(new LabelWidget(11, 20, "gtceu.gui.fluid_amount"))
+                .widget(new LabelWidget(11, 20, "gtpm.gui.fluid_amount"))
                 .widget(new LabelWidget(11, 30, () -> cache.getFluidInTank(0).getAmount() + "").setTextColor(-1)
                         .setDropShadow(true))
                 .widget(new LabelWidget(6, 6, getBlockState().getBlock().getDescriptionId()))
@@ -543,7 +543,7 @@ public class PumpMachine extends TieredEnergyMachine implements IUIMachine {
                         GuiTextures.BUTTON_FLUID_OUTPUT, this.autoOutput::isAutoOutputFluids,
                         this.autoOutput::setAllowAutoOutputFluids)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_auto_output.tooltip"))
+                        .setTooltipText("gtpm.gui.fluid_auto_output.tooltip"))
                 .widget(UITemplate.bindPlayerInventory(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 84, true));
     }
 }

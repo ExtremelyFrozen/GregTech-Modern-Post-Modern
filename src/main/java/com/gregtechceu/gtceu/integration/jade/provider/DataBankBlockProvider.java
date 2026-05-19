@@ -31,7 +31,7 @@ public class DataBankBlockProvider implements IBlockComponentProvider, IServerDa
             // wrap in text component to keep it from being formatted
             Component voltageName = Component.literal(GTValues.VNF[GTUtil.getTierByVoltage(energyUsage)]);
             Component text = Component.translatable(
-                    "gtceu.multiblock.energy_consumption",
+                    "gtpm.multiblock.energy_consumption",
                     energyFormatted,
                     voltageName);
 

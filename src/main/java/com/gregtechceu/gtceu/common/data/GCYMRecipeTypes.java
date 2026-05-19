@@ -38,14 +38,14 @@ public class GCYMRecipeTypes {
             .setSlotOverlay(true, true, true, GuiTextures.FURNACE_OVERLAY_2)
             .addDataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
-                return LocalizationUtils.format("gtceu.recipe.temperature", FormattingUtil.formatTemperature(temp));
+                return LocalizationUtils.format("gtpm.recipe.temperature", FormattingUtil.formatTemperature(temp));
             })
             .addDataInfo(data -> {
                 int temp = data.getInt("ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
                 if (requiredCoil != null && !requiredCoil.getMaterial().isNull()) {
-                    return LocalizationUtils.format("gtceu.recipe.coil.tier",
+                    return LocalizationUtils.format("gtpm.recipe.coil.tier",
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";

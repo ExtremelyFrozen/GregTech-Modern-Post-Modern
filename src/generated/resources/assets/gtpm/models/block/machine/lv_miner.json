@@ -1,0 +1,51 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:lv_miner",
+    "variants": {
+        "recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/lv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/miner/overlay_back",
+                    "overlay_front": "gtpm:block/machines/miner/overlay_front",
+                    "overlay_side": "gtpm:block/machines/miner/overlay_side",
+                    "overlay_top": "gtpm:block/machines/miner/overlay_top"
+                }
+            }
+        },
+        "recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/lv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/miner/overlay_back",
+                    "overlay_front": "gtpm:block/machines/miner/overlay_front",
+                    "overlay_side": "gtpm:block/machines/miner/overlay_side",
+                    "overlay_top": "gtpm:block/machines/miner/overlay_top"
+                }
+            }
+        },
+        "recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/lv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/miner/overlay_back",
+                    "overlay_front": "gtpm:block/machines/miner/overlay_front",
+                    "overlay_side": "gtpm:block/machines/miner/overlay_side",
+                    "overlay_top": "gtpm:block/machines/miner/overlay_top"
+                }
+            }
+        },
+        "recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/lv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/miner/overlay_back",
+                    "overlay_front": "gtpm:block/machines/miner/overlay_front",
+                    "overlay_side": "gtpm:block/machines/miner/overlay_side",
+                    "overlay_top": "gtpm:block/machines/miner/overlay_top"
+                }
+            }
+        }
+    }
+}

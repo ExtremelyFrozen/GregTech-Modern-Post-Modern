@@ -174,29 +174,29 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
         // does not occur.
         if (isFormed()) {
             if (!isWorkingEnabled()) {
-                textList.add(Component.translatable("gtceu.multiblock.work_paused"));
+                textList.add(Component.translatable("gtpm.multiblock.work_paused"));
             } else if (isActive()) {
-                textList.add(Component.translatable("gtceu.multiblock.running"));
+                textList.add(Component.translatable("gtpm.multiblock.running"));
                 textList.add(Component
-                        .translatable("gtceu.multiblock.active_transformer.max_input",
+                        .translatable("gtpm.multiblock.active_transformer.max_input",
                                 FormattingUtil.formatNumbers(
                                         Math.abs(powerInput.getInputVoltage() * powerInput.getInputAmperage()))));
                 textList.add(Component
-                        .translatable("gtceu.multiblock.active_transformer.max_output",
+                        .translatable("gtpm.multiblock.active_transformer.max_output",
                                 FormattingUtil.formatNumbers(
                                         Math.abs(powerOutput.getOutputVoltage() * powerOutput.getOutputAmperage()))));
                 textList.add(Component
-                        .translatable("gtceu.multiblock.active_transformer.average_in",
+                        .translatable("gtpm.multiblock.active_transformer.average_in",
                                 FormattingUtil.formatNumbers(Math.abs(powerInput.getInputPerSec() / 20))));
                 textList.add(Component
-                        .translatable("gtceu.multiblock.active_transformer.average_out",
+                        .translatable("gtpm.multiblock.active_transformer.average_out",
                                 FormattingUtil.formatNumbers(Math.abs(powerOutput.getOutputPerSec() / 20))));
                 if (!ConfigHolder.INSTANCE.machines.harmlessActiveTransformers) {
                     textList.add(Component
-                            .translatable("gtceu.multiblock.active_transformer.danger_enabled"));
+                            .translatable("gtpm.multiblock.active_transformer.danger_enabled"));
                 }
             } else {
-                textList.add(Component.translatable("gtceu.multiblock.idling"));
+                textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
         }
     }

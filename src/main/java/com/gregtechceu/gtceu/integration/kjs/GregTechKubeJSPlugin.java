@@ -198,8 +198,8 @@ public class GregTechKubeJSPlugin implements KubeJSPlugin {
     public void registerClasses(ClassFilter filter) {
         // allow user to access all gtceu classes by importing them.
         filter.allow("com.gregtechceu.gtceu");
-        filter.deny("com.gregtechceu.gtceu.core");
-        filter.deny("com.gregtechceu.gtceu.common.network");
+        filter.deny("com.gregtechceu.gtpm.core");
+        filter.deny("com.gregtechceu.gtpm.common.network");
     }
 
     @Override

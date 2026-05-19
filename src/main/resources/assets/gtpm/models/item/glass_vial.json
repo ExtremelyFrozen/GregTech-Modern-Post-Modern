@@ -1,0 +1,10 @@
+{
+	"loader": "neoforge:fluid_container",
+	"parent": "neoforge:item/default",
+	"textures": {
+		"base": "gtpm:item/glass_vial/base",
+		"fluid": "gtpm:item/glass_vial/overlay",
+		"cover": "gtpm:item/glass_vial/base"
+	},
+	"fluid": "minecraft:empty"
+}

@@ -1,0 +1,8 @@
+{
+    "values": [
+        "gtpm:hv_sodium_battery",
+        "gtpm:hv_lithium_battery",
+        "gtpm:hv_cadmium_battery",
+        "gtpm:energy_crystal"
+    ]
+}

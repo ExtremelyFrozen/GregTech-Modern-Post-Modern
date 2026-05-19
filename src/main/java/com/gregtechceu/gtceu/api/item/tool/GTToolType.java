@@ -614,7 +614,7 @@ public class GTToolType {
     }
 
     public String getUnlocalizedName() {
-        return "item.gtceu.tool." + name;
+        return "item.gtpm.tool." + name;
     }
 
     public enum ToolItemTagType {

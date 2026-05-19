@@ -41,16 +41,16 @@ public interface IVoidable extends IMachineFeature {
         configuratorPanel
                 .attachConfigurators(new FancySelectorConfigurator<>(VoidingMode.VALUES, controller.getVoidingMode(),
                         controller::setVoidingMode)
-                        .setTooltip(m -> List.of(Component.translatable("gtceu.gui.multiblock.voiding_mode"),
+                        .setTooltip(m -> List.of(Component.translatable("gtpm.gui.multiblock.voiding_mode"),
                                 Component.translatable(m.localeName))));
     }
 
     enum VoidingMode implements StringRepresentable, EnumSelectorWidget.SelectableEnum {
 
-        VOID_NONE("gtceu.gui.no_voiding", cap -> false),
-        VOID_ITEMS("gtceu.gui.item_voiding", cap -> cap == ItemRecipeCapability.CAP),
-        VOID_FLUIDS("gtceu.gui.fluid_voiding", cap -> cap == FluidRecipeCapability.CAP),
-        VOID_ITEMS_FLUIDS("gtceu.gui.all_voiding",
+        VOID_NONE("gtpm.gui.no_voiding", cap -> false),
+        VOID_ITEMS("gtpm.gui.item_voiding", cap -> cap == ItemRecipeCapability.CAP),
+        VOID_FLUIDS("gtpm.gui.fluid_voiding", cap -> cap == FluidRecipeCapability.CAP),
+        VOID_ITEMS_FLUIDS("gtpm.gui.all_voiding",
                 cap -> cap == ItemRecipeCapability.CAP || cap == FluidRecipeCapability.CAP);
 
         public static final VoidingMode[] VALUES = values();

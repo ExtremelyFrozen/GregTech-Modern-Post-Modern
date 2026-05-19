@@ -178,13 +178,13 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     public ModularUI createUI(Player entityPlayer) {
         return new ModularUI(176, 166, this, entityPlayer)
                 .background(GuiTextures.BACKGROUND)
-                .widget(new LabelWidget(7, 32, "gtceu.creative.energy.voltage"))
+                .widget(new LabelWidget(7, 32, "gtpm.creative.energy.voltage"))
                 .widget(new TextFieldWidget(9, 47, 152, 16, () -> String.valueOf(voltage),
                         value -> {
                             voltage = Long.parseLong(value);
                             setTier = GTUtil.getTierByVoltage(voltage);
                         }).setNumbersOnly(0L, Long.MAX_VALUE))
-                .widget(new LabelWidget(7, 74, "gtceu.creative.energy.amperage"))
+                .widget(new LabelWidget(7, 74, "gtpm.creative.energy.amperage"))
                 .widget(new ButtonWidget(7, 87, 20, 20,
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON, new TextTexture("-")),
                         cd -> amps = --amps == -1 ? 0 : amps))
@@ -202,9 +202,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
                 .widget(new SwitchWidget(7, 139, 77, 20, (clickData, value) -> active = value)
                         .setTexture(
                                 new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                        new TextTexture("gtceu.creative.activity.off")),
+                                        new TextTexture("gtpm.creative.activity.off")),
                                 new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                        new TextTexture("gtceu.creative.activity.on")))
+                                        new TextTexture("gtpm.creative.activity.on")))
                         .setPressed(active))
                 .widget(new SwitchWidget(85, 139, 77, 20, (clickData, value) -> {
                     source = value;
@@ -219,9 +219,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
                     }
                 }).setTexture(
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtceu.creative.energy.sink")),
+                                new TextTexture("gtpm.creative.energy.sink")),
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtceu.creative.energy.source")))
+                                new TextTexture("gtpm.creative.energy.source")))
                         .setPressed(source))
                 .widget(new SelectorWidget(7, 7, 50, 20, Arrays.stream(GTValues.VNF).toList(), -1)
                         .setOnChanged(tier -> {

@@ -1,0 +1,10 @@
+{
+	"parent": "gtpm:block/machine/template/pipeline_endpoint_machine",
+	"textures": {
+		"overlay_side": "gtpm:block/void",
+		"overlay_side_emissive": "gtpm:block/void",
+
+		"overlay_hatch_in": "gtpm:block/overlay/machine/overlay_fluid_hatch_input",
+		"overlay_hatch_out": "gtpm:block/overlay/machine/overlay_fluid_hatch_output"
+	}
+}

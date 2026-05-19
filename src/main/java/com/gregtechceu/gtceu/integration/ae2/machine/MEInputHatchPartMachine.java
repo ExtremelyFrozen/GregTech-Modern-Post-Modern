@@ -121,8 +121,8 @@ public class MEInputHatchPartMachine extends MEHatchPartMachine
         WidgetGroup group = new WidgetGroup(new Position(0, 0));
         // ME Network status
         group.addWidget(new LabelWidget(3, 0, () -> this.isOnline ?
-                "gtceu.gui.me_network.online" :
-                "gtceu.gui.me_network.offline"));
+                "gtpm.gui.me_network.online" :
+                "gtpm.gui.me_network.offline"));
 
         // Config slots
         group.addWidget(new AEFluidConfigWidget(3, 10, this.aeFluidHandler));
@@ -141,8 +141,8 @@ public class MEInputHatchPartMachine extends MEHatchPartMachine
             tag.put("MEInputHatch", writeConfigToTag(player.registryAccess()));
             dataStick.set(GTDataComponents.DATA_COPY_TAG, CustomData.of(tag));
             dataStick.set(DataComponents.ITEM_NAME,
-                    Component.translatable("gtceu.machine.me.fluid_import.data_stick.name"));
-            player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_copy_settings"));
+                    Component.translatable("gtpm.machine.me.fluid_import.data_stick.name"));
+            player.sendSystemMessage(Component.translatable("gtpm.machine.me.import_copy_settings"));
         }
         return InteractionResult.SUCCESS;
     }
@@ -157,7 +157,7 @@ public class MEInputHatchPartMachine extends MEHatchPartMachine
         if (!isRemote()) {
             readConfigFromTag(player.registryAccess(), tag.copyTag().getCompound("MEInputHatch"));
             this.updateTankSubscription();
-            player.sendSystemMessage(Component.translatable("gtceu.machine.me.import_paste_settings"));
+            player.sendSystemMessage(Component.translatable("gtpm.machine.me.import_paste_settings"));
         }
         return InteractionResult.sidedSuccess(isRemote());
     }

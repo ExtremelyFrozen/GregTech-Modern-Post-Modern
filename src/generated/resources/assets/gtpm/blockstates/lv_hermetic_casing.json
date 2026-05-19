@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/lv_hermetic_casing"
+        }
+    }
+}

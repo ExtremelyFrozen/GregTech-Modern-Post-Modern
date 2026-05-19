@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/gear",
+	"textures": {
+		"layer3": "gtpm:item/material_sets/magnetic/magnetic_overlay"
+	}
+}

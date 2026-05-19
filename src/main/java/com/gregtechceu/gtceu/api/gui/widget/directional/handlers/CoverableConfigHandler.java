@@ -43,6 +43,7 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
 
     private SlotWidget slotWidget;
     private CoverBehavior coverBehavior;
+    private boolean syncingDisplayedCoverItem;
 
     public CoverableConfigHandler(ICoverable machine) {
         this.machine = machine;
@@ -93,6 +94,9 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
 
     // FIXME: This gets called twice in a single tick, causing two covers to exist simultaneously
     private void coverItemChanged() {
+        if (syncingDisplayedCoverItem) {
+            return;
+        }
         closeConfigTab();
 
         if (!(panel.getGui().entityPlayer instanceof ServerPlayer serverPlayer) || side == null)
@@ -139,8 +143,12 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
             this.coverBehavior = coverBehaviour;
 
             var attachItem = coverBehaviour == null ? ItemStack.EMPTY : coverBehaviour.getAttachItem();
-            handler.setStackInSlot(0, attachItem);
-            handler.onContentsChanged(0);
+            syncingDisplayedCoverItem = true;
+            try {
+                handler.setStackInSlot(0, attachItem);
+            } finally {
+                syncingDisplayedCoverItem = false;
+            }
         }
 
         updateWidgetVisibility();

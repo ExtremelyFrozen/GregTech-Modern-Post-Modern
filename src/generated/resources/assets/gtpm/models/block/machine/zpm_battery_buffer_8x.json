@@ -1,0 +1,20 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:zpm_battery_buffer_8x",
+    "variants": {
+        "": {
+            "model": {
+                "parent": "gtpm:block/machine/template/transformer_like_machine",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/zpm/bottom",
+                    "overlay_in_io": "gtpm:block/overlay/machine/overlay_energy_8a_out",
+                    "overlay_in_tinted": "gtpm:block/overlay/machine/overlay_energy_8a_tinted",
+                    "overlay_out_io": "gtpm:block/void",
+                    "side": "gtpm:block/casings/voltage/zpm/side",
+                    "top": "gtpm:block/casings/voltage/zpm/top"
+                }
+            }
+        }
+    }
+}

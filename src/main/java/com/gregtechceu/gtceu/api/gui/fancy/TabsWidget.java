@@ -42,10 +42,10 @@ public class TabsWidget extends Widget {
             rightButtonHoverTexture = new GuiTextureGroup(GuiTextures.BUTTON,
                     Icons.RIGHT.copy().setColor(0xffaaaaaa).scale(0.7f));
     @Setter
-    protected IGuiTexture tabTexture = new ResourceTexture("gtceu:textures/gui/tab/tabs_top.png").getSubTexture(1 / 3f,
+    protected IGuiTexture tabTexture = new ResourceTexture("gtpm:textures/gui/tab/tabs_top.png").getSubTexture(1 / 3f,
             0, 1 / 3f, 0.5f);
     @Setter
-    protected IGuiTexture tabHoverTexture = new ResourceTexture("gtceu:textures/gui/tab/tabs_top.png")
+    protected IGuiTexture tabHoverTexture = new ResourceTexture("gtpm:textures/gui/tab/tabs_top.png")
             .getSubTexture(1 / 3f, 0.5f, 1 / 3f, 0.5f);
     @Setter
     protected IGuiTexture tabPressedTexture = tabHoverTexture;

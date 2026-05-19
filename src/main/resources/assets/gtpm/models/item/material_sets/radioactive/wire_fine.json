@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/wire_fine",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/wire_fine_secondary"
+	}
+}

@@ -204,17 +204,17 @@ public class ElectricStats implements IInteractionItem, ISubItemHandler, IAddInf
             if (durationCurrent.getSeconds() <= 60) {
                 maxChargeTime = durationMax.getSeconds();
                 currentChargeTime = durationCurrent.toSeconds();
-                unit = Component.translatable("item.gtceu.battery.charge_unit.second");
+                unit = Component.translatable("item.gtpm.battery.charge_unit.second");
             } else if (durationCurrent.toMinutes() <= 60) {
                 maxChargeTime = durationMax.toMinutes();
                 currentChargeTime = durationCurrent.toMinutes();
-                unit = Component.translatable("item.gtceu.battery.charge_unit.minute");
+                unit = Component.translatable("item.gtpm.battery.charge_unit.minute");
             } else {
                 maxChargeTime = durationMax.toHours();
                 currentChargeTime = durationCurrent.toHours();
-                unit = Component.translatable("item.gtceu.battery.charge_unit.hour");
+                unit = Component.translatable("item.gtpm.battery.charge_unit.hour");
             }
-            tooltip.add(Component.translatable("item.gtceu.battery.charge_detailed",
+            tooltip.add(Component.translatable("item.gtpm.battery.charge_detailed",
                     FormattingUtil.formatNumbers(currentCharge), FormattingUtil.formatNumbers(maxCharge),
                     GTValues.VNF[tier],
                     FormattingUtil.formatNumbers(currentChargeTime), FormattingUtil.formatNumbers(maxChargeTime),

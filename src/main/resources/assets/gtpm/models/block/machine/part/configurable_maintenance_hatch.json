@@ -1,0 +1,7 @@
+{
+	"parent": "gtpm:block/overlay/2_layer/front",
+	"textures": {
+		"overlay": "gtpm:block/overlay/machine/overlay_maintenance_configurable",
+		"overlay_2": "gtpm:block/void"
+	}
+}

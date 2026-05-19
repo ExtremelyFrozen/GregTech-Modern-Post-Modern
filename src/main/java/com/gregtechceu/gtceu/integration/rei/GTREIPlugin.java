@@ -92,7 +92,7 @@ public class GTREIPlugin implements REIClientPlugin {
     public void registerCollapsibleEntries(CollapsibleEntryRegistry registry) {
         for (GTToolType toolType : GTToolType.getTypes().values()) {
             registry.group(GTCEu.id("tool/" + toolType.name),
-                    Component.translatable("gtceu.tool.class." + toolType.name),
+                    Component.translatable("gtpm.tool.class." + toolType.name),
                     EntryIngredients.ofItemTag(toolType.itemTags.getFirst()));
             // EntryIngredients.ofItemStacks(GTItems.TOOL_ITEMS.column(toolType).values().stream().filter(Objects::nonNull).map(ItemProviderEntry::get).map(IGTTool::get).collect(Collectors.toSet()))
         }
@@ -126,7 +126,7 @@ public class GTREIPlugin implements REIClientPlugin {
                     .of(dev.architectury.fluid.FluidStack.create(stack.getFluid(), stack.getAmount(),
                             stack.getComponentsPatch())));
         });
-        registry.group(GTCEu.id("potion_fluids"), Component.translatable("gtceu.rei.group.potion_fluids"), stacks);
+        registry.group(GTCEu.id("potion_fluids"), Component.translatable("gtpm.rei.group.potion_fluids"), stacks);
     }
 
     @Override

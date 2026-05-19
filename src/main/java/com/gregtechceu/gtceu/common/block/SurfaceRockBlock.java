@@ -167,7 +167,7 @@ public class SurfaceRockBlock extends Block {
 
     @Override
     public String getDescriptionId() {
-        return "block.gtceu.surface_rock";
+        return "block.gtpm.surface_rock";
     }
 
     @Override

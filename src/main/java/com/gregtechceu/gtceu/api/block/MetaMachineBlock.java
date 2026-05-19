@@ -196,7 +196,7 @@ public class MetaMachineBlock extends Block implements EntityBlock {
                 if (pattern != null) {
                     var aisleDims = pattern.getDimensions();
                     assert aisleDims.length == 3;
-                    tooltip.add(Component.translatable("gtceu.multiblock.dimension", aisleDims[0], aisleDims[1],
+                    tooltip.add(Component.translatable("gtpm.multiblock.dimension", aisleDims[0], aisleDims[1],
                             aisleDims[2]));
                 }
             }

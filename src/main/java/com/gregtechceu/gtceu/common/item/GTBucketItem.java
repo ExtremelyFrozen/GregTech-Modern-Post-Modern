@@ -34,13 +34,13 @@ public class GTBucketItem extends BucketItem {
 
     @Override
     public String getDescriptionId() {
-        return "item.gtceu.bucket";
+        return "item.gtpm.bucket";
     }
 
     @Override
     public Component getDescription() {
         Component materialName = material.getLocalizedName();
-        return Component.translatable("item.gtceu.bucket", Component.translatable(this.langKey, materialName));
+        return Component.translatable("item.gtpm.bucket", Component.translatable(this.langKey, materialName));
     }
 
     @Override

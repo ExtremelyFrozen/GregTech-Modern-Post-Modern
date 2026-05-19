@@ -129,7 +129,7 @@ public final class CustomToolRecipes {
         registerSoftToolRecipes(provider);
         registerElectricRecipes(provider);
 
-        SpecialRecipeBuilder.special(ToolHeadReplaceRecipe::new).save(provider, "gtceu:crafting/replace_tool_head");
+        SpecialRecipeBuilder.special(ToolHeadReplaceRecipe::new).save(provider, "gtpm:crafting/replace_tool_head");
     }
 
     private static void registerFlintToolRecipes(@NotNull RecipeOutput provider) {

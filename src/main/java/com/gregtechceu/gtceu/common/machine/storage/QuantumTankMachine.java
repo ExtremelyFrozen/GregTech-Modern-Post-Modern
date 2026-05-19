@@ -178,7 +178,7 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
     public Widget createUIWidget() {
         var group = new WidgetGroup(0, 0, 90, 63);
         group.addWidget(new ImageWidget(4, 4, 82, 55, GuiTextures.DISPLAY))
-                .addWidget(new LabelWidget(8, 8, "gtceu.gui.fluid_amount"))
+                .addWidget(new LabelWidget(8, 8, "gtpm.gui.fluid_amount"))
                 .addWidget(new LabelWidget(8, 18, () -> FormattingUtil.formatBuckets(storedAmount))
                         .setTextColor(-1)
                         .setDropShadow(false))
@@ -193,15 +193,15 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
                         GuiTextures.BUTTON_FLUID_OUTPUT, this.autoOutput::isAutoOutputFluids,
                         this.autoOutput::setAllowAutoOutputFluids)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_auto_output.tooltip"))
+                        .setTooltipText("gtpm.gui.fluid_auto_output.tooltip"))
                 .addWidget(new ToggleButtonWidget(22, 41, 18, 18,
                         GuiTextures.BUTTON_LOCK, this::isLocked, this::setLocked)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_lock.tooltip"))
+                        .setTooltipText("gtpm.gui.fluid_lock.tooltip"))
                 .addWidget(new ToggleButtonWidget(40, 41, 18, 18,
                         GuiTextures.BUTTON_VOID, () -> isVoiding, (b) -> isVoiding = b)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_voiding_partial.tooltip"));
+                        .setTooltipText("gtpm.gui.fluid_voiding_partial.tooltip"));
         group.setBackground(GuiTextures.BACKGROUND_INVERSE);
         return group;
     }
