@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/crushed_purified",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/crushed_secondary"
+	}
+}

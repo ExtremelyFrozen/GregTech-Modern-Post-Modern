@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/machine/iv_world_accelerator"
+        }
+    }
+}

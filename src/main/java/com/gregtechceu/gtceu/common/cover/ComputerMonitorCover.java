@@ -133,7 +133,7 @@ public class ComputerMonitorCover extends CoverBehavior
             formatStringInput.setSelfPosition(horizontalPadding + textFieldWidth / 2,
                     10 + verticalPadding + i * (15 + verticalPadding));
             formatStringInput.setHoverTooltips(GTStringUtils.toImmutable(
-                    LangHandler.getMultiLang("gtceu.gui.computer_monitor_cover.main_textbox_tooltip", i + 1)));
+                    LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.main_textbox_tooltip", i + 1)));
             int finalI = i;
             if (i >= formatStringLines.size()) formatStringLines.add("");
             formatStringInput.setCurrentString(formatStringLines.get(i));
@@ -146,7 +146,7 @@ public class ComputerMonitorCover extends CoverBehavior
                     20 * i);
             slot.setBackgroundTexture(SlotWidget.ITEM_SLOT_TEXTURE);
             slot.setHoverTooltips(GTStringUtils
-                    .toImmutable(LangHandler.getMultiLang("gtceu.gui.computer_monitor_cover.slot_tooltip", i + 1)));
+                    .toImmutable(LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.slot_tooltip", i + 1)));
             mainPage.addWidget(slot);
         }
         for (int i = 0; i < 8; i++) {
@@ -155,7 +155,7 @@ public class ComputerMonitorCover extends CoverBehavior
             formatStringArgsInput.setSelfPosition(textFieldWidth / 2 + horizontalPadding,
                     10 + verticalPadding + i * (15 + verticalPadding));
             formatStringArgsInput.setHoverTooltips(GTStringUtils.toImmutable(
-                    LangHandler.getMultiLang("gtceu.gui.computer_monitor_cover.second_page_textbox_tooltip",
+                    LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.second_page_textbox_tooltip",
                             GTStringUtils.getIntOrderingSuffix(i + 1))));
 
             int finalI = i;
@@ -191,11 +191,11 @@ public class ComputerMonitorCover extends CoverBehavior
         updateIntervalInput.setMin(1);
         updateIntervalInput.setMax(60 * 20);
         updateIntervalInput
-                .setHoverTooltips(Component.translatable("gtceu.gui.computer_monitor_cover.update_interval"));
+                .setHoverTooltips(Component.translatable("gtpm.gui.computer_monitor_cover.update_interval"));
         mainPage.addWidget(updateIntervalInput);
         switchToFormatStringArgsPageButton
-                .setHoverTooltips(Component.translatable("gtceu.gui.computer_monitor_cover.edit_blank_placeholders"));
-        switchBack.setHoverTooltips(Component.translatable("gtceu.gui.computer_monitor_cover.edit_displayed_text"));
+                .setHoverTooltips(Component.translatable("gtpm.gui.computer_monitor_cover.edit_blank_placeholders"));
+        switchBack.setHoverTooltips(Component.translatable("gtpm.gui.computer_monitor_cover.edit_displayed_text"));
         mainPage.addWidget(switchToFormatStringArgsPageButton);
         formatStringArgsPage.addWidget(switchBack);
         group.addWidget(mainPage);
@@ -218,7 +218,7 @@ public class ComputerMonitorCover extends CoverBehavior
                 text = getRenderedText();
             } catch (RuntimeException e) {
                 text = GTUtil.list(
-                        Component.translatable("gtceu.computer_monitor_cover.error.exception", e.getMessage()));
+                        Component.translatable("gtpm.computer_monitor_cover.error.exception", e.getMessage()));
             }
         }
     }

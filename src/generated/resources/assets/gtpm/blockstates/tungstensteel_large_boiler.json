@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=east": {
+            "model": "gtpm:block/machine/tungstensteel_large_boiler",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/tungstensteel_large_boiler"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/tungstensteel_large_boiler",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/tungstensteel_large_boiler",
+            "y": 270
+        }
+    }
+}

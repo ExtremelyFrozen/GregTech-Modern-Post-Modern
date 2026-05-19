@@ -308,7 +308,7 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
                         .setProgressTexture(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure),
                                 GuiTextures.PROGRESS_BAR_BOILER_HEAT)
                         .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP)
-                        .setDynamicHoverTips(pct -> I18n.get("gtceu.multiblock.large_boiler.temperature",
+                        .setDynamicHoverTips(pct -> I18n.get("gtpm.multiblock.large_boiler.temperature",
                                 currentTemperature + 274, getMaxTemperature() + 274)))
                 .widget(new TankWidget(waterTank.getStorages()[0], 83, 26, 10, 54, false, true)
                         .setShowAmount(false)
@@ -361,7 +361,7 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
     public List<Component> getDataInfo(PortableScannerBehavior.DisplayMode mode) {
         if (mode == PortableScannerBehavior.DisplayMode.SHOW_ALL ||
                 mode == PortableScannerBehavior.DisplayMode.SHOW_MACHINE_INFO) {
-            return Collections.singletonList(Component.translatable("gtceu.machine.steam_boiler.heat_amount",
+            return Collections.singletonList(Component.translatable("gtpm.machine.steam_boiler.heat_amount",
                     FormattingUtil.formatNumbers((int) (getTemperaturePercent() * 100))));
         }
         return new ArrayList<>();

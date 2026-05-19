@@ -236,7 +236,7 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
             setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_RANDOM_TICK_MODE, isRandomTickMode));
             syncDataHolder.markClientSyncFieldDirty("isRandomTickMode");
             context.getPlayer().sendSystemMessage(Component.translatable(isRandomTickMode ?
-                    "gtceu.machine.world_accelerator.mode_entity" : "gtceu.machine.world_accelerator.mode_tile"));
+                    "gtpm.machine.world_accelerator.mode_entity" : "gtpm.machine.world_accelerator.mode_tile"));
             scheduleRenderUpdate();
         }
         return InteractionResult.CONSUME;

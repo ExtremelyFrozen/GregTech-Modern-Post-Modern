@@ -56,7 +56,7 @@ public class ParallelLogic {
                 // Find the maximum number of recipes that can be performed from the contents of the input inventories
                 var capParallel = cap.getMaxParallelByInput(holder, recipe, parallelLimit, false);
                 if (capParallel == 0) {
-                    Component reason = Component.translatable("gtceu.recipe_logic.insufficient_in")
+                    Component reason = Component.translatable("gtpm.recipe_logic.insufficient_in")
                             .append(": ")
                             .append(cap.getName());
                     RecipeLogic.putFailureReason(holder, recipe, reason);
@@ -72,7 +72,7 @@ public class ParallelLogic {
                 // Find the maximum number of recipes that can be performed from the contents of the input inventories
                 var capParallel = cap.getMaxParallelByInput(holder, recipe, parallelLimit, true);
                 if (capParallel == 0) {
-                    Component reason = Component.translatable("gtceu.recipe_logic.insufficient_in")
+                    Component reason = Component.translatable("gtpm.recipe_logic.insufficient_in")
                             .append(": ")
                             .append(cap.getName());
                     RecipeLogic.putFailureReason(holder, recipe, reason);
@@ -82,7 +82,7 @@ public class ParallelLogic {
             }
         }
         if (minimum == Integer.MAX_VALUE) {
-            Component reason = Component.translatable("gtceu.recipe_logic.no_capabilities")
+            Component reason = Component.translatable("gtpm.recipe_logic.no_capabilities")
                     .append(Component.literal(": "))
                     .append(Component.translatable(IO.IN.tooltip));
             RecipeLogic.putFailureReason(holder, recipe, reason);
@@ -112,7 +112,7 @@ public class ParallelLogic {
                 int limit = cap.limitMaxParallelByOutput(holder, recipe, parallelLimit, false);
                 // If we are not voiding, and cannot fit any items, return 0
                 if (limit == 0) {
-                    Component reason = Component.translatable("gtceu.recipe_logic.insufficient_out")
+                    Component reason = Component.translatable("gtpm.recipe_logic.insufficient_out")
                             .append(": ")
                             .append(cap.getName());
                     RecipeLogic.putFailureReason(holder, recipe, reason);
@@ -130,7 +130,7 @@ public class ParallelLogic {
                 int limit = cap.limitMaxParallelByOutput(holder, recipe, parallelLimit, true);
                 // If we are not voiding, and cannot fit any items, return 0
                 if (limit == 0) {
-                    Component reason = Component.translatable("gtceu.recipe_logic.insufficient_out")
+                    Component reason = Component.translatable("gtpm.recipe_logic.insufficient_out")
                             .append(": ")
                             .append(cap.getName());
                     RecipeLogic.putFailureReason(holder, recipe, reason);

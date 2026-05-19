@@ -350,7 +350,7 @@ public class ElementMaterials {
                         .temperature(4)
                         .color(0xFCFF90)
                         .name("liquid_helium")
-                        .translation("gtceu.fluid.liquid_generic"))
+                        .translation("gtpm.fluid.liquid_generic"))
                 .element(GTElements.He)
                 .buildAndRegister();
         Helium.getProperty(PropertyKey.FLUID).setPrimaryKey(FluidStorageKeys.GAS);
@@ -358,7 +358,7 @@ public class ElementMaterials {
         Helium3 = new Material.Builder(GTCEu.id("helium_3"))
                 .gas(new FluidBuilder()
                         .customStill()
-                        .translation("gtceu.fluid.generic"))
+                        .translation("gtpm.fluid.generic"))
                 .element(GTElements.He3)
                 .buildAndRegister();
 
@@ -407,7 +407,7 @@ public class ElementMaterials {
         Krypton = new Material.Builder(GTCEu.id("krypton"))
                 .gas(new FluidBuilder()
                         .customStill()
-                        .translation("gtceu.fluid.generic"))
+                        .translation("gtpm.fluid.generic"))
                 .color(0x80FF80)
                 .element(GTElements.Kr)
                 .buildAndRegister();
@@ -589,7 +589,7 @@ public class ElementMaterials {
                         .temperature(85)
                         .color(0x6688DD)
                         .name("liquid_oxygen")
-                        .translation("gtceu.fluid.liquid_generic"))
+                        .translation("gtpm.fluid.liquid_generic"))
                 .plasma()
                 .color(0x4CC3FF)
                 .element(GTElements.O)

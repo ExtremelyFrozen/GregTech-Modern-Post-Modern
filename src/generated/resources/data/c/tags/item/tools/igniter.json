@@ -1,9 +1,9 @@
 {
     "values": [
-        "gtceu:matches",
-        "gtceu:matchbox",
-        "gtceu:invar_lighter",
-        "gtceu:platinum_lighter",
+        "gtpm:matches",
+        "gtpm:matchbox",
+        "gtpm:invar_lighter",
+        "gtpm:platinum_lighter",
         "#minecraft:creeper_igniters"
     ]
 }

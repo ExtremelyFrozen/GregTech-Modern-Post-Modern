@@ -162,13 +162,13 @@ public class GTRecipeWidget extends WidgetGroup {
 
         if (EUt.voltage() > 0) {
             textsY += 10;
-            Component text = Component.translatable(EUt.isInput() ? "gtceu.recipe.eu" : "gtceu.recipe.eu_inverted",
+            Component text = Component.translatable(EUt.isInput() ? "gtpm.recipe.eu" : "gtpm.recipe.eu_inverted",
                     FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[minVoltageTier])
                     .withStyle(ChatFormatting.UNDERLINE);
             recipeVoltageText = new LabelWidget(3 - xOffset, textsY, text).setTextColor(-1)
                     .setDropShadow(true);
             recipeVoltageText.setHoverTooltips(
-                    Component.translatable("gtceu.recipe.eu.total", FormattingUtil.formatNumbers(EUt.getTotalEU()))
+                    Component.translatable("gtpm.recipe.eu.total", FormattingUtil.formatNumbers(EUt.getTotalEU()))
                             .withStyle(ChatFormatting.UNDERLINE));
             if (recipeVoltageText != null) {
                 addWidget(recipeVoltageText);
@@ -186,7 +186,7 @@ public class GTRecipeWidget extends WidgetGroup {
             addWidget(new ButtonWidget(voltageTextWidget.getPositionX(), voltageTextWidget.getPositionY(),
                     voltageTextWidget.getSizeWidth(), voltageTextWidget.getSizeHeight(),
                     cd -> setRecipeOC(cd.button, cd.isShiftClick))
-                    .setHoverTooltips(LangHandler.getMultiLang("gtceu.oc.tooltip", GTValues.VNF[minTier])
+                    .setHoverTooltips(LangHandler.getMultiLang("gtpm.oc.tooltip", GTValues.VNF[minTier])
                             .toArray(Component[]::new)));
             addWidget(this.voltageTextWidget = voltageTextWidget);
         }
@@ -197,7 +197,7 @@ public class GTRecipeWidget extends WidgetGroup {
                                                      EnergyStack.WithIO eu) {
         List<Component> texts = new ArrayList<>();
         if (!recipe.data.getBoolean("hide_duration")) {
-            texts.add(Component.translatable("gtceu.recipe.duration", FormattingUtil.formatNumbers(duration / 20f)));
+            texts.add(Component.translatable("gtpm.recipe.duration", FormattingUtil.formatNumbers(duration / 20f)));
         }
         if (eu.voltage() > 0) {
             long euTotal = eu.getTotalEU() * duration;
@@ -206,10 +206,10 @@ public class GTRecipeWidget extends WidgetGroup {
                     recipe.tickInputs.containsKey(CWURecipeCapability.CAP)) {
                 int minimumCWUt = Math.max(recipe.tickInputs.get(CWURecipeCapability.CAP).stream()
                         .map(Content::getContent).mapToInt(CWURecipeCapability.CAP::of).sum(), 1);
-                texts.add(Component.translatable("gtceu.recipe.max_eu",
+                texts.add(Component.translatable("gtpm.recipe.max_eu",
                         FormattingUtil.formatNumbers(euTotal / minimumCWUt)));
             } else {
-                texts.add(Component.translatable("gtceu.recipe.total", FormattingUtil.formatNumbers(euTotal)));
+                texts.add(Component.translatable("gtpm.recipe.total", FormattingUtil.formatNumbers(euTotal)));
             }
         }
 
@@ -283,11 +283,11 @@ public class GTRecipeWidget extends WidgetGroup {
         voltageTextWidget.setText(tierText);
         voltageTextWidget.setSelfPositionX(getVoltageXOffset() - xOffset);
         if (recipeVoltageText != null) {
-            recipeVoltageText.setComponent(Component.translatable("gtceu.recipe.eu",
+            recipeVoltageText.setComponent(Component.translatable("gtpm.recipe.eu",
                     FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[minVoltageTier])
                     .withStyle(ChatFormatting.UNDERLINE));
             recipeVoltageText.setHoverTooltips(
-                    Component.translatable("gtceu.recipe.eu.total", FormattingUtil.formatNumbers(inputEUt.getTotalEU()))
+                    Component.translatable("gtpm.recipe.eu.total", FormattingUtil.formatNumbers(inputEUt.getTotalEU()))
                             .withStyle(ChatFormatting.UNDERLINE));
         }
         detectAndSendChanges();
@@ -299,44 +299,44 @@ public class GTRecipeWidget extends WidgetGroup {
         if (content.chance < ChanceLogic.getMaxChancedValue()) {
             int boostedChance = function.getBoostedChance(content, recipeTier, chanceTier);
             if (boostedChance == 0) {
-                tooltips.add(Component.translatable("gtceu.gui.content.chance_nc"));
+                tooltips.add(Component.translatable("gtpm.gui.content.chance_nc"));
             } else {
                 float baseChanceFloat = 100f * content.chance / content.maxChance;
                 if (content.tierChanceBoost != 0) {
                     float boostedChanceFloat = 100f * boostedChance / content.maxChance;
 
                     if (logic != ChanceLogic.NONE && logic != ChanceLogic.OR) {
-                        tooltips.add(Component.translatable("gtceu.gui.content.chance_base_logic",
+                        tooltips.add(Component.translatable("gtpm.gui.content.chance_base_logic",
                                 FormattingUtil.formatNumber2Places(baseChanceFloat), logic.getTranslation())
                                 .withStyle(ChatFormatting.YELLOW));
                     } else {
                         tooltips.add(
-                                FormattingUtil.formatPercentage2Places("gtceu.gui.content.chance_base",
+                                FormattingUtil.formatPercentage2Places("gtpm.gui.content.chance_base",
                                         baseChanceFloat));
                     }
 
-                    String key = "gtceu.gui.content.chance_tier_boost_" +
+                    String key = "gtpm.gui.content.chance_tier_boost_" +
                             ((content.tierChanceBoost > 0) ? "plus" : "minus");
                     tooltips.add(FormattingUtil.formatPercentage2Places(key,
                             Math.abs(100f * content.tierChanceBoost / content.maxChance)));
 
                     if (logic != ChanceLogic.NONE && logic != ChanceLogic.OR) {
-                        tooltips.add(Component.translatable("gtceu.gui.content.chance_boosted_logic",
+                        tooltips.add(Component.translatable("gtpm.gui.content.chance_boosted_logic",
                                 FormattingUtil.formatNumber2Places(boostedChanceFloat), logic.getTranslation())
                                 .withStyle(ChatFormatting.YELLOW));
                     } else {
                         tooltips.add(
-                                FormattingUtil.formatPercentage2Places("gtceu.gui.content.chance_boosted",
+                                FormattingUtil.formatPercentage2Places("gtpm.gui.content.chance_boosted",
                                         boostedChanceFloat));
                     }
                 } else {
                     if (logic != ChanceLogic.NONE && logic != ChanceLogic.OR) {
-                        tooltips.add(Component.translatable("gtceu.gui.content.chance_no_boost_logic",
+                        tooltips.add(Component.translatable("gtpm.gui.content.chance_no_boost_logic",
                                 FormattingUtil.formatNumber2Places(baseChanceFloat), logic.getTranslation())
                                 .withStyle(ChatFormatting.YELLOW));
                     } else {
                         tooltips.add(
-                                FormattingUtil.formatPercentage2Places("gtceu.gui.content.chance_no_boost",
+                                FormattingUtil.formatPercentage2Places("gtpm.gui.content.chance_no_boost",
                                         baseChanceFloat));
                     }
                 }

@@ -1,0 +1,24 @@
+{
+	"parent": "block/block",
+	"loader": "neoforge:composite",
+	"textures": {
+		"particle": "gtpm:block/material_sets/shiny/block"
+	},
+	"children": {
+		"base": {
+			"parent": "gtpm:block/cube/tinted/all_0",
+			"render_type": "solid",
+			"textures": {
+				"all": "gtpm:block/material_sets/shiny/block"
+			}
+		},
+		"secondary": {
+			"parent": "gtpm:block/cube/tinted/all",
+			"render_type": "translucent",
+			"textures": {
+				"all": "gtpm:block/material_sets/shiny/block_secondary"
+			}
+		}
+	},
+	"item_render_order": ["base", "secondary"]
+}

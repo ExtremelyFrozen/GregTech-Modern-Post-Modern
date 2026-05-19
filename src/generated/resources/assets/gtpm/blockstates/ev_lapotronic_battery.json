@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/ev_lapotronic_battery"
+        }
+    }
+}

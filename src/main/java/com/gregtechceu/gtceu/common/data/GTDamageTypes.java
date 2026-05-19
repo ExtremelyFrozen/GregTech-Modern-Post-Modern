@@ -25,17 +25,17 @@ public class GTDamageTypes {
     }
 
     public static void bootstrap(BootstrapContext<DamageType> ctx) {
-        ctx.register(HEAT, new DamageType("gtceu.heat", 0, DamageEffects.BURNING));
-        ctx.register(CHEMICAL, new DamageType("gtceu.chemical", 0));
-        ctx.register(ELECTRIC, new DamageType("gtceu.electric", 0));
-        ctx.register(RADIATION, new DamageType("gtceu.radiation", 0));
-        ctx.register(TURBINE, new DamageType("gtceu.turbine", 0));
+        ctx.register(HEAT, new DamageType("gtpm.heat", 0, DamageEffects.BURNING));
+        ctx.register(CHEMICAL, new DamageType("gtpm.chemical", 0));
+        ctx.register(ELECTRIC, new DamageType("gtpm.electric", 0));
+        ctx.register(RADIATION, new DamageType("gtpm.radiation", 0));
+        ctx.register(TURBINE, new DamageType("gtpm.turbine", 0));
 
         for (var entry : MedicalCondition.CONDITIONS.entrySet()) {
             String name = entry.getKey();
             MedicalCondition condition = entry.getValue();
             ctx.register(condition.getDamageType(),
-                    new DamageType("gtceu.medical_condition." + name, DamageScaling.NEVER, 0));
+                    new DamageType("gtpm.medical_condition." + name, DamageScaling.NEVER, 0));
         }
     }
 }

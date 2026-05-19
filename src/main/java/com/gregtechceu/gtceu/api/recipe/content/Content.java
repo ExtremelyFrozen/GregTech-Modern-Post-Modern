@@ -182,7 +182,7 @@ public class Content {
         float chanceFloat = 1f * chance / this.maxChance;
         String percent = FormattingUtil.formatNumber2Places(100 * chanceFloat);
 
-        String s = chance == 0 ? LocalizationUtils.format("gtceu.gui.content.chance_nc_short") :
+        String s = chance == 0 ? LocalizationUtils.format("gtpm.gui.content.chance_nc_short") :
                 percent + "%";
 
         int color = chance == 0 ? 0xFF0000 : GradientUtil.toRGB(Mth.lerp(chanceFloat, 29f, 167f), 100f, 50f);
@@ -198,7 +198,7 @@ public class Content {
         RenderSystem.disableDepthTest();
         graphics.pose().translate(0, 0, 400);
         graphics.pose().scale(0.5f, 0.5f, 1);
-        String s = LocalizationUtils.format("gtceu.gui.content.tips.per_tick_short");
+        String s = LocalizationUtils.format("gtpm.gui.content.tips.per_tick_short");
         int color = 0xFFFF00;
         Font fontRenderer = Minecraft.getInstance().font;
         graphics.drawString(fontRenderer, s, (int) ((x + (width / 3f)) * 2 - fontRenderer.width(s) + 23),

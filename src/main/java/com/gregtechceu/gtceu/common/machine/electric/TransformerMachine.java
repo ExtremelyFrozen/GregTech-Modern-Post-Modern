@@ -111,8 +111,8 @@ public class TransformerMachine extends TieredEnergyMachine implements IControll
         if (!isRemote()) {
             setTransformUp(!isTransformUp());
             context.getPlayer().sendSystemMessage(Component.translatable(
-                    isTransformUp() ? "gtceu.machine.transformer.message_transform_up" :
-                            "gtceu.machine.transformer.message_transform_down",
+                    isTransformUp() ? "gtpm.machine.transformer.message_transform_up" :
+                            "gtpm.machine.transformer.message_transform_down",
                     energyContainer.getInputVoltage(), energyContainer.getInputAmperage(),
                     energyContainer.getOutputVoltage(), energyContainer.getOutputAmperage()));
         }

@@ -1,0 +1,16 @@
+{
+    "values": [
+        "gtpm:face_mask",
+        "gtpm:rubber_gloves",
+        "gtpm:hazmat_chestpiece",
+        "gtpm:hazmat_leggings",
+        "gtpm:hazmat_boots",
+        "gtpm:hazmat_headpiece",
+        "gtpm:quarktech_chestplate",
+        "gtpm:quarktech_leggings",
+        "gtpm:quarktech_boots",
+        "gtpm:quarktech_helmet",
+        "gtpm:advanced_nanomuscle_chestplate",
+        "gtpm:advanced_quarktech_chestplate"
+    ]
+}

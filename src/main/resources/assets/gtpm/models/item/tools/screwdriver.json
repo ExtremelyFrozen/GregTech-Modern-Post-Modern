@@ -1,0 +1,7 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/tools/handle_screwdriver",
+		"layer1": "gtpm:item/tools/screwdriver"
+	}
+}

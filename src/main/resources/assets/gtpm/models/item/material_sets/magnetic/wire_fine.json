@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/wire_fine",
+	"textures": {
+		"layer2": "gtpm:item/material_sets/magnetic/wire_fine_overlay"
+	}
+}

@@ -9,7 +9,7 @@ import dan200.computercraft.api.peripheral.GenericPeripheral;
 public class EnergyInfoPeripheral implements GenericPeripheral {
 
     public String id() {
-        return "gtceu:energy_info";
+        return "gtpm:energy_info";
     }
 
     @LuaFunction

@@ -1,0 +1,7 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/dull/rod_long",
+		"layer1": "gtpm:item/material_sets/dull/rod_long_secondary"
+	}
+}

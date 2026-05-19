@@ -58,15 +58,15 @@ public abstract class RecipeCondition<T extends RecipeCondition<T>> {
     public abstract RecipeConditionType<T> getType();
 
     public String getTranslationKey() {
-        return "gtceu.recipe.condition." + getType();
+        return "gtpm.recipe.condition." + getType();
     }
 
     public IGuiTexture getInValidTexture() {
-        return new ResourceTexture("gtceu:textures/gui/condition/" + getType() + ".png").getSubTexture(0, 0, 1, 0.5f);
+        return new ResourceTexture("gtpm:textures/gui/condition/" + getType() + ".png").getSubTexture(0, 0, 1, 0.5f);
     }
 
     public IGuiTexture getValidTexture() {
-        return new ResourceTexture("gtceu:textures/gui/condition/" + getType() + ".png").getSubTexture(0, 0.5f, 1,
+        return new ResourceTexture("gtpm:textures/gui/condition/" + getType() + ".png").getSubTexture(0, 0.5f, 1,
                 0.5f);
     }
 

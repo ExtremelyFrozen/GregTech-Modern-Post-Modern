@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/turret_hazard_sign_block"
+        }
+    }
+}

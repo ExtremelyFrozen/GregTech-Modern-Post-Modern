@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/slab",
+    "textures": {
+        "bottom": "gtpm:block/treated_wood_planks",
+        "side": "gtpm:block/treated_wood_planks",
+        "top": "gtpm:block/treated_wood_planks"
+    }
+}

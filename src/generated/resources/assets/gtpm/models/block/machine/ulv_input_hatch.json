@@ -1,0 +1,60 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:ulv_input_hatch",
+    "replaceable_textures": [
+        "bottom",
+        "top",
+        "side"
+    ],
+    "variants": {
+        "is_formed=false,is_painted=false": {
+            "model": {
+                "parent": "gtpm:block/machine/template/part/hatch_machine_emissive",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/ulv/bottom",
+                    "overlay": "gtpm:block/overlay/machine/overlay_fluid_hatch_input",
+                    "overlay_emissive": "gtpm:block/overlay/machine/overlay_pipe_in_emissive",
+                    "side": "gtpm:block/casings/voltage/ulv/side",
+                    "top": "gtpm:block/casings/voltage/ulv/top"
+                }
+            }
+        },
+        "is_formed=false,is_painted=true": {
+            "model": {
+                "parent": "gtpm:block/machine/template/part/hatch_machine_emissive_color_ring",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/ulv/bottom",
+                    "overlay": "gtpm:block/overlay/machine/overlay_fluid_hatch_input",
+                    "overlay_emissive": "gtpm:block/overlay/machine/overlay_pipe_in_emissive",
+                    "side": "gtpm:block/casings/voltage/ulv/side",
+                    "top": "gtpm:block/casings/voltage/ulv/top"
+                }
+            }
+        },
+        "is_formed=true,is_painted=false": {
+            "model": {
+                "parent": "gtpm:block/machine/template/part/hatch_machine_emissive",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/ulv/bottom",
+                    "overlay": "gtpm:block/overlay/machine/overlay_fluid_hatch_input",
+                    "overlay_emissive": "gtpm:block/overlay/machine/overlay_pipe_in_emissive",
+                    "side": "gtpm:block/casings/voltage/ulv/side",
+                    "top": "gtpm:block/casings/voltage/ulv/top"
+                }
+            }
+        },
+        "is_formed=true,is_painted=true": {
+            "model": {
+                "parent": "gtpm:block/machine/template/part/hatch_machine_emissive_color_ring",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/ulv/bottom",
+                    "overlay": "gtpm:block/overlay/machine/overlay_fluid_hatch_input",
+                    "overlay_emissive": "gtpm:block/overlay/machine/overlay_pipe_in_emissive",
+                    "side": "gtpm:block/casings/voltage/ulv/side",
+                    "top": "gtpm:block/casings/voltage/ulv/top"
+                }
+            }
+        }
+    }
+}

@@ -146,7 +146,7 @@ public class TorchPlaceBehavior implements IToolBehavior<TorchPlaceBehavior> {
     @Override
     public void addInformation(@NotNull ItemStack stack, Item.TooltipContext Level, @NotNull List<Component> tooltip,
                                @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.gtceu.tool.behavior.torch_place"));
+        tooltip.add(Component.translatable("item.gtpm.tool.behavior.torch_place"));
     }
 
     @Override

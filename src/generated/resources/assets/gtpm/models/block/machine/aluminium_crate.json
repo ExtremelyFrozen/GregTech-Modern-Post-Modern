@@ -1,0 +1,13 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:aluminium_crate",
+    "variants": {
+        "taped=false": {
+            "model": "gtpm:block/machine/template/crate/metal_crate"
+        },
+        "taped=true": {
+            "model": "gtpm:block/machine/template/crate/metal_crate_taped"
+        }
+    }
+}

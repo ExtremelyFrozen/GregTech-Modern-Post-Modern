@@ -84,23 +84,23 @@ public class SimplePredicate {
             result.addAll(toolTips);
         }
         if (minCount == maxCount && maxCount != -1) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.error.limited_exact", minCount));
+            result.add(Component.translatable("gtpm.multiblock.pattern.error.limited_exact", minCount));
         } else if (minCount != maxCount && minCount != -1 && maxCount != -1) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.error.limited_within", minCount, maxCount));
+            result.add(Component.translatable("gtpm.multiblock.pattern.error.limited_within", minCount, maxCount));
         } else {
             if (minCount != -1) {
-                result.add(LangHandler.getFromMultiLang("gtceu.multiblock.pattern.error.limited", 1, minCount));
+                result.add(LangHandler.getFromMultiLang("gtpm.multiblock.pattern.error.limited", 1, minCount));
             }
             if (maxCount != -1) {
-                result.add(LangHandler.getFromMultiLang("gtceu.multiblock.pattern.error.limited", 0, maxCount));
+                result.add(LangHandler.getFromMultiLang("gtpm.multiblock.pattern.error.limited", 0, maxCount));
             }
         }
         if (predicates == null) return result;
         if (predicates.isSingle()) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.single"));
+            result.add(Component.translatable("gtpm.multiblock.pattern.single"));
         }
         if (predicates.hasAir()) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.replaceable_air"));
+            result.add(Component.translatable("gtpm.multiblock.pattern.replaceable_air"));
         }
         return result;
     }

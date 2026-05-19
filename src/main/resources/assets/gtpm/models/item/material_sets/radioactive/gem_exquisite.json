@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/gem_exquisite",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/gem_exquisite_secondary"
+	}
+}

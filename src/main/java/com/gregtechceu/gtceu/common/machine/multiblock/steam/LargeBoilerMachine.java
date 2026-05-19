@@ -205,18 +205,18 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
     public void addDisplayText(List<Component> textList) {
         IDisplayUIMachine.super.addDisplayText(textList);
         if (isFormed()) {
-            textList.add(Component.translatable("gtceu.multiblock.large_boiler.temperature",
+            textList.add(Component.translatable("gtpm.multiblock.large_boiler.temperature",
                     currentTemperature + 274, maxTemperature + 274));
-            textList.add(Component.translatable("gtceu.multiblock.large_boiler.steam_output",
+            textList.add(Component.translatable("gtpm.multiblock.large_boiler.steam_output",
                     steamGenerated / TICKS_PER_STEAM_GENERATION));
 
-            var throttleText = Component.translatable("gtceu.multiblock.large_boiler.throttle",
+            var throttleText = Component.translatable("gtpm.multiblock.large_boiler.throttle",
                     ChatFormatting.AQUA.toString() + getThrottle() + "%")
                     .withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            Component.translatable("gtceu.multiblock.large_boiler.throttle.tooltip"))));
+                            Component.translatable("gtpm.multiblock.large_boiler.throttle.tooltip"))));
             textList.add(throttleText);
 
-            var buttonText = Component.translatable("gtceu.multiblock.large_boiler.throttle_modify");
+            var buttonText = Component.translatable("gtpm.multiblock.large_boiler.throttle_modify");
             buttonText.append(" ");
             buttonText.append(ComponentPanelWidget.withButton(Component.literal("[-]"), "sub"));
             buttonText.append(" ");

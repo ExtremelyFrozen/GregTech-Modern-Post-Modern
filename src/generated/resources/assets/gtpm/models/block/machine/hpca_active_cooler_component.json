@@ -1,0 +1,79 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:hpca_active_cooler_component",
+    "variants": {
+        "active=false,hpca_part_damaged=false,is_formed=false": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/active_cooler",
+                    "overlay_emissive": "gtpm:block/void"
+                }
+            }
+        },
+        "active=false,hpca_part_damaged=false,is_formed=true": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/active_cooler",
+                    "overlay_emissive": "gtpm:block/void"
+                }
+            }
+        },
+        "active=false,hpca_part_damaged=true,is_formed=false": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/damaged_advanced",
+                    "overlay_emissive": "gtpm:block/void"
+                }
+            }
+        },
+        "active=false,hpca_part_damaged=true,is_formed=true": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/damaged_advanced",
+                    "overlay_emissive": "gtpm:block/void"
+                }
+            }
+        },
+        "active=true,hpca_part_damaged=false,is_formed=false": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/active_cooler_active",
+                    "overlay_emissive": "gtpm:block/overlay/machine/hpca/active_cooler_active_emissive"
+                }
+            }
+        },
+        "active=true,hpca_part_damaged=false,is_formed=true": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/active_cooler_active",
+                    "overlay_emissive": "gtpm:block/overlay/machine/hpca/active_cooler_active_emissive"
+                }
+            }
+        },
+        "active=true,hpca_part_damaged=true,is_formed=false": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/damaged_advanced_active",
+                    "overlay_emissive": "gtpm:block/overlay/machine/hpca/damaged_advanced_active_emissive"
+                }
+            }
+        },
+        "active=true,hpca_part_damaged=true,is_formed=true": {
+            "model": {
+                "parent": "gtpm:block/hpca_active_cooler_component_base",
+                "textures": {
+                    "overlay": "gtpm:block/overlay/machine/hpca/damaged_advanced_active",
+                    "overlay_emissive": "gtpm:block/overlay/machine/hpca/damaged_advanced_active_emissive"
+                }
+            }
+        }
+    }
+}

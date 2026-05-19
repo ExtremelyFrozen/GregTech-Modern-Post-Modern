@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/stainless_steel_turbine_casing"
+        }
+    }
+}

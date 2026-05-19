@@ -484,19 +484,19 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                     // spotless:off
                     if (this.of(content.content).getContainedCustom() instanceof IntProviderIngredient ingredient) {
                         IntProvider countProvider = ingredient.getCountProvider();
-                        tooltips.add(Component.translatable("gtceu.gui.content.count_range",
+                        tooltips.add(Component.translatable("gtpm.gui.content.count_range",
                                         countProvider.getMinValue(), countProvider.getMaxValue())
                                 .withStyle(ChatFormatting.GOLD));
                     } else if (this.of(content.content) instanceof SizedIngredient sizedIngredient &&
                             sizedIngredient.getContainedCustom() instanceof IntProviderIngredient ingredient) {
                         IntProvider countProvider = ingredient.getCountProvider();
-                        tooltips.add(Component.translatable("gtceu.gui.content.count_range",
+                        tooltips.add(Component.translatable("gtpm.gui.content.count_range",
                                         countProvider.getMinValue(), countProvider.getMaxValue())
                                 .withStyle(ChatFormatting.GOLD));
                     }
                     // spotless:on
                     if (isTickSlot(index, io, recipe)) {
-                        tooltips.add(Component.translatable("gtceu.gui.content.per_tick"));
+                        tooltips.add(Component.translatable("gtpm.gui.content.per_tick"));
                     }
                 });
                 if (io == IO.IN && (content.chance == 0 ||

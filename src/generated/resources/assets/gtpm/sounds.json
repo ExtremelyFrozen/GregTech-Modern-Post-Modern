@@ -1,0 +1,353 @@
+{
+    "arc": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:arc"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.arc"
+    },
+    "assembler": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:assembler"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.assembler"
+    },
+    "bath": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:bath"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.bath"
+    },
+    "boiler": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:boiler"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.boiler"
+    },
+    "centrifuge": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:centrifuge"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.centrifuge"
+    },
+    "chainsaw": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:chainsaw"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.chainsaw"
+    },
+    "chemical": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:chemical"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.chemical"
+    },
+    "combustion": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:combustion"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.combustion"
+    },
+    "compressor": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:compressor"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.compressor"
+    },
+    "computation": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:computation"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.computation"
+    },
+    "cooling": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:cooling"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.cooling"
+    },
+    "cut": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:cut"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.cut"
+    },
+    "drill": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:drill"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.drill"
+    },
+    "electrolyzer": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:electrolyzer"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.electrolyzer"
+    },
+    "file": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:file"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.file"
+    },
+    "fire": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:fire"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.fire"
+    },
+    "forge_hammer": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:forge_hammer"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.forge_hammer"
+    },
+    "furnace": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:furnace"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.furnace"
+    },
+    "jet_engine": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:jet_engine"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.jet_engine"
+    },
+    "macerator": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:macerator"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.macerator"
+    },
+    "metal_pipe": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:metal_pipe"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.metal_pipe"
+    },
+    "miner": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:miner"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.miner"
+    },
+    "mixer": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:mixer"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.mixer"
+    },
+    "mortar": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:mortar"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.mortar"
+    },
+    "motor": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:motor"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.motor"
+    },
+    "plunger": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:plunger"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.plunger"
+    },
+    "portable_scanner": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:portable_scanner"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.portable_scanner"
+    },
+    "portal_closing": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:portal_closing"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.portal_closing"
+    },
+    "portal_opening": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:portal_opening"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.portal_opening"
+    },
+    "replicator": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:replicator"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.replicator"
+    },
+    "saw": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:saw"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.saw"
+    },
+    "science": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:science"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.science"
+    },
+    "screwdriver": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:screwdriver"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.screwdriver"
+    },
+    "soft_hammer": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:soft_hammer"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.soft_hammer"
+    },
+    "spray_can": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:spray_can"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.spray_can"
+    },
+    "sus": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:sus"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.sus"
+    },
+    "turbine": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:turbine"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.turbine"
+    },
+    "wirecutter": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:wirecutter"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.wirecutter"
+    },
+    "wrench": {
+        "sounds": [
+            {
+                "type": "file",
+                "name": "gtpm:wrench"
+            }
+        ],
+        "subtitle": "gtpm.subtitle.wrench"
+    }
+}

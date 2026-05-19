@@ -53,13 +53,13 @@ public class CombinedDirectionalFancyConfigurator implements IFancyUIProvider {
 
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.gui.directional_setting.title");
+        return Component.translatable("gtpm.gui.directional_setting.title");
     }
 
     @Override
     public List<Component> getTabTooltips() {
         List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.translatable("gtceu.gui.directional_setting.tab_tooltip"));
+        tooltip.add(Component.translatable("gtpm.gui.directional_setting.tab_tooltip"));
         return tooltip;
     }
 

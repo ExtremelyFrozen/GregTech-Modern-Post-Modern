@@ -47,17 +47,17 @@ public class AEConfigSlotWidget extends Widget {
         if (slot.getConfig() == null) {
             if (mouseOverConfig(mouseX, mouseY)) {
                 List<Component> hoverStringList = new ArrayList<>();
-                hoverStringList.add(Component.translatable("gtceu.gui.config_slot"));
+                hoverStringList.add(Component.translatable("gtpm.gui.config_slot"));
                 if (parentWidget.isAutoPull()) {
-                    hoverStringList.add(Component.translatable("gtceu.gui.config_slot.auto_pull_managed"));
+                    hoverStringList.add(Component.translatable("gtpm.gui.config_slot.auto_pull_managed"));
                 } else {
                     if (!parentWidget.isStocking()) {
-                        hoverStringList.add(Component.translatable("gtceu.gui.config_slot.set"));
-                        hoverStringList.add(Component.translatable("gtceu.gui.config_slot.scroll"));
+                        hoverStringList.add(Component.translatable("gtpm.gui.config_slot.set"));
+                        hoverStringList.add(Component.translatable("gtpm.gui.config_slot.scroll"));
                     } else {
-                        hoverStringList.add(Component.translatable("gtceu.gui.config_slot.set_only"));
+                        hoverStringList.add(Component.translatable("gtpm.gui.config_slot.set_only"));
                     }
-                    hoverStringList.add(Component.translatable("gtceu.gui.config_slot.remove"));
+                    hoverStringList.add(Component.translatable("gtpm.gui.config_slot.remove"));
                 }
                 graphics.renderTooltip(Minecraft.getInstance().font, hoverStringList, Optional.empty(), mouseX, mouseY);
             }

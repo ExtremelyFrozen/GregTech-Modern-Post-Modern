@@ -1,0 +1,5 @@
+{
+	"ldlib": {
+		"connection": "gtpm:block/overlay/machine/overlay_monitor_ctm"
+	}
+}

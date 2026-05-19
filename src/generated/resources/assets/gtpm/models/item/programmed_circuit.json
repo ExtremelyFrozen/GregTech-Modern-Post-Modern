@@ -1,0 +1,206 @@
+{
+    "parent": "minecraft:item/generated",
+    "overrides": [
+        {
+            "model": "gtpm:item/programmed_circuit/0",
+            "predicate": {
+                "gtpm:circuit": 0.0
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/1",
+            "predicate": {
+                "gtpm:circuit": 0.01
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/2",
+            "predicate": {
+                "gtpm:circuit": 0.02
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/3",
+            "predicate": {
+                "gtpm:circuit": 0.03
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/4",
+            "predicate": {
+                "gtpm:circuit": 0.04
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/5",
+            "predicate": {
+                "gtpm:circuit": 0.05
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/6",
+            "predicate": {
+                "gtpm:circuit": 0.06
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/7",
+            "predicate": {
+                "gtpm:circuit": 0.07
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/8",
+            "predicate": {
+                "gtpm:circuit": 0.08
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/9",
+            "predicate": {
+                "gtpm:circuit": 0.09
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/10",
+            "predicate": {
+                "gtpm:circuit": 0.1
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/11",
+            "predicate": {
+                "gtpm:circuit": 0.11
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/12",
+            "predicate": {
+                "gtpm:circuit": 0.12
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/13",
+            "predicate": {
+                "gtpm:circuit": 0.13
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/14",
+            "predicate": {
+                "gtpm:circuit": 0.14
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/15",
+            "predicate": {
+                "gtpm:circuit": 0.15
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/16",
+            "predicate": {
+                "gtpm:circuit": 0.16
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/17",
+            "predicate": {
+                "gtpm:circuit": 0.17
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/18",
+            "predicate": {
+                "gtpm:circuit": 0.18
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/19",
+            "predicate": {
+                "gtpm:circuit": 0.19
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/20",
+            "predicate": {
+                "gtpm:circuit": 0.2
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/21",
+            "predicate": {
+                "gtpm:circuit": 0.21
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/22",
+            "predicate": {
+                "gtpm:circuit": 0.22
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/23",
+            "predicate": {
+                "gtpm:circuit": 0.23
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/24",
+            "predicate": {
+                "gtpm:circuit": 0.24
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/25",
+            "predicate": {
+                "gtpm:circuit": 0.25
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/26",
+            "predicate": {
+                "gtpm:circuit": 0.26
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/27",
+            "predicate": {
+                "gtpm:circuit": 0.27
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/28",
+            "predicate": {
+                "gtpm:circuit": 0.28
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/29",
+            "predicate": {
+                "gtpm:circuit": 0.29
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/30",
+            "predicate": {
+                "gtpm:circuit": 0.3
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/31",
+            "predicate": {
+                "gtpm:circuit": 0.31
+            }
+        },
+        {
+            "model": "gtpm:item/programmed_circuit/32",
+            "predicate": {
+                "gtpm:circuit": 0.32
+            }
+        }
+    ],
+    "textures": {
+        "layer0": "gtpm:item/programmed_circuit/1"
+    }
+}

@@ -9,7 +9,7 @@ import dan200.computercraft.api.peripheral.GenericPeripheral;
 public class TurbineMachinePeripheral implements GenericPeripheral {
 
     public String id() {
-        return "gtceu:large_turbine";
+        return "gtpm:large_turbine";
     }
 
     @LuaFunction

@@ -23,7 +23,7 @@ public class GTMixinPlugin implements IMixinConfigPlugin {
         return null;
     }
 
-    private static final String MIXIN_PACKAGE = "com.gregtechceu.gtceu.core.mixins.";
+    private static final String MIXIN_PACKAGE = "com.gregtechceu.gtpm.core.mixins.";
     private static final Map<String, String> MOD_COMPAT_MIXINS = new HashMap<>();
 
     private static final String DEV_PACKAGE = MIXIN_PACKAGE + "dev.";

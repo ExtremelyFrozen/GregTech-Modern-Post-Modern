@@ -67,6 +67,6 @@ public class GTOreProcessingInfoCategory extends ModularUIRecipeCategory<Materia
     @NotNull
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.jei.ore_processing_diagram");
+        return Component.translatable("gtpm.jei.ore_processing_diagram");
     }
 }

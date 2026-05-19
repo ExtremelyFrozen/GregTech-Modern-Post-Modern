@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:block/cube/tinted/all",
+	"textures": {
+		"all": "gtpm:block/storage/crates/metal_crate"
+	}
+}

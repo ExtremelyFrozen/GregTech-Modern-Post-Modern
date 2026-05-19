@@ -1,0 +1,32 @@
+{
+    "values": [
+        "gtpm:lv_sensor",
+        "gtpm:mv_sensor",
+        "gtpm:hv_sensor",
+        "gtpm:ev_sensor",
+        "gtpm:iv_sensor",
+        "gtpm:luv_sensor",
+        "gtpm:zpm_sensor",
+        "gtpm:uv_sensor",
+        {
+            "id": "gtpm:uhv_sensor",
+            "required": false
+        },
+        {
+            "id": "gtpm:uev_sensor",
+            "required": false
+        },
+        {
+            "id": "gtpm:uiv_sensor",
+            "required": false
+        },
+        {
+            "id": "gtpm:uxv_sensor",
+            "required": false
+        },
+        {
+            "id": "gtpm:opv_sensor",
+            "required": false
+        }
+    ]
+}

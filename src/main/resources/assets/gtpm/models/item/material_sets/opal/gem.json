@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/ruby/gem",
+	"textures": {
+		"layer2": "gtpm:item/material_sets/ruby/gem_overlay"
+	}
+}

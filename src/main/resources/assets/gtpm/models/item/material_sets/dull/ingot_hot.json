@@ -1,0 +1,9 @@
+{
+	"parent": "gtpm:item/material_sets/dull/ingot",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/dull/ingot",
+		"layer1": "gtpm:item/material_sets/dull/ingot_secondary",
+		"layer2": "gtpm:item/material_sets/dull/ingot_overlay",
+		"layer3": "gtpm:item/material_sets/dull/ingot_hot_overlay"
+	}
+}

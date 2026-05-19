@@ -1,0 +1,8 @@
+{
+    "values": [
+        "gtpm:micro_processor_mainframe",
+        "gtpm:nano_processor_computer",
+        "gtpm:quantum_processor_assembly",
+        "gtpm:crystal_processor"
+    ]
+}

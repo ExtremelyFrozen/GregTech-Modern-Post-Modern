@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/dull/rotor",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/rotor_secondary"
+	}
+}

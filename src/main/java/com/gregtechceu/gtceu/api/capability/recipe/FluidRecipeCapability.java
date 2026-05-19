@@ -407,7 +407,7 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                     }
                     if (ingredient.ingredient() instanceof IntProviderFluidIngredient provider) {
                         IntProvider countProvider = provider.getCountProvider();
-                        tooltips.add(Component.translatable("gtceu.gui.content.fluid_range",
+                        tooltips.add(Component.translatable("gtpm.gui.content.fluid_range",
                                 countProvider.getMinValue(), countProvider.getMaxValue())
                                 .withStyle(ChatFormatting.GOLD));
                     }
@@ -415,7 +415,7 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                             recipe.getChanceLogicForCapability(this, io, isTickSlot(index, io, recipe)),
                             tooltips, recipeTier, chanceTier, recipeType.getChanceFunction());
                     if (isTickSlot(index, io, recipe)) {
-                        tooltips.add(Component.translatable("gtceu.gui.content.per_tick"));
+                        tooltips.add(Component.translatable("gtpm.gui.content.per_tick"));
                     }
                 });
                 if (io == IO.IN && (content.chance == 0)) {

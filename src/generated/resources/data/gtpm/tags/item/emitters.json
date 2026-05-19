@@ -1,0 +1,32 @@
+{
+    "values": [
+        "gtpm:lv_emitter",
+        "gtpm:mv_emitter",
+        "gtpm:hv_emitter",
+        "gtpm:ev_emitter",
+        "gtpm:iv_emitter",
+        "gtpm:luv_emitter",
+        "gtpm:zpm_emitter",
+        "gtpm:uv_emitter",
+        {
+            "id": "gtpm:uhv_emitter",
+            "required": false
+        },
+        {
+            "id": "gtpm:uev_emitter",
+            "required": false
+        },
+        {
+            "id": "gtpm:uiv_emitter",
+            "required": false
+        },
+        {
+            "id": "gtpm:uxv_emitter",
+            "required": false
+        },
+        {
+            "id": "gtpm:opv_emitter",
+            "required": false
+        }
+    ]
+}

@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/sterilizing_filter_casing"
+        }
+    }
+}

@@ -75,7 +75,7 @@ public abstract class ResearchRecipeBuilder<T extends ResearchRecipeBuilder<T>> 
             dataStack = dataStack.copy();
             dataStack.setCount(1);
         } else {
-            throw new IllegalArgumentException("Data ItemStack must have the gtceu:data_item component");
+            throw new IllegalArgumentException("Data ItemStack must have the gtpm:data_item component");
         }
     }
 

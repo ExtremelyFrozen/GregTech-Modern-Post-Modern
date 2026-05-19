@@ -32,7 +32,7 @@ public class JourneymapEventListener {
         var display = event.getThemeButtonDisplay();
         var buttons = new ArrayList<IThemeButton>(ButtonState.getAllButtons().size());
         for (var state : ButtonState.getAllButtons()) {
-            buttons.add(display.addThemeToggleButton("gtceu.button." + state.name,
+            buttons.add(display.addThemeToggleButton("gtpm.button." + state.name,
                     GTCEu.id("textures/gui/widget/button_" + state.name + ".png"),
                     state.enabled,
                     b -> {
@@ -56,7 +56,7 @@ public class JourneymapEventListener {
         var buttons = new IThemeButton[allButtons.size()];
         for (int i = 0; i < allButtons.size(); i++) {
             var state = allButtons.get(i);
-            buttons[i] = builder.getThemeToggleButton("gtceu.button." + state.name,
+            buttons[i] = builder.getThemeToggleButton("gtpm.button." + state.name,
                     GTCEu.id("textures/gui/widget/button_" + state.name + ".png"),
                     b -> {
                         ButtonState.toggleButton(state);

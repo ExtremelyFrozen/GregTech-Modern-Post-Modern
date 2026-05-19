@@ -28,7 +28,7 @@ public class TagUtil {
     /**
      * Creates a tag under the {@code gtceu} namespace
      *
-     * @return {@code #gtceu:path}
+     * @return {@code #gtpm:path}
      */
     public static <T> TagKey<T> createModTag(ResourceKey<? extends Registry<T>> registryKey, String path) {
         return TagKey.create(registryKey, GTCEu.id(path));
@@ -56,7 +56,7 @@ public class TagUtil {
     /**
      * Creates a block tag under the {@code gtceu} namespace
      *
-     * @return Block tag {@code #gtceu:path}
+     * @return Block tag {@code #gtpm:path}
      */
     public static TagKey<Block> createModBlockTag(String path) {
         return createModTag(Registries.BLOCK, path);
@@ -84,7 +84,7 @@ public class TagUtil {
     /**
      * Creates an item tag under the {@code gtceu} namespace
      *
-     * @return Item tag {@code #gtceu:path}
+     * @return Item tag {@code #gtpm:path}
      */
     public static TagKey<Item> createModItemTag(String path) {
         return createModTag(Registries.ITEM, path);
@@ -102,7 +102,7 @@ public class TagUtil {
     /**
      * Generates fluid tag under GTM namespace
      *
-     * @return Fluid tag #gtceu:path
+     * @return Fluid tag #gtpm:path
      */
     public static TagKey<Fluid> createModFluidTag(String path) {
         return createModTag(Registries.FLUID, path);

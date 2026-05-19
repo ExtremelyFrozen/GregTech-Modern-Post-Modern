@@ -92,9 +92,9 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
         WidgetGroup group = new WidgetGroup(0, 0, 170, 65);
         // ME Network status
         group.addWidget(new LabelWidget(5, 0, () -> this.isOnline ?
-                "gtceu.gui.me_network.online" :
-                "gtceu.gui.me_network.offline"));
-        group.addWidget(new LabelWidget(5, 10, "gtceu.gui.waiting_list"));
+                "gtpm.gui.me_network.online" :
+                "gtpm.gui.me_network.offline"));
+        group.addWidget(new LabelWidget(5, 10, "gtpm.gui.waiting_list"));
         // display list
         group.addWidget(new AEListGridWidget.Fluid(5, 20, 3, this.internalBuffer));
 

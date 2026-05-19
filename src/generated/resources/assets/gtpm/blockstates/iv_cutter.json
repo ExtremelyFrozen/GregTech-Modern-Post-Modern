@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=east": {
+            "model": "gtpm:block/machine/iv_cutter",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/iv_cutter"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/iv_cutter",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/iv_cutter",
+            "y": 270
+        }
+    }
+}

@@ -28,7 +28,7 @@ public class HazardCleanerBlockProvider extends MachineTraitProvider<Environment
                               BlockEntity blockEntity, IPluginConfig config) {
         float cleaned = capData.getFloat("Cleaned");
         if (cleaned > 0) {
-            tooltip.add(Component.translatable("gtceu.jade.cleaned_this_second", cleaned));
+            tooltip.add(Component.translatable("gtpm.jade.cleaned_this_second", cleaned));
         }
     }
 }

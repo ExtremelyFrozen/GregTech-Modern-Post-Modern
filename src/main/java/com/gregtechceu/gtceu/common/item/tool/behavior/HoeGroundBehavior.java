@@ -111,7 +111,7 @@ public class HoeGroundBehavior implements IToolBehavior<HoeGroundBehavior> {
     @Override
     public void addInformation(@NotNull ItemStack stack, Item.TooltipContext context, @NotNull List<Component> tooltip,
                                @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.gtceu.tool.behavior.ground_tilling"));
+        tooltip.add(Component.translatable("item.gtpm.tool.behavior.ground_tilling"));
     }
 
     @Override

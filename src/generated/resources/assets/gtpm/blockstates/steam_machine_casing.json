@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/steam_machine_casing"
+        }
+    }
+}

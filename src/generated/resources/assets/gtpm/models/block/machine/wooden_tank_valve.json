@@ -1,0 +1,56 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:wooden_tank_valve",
+    "texture_overrides": {
+        "bottom": "gtpm:block/casings/wood_wall/bottom",
+        "side": "gtpm:block/casings/wood_wall/side",
+        "top": "gtpm:block/casings/wood_wall/top"
+    },
+    "variants": {
+        "recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/sided",
+                "textures": {
+                    "bottom": "gtpm:block/casings/wood_wall/bottom",
+                    "overlay_front": "gtpm:block/multiblock/tank_valve/overlay_front",
+                    "side": "gtpm:block/casings/wood_wall/side",
+                    "top": "gtpm:block/casings/wood_wall/top"
+                }
+            }
+        },
+        "recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/sided",
+                "textures": {
+                    "bottom": "gtpm:block/casings/wood_wall/bottom",
+                    "overlay_front": "gtpm:block/multiblock/tank_valve/overlay_front",
+                    "side": "gtpm:block/casings/wood_wall/side",
+                    "top": "gtpm:block/casings/wood_wall/top"
+                }
+            }
+        },
+        "recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/sided",
+                "textures": {
+                    "bottom": "gtpm:block/casings/wood_wall/bottom",
+                    "overlay_front": "gtpm:block/multiblock/tank_valve/overlay_front_active",
+                    "side": "gtpm:block/casings/wood_wall/side",
+                    "top": "gtpm:block/casings/wood_wall/top"
+                }
+            }
+        },
+        "recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/machine/template/sided/sided",
+                "textures": {
+                    "bottom": "gtpm:block/casings/wood_wall/bottom",
+                    "overlay_front": "gtpm:block/multiblock/tank_valve/overlay_front_active",
+                    "side": "gtpm:block/casings/wood_wall/side",
+                    "top": "gtpm:block/casings/wood_wall/top"
+                }
+            }
+        }
+    }
+}

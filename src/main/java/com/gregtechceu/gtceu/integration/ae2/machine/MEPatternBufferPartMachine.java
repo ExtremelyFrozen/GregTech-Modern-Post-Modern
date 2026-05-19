@@ -276,20 +276,20 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
         configuratorPanel.attachConfigurators(new ButtonConfigurator(
                 new GuiTextureGroup(GuiTextures.BUTTON, GuiTextures.REFUND_OVERLAY), this::refundAll)
-                .setTooltips(List.of(Component.translatable("gui.gtceu.refund_all.desc"))));
+                .setTooltips(List.of(Component.translatable("gui.gtpm.refund_all.desc"))));
         if (isHasCircuitSlot() && isCircuitSlotEnabled()) {
             configuratorPanel.attachConfigurators(new CircuitFancyConfigurator(circuitInventory.storage));
         }
         configuratorPanel.attachConfigurators(new FancyInvConfigurator(
-                shareInventory.storage, Component.translatable("gui.gtceu.share_inventory.title"))
+                shareInventory.storage, Component.translatable("gui.gtpm.share_inventory.title"))
                 .setTooltips(List.of(
-                        Component.translatable("gui.gtceu.share_inventory.desc.0"),
-                        Component.translatable("gui.gtceu.share_inventory.desc.1"))));
+                        Component.translatable("gui.gtpm.share_inventory.desc.0"),
+                        Component.translatable("gui.gtpm.share_inventory.desc.1"))));
         configuratorPanel.attachConfigurators(new FancyTankConfigurator(
-                shareTank.getStorages(), Component.translatable("gui.gtceu.share_tank.title"))
+                shareTank.getStorages(), Component.translatable("gui.gtpm.share_tank.title"))
                 .setTooltips(List.of(
-                        Component.translatable("gui.gtceu.share_tank.desc.0"),
-                        Component.translatable("gui.gtceu.share_inventory.desc.1"))));
+                        Component.translatable("gui.gtpm.share_tank.desc.0"),
+                        Component.translatable("gui.gtpm.share_inventory.desc.1"))));
     }
 
     @Override
@@ -321,12 +321,12 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
         group.addWidget(new LabelWidget(
                 8,
                 2,
-                () -> this.isOnline ? "gtceu.gui.me_network.online" : "gtceu.gui.me_network.offline"));
+                () -> this.isOnline ? "gtpm.gui.me_network.online" : "gtpm.gui.me_network.offline"));
 
         group.addWidget(new AETextInputButtonWidget(18 * rowSize + 8 - 70, 2, 70, 10)
                 .setText(customName)
                 .setOnConfirm(this::setCustomName)
-                .setButtonTooltips(Component.translatable("gui.gtceu.rename.desc")));
+                .setButtonTooltips(Component.translatable("gui.gtpm.rename.desc")));
 
         return group;
     }

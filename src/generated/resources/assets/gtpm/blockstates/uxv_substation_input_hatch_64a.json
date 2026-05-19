@@ -1,0 +1,28 @@
+{
+    "variants": {
+        "facing=down": {
+            "model": "gtpm:block/machine/uxv_substation_input_hatch_64a",
+            "x": 90
+        },
+        "facing=east": {
+            "model": "gtpm:block/machine/uxv_substation_input_hatch_64a",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/uxv_substation_input_hatch_64a"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/uxv_substation_input_hatch_64a",
+            "y": 180
+        },
+        "facing=up": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/uxv_substation_input_hatch_64a",
+            "x": 270
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/uxv_substation_input_hatch_64a",
+            "y": 270
+        }
+    }
+}

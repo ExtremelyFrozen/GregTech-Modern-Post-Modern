@@ -1,0 +1,95 @@
+{
+    "parent": "minecraft:block/block",
+    "dynamic_renders": [
+        {
+            "type": "gtpm:fusion_ring"
+        }
+    ],
+    "loader": "gtpm:machine",
+    "machine": "gtpm:luv_fusion_reactor",
+    "texture_overrides": {
+        "all": "gtpm:block/casings/fusion/fusion_casing"
+    },
+    "variants": {
+        "is_formed=false,recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_emissive"
+                }
+            }
+        },
+        "is_formed=false,recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_emissive"
+                }
+            }
+        },
+        "is_formed=false,recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_active_emissive"
+                }
+            }
+        },
+        "is_formed=false,recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_active_emissive"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_emissive"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_emissive"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_active_emissive"
+                }
+            }
+        },
+        "is_formed=true,recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/machine/template/cube_all/sided",
+                "textures": {
+                    "all": "gtpm:block/casings/fusion/fusion_casing",
+                    "overlay_front": "gtpm:block/multiblock/fusion_reactor/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/multiblock/fusion_reactor/overlay_front_active_emissive"
+                }
+            }
+        }
+    }
+}

@@ -41,9 +41,9 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
         ItemStack held = holder.getHeld();
         final AoESymmetrical.Mutable definition = getAoEDefinition(held).toMutable();
         return new ModularUI(120, 80, holder, player).background(GuiTextures.BACKGROUND)
-                .widget(new LabelWidget(6, 10, "item.gtceu.tool.aoe.columns"))
-                .widget(new LabelWidget(49, 10, "item.gtceu.tool.aoe.rows"))
-                .widget(new LabelWidget(79, 10, "item.gtceu.tool.aoe.layers"))
+                .widget(new LabelWidget(6, 10, "item.gtpm.tool.aoe.columns"))
+                .widget(new LabelWidget(49, 10, "item.gtpm.tool.aoe.rows"))
+                .widget(new LabelWidget(79, 10, "item.gtpm.tool.aoe.layers"))
                 .widget(new ButtonWidget(15, 24, 20, 20, new TextTexture("+"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.increaseColumn().toImmutable());
                     holder.markAsDirty();

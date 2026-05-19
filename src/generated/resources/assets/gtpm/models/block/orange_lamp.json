@@ -1,0 +1,7 @@
+{
+    "parent": "gtpm:block/lamp",
+    "textures": {
+        "active": "gtpm:block/lamps/orange",
+        "active_overlay": "gtpm:block/lamps/orange"
+    }
+}

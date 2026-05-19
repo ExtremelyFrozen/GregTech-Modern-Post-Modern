@@ -50,6 +50,6 @@ public class PatternError {
             }
         }
         builder.append("...");
-        return Component.translatable("gtceu.multiblock.pattern.error", builder.toString(), worldState.getPos());
+        return Component.translatable("gtpm.multiblock.pattern.error", builder.toString(), worldState.getPos());
     }
 }

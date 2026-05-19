@@ -1,6 +1,6 @@
 {
     "values": [
-        "gtceu:pump_deck",
-        "#gtceu:mineable/pickaxe_or_wrench"
+        "gtpm:pump_deck",
+        "#gtpm:mineable/pickaxe_or_wrench"
     ]
 }

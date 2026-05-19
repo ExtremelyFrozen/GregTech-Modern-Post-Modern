@@ -1,7 +1,7 @@
 {
     "values": [
-        "gtceu:nanomuscle_leggings",
-        "gtceu:hazmat_leggings",
-        "gtceu:quarktech_leggings"
+        "gtpm:nanomuscle_leggings",
+        "gtpm:hazmat_leggings",
+        "gtpm:quarktech_leggings"
     ]
 }

@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=east": {
+            "model": "gtpm:block/machine/hv_canner",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/hv_canner"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/hv_canner",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/hv_canner",
+            "y": 270
+        }
+    }
+}

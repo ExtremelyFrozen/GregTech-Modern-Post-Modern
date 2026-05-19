@@ -1,0 +1,21 @@
+{
+    "type": "minecraft:block",
+    "pools": [
+        {
+            "bonus_rolls": 0.0,
+            "conditions": [
+                {
+                    "condition": "minecraft:survives_explosion"
+                }
+            ],
+            "entries": [
+                {
+                    "type": "minecraft:item",
+                    "name": "gtpm:vibration_safe_casing"
+                }
+            ],
+            "rolls": 1.0
+        }
+    ],
+    "random_sequence": "gtpm:blocks/vibration_safe_casing"
+}

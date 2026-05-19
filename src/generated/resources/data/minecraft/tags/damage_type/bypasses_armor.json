@@ -1,21 +1,21 @@
 {
     "values": [
-        "gtceu:heat",
-        "gtceu:chemical",
-        "gtceu:radiation",
-        "gtceu:turbine",
-        "gtceu:medical_condition/chemical_burns",
-        "gtceu:medical_condition/arsenicosis",
-        "gtceu:medical_condition/poison",
-        "gtceu:medical_condition/carcinogen",
-        "gtceu:medical_condition/asbestosis",
-        "gtceu:medical_condition/none",
-        "gtceu:medical_condition/nausea",
-        "gtceu:medical_condition/silicosis",
-        "gtceu:medical_condition/methanol_poisoning",
-        "gtceu:medical_condition/berylliosis",
-        "gtceu:medical_condition/carbon_monoxide_poisoning",
-        "gtceu:medical_condition/irritant",
-        "gtceu:medical_condition/weak_poison"
+        "gtpm:heat",
+        "gtpm:chemical",
+        "gtpm:radiation",
+        "gtpm:turbine",
+        "gtpm:medical_condition/chemical_burns",
+        "gtpm:medical_condition/arsenicosis",
+        "gtpm:medical_condition/poison",
+        "gtpm:medical_condition/carcinogen",
+        "gtpm:medical_condition/asbestosis",
+        "gtpm:medical_condition/none",
+        "gtpm:medical_condition/nausea",
+        "gtpm:medical_condition/silicosis",
+        "gtpm:medical_condition/methanol_poisoning",
+        "gtpm:medical_condition/berylliosis",
+        "gtpm:medical_condition/carbon_monoxide_poisoning",
+        "gtpm:medical_condition/irritant",
+        "gtpm:medical_condition/weak_poison"
     ]
 }

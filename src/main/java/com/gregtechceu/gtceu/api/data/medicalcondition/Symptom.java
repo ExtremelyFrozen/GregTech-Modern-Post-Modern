@@ -195,6 +195,6 @@ public class Symptom {
     }
 
     private static String defaultKey(String name) {
-        return "symptom.gtceu." + name;
+        return "symptom.gtpm." + name;
     }
 }

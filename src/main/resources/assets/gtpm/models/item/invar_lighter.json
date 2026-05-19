@@ -1,0 +1,20 @@
+{
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "gtpm:item/invar_lighter"
+	},
+	"overrides": [
+		{
+			"predicate": {
+				"gtpm:lighter_open": 0.0
+			},
+			"model": "gtpm:item/invar_lighter_closed"
+		},
+		{
+			"predicate": {
+				"gtpm:lighter_open": 1.0
+			},
+			"model": "gtpm:item/invar_lighter_open"
+		}
+	]
+}

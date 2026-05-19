@@ -238,7 +238,7 @@ public class RecipeHelper {
             GTCEu.LOGGER.warn("IO {} Error while handling recipe {} outputs for {}",
                     Component.translatable(io.tooltip).getString(), recipe, holder);
         }
-        String key = "gtceu.recipe_logic.insufficient_" + (io == IO.IN ? "in" : "out");
+        String key = "gtpm.recipe_logic.insufficient_" + (io == IO.IN ? "in" : "out");
         return ActionResult.fail(Component.translatable(key)
                 .append(": ").append(result.capability().getName()), result.capability(), io);
     }
@@ -264,7 +264,7 @@ public class RecipeHelper {
             if (condition.isOr()) {
                 or.computeIfAbsent(condition.getType(), type -> new ArrayList<>()).add(condition);
             } else if (!condition.check(recipe, recipeLogic)) {
-                return ActionResult.fail(Component.translatable("gtceu.recipe_logic.condition_fails")
+                return ActionResult.fail(Component.translatable("gtpm.recipe_logic.condition_fails")
                         .append(": ")
                         .append(condition.getTooltips()), null, null);
             }
@@ -272,7 +272,7 @@ public class RecipeHelper {
 
         for (List<RecipeCondition<?>> conditions : or.values()) {
             boolean passed = conditions.isEmpty();
-            MutableComponent component = Component.translatable("gtceu.recipe_logic.condition_fails")
+            MutableComponent component = Component.translatable("gtpm.recipe_logic.condition_fails")
                     .append(": ");
             for (RecipeCondition<?> condition : conditions) {
                 passed = condition.check(recipe, recipeLogic);

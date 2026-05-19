@@ -45,7 +45,7 @@ public class GTClientCache extends WorldCache implements IClientCache {
                         HoverEvent.Action.SHOW_TEXT,
                         Component.literal("(%d, %d, %d)".formatted(center.getX(), center.getY(), center.getZ())))));
             }
-            player.sendSystemMessage(Component.translatable("message.gtceu.new_veins.name", name));
+            player.sendSystemMessage(Component.translatable("message.gtpm.new_veins.name", name));
         }
     }
 

@@ -1,0 +1,54 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:maintenance_hatch",
+    "replaceable_textures": [
+        "bottom",
+        "top",
+        "side"
+    ],
+    "variants": {
+        "is_formed=false,taped=false": {
+            "model": {
+                "parent": "gtpm:block/machine/part/maintenance_hatch",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        },
+        "is_formed=false,taped=true": {
+            "model": {
+                "parent": "gtpm:block/machine/part/maintenance_hatch",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "overlay_2": "gtpm:block/overlay/machine/overlay_maintenance_taped",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        },
+        "is_formed=true,taped=false": {
+            "model": {
+                "parent": "gtpm:block/machine/part/maintenance_hatch",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        },
+        "is_formed=true,taped=true": {
+            "model": {
+                "parent": "gtpm:block/machine/part/maintenance_hatch",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/lv/bottom",
+                    "overlay_2": "gtpm:block/overlay/machine/overlay_maintenance_taped",
+                    "side": "gtpm:block/casings/voltage/lv/side",
+                    "top": "gtpm:block/casings/voltage/lv/top"
+                }
+            }
+        }
+    }
+}

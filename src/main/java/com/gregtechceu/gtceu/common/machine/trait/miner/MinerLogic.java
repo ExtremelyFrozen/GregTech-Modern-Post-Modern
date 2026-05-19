@@ -215,7 +215,7 @@ public class MinerLogic extends RecipeLogic implements IRecipeCapabilityHolder {
             } else {
                 // the miner cannot drain, therefore it is inactive
                 if (this.isWorking()) {
-                    setWaiting(Component.translatable("gtceu.recipe_logic.insufficient_out").append(": ")
+                    setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_out").append(": ")
                             .append(ItemRecipeCapability.CAP.getName()));
                 }
             }
@@ -650,7 +650,7 @@ public class MinerLogic extends RecipeLogic implements IRecipeCapabilityHolder {
     @Nullable
     @Override
     public Component getCustomProgressLine() {
-        return Component.translatable("gtceu.machine.miner.progress", blocksToMineOriginalCount - blocksToMine.size(),
+        return Component.translatable("gtpm.machine.miner.progress", blocksToMineOriginalCount - blocksToMine.size(),
                 blocksToMineOriginalCount);
     }
 }

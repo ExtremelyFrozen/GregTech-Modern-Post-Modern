@@ -57,6 +57,6 @@ public class GTOreProcessingEmiCategory extends EmiRecipeCategory {
 
     @Override
     public Component getName() {
-        return Component.translatable("gtceu.jei.ore_processing_diagram");
+        return Component.translatable("gtpm.jei.ore_processing_diagram");
     }
 }

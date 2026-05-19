@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.util.ClickData;
+import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.gui.widget.custom.PlayerInventoryWidget;
 import com.lowdragmc.lowdraglib.utils.Position;
@@ -17,7 +18,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @Getter
@@ -47,6 +50,7 @@ public class FancyMachineUIWidget extends WidgetGroup {
     protected List<IFancyUIProvider> allPages;
 
     protected Deque<NavigationEntry> previousPages = new ArrayDeque<>();
+    protected final Map<IFancyUIProvider, Widget> pageCache = new IdentityHashMap<>();
 
     protected record NavigationEntry(IFancyUIProvider page, IFancyUIProvider homePage, Runnable onNavigation) {}
 
@@ -83,6 +87,7 @@ public class FancyMachineUIWidget extends WidgetGroup {
         }
 
         this.allPages = Stream.concat(Stream.of(this.mainPage), this.mainPage.getSubTabs().stream()).toList();
+        initializeCachedPages();
 
         performNavigation(this.mainPage, this.mainPage);
     }
@@ -188,7 +193,7 @@ public class FancyMachineUIWidget extends WidgetGroup {
                 !this.previousPages.isEmpty(),
                 this.allPages.size() > 1 && this.currentPage != this.pageSwitcher);
 
-        var page = fancyUI.createMainPage(this);
+        var page = getOrCreatePage(fancyUI);
 
         // layout
         var size = new Size(Math.max(172, page.getSize().width + border * 2),
@@ -205,7 +210,10 @@ public class FancyMachineUIWidget extends WidgetGroup {
         setupInventoryPosition(showInventory, size);
 
         // setup
-        this.pageContainer.addWidget(page);
+        this.pageCache.values().forEach(widget -> {
+            widget.setVisible(widget == page);
+            widget.setActive(widget == page);
+        });
         page.setSelfPosition(new Position(
                 (pageContainer.getSize().width - page.getSize().width) / 2,
                 (pageContainer.getSize().height - page.getSize().height) / 2));
@@ -230,9 +238,28 @@ public class FancyMachineUIWidget extends WidgetGroup {
     }
 
     protected void clearUI() {
-        this.pageContainer.clearAllWidgets();
+        this.pageCache.values().forEach(widget -> {
+            widget.setVisible(false);
+            widget.setActive(false);
+        });
         this.configuratorPanel.clear();
         this.tooltipsPanel.clear();
+    }
+
+    protected void initializeCachedPages() {
+        for (var page : allPages) {
+            var widget = getOrCreatePage(page);
+            widget.setVisible(false);
+            widget.setActive(false);
+        }
+    }
+
+    protected Widget getOrCreatePage(IFancyUIProvider fancyUI) {
+        return pageCache.computeIfAbsent(fancyUI, key -> {
+            var createdPage = key.createMainPage(this);
+            this.pageContainer.addWidget(createdPage);
+            return createdPage;
+        });
     }
 
     protected void setupSideTabs(IFancyUIProvider currentHomePage) {

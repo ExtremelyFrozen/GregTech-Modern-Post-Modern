@@ -58,10 +58,10 @@ public class SteamBoilerBlockProvider extends BlockInfoProvider<SteamBoilerMachi
         MutableComponent root;
         if (isBurning && temperature < maxTemperature) {
             // Heating up
-            root = Component.translatable("gtceu.machine.boiler.info.heating.up");
+            root = Component.translatable("gtpm.machine.boiler.info.heating.up");
         } else if (!isBurning && temperature > 0) {
             // Cooling down
-            root = Component.translatable("gtceu.machine.boiler.info.cooling.down");
+            root = Component.translatable("gtpm.machine.boiler.info.cooling.down");
         } else {
             root = null; // neither heating nor cooling, is either max temperature or temperature of zero
         }
@@ -70,7 +70,7 @@ public class SteamBoilerBlockProvider extends BlockInfoProvider<SteamBoilerMachi
         MutableComponent extra;
         if (makingSteam) {
             // Producing some amount of steam
-            extra = Component.translatable("gtceu.machine.boiler.info.production.data",
+            extra = Component.translatable("gtpm.machine.boiler.info.production.data",
                     Component.literal(FormattingUtil.formatNumbers(production / 10))
                             .withStyle(ChatFormatting.GREEN));
             if (root != null) {

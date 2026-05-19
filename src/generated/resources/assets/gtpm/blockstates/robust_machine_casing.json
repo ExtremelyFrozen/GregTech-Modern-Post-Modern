@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/robust_machine_casing"
+        }
+    }
+}

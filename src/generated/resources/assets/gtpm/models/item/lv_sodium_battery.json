@@ -1,0 +1,56 @@
+{
+    "parent": "minecraft:item/generated",
+    "overrides": [
+        {
+            "model": "gtpm:item/lv_sodium_battery/0",
+            "predicate": {
+                "gtpm:battery": 0.0
+            }
+        },
+        {
+            "model": "gtpm:item/lv_sodium_battery/1",
+            "predicate": {
+                "gtpm:battery": 0.01
+            }
+        },
+        {
+            "model": "gtpm:item/lv_sodium_battery/2",
+            "predicate": {
+                "gtpm:battery": 0.02
+            }
+        },
+        {
+            "model": "gtpm:item/lv_sodium_battery/3",
+            "predicate": {
+                "gtpm:battery": 0.03
+            }
+        },
+        {
+            "model": "gtpm:item/lv_sodium_battery/4",
+            "predicate": {
+                "gtpm:battery": 0.04
+            }
+        },
+        {
+            "model": "gtpm:item/lv_sodium_battery/5",
+            "predicate": {
+                "gtpm:battery": 0.05
+            }
+        },
+        {
+            "model": "gtpm:item/lv_sodium_battery/6",
+            "predicate": {
+                "gtpm:battery": 0.06
+            }
+        },
+        {
+            "model": "gtpm:item/lv_sodium_battery/7",
+            "predicate": {
+                "gtpm:battery": 0.07
+            }
+        }
+    ],
+    "textures": {
+        "layer0": "gtpm:item/lv_sodium_battery/1"
+    }
+}

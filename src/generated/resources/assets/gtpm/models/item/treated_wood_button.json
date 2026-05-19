@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:block/button_inventory",
+    "textures": {
+        "texture": "gtpm:block/treated_wood_planks"
+    }
+}

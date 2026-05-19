@@ -107,7 +107,7 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
             return String.valueOf(Mth.clamp(stack.get(GTDataComponents.FORMAT_STRING_LIST).scale(), .0001f, 1000f));
         };
         scaleInput.setTextSupplier(scaleInputSupplier);
-        scaleInput.setHoverTooltips(Component.translatable("gtceu.gui.central_monitor.text_scale"));
+        scaleInput.setHoverTooltips(Component.translatable("gtpm.gui.central_monitor.text_scale"));
         List<String> formatStringLines = stack.getOrDefault(GTDataComponents.FORMAT_STRING_LIST, TextLineList.EMPTY)
                 .lines()
                 .stream()

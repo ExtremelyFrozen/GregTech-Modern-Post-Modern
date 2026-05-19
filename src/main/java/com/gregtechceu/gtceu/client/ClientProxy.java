@@ -69,7 +69,7 @@ public class ClientProxy {
     public static void init(IEventBus modBus) {
         modBus.register(ClientProxy.class);
         if (!GTCEu.isDataGen()) {
-            ClientCacheManager.registerClientCache(GTClientCache.instance, "gtceu");
+            ClientCacheManager.registerClientCache(GTClientCache.instance, GTCEu.MOD_ID);
             Layers.registerLayer(OreRenderLayer::new, "ore_veins");
             Layers.registerLayer(FluidRenderLayer::new, "bedrock_fluids");
             CommonEventListener.registerCapes(new RegisterGTCapesEvent());

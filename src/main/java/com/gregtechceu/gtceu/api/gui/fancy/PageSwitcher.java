@@ -85,7 +85,7 @@ public class PageSwitcher implements IFancyUIProvider {
 
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.gui.title_bar.page_switcher");
+        return Component.translatable("gtpm.gui.title_bar.page_switcher");
     }
 
     @Override
