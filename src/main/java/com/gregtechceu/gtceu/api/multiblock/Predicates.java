@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateBlockTag;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateBlocks;
+import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateFluidTag;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateFluids;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateStates;
@@ -59,8 +60,8 @@ import static com.gregtechceu.gtceu.common.machine.multiblock.electric.PowerSubs
 
 public class Predicates {
 
-    public static TraceabilityPredicate controller(TraceabilityPredicate predicate) {
-        return predicate.setController();
+    public static TraceabilityPredicate controller(MachineDefinition definition) {
+        return new PredicateController(definition);
     }
 
     public static TraceabilityPredicate states(BlockState... allowedStates) {
@@ -106,7 +107,7 @@ public class Predicates {
     }
 
     public static TraceabilityPredicate custom(Predicate<MultiblockState> predicate, Supplier<BlockInfo[]> candidates) {
-        return new TraceabilityPredicate(predicate, candidates);
+        return fromBlockInfos(predicate, candidates);
     }
 
     public static TraceabilityPredicate any() {
@@ -119,7 +120,7 @@ public class Predicates {
 
     @SafeVarargs
     public static TraceabilityPredicate lamps(BlockEntry<LampBlock>... lampEntries) {
-        return new TraceabilityPredicate(blockWorldState -> {
+        return fromBlockInfos(blockWorldState -> {
             BlockState state = blockWorldState.getBlockState();
             for (BlockEntry<LampBlock> entry : lampEntries) {
                 if (state.is(entry.get())) return true;
@@ -236,14 +237,14 @@ public class Predicates {
     }
 
     public static TraceabilityPredicate heatingCoils() {
-        return new TraceabilityPredicate(blockWorldState -> {
+        return fromBlockInfos(blockWorldState -> {
             var blockState = blockWorldState.getBlockState();
             for (Map.Entry<ICoilType, Supplier<CoilBlock>> entry : GTCEuAPI.HEATING_COILS.entrySet()) {
                 if (blockState.is(entry.getValue().get())) {
                     var stats = entry.getKey();
                     Object currentCoil = blockWorldState.getMatchContext().getOrPut("CoilType", stats);
                     if (!currentCoil.equals(stats)) {
-                        blockWorldState.setError(new PatternStringError("gtceu.multiblock.pattern.error.coils"));
+                        blockWorldState.setError(new PatternStringError("gtpm.multiblock.pattern.error.coils"));
                         return false;
                     }
                     return true;
@@ -255,18 +256,18 @@ public class Predicates {
                 .sorted(Comparator.comparingInt(value -> value.getKey().getTier()))
                 .map(coil -> BlockInfo.fromBlockState(coil.getValue().get().defaultBlockState()))
                 .toArray(BlockInfo[]::new))
-                .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.coils"));
+                .addTooltips(Component.translatable("gtpm.multiblock.pattern.error.coils"));
     }
 
     public static TraceabilityPredicate cleanroomFilters() {
-        return new TraceabilityPredicate(blockWorldState -> {
+        return fromBlockInfos(blockWorldState -> {
             var blockState = blockWorldState.getBlockState();
             for (var entry : GTCEuAPI.CLEANROOM_FILTERS.entrySet()) {
                 if (blockState.is(entry.getValue().get())) {
                     var stats = entry.getKey();
                     Object currentCoil = blockWorldState.getMatchContext().getOrPut("FilterType", stats);
                     if (!currentCoil.equals(stats)) {
-                        blockWorldState.setError(new PatternStringError("gtceu.multiblock.pattern.error.filters"));
+                        blockWorldState.setError(new PatternStringError("gtpm.multiblock.pattern.error.filters"));
                         return false;
                     }
                     return true;
@@ -276,11 +277,11 @@ public class Predicates {
         }, () -> GTCEuAPI.CLEANROOM_FILTERS.values().stream()
                 .map(blockSupplier -> BlockInfo.fromBlockState(blockSupplier.get().defaultBlockState()))
                 .toArray(BlockInfo[]::new))
-                .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.filters"));
+                .addTooltips(Component.translatable("gtpm.multiblock.pattern.error.filters"));
     }
 
     public static TraceabilityPredicate powerSubstationBatteries() {
-        return new TraceabilityPredicate(blockWorldState -> {
+        return fromBlockInfos(blockWorldState -> {
             BlockState state = blockWorldState.getBlockState();
             for (Map.Entry<IBatteryData, Supplier<BatteryBlock>> entry : GTCEuAPI.PSS_BATTERIES.entrySet()) {
                 if (state.is(entry.getValue().get())) {
@@ -301,7 +302,7 @@ public class Predicates {
                 .sorted(Comparator.comparingInt(entry -> entry.getKey().getTier()))
                 .map(entry -> new BlockInfo(entry.getValue().get().defaultBlockState(), null))
                 .toArray(BlockInfo[]::new))
-                .addTooltips(Component.translatable("gtceu.multiblock.pattern.error.batteries"));
+                .addTooltips(Component.translatable("gtpm.multiblock.pattern.error.batteries"));
     }
 
     public static TraceabilityPredicate dataHatchPredicate(TraceabilityPredicate def) {
@@ -325,7 +326,7 @@ public class Predicates {
                 .map(RegistryEntry::get)
                 .toArray(Block[]::new);
         return blocks(frameBlocks)
-                .or(new TraceabilityPredicate(blockWorldState -> {
+                .or(fromBlockInfos(blockWorldState -> {
                     BlockEntity blockEntity = blockWorldState.getBlockEntity();
                     if (!(blockEntity instanceof IPipeNode<?, ?> pipeNode)) {
                         return false;
@@ -338,5 +339,16 @@ public class Predicates {
                         .map(RegistryEntry::get)
                         .map(BlockInfo::fromBlock)
                         .toArray(BlockInfo[]::new)));
+    }
+
+    private static TraceabilityPredicate fromBlockInfos(Predicate<MultiblockState> predicate,
+                                                        Supplier<BlockInfo[]> candidates) {
+        return new TraceabilityPredicate(predicate, () -> {
+            BlockInfo[] infos = candidates.get();
+            return infos.length == 0 ? BlockInfo.EMPTY : infos[0];
+        }, () -> Arrays.stream(candidates.get())
+                .map(BlockInfo::getBlockState)
+                .map(BlockState::getBlock)
+                .toArray(Block[]::new));
     }
 }

@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.api.multiblock.predicates;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
@@ -10,12 +9,13 @@ import com.gregtechceu.gtceu.data.lang.LangHandler;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -34,15 +34,18 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class SimplePredicate {
 
-    public static SimplePredicate ANY = new SimplePredicate("any", x -> true, null);
-    public static SimplePredicate AIR = new SimplePredicate("air",
-            blockWorldState -> blockWorldState.getWorld().isEmptyBlock(blockWorldState.getPos()), null);
+    private static final Supplier<BlockInfo> NULL_BLOCK_INFO = () -> null;
+
+    public static SimplePredicate ANY = new SimplePredicate(blockWorldState -> true, null, null);
+    public static SimplePredicate AIR = new SimplePredicate(blockWorldState -> blockWorldState.getBlockState().isAir(),
+            null, null);
+
     @Nullable
-    public Supplier<BlockInfo[]> candidates;
+    public Supplier<Block[]> candidates;
+    public Supplier<BlockInfo> blockInfo;
     public Predicate<MultiblockState> predicate;
     public List<Component> toolTips;
     public int minCount = -1;
@@ -55,26 +58,12 @@ public class SimplePredicate {
     public String slotName;
     public String nbtParser;
 
-    public final String type;
+    public SimplePredicate() {}
 
-    public SimplePredicate() {
-        this("unknown");
-    }
-
-    public SimplePredicate(String type) {
-        this.type = type;
-    }
-
-    public SimplePredicate(Predicate<MultiblockState> predicate, @Nullable Supplier<BlockInfo[]> candidates) {
-        this();
+    public SimplePredicate(Predicate<MultiblockState> predicate, Supplier<BlockInfo> blockInfo,
+                           @Nullable Supplier<Block[]> candidates) {
         this.predicate = predicate;
-        this.candidates = candidates;
-    }
-
-    public SimplePredicate(String type, Predicate<MultiblockState> predicate,
-                           @Nullable Supplier<BlockInfo[]> candidates) {
-        this(type);
-        this.predicate = predicate;
+        this.blockInfo = blockInfo == null ? NULL_BLOCK_INFO : blockInfo;
         this.candidates = candidates;
     }
 
@@ -89,23 +78,23 @@ public class SimplePredicate {
             result.addAll(toolTips);
         }
         if (minCount == maxCount && maxCount != -1) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.error.limited_exact", minCount));
+            result.add(Component.translatable("gtpm.multiblock.pattern.error.limited_exact", minCount));
         } else if (minCount != maxCount && minCount != -1 && maxCount != -1) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.error.limited_within", minCount, maxCount));
+            result.add(Component.translatable("gtpm.multiblock.pattern.error.limited_within", minCount, maxCount));
         } else {
             if (minCount != -1) {
-                result.add(LangHandler.getFromMultiLang("gtceu.multiblock.pattern.error.limited", 1, minCount));
+                result.add(LangHandler.getFromMultiLang("gtpm.multiblock.pattern.error.limited", 1, minCount));
             }
             if (maxCount != -1) {
-                result.add(LangHandler.getFromMultiLang("gtceu.multiblock.pattern.error.limited", 0, maxCount));
+                result.add(LangHandler.getFromMultiLang("gtpm.multiblock.pattern.error.limited", 0, maxCount));
             }
         }
         if (predicates == null) return result;
         if (predicates.isSingle()) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.single"));
+            result.add(Component.translatable("gtpm.multiblock.pattern.single"));
         }
         if (predicates.hasAir()) {
-            result.add(Component.translatable("gtceu.multiblock.pattern.replaceable_air"));
+            result.add(Component.translatable("gtpm.multiblock.pattern.replaceable_air"));
         }
         return result;
     }
@@ -175,14 +164,15 @@ public class SimplePredicate {
     }
 
     public List<ItemStack> getCandidates() {
-        if (GTCEu.isClientSide()) {
-            return candidates == null ? Collections.emptyList() :
-                    Arrays.stream(this.candidates.get()).filter(info -> info.getBlockState().getBlock() != Blocks.AIR)
-                            .map(blockInfo -> blockInfo.getItemStackForm(Minecraft.getInstance().level, BlockPos.ZERO))
-                            .collect(Collectors.toList());
+        return candidates == null ? Collections.emptyList() : Arrays.stream(this.candidates.get())
+                .map(SimplePredicate::toItem).filter(i -> i != Items.AIR).map(Item::getDefaultInstance).toList();
+    }
+
+    public static Item toItem(Block block) {
+        if (block instanceof LiquidBlock liquidBlock) {
+            return liquidBlock.fluid.getBucket();
+        } else {
+            return block.asItem();
         }
-        return candidates == null ? Collections.emptyList() :
-                Arrays.stream(this.candidates.get()).filter(info -> info.getBlockState().getBlock() != Blocks.AIR)
-                        .map(BlockInfo::getItemStackForm).collect(Collectors.toList());
     }
 }

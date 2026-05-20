@@ -5,12 +5,17 @@ import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.Block;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -18,21 +23,18 @@ public class TraceabilityPredicate {
 
     public List<SimplePredicate> common = new ArrayList<>();
     public List<SimplePredicate> limited = new ArrayList<>();
-    public boolean isController;
+    public Function<MultiblockState, Direction> direction = o -> null;
 
     public TraceabilityPredicate() {}
 
-    public TraceabilityPredicate(TraceabilityPredicate predicate) {
-        common.addAll(predicate.common);
-        limited.addAll(predicate.limited);
-        isController = predicate.isController;
-    }
-
-    public TraceabilityPredicate(Predicate<MultiblockState> predicate, Supplier<BlockInfo[]> candidates) {
-        common.add(new SimplePredicate(predicate, candidates));
+    public TraceabilityPredicate(Predicate<MultiblockState> predicate, Supplier<BlockInfo> blockInfo,
+                                 @Nullable Supplier<Block[]> candidates) {
+        this();
+        common.add(new SimplePredicate(predicate, blockInfo, candidates));
     }
 
     public TraceabilityPredicate(SimplePredicate simplePredicate) {
+        this();
         if (simplePredicate.minCount != -1 || simplePredicate.maxCount != -1) {
             limited.add(simplePredicate);
         } else {
@@ -40,12 +42,10 @@ public class TraceabilityPredicate {
         }
     }
 
-    /**
-     * Mark it as the controller of this multi. Normally you won't call it yourself. Use plz.
-     */
-    public TraceabilityPredicate setController() {
-        isController = true;
-        return this;
+    protected TraceabilityPredicate(TraceabilityPredicate predicate) {
+        common.addAll(predicate.common);
+        limited.addAll(predicate.limited);
+        this.direction = predicate.direction;
     }
 
     public TraceabilityPredicate sort() {
@@ -215,7 +215,7 @@ public class TraceabilityPredicate {
     }
 
     public boolean isAny() {
-        return this.common.size() == 1 && this.limited.isEmpty() && this.common.get(0) == SimplePredicate.ANY;
+        return this.common.size() == 1 && this.limited.isEmpty() && this.common.getFirst() == SimplePredicate.ANY;
     }
 
     public boolean addCache() {
@@ -223,7 +223,7 @@ public class TraceabilityPredicate {
     }
 
     public boolean isAir() {
-        return this.common.size() == 1 && this.limited.isEmpty() && this.common.get(0) == SimplePredicate.AIR;
+        return this.common.size() == 1 && this.limited.isEmpty() && this.common.getFirst() == SimplePredicate.AIR;
     }
 
     public boolean isSingle() {

@@ -85,7 +85,7 @@ public class Predicates {
         return new TraceabilityPredicate(new PredicateBlockTag(tag));
     }
 
-    public static TraceabilityPredicate fluids(Fluid... fluids) {
+    public static TraceabilityPredicate fluids(Fluid fluids) {
         return new TraceabilityPredicate(new PredicateFluids(fluids));
     }
 

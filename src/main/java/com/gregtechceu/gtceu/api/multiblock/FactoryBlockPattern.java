@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock;
 
+import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 
 import com.google.common.base.Joiner;
@@ -10,7 +11,6 @@ import it.unimi.dsi.fastutil.chars.CharList;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,40 +120,34 @@ public class FactoryBlockPattern {
 
     public BlockPattern build() {
         this.checkMissingPredicates();
-        int[] centerOffset = new int[5];
+        int size = this.depth.size();
+        CenterOffset centerOffset = null;
         int[][] aisleRepetitions = this.aisleRepetitions.toArray(new int[this.aisleRepetitions.size()][]);
-        TraceabilityPredicate[][][] predicate = (TraceabilityPredicate[][][]) Array
-                .newInstance(TraceabilityPredicate.class, this.depth.size(), this.aisleHeight, this.rowWidth);
+        TraceabilityPredicate[][][] predicate = new TraceabilityPredicate[size][][];
 
         for (int i = 0, minZ = 0, maxZ = 0; i <
-                this.depth.size(); minZ += aisleRepetitions[i][0], maxZ += aisleRepetitions[i][1], i++) {
+                size; minZ += aisleRepetitions[i][0], maxZ += aisleRepetitions[i][1], i++) {
             for (int j = 0; j < this.aisleHeight; j++) {
                 for (int k = 0; k < this.rowWidth; k++) {
-                    predicate[i][j][k] = this.symbolMap.get(this.depth.get(i)[j].charAt(k));
-                    if (predicate[i][j][k].isController) {
-                        centerOffset = new int[] { k, j, i, minZ, maxZ };
+                    var tp = this.symbolMap.get(this.depth.get(i)[j].charAt(k));
+                    if (tp != null) {
+                        var pi = predicate[i];
+                        if (pi == null) {
+                            predicate[i] = pi = new TraceabilityPredicate[this.aisleHeight][];
+                        }
+                        var pj = pi[j];
+                        if (pj == null) {
+                            pi[j] = pj = new TraceabilityPredicate[this.rowWidth];
+                        }
+                        pj[k] = tp;
+                        if (tp instanceof PredicateController) centerOffset = new CenterOffset(k, j, i, minZ, maxZ);
                     }
                 }
             }
         }
 
-        return new BlockPattern(predicate, structureDir, aisleRepetitions, centerOffset);
-    }
-
-    private TraceabilityPredicate[][][] makePredicateArray() {
-        this.checkMissingPredicates();
-        TraceabilityPredicate[][][] predicate = (TraceabilityPredicate[][][]) Array
-                .newInstance(TraceabilityPredicate.class, this.depth.size(), this.aisleHeight, this.rowWidth);
-
-        for (int i = 0; i < this.depth.size(); ++i) {
-            for (int j = 0; j < this.aisleHeight; ++j) {
-                for (int k = 0; k < this.rowWidth; ++k) {
-                    predicate[i][j][k] = this.symbolMap.get(this.depth.get(i)[j].charAt(k));
-                }
-            }
-        }
-
-        return predicate;
+        return new BlockPattern(predicate, structureDir, aisleRepetitions, centerOffset, size, this.aisleHeight,
+                this.rowWidth);
     }
 
     private void checkMissingPredicates() {

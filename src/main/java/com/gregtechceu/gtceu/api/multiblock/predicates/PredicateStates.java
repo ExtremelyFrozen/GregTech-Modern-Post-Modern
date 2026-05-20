@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.multiblock.predicates;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -14,12 +15,7 @@ public class PredicateStates extends SimplePredicate {
 
     public BlockState[] states = new BlockState[0];
 
-    public PredicateStates() {
-        super("states");
-    }
-
     public PredicateStates(BlockState... states) {
-        this();
         this.states = states;
         buildPredicate();
     }
@@ -29,7 +25,10 @@ public class PredicateStates extends SimplePredicate {
         states = Arrays.stream(states).filter(Objects::nonNull).toArray(BlockState[]::new);
         if (states.length == 0) states = new BlockState[] { Blocks.BARRIER.defaultBlockState() };
         predicate = state -> ArrayUtils.contains(states, state.getBlockState());
-        candidates = () -> Arrays.stream(states).map(BlockInfo::fromBlockState).toArray(BlockInfo[]::new);
+        Block[] blocks = Arrays.stream(states).map(BlockState::getBlock).toArray(Block[]::new);
+        candidates = () -> blocks;
+        var info = BlockInfo.fromBlockState(states[0]);
+        blockInfo = () -> info;
         return this;
     }
 }
