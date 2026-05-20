@@ -95,7 +95,7 @@ public class GTCommands {
                                             return GTCommands.placeVein(context, BlockPosArgument.getBlockPos(context, "position"));
                                         }))))
                 .then(literal("structure_cache")
-                        .requires(ctx -> GTCEu.isDev() && ctx.hasPermission(LEVEL_ADMINS))
+                        .requires(ctx -> GTCEu.isDev() && GTCEu.isClientSide() && ctx.hasPermission(LEVEL_ADMINS))
                         .then(literal("reload")
                                 .executes(ctx -> reloadStructureCache(ctx.getSource()))
                                 .then(literal("binary")

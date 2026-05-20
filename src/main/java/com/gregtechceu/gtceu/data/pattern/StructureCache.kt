@@ -23,6 +23,7 @@ import java.nio.file.StandardCopyOption
 import java.util.ArrayList
 import java.util.Collections
 import java.util.Comparator
+import java.util.HashSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.concurrent.Executors
@@ -130,8 +131,10 @@ object StructureCache {
 
 	@Throws(IOException::class)
 	private fun syncPatternResourcesToDisk(patternRoot: Path) {
-		resetPatternDirectory(patternRoot)
-		Files.createDirectories(patternRoot)
+		val normalizedPatternRoot = normalizePatternRoot(patternRoot)
+		Files.createDirectories(normalizedPatternRoot)
+		val expectedPaths = HashSet<Path>()
+		expectedPaths.add(normalizedPatternRoot)
 
 		val dataUrls = javaClass.classLoader.getResources("pattern")
 		while (dataUrls.hasMoreElements()) {
@@ -139,45 +142,79 @@ object StructureCache {
 			val uri = url.toURI()
 
 			if (uri.scheme == "file") {
-				copyPatternTree(Paths.get(uri), patternRoot)
+				copyPatternTree(Paths.get(uri), normalizedPatternRoot, expectedPaths)
 			} else if (uri.scheme == "jar") {
 				FileSystems.newFileSystem(uri, mutableMapOf<String, Any>()).use { fs ->
-					copyPatternTree(fs.getPath("pattern"), patternRoot)
+					copyPatternTree(fs.getPath("pattern"), normalizedPatternRoot, expectedPaths)
+				}
+			}
+		}
+		prunePatternDirectory(normalizedPatternRoot, expectedPaths)
+	}
+
+	@Throws(IOException::class)
+	private fun prunePatternDirectory(patternRoot: Path, expectedPaths: Set<Path>) {
+		if (!Files.exists(patternRoot)) return
+		Files.walk(patternRoot).use { paths ->
+			paths.sorted(Comparator.reverseOrder()).forEach { path ->
+				val normalizedPath = path.toAbsolutePath().normalize()
+				if (normalizedPath !in expectedPaths) {
+					Files.deleteIfExists(normalizedPath)
 				}
 			}
 		}
 	}
 
-	@Throws(IOException::class)
-	private fun resetPatternDirectory(patternRoot: Path) {
-		if (!Files.exists(patternRoot)) return
+	private fun normalizePatternRoot(patternRoot: Path): Path {
 		val normalizedPatternRoot = patternRoot.toAbsolutePath().normalize()
 		val normalizedGtceuRoot = GTCEu.GTCEU_FOLDER.toAbsolutePath().normalize()
 		check(normalizedPatternRoot.startsWith(normalizedGtceuRoot)) {
 			"Refusing to clear pattern directory outside gtceu folder: $normalizedPatternRoot"
 		}
-
-		Files.walk(normalizedPatternRoot).use { paths ->
-			paths.sorted(Comparator.reverseOrder()).forEach { path ->
-				Files.deleteIfExists(path)
-			}
-		}
+		return normalizedPatternRoot
 	}
 
 	@Throws(IOException::class)
-	private fun copyPatternTree(sourceRoot: Path, targetRoot: Path) {
+	private fun copyPatternTree(sourceRoot: Path, targetRoot: Path, expectedPaths: MutableSet<Path>) {
 		if (!Files.isDirectory(sourceRoot)) return
 
 		Files.walk(sourceRoot).use { paths ->
 			paths.forEach { source ->
 				val relative = sourceRoot.relativize(source)
-				val target = targetRoot.resolve(relative.toString())
+				val target = targetRoot.resolve(relative.toString()).toAbsolutePath().normalize()
+				expectedPaths.add(target)
 				if (Files.isDirectory(source)) {
+					if (Files.exists(target) && !Files.isDirectory(target)) {
+						Files.delete(target)
+					}
 					Files.createDirectories(target)
 				} else {
+					if (Files.exists(target) && Files.isDirectory(target)) {
+						deleteRecursively(target)
+					}
 					Files.createDirectories(target.parent)
-					Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
+					if (shouldCopyFile(source, target)) {
+						Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
+					}
 				}
+			}
+		}
+	}
+
+	@Throws(IOException::class)
+	private fun shouldCopyFile(source: Path, target: Path): Boolean {
+		if (!Files.exists(target)) return true
+		if (!Files.isRegularFile(target)) return true
+		if (Files.size(source) != Files.size(target)) return true
+		return Files.mismatch(source, target) != -1L
+	}
+
+	@Throws(IOException::class)
+	private fun deleteRecursively(path: Path) {
+		if (!Files.exists(path)) return
+		Files.walk(path).use { paths ->
+			paths.sorted(Comparator.reverseOrder()).forEach { nested ->
+				Files.deleteIfExists(nested)
 			}
 		}
 	}
@@ -365,8 +402,8 @@ object StructureCache {
 	}
 
 	private fun <T> runReloadTask(action: () -> T): T {
-		check(GTCEu.isDev()) {
-			"Structure cache reload is only available in development environment"
+		check(GTCEu.isDev() && GTCEu.isClientSide()) {
+			"Structure cache reload is only available in development client environment"
 		}
 		check(reloadInProgress.compareAndSet(false, true)) {
 			"Structure cache reload task is already running"
@@ -392,11 +429,7 @@ object StructureCache {
 			}, LOAD_EXECUTOR)
 		}
 		try {
-			if (GTCEu.isDev() && GTCEu.isClientSide()) {
-				ResourceReloadDetector.regenerateResourcesOnReload(reloadFutureSupplier).join()
-			} else {
-				reloadFutureSupplier.get().join()
-			}
+			ResourceReloadDetector.regenerateResourcesOnReload(reloadFutureSupplier).join()
 			return resultFuture.join()
 		} catch (e: CompletionException) {
 			val cause = e.cause ?: e
