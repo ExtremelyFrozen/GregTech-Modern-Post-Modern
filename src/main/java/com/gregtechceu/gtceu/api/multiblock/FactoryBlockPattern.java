@@ -1,7 +1,9 @@
 package com.gregtechceu.gtceu.api.multiblock;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 
 import com.google.common.base.Joiner;
 import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
@@ -13,18 +15,23 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class FactoryBlockPattern {
 
     private static final Joiner COMMA_JOIN = Joiner.on(",");
+    private final MultiblockMachineDefinition definition;
     private final List<String[]> depth;
     private final List<int[]> aisleRepetitions;
     private final Char2ObjectMap<TraceabilityPredicate> symbolMap;
     private final StructureDir structureDir;
+    private PatternCondition condition;
     private int aisleHeight;
     private int rowWidth;
 
-    private FactoryBlockPattern(RelativeDirection charDir, RelativeDirection stringDir, RelativeDirection aisleDir) {
+    private FactoryBlockPattern(RelativeDirection charDir, RelativeDirection stringDir, RelativeDirection aisleDir,
+                                MultiblockMachineDefinition definition) {
+        this.definition = definition;
         depth = new ArrayList<>();
         aisleRepetitions = new ArrayList<>();
         symbolMap = new Char2ObjectArrayMap<>();
@@ -97,12 +104,23 @@ public class FactoryBlockPattern {
     }
 
     public static FactoryBlockPattern start() {
-        return new FactoryBlockPattern(RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT);
+        return new FactoryBlockPattern(RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT, null);
+    }
+
+    public static FactoryBlockPattern start(MultiblockMachineDefinition definition) {
+        return new FactoryBlockPattern(RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT,
+                definition);
     }
 
     public static FactoryBlockPattern start(RelativeDirection charDir, RelativeDirection stringDir,
                                             RelativeDirection aisleDir) {
-        return new FactoryBlockPattern(charDir, stringDir, aisleDir);
+        return new FactoryBlockPattern(charDir, stringDir, aisleDir, null);
+    }
+
+    public static FactoryBlockPattern start(MultiblockMachineDefinition definition, RelativeDirection charDir,
+                                            RelativeDirection stringDir,
+                                            RelativeDirection aisleDir) {
+        return new FactoryBlockPattern(charDir, stringDir, aisleDir, definition);
     }
 
     public FactoryBlockPattern where(String symbol, TraceabilityPredicate blockMatcher) {
@@ -116,6 +134,29 @@ public class FactoryBlockPattern {
             this.symbolMap.put(symbol, new TraceabilityPredicate(blockMatcher).sort());
         }
         return this;
+    }
+
+    public FactoryBlockPattern condition(Predicate<MultiblockState> condition) {
+        return condition(condition, "gtceu.recipe_logic.condition_fails");
+    }
+
+    public FactoryBlockPattern condition(Predicate<MultiblockState> condition, String translateKey) {
+        this.condition = new PatternCondition(condition, translateKey);
+        return this;
+    }
+
+    private void checkMissingPredicates() {
+        CharList list = new CharArrayList();
+
+        for (var entry : this.symbolMap.char2ObjectEntrySet()) {
+            if (entry.getValue() == null) {
+                list.add(entry.getCharKey());
+            }
+        }
+
+        if (!list.isEmpty()) {
+            throw new IllegalStateException("Predicates for character(s) " + COMMA_JOIN.join(list) + " are missing");
+        }
     }
 
     public BlockPattern build() {
@@ -146,21 +187,13 @@ public class FactoryBlockPattern {
             }
         }
 
-        return new BlockPattern(predicate, structureDir, aisleRepetitions, centerOffset, size, this.aisleHeight,
+        var pattern = new BlockPattern(predicate, structureDir, aisleRepetitions, centerOffset, size, this.aisleHeight,
                 this.rowWidth);
-    }
-
-    private void checkMissingPredicates() {
-        CharList list = new CharArrayList();
-
-        for (var entry : this.symbolMap.char2ObjectEntrySet()) {
-            if (entry.getValue() == null) {
-                list.add(entry.getCharKey());
-            }
+        if (condition != null) pattern.condition = condition;
+        if (definition != null) {
+            pattern.predicates = symbolMap.values();
+            // definition.setCheckPriority(-(pattern.fingerLength * pattern.thumbLength * pattern.palmLength));
         }
-
-        if (!list.isEmpty()) {
-            throw new IllegalStateException("Predicates for character(s) " + COMMA_JOIN.join(list) + " are missing");
-        }
+        return pattern;
     }
 }

@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -66,6 +67,8 @@ public class BlockPattern {
     protected final CenterOffset centerOffset; // x, y, z, minZ, maxZ
     @Getter
     protected int[] formedRepetitionCount;
+    public Collection<TraceabilityPredicate> predicates;
+    public PatternCondition condition;
 
     public BlockPattern(TraceabilityPredicate[][][] predicatesIn, StructureDir structureDir,
                         int[][] aisleRepetitions, CenterOffset centerOffset, int fingerLength, int thumbLength,
