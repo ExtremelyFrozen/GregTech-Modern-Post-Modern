@@ -49,26 +49,18 @@ neoForge {
         client {
             client()
             sourceSet = sourceSets.clientExtra
-            ideName = "Client 1"
+            ideName = "All Client"
 
-            systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
-        }
-
-        client2 {
-            client()
-            sourceSet = sourceSets.clientExtra
-            ideName = "Client 2"
-
-            programArguments.addAll('--username', 'YoungOnion', '--uuid', '3a27782d-6864-4814-a9fe-7c6931f29a8a')
+            gameDirectory.set(file('run/all/client'))
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
         }
 
         server {
             server()
             sourceSet = sourceSets.extra
-            ideName = "Server"
+            ideName = "All Server"
 
-            gameDirectory.set(file('run/server'))
+            gameDirectory.set(file('run/all/server'))
             programArguments.addAll('--nogui', '--world', 'world-extra')
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
         }
@@ -79,6 +71,7 @@ neoForge {
             sourceSet = sourceSets.client
             ideName = "Clean Client"
 
+            gameDirectory.set(file('run/clean/client'))
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
         }
 
@@ -87,7 +80,7 @@ neoForge {
             sourceSet = sourceSets.main
             ideName = "Clean Server"
 
-            gameDirectory.set(file('run/server'))
+            gameDirectory.set(file('run/clean/server'))
             programArgument '--nogui'
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
         }
@@ -100,7 +93,7 @@ neoForge {
             sourceSet = sourceSets.test
             ideName = "Game Tests"
 
-            gameDirectory.set(file('run/gametest'))
+            gameDirectory.set(file('run/gametest/server'))
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
             environment('TEST', 'true')
         }
@@ -110,7 +103,7 @@ neoForge {
             sourceSet = sourceSets.test
             ideName = "Game Tests (Client)"
 
-            gameDirectory.set(file('run/gametest'))
+            gameDirectory.set(file('run/gametest/client'))
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
             environment('TEST', 'true')
         }
@@ -126,26 +119,6 @@ neoForge {
             programArguments.addAll('--all')
             programArguments.addAll('--output', file('src/generated/resources/').getAbsolutePath())
             programArguments.addAll('--existing', file('src/main/resources/').getAbsolutePath())
-        }
-
-        String renderDocPath = System.getenv("RENDERDOC_LIB")
-        // RenderDoc cannot run on macos so we don't add the config for mac users
-        if(renderDocPath != null && !OperatingSystem.current().isMacOsX()) {
-            create("renderDocClient") {
-                client()
-                sourceSet = sourceSets.client
-                ideName = "Clean Client + RenderDoc"
-
-                programArguments.addAll('--username', 'screret', '--uuid', '1184eb79-5831-4f7d-b8f4-3a46fccf7a1d')
-
-                systemProperty("neoforge.rendernurse.renderdoc.library", renderDocPath)
-                if(OperatingSystem.current().isLinux()) {
-                    environment("LD_PRELOAD", renderDocPath)
-                }
-                // parses out the render nurse jar path and adds as `-javaagent:${path}`
-                jvmArguments.addAll(project.configurations.renderNurseCfg.incoming.files.elements.map { it.collect { "-javaagent:${it.asFile.absolutePath}" }})
-                jvmArguments.addAll("--enable-preview", "--enable-native-access=ALL-UNNAMED")
-            }
         }
 
         // applies to all the run configs above

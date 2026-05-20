@@ -176,7 +176,11 @@ public class RecipeRunner {
 
             if (handlerListEntry.getKey() instanceof RecipeHandlerGroupColor coloredGroup) {
                 if (io == IO.IN && simulated && !isTick) {
-                    groupColor = coloredGroup.color();
+                    // Undyed handlers participate in every colored group, but they must not erase the
+                    // dyed group candidate that this simulation pass is currently testing.
+                    if (coloredGroup.color() != -1) {
+                        groupColor = coloredGroup.color();
+                    }
                 } else if (coloredGroup.color() != -1 && coloredGroup.color() != groupColor) {
                     continue;
                 }
