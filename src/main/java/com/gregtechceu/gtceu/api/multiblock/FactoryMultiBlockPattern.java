@@ -20,7 +20,7 @@ import java.util.Objects;
  * File-backed multiblock definition DTO.
  * <p>
  * This class intentionally focuses on storage shape only, so structure definitions can be
- * serialized to or deserialized from {@code pattern/<modid>/structures/*.cbor.zst}.
+ * serialized to or deserialized from {@code pattern/<modid>/json/*.json}.
  * Runtime conversion to {@link BlockPattern} is expected to be handled separately during the
  * structure-definition refactor.
  */

@@ -2,9 +2,11 @@ package com.gregtechceu.gtceu.data.pattern
 
 import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.multiblock.FactoryMultiBlockPattern
+import com.gregtechceu.gtceu.utils.dev.ResourceReloadDetector
 
 import net.minecraft.resources.ResourceLocation
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.github.luben.zstd.ZstdInputStream
@@ -17,92 +19,286 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+import java.util.ArrayList
 import java.util.Collections
+import java.util.Comparator
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.CompletionException
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Supplier
 import kotlin.concurrent.Volatile
 
 object StructureCache {
 	@Volatile
-	private var futureCache: CompletableFuture<MutableMap<ResourceLocation, FactoryMultiBlockPattern>>? = null
-	private val VIRTUAL_THREAD_EXECUTOR: ExecutorService = Executors.newVirtualThreadPerTaskExecutor()
+	private var futureCache: CompletableFuture<StructureCaches>? = null
+
+	private val LOAD_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor()
 	private val CBOR_MAPPER = ObjectMapper(CBORFactory())
+	private val JSON_MAPPER = ObjectMapper()
+	private val reloadInProgress = AtomicBoolean(false)
+
+	private data class StructureCaches(val binary: MutableMap<ResourceLocation, FactoryMultiBlockPattern>, val json: MutableMap<ResourceLocation, JsonNode>)
+
+	private enum class CacheSection {
+		BINARY,
+		JSON,
+	}
 
 	@JvmStatic
 	fun loadAsync() {
 		GTCEu.LOGGER.info("Loading pattern...")
 		if (futureCache != null) return
+		if (!reloadInProgress.compareAndSet(false, true)) return
 
 		futureCache = CompletableFuture.supplyAsync({
-			val map: MutableMap<ResourceLocation, FactoryMultiBlockPattern> =
-				HashMap()
-			try {
-				// 遍历 classpath 下所有 data 目录
-				val dataUrls = StructureCache::class.java.getClassLoader().getResources("pattern")
-				while (dataUrls.hasMoreElements()) {
-					val url = dataUrls.nextElement()
-					val uri = url.toURI()
-
-					if (uri.scheme == "file") {
-						// 开发环境：直接文件系统遍历
-						val dataPath = Paths.get(uri)
-						loadFromFileSystem(dataPath, map)
-					} else if (uri.scheme == "jar") {
-						// 生产 JAR 环境：需要使用 FileSystem 读取
-						FileSystems.newFileSystem(uri, mutableMapOf<String, Any>()).use { fs ->
-							val dataPath = fs.getPath("pattern")
-							loadFromFileSystem(dataPath, map)
-						}
-					}
-				}
-			} catch (e: Exception) {
-				throw RuntimeException("Asynchronous loading of structure definition failed", e)
+			loadCaches(true)
+		}, LOAD_EXECUTOR)
+		futureCache!!.whenComplete { caches, throwable ->
+			reloadInProgress.set(false)
+			if (throwable != null) {
+				GTCEu.LOGGER.error("Failed to load pattern cache", throwable)
+			} else {
+				GTCEu.LOGGER.info("Loaded binary patterns: ${caches.binary.size}")
+				GTCEu.LOGGER.info("Loaded json patterns: ${caches.json.size}")
 			}
-			Collections.unmodifiableMap(map)
-		}, VIRTUAL_THREAD_EXECUTOR)
-		GTCEu.LOGGER.info("Loading data: ${futureCache!!.join().size}")
+		}
+	}
+
+	@JvmStatic
+	@Throws(IOException::class)
+	fun reloadAll(): Int = runReloadTask {
+		runOnVirtualThread {
+			val caches = loadCaches(true)
+			futureCache = CompletableFuture.completedFuture(caches)
+			caches.binary.size + caches.json.size
+		}
+	}
+
+	@JvmStatic
+	@Throws(IOException::class)
+	fun reloadType(type: StructureDefinitionType): Int = runReloadTask {
+		runOnVirtualThread {
+			val current = requireCaches()
+			syncPatternResourcesToDisk(patternRoot())
+			val binaryMap = HashMap(current.binary)
+			val jsonMap = HashMap(current.json)
+			when (type) {
+				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> {
+					binaryMap.clear()
+					loadTypeFromFileSystem(patternRoot(), type, binaryMap, createClaimedSources(jsonMap, CacheSection.JSON), ::readBinaryStructureDefinition)
+				}
+
+				StructureDefinitionType.STRING_ARRAY_JSON -> {
+					jsonMap.clear()
+					loadTypeFromFileSystem(patternRoot(), type, jsonMap, createClaimedSources(binaryMap, CacheSection.BINARY), ::readJsonStructureDefinition)
+				}
+			}
+			val caches = freezeCaches(binaryMap, jsonMap)
+			futureCache = CompletableFuture.completedFuture(caches)
+			when (type) {
+				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> caches.binary.size
+				StructureDefinitionType.STRING_ARRAY_JSON -> caches.json.size
+			}
+		}
+	}
+
+	@JvmStatic
+	@Throws(IOException::class)
+	fun reload(type: StructureDefinitionType, id: ResourceLocation): Boolean = runReloadTask {
+		runOnVirtualThread {
+			val current = requireCaches()
+			syncPatternResourcesToDisk(patternRoot())
+			val binaryMap = HashMap(current.binary)
+			val jsonMap = HashMap(current.json)
+			when (type) {
+				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> {
+					binaryMap.remove(id)
+					reloadSingleEntry(patternRoot(), type, id, binaryMap, createClaimedSources(jsonMap, CacheSection.JSON), ::readBinaryStructureDefinition)
+				}
+
+				StructureDefinitionType.STRING_ARRAY_JSON -> {
+					jsonMap.remove(id)
+					reloadSingleEntry(patternRoot(), type, id, jsonMap, createClaimedSources(binaryMap, CacheSection.BINARY), ::readJsonStructureDefinition)
+				}
+			}
+			futureCache = CompletableFuture.completedFuture(freezeCaches(binaryMap, jsonMap))
+			true
+		}
 	}
 
 	@Throws(IOException::class)
-	private fun loadFromFileSystem(dataDir: Path, map: MutableMap<ResourceLocation, FactoryMultiBlockPattern>) {
-		if (!Files.isDirectory(dataDir)) return
+	private fun syncPatternResourcesToDisk(patternRoot: Path) {
+		resetPatternDirectory(patternRoot)
+		Files.createDirectories(patternRoot)
 
-		Files.list(dataDir).use { modDirs ->
-			modDirs.filter { path: Path -> Files.isDirectory(path) }.forEach { modDir: Path ->
-				val structuresDir = modDir.resolve("structures")
-				if (!Files.isDirectory(structuresDir)) return@forEach
-				try {
-					Files.list(structuresDir).use { files ->
-						files.filter { f: Path -> f.toString().endsWith(".cbor.zst") }
-							.forEach { file: Path ->
-								try {
-									val compressed = Files.readAllBytes(file)
-									val raw = decompressZstd(compressed)
-									val def: FactoryMultiBlockPattern = CBOR_MAPPER.readValue(
-										raw,
-										FactoryMultiBlockPattern::class.java,
-									)
-									val modid = modDir.fileName.toString()
-									val name = file.fileName.toString().replace(".cbor.zst", "")
-									synchronized(map) {
-										map.put(ResourceLocation.fromNamespaceAndPath(modid, name), def)
-									}
-								} catch (e: IOException) {
-									throw UncheckedIOException("Failed to load structure file: $file", e)
-								}
-							}
-					}
-				} catch (e: IOException) {
-					throw UncheckedIOException(e)
+		val dataUrls = javaClass.classLoader.getResources("pattern")
+		while (dataUrls.hasMoreElements()) {
+			val url = dataUrls.nextElement()
+			val uri = url.toURI()
+
+			if (uri.scheme == "file") {
+				copyPatternTree(Paths.get(uri), patternRoot)
+			} else if (uri.scheme == "jar") {
+				FileSystems.newFileSystem(uri, mutableMapOf<String, Any>()).use { fs ->
+					copyPatternTree(fs.getPath("pattern"), patternRoot)
 				}
 			}
 		}
 	}
 
-	fun get(id: ResourceLocation): FactoryMultiBlockPattern? {
-		val f: CompletableFuture<MutableMap<ResourceLocation, FactoryMultiBlockPattern>>? = futureCache
-		return f!!.join()[id]
+	@Throws(IOException::class)
+	private fun resetPatternDirectory(patternRoot: Path) {
+		if (!Files.exists(patternRoot)) return
+		val normalizedPatternRoot = patternRoot.toAbsolutePath().normalize()
+		val normalizedGtceuRoot = GTCEu.GTCEU_FOLDER.toAbsolutePath().normalize()
+		check(normalizedPatternRoot.startsWith(normalizedGtceuRoot)) {
+			"Refusing to clear pattern directory outside gtceu folder: $normalizedPatternRoot"
+		}
+
+		Files.walk(normalizedPatternRoot).use { paths ->
+			paths.sorted(Comparator.reverseOrder()).forEach { path ->
+				Files.deleteIfExists(path)
+			}
+		}
+	}
+
+	@Throws(IOException::class)
+	private fun copyPatternTree(sourceRoot: Path, targetRoot: Path) {
+		if (!Files.isDirectory(sourceRoot)) return
+
+		Files.walk(sourceRoot).use { paths ->
+			paths.forEach { source ->
+				val relative = sourceRoot.relativize(source)
+				val target = targetRoot.resolve(relative.toString())
+				if (Files.isDirectory(source)) {
+					Files.createDirectories(target)
+				} else {
+					Files.createDirectories(target.parent)
+					Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
+				}
+			}
+		}
+	}
+
+	@Throws(IOException::class)
+	private fun loadFromFileSystem(dataDir: Path, binaryMap: MutableMap<ResourceLocation, FactoryMultiBlockPattern>, jsonMap: MutableMap<ResourceLocation, JsonNode>) {
+		if (!Files.isDirectory(dataDir)) return
+
+		val claimedSources = HashMap<ResourceLocation, String>()
+		loadTypeFromFileSystem(dataDir, StructureDefinitionType.SERIALIZED_BLOCK_PATTERN, binaryMap, claimedSources, ::readBinaryStructureDefinition)
+		loadTypeFromFileSystem(dataDir, StructureDefinitionType.STRING_ARRAY_JSON, jsonMap, claimedSources, ::readJsonStructureDefinition)
+	}
+
+	private fun <T> loadTypeFromFileSystem(
+		dataDir: Path,
+		type: StructureDefinitionType,
+		map: MutableMap<ResourceLocation, T>,
+		claimedSources: MutableMap<ResourceLocation, String>,
+		reader: (Path) -> T,
+	) {
+		val loadTasks = ArrayList<CompletableFuture<Void>>()
+		Files.list(dataDir).use { modDirs ->
+			modDirs
+				.filter { path: Path -> Files.isDirectory(path) }
+				.forEach { modDir: Path ->
+					enqueueStructureLoads(modDir, type, map, claimedSources, loadTasks, reader)
+				}
+		}
+		CompletableFuture.allOf(*loadTasks.toTypedArray()).join()
+	}
+
+	@JvmStatic
+	fun getSerializedBlockPattern(id: ResourceLocation): JsonNode? {
+		val f: CompletableFuture<StructureCaches>? = futureCache
+		return f!!.join().json[id]
+	}
+
+	@JvmStatic
+	fun getBinaryCacheSize(): Int = requireCaches().binary.size
+
+	private fun <T> enqueueStructureLoads(
+		modDir: Path,
+		type: StructureDefinitionType,
+		map: MutableMap<ResourceLocation, T>,
+		claimedSources: MutableMap<ResourceLocation, String>,
+		loadTasks: MutableList<CompletableFuture<Void>>,
+		reader: (Path) -> T,
+	) {
+		val typeDir = modDir.resolve(type.directoryName)
+		if (!Files.isDirectory(typeDir)) return
+		try {
+			Files.walk(typeDir).use { files ->
+				files.filter { file: Path -> Files.isRegularFile(file) && type.matchesFileName(file.fileName.toString()) }
+					.forEach { file: Path ->
+						loadTasks += CompletableFuture.runAsync({
+							loadStructureFile(modDir, typeDir, type, file, map, claimedSources, reader)
+						}, LOAD_EXECUTOR)
+					}
+			}
+		} catch (e: IOException) {
+			throw UncheckedIOException(e)
+		}
+	}
+
+	private fun <T> loadStructureFile(
+		modDir: Path,
+		typeDir: Path,
+		type: StructureDefinitionType,
+		file: Path,
+		map: MutableMap<ResourceLocation, T>,
+		claimedSources: MutableMap<ResourceLocation, String>,
+		reader: (Path) -> T,
+	) {
+		try {
+			val def = reader(file)
+			val modid = modDir.fileName.toString()
+			val relative = typeDir.relativize(file).toString().replace('\\', '/')
+			val name = type.stripFileExtension(relative)
+			val structureId = ResourceLocation.fromNamespaceAndPath(modid, name)
+			val sourcePath = "pattern/$modid/${type.directoryName}/${typeDir.relativize(file)}"
+			synchronized(claimedSources) {
+				val previousSource = claimedSources.putIfAbsent(structureId, sourcePath)
+				check(previousSource == null) {
+					"Duplicate structure id '$structureId' found while loading $sourcePath; already defined at $previousSource"
+				}
+			}
+			synchronized(map) {
+				val previous = map.put(structureId, def)
+				check(previous == null) {
+					"Duplicate structure id '$structureId' found while loading $sourcePath"
+				}
+			}
+		} catch (e: IOException) {
+			throw UncheckedIOException("Failed to load structure file: $file", e)
+		}
+	}
+
+	@JvmStatic
+	fun getStringArrayPattern(id: ResourceLocation): FactoryMultiBlockPattern? {
+		val f: CompletableFuture<StructureCaches>? = futureCache
+		return f!!.join().binary[id]
+	}
+
+	@JvmStatic
+	fun getJsonCacheSize(): Int = requireCaches().json.size
+
+	private fun <T> reloadSingleEntry(
+		dataDir: Path,
+		type: StructureDefinitionType,
+		id: ResourceLocation,
+		map: MutableMap<ResourceLocation, T>,
+		claimedSources: MutableMap<ResourceLocation, String>,
+		reader: (Path) -> T,
+	) {
+		val modDir = dataDir.resolve(id.namespace)
+		val typeDir = modDir.resolve(type.directoryName)
+		val file = typeDir.resolve(id.path + type.fileExtension)
+		check(Files.isRegularFile(file)) {
+			"Structure definition file not found for '$id' at $file"
+		}
+		loadStructureFile(modDir, typeDir, type, file, map, claimedSources, reader)
 	}
 
 	@Throws(IOException::class)
@@ -111,6 +307,104 @@ object StructureCache {
 			ByteArrayOutputStream().use { baos ->
 				zis.transferTo(baos)
 				return baos.toByteArray()
+			}
+		}
+	}
+
+	@Throws(IOException::class)
+	private fun readBinaryStructureDefinition(file: Path): FactoryMultiBlockPattern {
+		val compressed = Files.readAllBytes(file)
+		val raw = decompressZstd(compressed)
+		return CBOR_MAPPER.readValue(raw, FactoryMultiBlockPattern::class.java)
+	}
+
+	@Throws(IOException::class)
+	private fun readJsonStructureDefinition(file: Path): JsonNode {
+		val raw = Files.readAllBytes(file)
+		return JSON_MAPPER.readTree(raw)
+	}
+
+	private fun patternRoot(): Path = GTCEu.GTCEU_FOLDER.resolve("pattern")
+
+	private fun requireCaches(): StructureCaches {
+		val currentFuture = futureCache
+		if (currentFuture != null) {
+			return currentFuture.join()
+		}
+
+		val caches = loadCaches(true)
+		futureCache = CompletableFuture.completedFuture(caches)
+		return caches
+	}
+
+	private fun loadCaches(syncResources: Boolean): StructureCaches {
+		val root = patternRoot()
+		if (syncResources) {
+			syncPatternResourcesToDisk(root)
+		}
+		val binaryMap = HashMap<ResourceLocation, FactoryMultiBlockPattern>()
+		val jsonMap = HashMap<ResourceLocation, JsonNode>()
+		loadFromFileSystem(root, binaryMap, jsonMap)
+		return freezeCaches(binaryMap, jsonMap)
+	}
+
+	private fun freezeCaches(binaryMap: MutableMap<ResourceLocation, FactoryMultiBlockPattern>, jsonMap: MutableMap<ResourceLocation, JsonNode>): StructureCaches = StructureCaches(
+		Collections.unmodifiableMap(binaryMap),
+		Collections.unmodifiableMap(jsonMap),
+	)
+
+	private fun <T> createClaimedSources(map: Map<ResourceLocation, T>, section: CacheSection): MutableMap<ResourceLocation, String> {
+		val claimedSources = HashMap<ResourceLocation, String>()
+		for (id in map.keys) {
+			claimedSources[id] = when (section) {
+				CacheSection.BINARY -> "existing binary cache entry for $id"
+				CacheSection.JSON -> "existing json cache entry for $id"
+			}
+		}
+		return claimedSources
+	}
+
+	private fun <T> runReloadTask(action: () -> T): T {
+		check(GTCEu.isDev()) {
+			"Structure cache reload is only available in development environment"
+		}
+		check(reloadInProgress.compareAndSet(false, true)) {
+			"Structure cache reload task is already running"
+		}
+		try {
+			return action()
+		} finally {
+			reloadInProgress.set(false)
+		}
+	}
+
+	@Throws(IOException::class)
+	private fun <T> runOnVirtualThread(action: () -> T): T {
+		val resultFuture = CompletableFuture<T>()
+		val reloadFutureSupplier = Supplier {
+			CompletableFuture.runAsync({
+				try {
+					resultFuture.complete(action())
+				} catch (t: Throwable) {
+					resultFuture.completeExceptionally(t)
+					throw t
+				}
+			}, LOAD_EXECUTOR)
+		}
+		try {
+			if (GTCEu.isDev() && GTCEu.isClientSide()) {
+				ResourceReloadDetector.regenerateResourcesOnReload(reloadFutureSupplier).join()
+			} else {
+				reloadFutureSupplier.get().join()
+			}
+			return resultFuture.join()
+		} catch (e: CompletionException) {
+			val cause = e.cause ?: e
+			when (cause) {
+				is IOException -> throw cause
+				is RuntimeException -> throw cause
+				is Error -> throw cause
+				else -> throw RuntimeException(cause)
 			}
 		}
 	}

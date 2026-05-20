@@ -1,13 +1,18 @@
 package com.gregtechceu.gtceu.common.commands;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.cosmetics.CapeRegistry;
 import com.gregtechceu.gtceu.api.data.worldgen.GTOreDefinition;
 import com.gregtechceu.gtceu.api.data.worldgen.ores.GeneratedVeinMetadata;
 import com.gregtechceu.gtceu.api.data.worldgen.ores.OreGenerator;
 import com.gregtechceu.gtceu.api.data.worldgen.ores.OrePlacer;
 import com.gregtechceu.gtceu.api.gui.factory.GTUIEditorFactory;
+import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.core.mixins.ResourceKeyArgumentAccessor;
+import com.gregtechceu.gtceu.data.pattern.StructureCache;
+import com.gregtechceu.gtceu.data.pattern.StructureDefinitionType;
 
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -48,6 +53,13 @@ public class GTCommands {
     public static final SuggestionProvider<CommandSourceStack> NOT_OWNED_CAPES = (ctx, builder) -> {
         return SharedSuggestionProvider.suggestResource(findNotOwnedCapesFor(ctx), builder);
     };
+    public static final SuggestionProvider<CommandSourceStack> STRUCTURE_IDS = (ctx, builder) -> {
+        return SharedSuggestionProvider.suggestResource(
+                GTRegistries.MACHINES.stream()
+                        .filter(MultiblockMachineDefinition.class::isInstance)
+                        .map(MachineDefinition::getId),
+                builder);
+    };
     public static final DynamicCommandExceptionType ERROR_NO_SUCH_CAPE = new DynamicCommandExceptionType(
             id -> Component.translatable("command.gtpm.cape.failure.does_not_exist", id));
 
@@ -82,6 +94,26 @@ public class GTCommands {
                                         .executes(context -> {
                                             return GTCommands.placeVein(context, BlockPosArgument.getBlockPos(context, "position"));
                                         }))))
+                .then(literal("structure_cache")
+                        .requires(ctx -> GTCEu.isDev() && ctx.hasPermission(LEVEL_ADMINS))
+                        .then(literal("reload")
+                                .executes(ctx -> reloadStructureCache(ctx.getSource()))
+                                .then(literal("binary")
+                                        .executes(ctx -> reloadStructureCacheType(ctx.getSource(),
+                                                StructureDefinitionType.SERIALIZED_BLOCK_PATTERN))
+                                        .then(argument("id", ResourceLocationArgument.id())
+                                                .suggests(STRUCTURE_IDS)
+                                                .executes(ctx -> reloadStructureCacheEntry(ctx.getSource(),
+                                                        StructureDefinitionType.SERIALIZED_BLOCK_PATTERN,
+                                                        ResourceLocationArgument.getId(ctx, "id")))))
+                                .then(literal("json")
+                                        .executes(ctx -> reloadStructureCacheType(ctx.getSource(),
+                                                StructureDefinitionType.STRING_ARRAY_JSON))
+                                        .then(argument("id", ResourceLocationArgument.id())
+                                                .suggests(STRUCTURE_IDS)
+                                                .executes(ctx -> reloadStructureCacheEntry(ctx.getSource(),
+                                                        StructureDefinitionType.STRING_ARRAY_JSON,
+                                                        ResourceLocationArgument.getId(ctx, "id")))))))
                 .then(literal("cape")
                         .then(literal("give")
                                 .requires(ctx -> ctx.hasPermission(LEVEL_GAMEMASTERS))
@@ -298,5 +330,46 @@ public class GTCommands {
         }
 
         return 1;
+    }
+
+    private static int reloadStructureCache(CommandSourceStack source) {
+        try {
+            int total = StructureCache.reloadAll();
+            source.sendSuccess(() -> Component.literal("Reloaded structure cache: " +
+                    StructureCache.getBinaryCacheSize() + " binary, " +
+                    StructureCache.getJsonCacheSize() + " json, " +
+                    total + " total"), true);
+            return total;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed to reload structure cache: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int reloadStructureCacheType(CommandSourceStack source, StructureDefinitionType type) {
+        try {
+            int count = StructureCache.reloadType(type);
+            source.sendSuccess(() -> Component.literal("Reloaded " + type.directoryName +
+                    " structure cache: " + count + " entries"), true);
+            return count;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed to reload " + type.directoryName +
+                    " structure cache: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int reloadStructureCacheEntry(CommandSourceStack source, StructureDefinitionType type,
+                                                 ResourceLocation id) {
+        try {
+            StructureCache.reload(type, id);
+            source.sendSuccess(() -> Component.literal("Reloaded " + type.directoryName +
+                    " structure cache entry " + id), true);
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed to reload " + type.directoryName +
+                    " structure cache entry " + id + ": " + e.getMessage()));
+            return 0;
+        }
     }
 }
