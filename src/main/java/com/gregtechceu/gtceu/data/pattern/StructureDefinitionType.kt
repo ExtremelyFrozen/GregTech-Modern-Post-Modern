@@ -13,7 +13,7 @@ enum class StructureDefinitionType(val directoryName: String, val fileExtension:
 	}
 
 	companion object {
-		fun fromDirectoryName(directoryName: String?): StructureDefinitionType? {
+		fun fromDirectoryName(directoryName: String): StructureDefinitionType? {
 			for (value in StructureDefinitionType.entries) {
 				if (value.directoryName == directoryName) {
 					return value
