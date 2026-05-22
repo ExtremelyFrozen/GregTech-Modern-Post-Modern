@@ -349,11 +349,11 @@ public class GTCommands {
     private static int reloadStructureCacheType(CommandSourceStack source, StructureDefinitionType type) {
         try {
             int count = StructureCache.reloadType(type);
-            source.sendSuccess(() -> Component.literal("Reloaded " + type.directoryName +
+            source.sendSuccess(() -> Component.literal("Reloaded " + type.getDirectoryName() +
                     " structure cache: " + count + " entries"), true);
             return count;
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed to reload " + type.directoryName +
+            source.sendFailure(Component.literal("Failed to reload " + type.getDirectoryName() +
                     " structure cache: " + e.getMessage()));
             return 0;
         }
@@ -363,11 +363,11 @@ public class GTCommands {
                                                  ResourceLocation id) {
         try {
             StructureCache.reload(type, id);
-            source.sendSuccess(() -> Component.literal("Reloaded " + type.directoryName +
+            source.sendSuccess(() -> Component.literal("Reloaded " + type.getDirectoryName() +
                     " structure cache entry " + id), true);
             return 1;
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed to reload " + type.directoryName +
+            source.sendFailure(Component.literal("Failed to reload " + type.getDirectoryName() +
                     " structure cache entry " + id + ": " + e.getMessage()));
             return 0;
         }

@@ -1,38 +1,25 @@
-package com.gregtechceu.gtceu.data.pattern;
+package com.gregtechceu.gtceu.data.pattern
 
-import org.jetbrains.annotations.Nullable;
+enum class StructureDefinitionType(val directoryName: String, val fileExtension: String) {
+	SERIALIZED_BLOCK_PATTERN("binary", ".cbor.zst"),
+	STRING_ARRAY_JSON("json", ".json"),
+	;
 
-public enum StructureDefinitionType {
+	fun matchesFileName(fileName: String): Boolean = fileName.endsWith(fileExtension)
 
-    SERIALIZED_BLOCK_PATTERN("binary", ".cbor.zst"),
-    STRING_ARRAY_JSON("json", ".json");
+	fun stripFileExtension(fileName: String): String {
+		require(matchesFileName(fileName)) { "File '$fileName' does not match extension '$fileExtension'" }
+		return fileName.substring(0, fileName.length - fileExtension.length)
+	}
 
-    public final String directoryName;
-    public final String fileExtension;
-
-    StructureDefinitionType(String directoryName, String fileExtension) {
-        this.directoryName = directoryName;
-        this.fileExtension = fileExtension;
-    }
-
-    public boolean matchesFileName(String fileName) {
-        return fileName.endsWith(fileExtension);
-    }
-
-    public String stripFileExtension(String fileName) {
-        if (!matchesFileName(fileName)) {
-            throw new IllegalArgumentException(
-                    "File '" + fileName + "' does not match extension '" + fileExtension + "'");
-        }
-        return fileName.substring(0, fileName.length() - fileExtension.length());
-    }
-
-    public static @Nullable StructureDefinitionType fromDirectoryName(String directoryName) {
-        for (StructureDefinitionType value : values()) {
-            if (value.directoryName.equals(directoryName)) {
-                return value;
-            }
-        }
-        return null;
-    }
+	companion object {
+		fun fromDirectoryName(directoryName: String?): StructureDefinitionType? {
+			for (value in StructureDefinitionType.entries) {
+				if (value.directoryName == directoryName) {
+					return value
+				}
+			}
+			return null
+		}
+	}
 }

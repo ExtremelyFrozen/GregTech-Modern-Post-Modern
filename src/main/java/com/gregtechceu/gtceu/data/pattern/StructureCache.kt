@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.multiblock.FactoryMultiBlockPattern
 import com.gregtechceu.gtceu.utils.dev.ResourceReloadDetector
 
 import net.minecraft.resources.ResourceLocation
+import net.neoforged.fml.ModList
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -53,12 +54,16 @@ object StructureCache {
 		if (futureCache != null) return
 		if (!reloadInProgress.compareAndSet(false, true)) return
 
-		futureCache = CompletableFuture.supplyAsync({
-			loadCaches(true)
+		val loadingFuture = CompletableFuture.supplyAsync({
+			loadCaches()
 		}, LOAD_EXECUTOR)
-		futureCache!!.whenComplete { caches, throwable ->
+		futureCache = loadingFuture
+		loadingFuture.whenComplete { caches, throwable ->
 			reloadInProgress.set(false)
 			if (throwable != null) {
+				if (futureCache === loadingFuture) {
+					futureCache = null
+				}
 				GTCEu.LOGGER.error("Failed to load pattern cache", throwable)
 			} else {
 				GTCEu.LOGGER.info("Loaded binary patterns: ${caches.binary.size}")
@@ -71,7 +76,7 @@ object StructureCache {
 	@Throws(IOException::class)
 	fun reloadAll(): Int = runReloadTask {
 		runOnVirtualThread {
-			val caches = loadCaches(true)
+			val caches = loadCaches()
 			futureCache = CompletableFuture.completedFuture(caches)
 			caches.binary.size + caches.json.size
 		}
@@ -88,12 +93,24 @@ object StructureCache {
 			when (type) {
 				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> {
 					binaryMap.clear()
-					loadTypeFromFileSystem(patternRoot(), type, binaryMap, createClaimedSources(jsonMap, CacheSection.JSON), ::readBinaryStructureDefinition)
+					loadTypeFromFileSystem(
+						patternRoot(),
+						type,
+						binaryMap,
+						createClaimedSources(jsonMap, CacheSection.JSON),
+						::readBinaryStructureDefinition,
+					)
 				}
 
 				StructureDefinitionType.STRING_ARRAY_JSON -> {
 					jsonMap.clear()
-					loadTypeFromFileSystem(patternRoot(), type, jsonMap, createClaimedSources(binaryMap, CacheSection.BINARY), ::readJsonStructureDefinition)
+					loadTypeFromFileSystem(
+						patternRoot(),
+						type,
+						jsonMap,
+						createClaimedSources(binaryMap, CacheSection.BINARY),
+						::readJsonStructureDefinition,
+					)
 				}
 			}
 			val caches = freezeCaches(binaryMap, jsonMap)
@@ -116,12 +133,26 @@ object StructureCache {
 			when (type) {
 				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> {
 					binaryMap.remove(id)
-					reloadSingleEntry(patternRoot(), type, id, binaryMap, createClaimedSources(jsonMap, CacheSection.JSON), ::readBinaryStructureDefinition)
+					reloadSingleEntry(
+						patternRoot(),
+						type,
+						id,
+						binaryMap,
+						createClaimedSources(jsonMap, CacheSection.JSON),
+						::readBinaryStructureDefinition,
+					)
 				}
 
 				StructureDefinitionType.STRING_ARRAY_JSON -> {
 					jsonMap.remove(id)
-					reloadSingleEntry(patternRoot(), type, id, jsonMap, createClaimedSources(binaryMap, CacheSection.BINARY), ::readJsonStructureDefinition)
+					reloadSingleEntry(
+						patternRoot(),
+						type,
+						id,
+						jsonMap,
+						createClaimedSources(binaryMap, CacheSection.BINARY),
+						::readJsonStructureDefinition,
+					)
 				}
 			}
 			futureCache = CompletableFuture.completedFuture(freezeCaches(binaryMap, jsonMap))
@@ -136,20 +167,56 @@ object StructureCache {
 		val expectedPaths = HashSet<Path>()
 		expectedPaths.add(normalizedPatternRoot)
 
+		copyModPatternResources(normalizedPatternRoot, expectedPaths)
+		copyClassLoaderPatternResources(normalizedPatternRoot, expectedPaths)
+		copyDevPatternResources(normalizedPatternRoot, expectedPaths)
+		prunePatternDirectory(normalizedPatternRoot, expectedPaths)
+	}
+
+	@Throws(IOException::class)
+	private fun copyModPatternResources(targetRoot: Path, expectedPaths: MutableSet<Path>) {
+		val modList = ModList.get() ?: return
+		for (modFileInfo in modList.modFiles) {
+			copyPatternTree(modFileInfo.file.findResource("pattern"), targetRoot, expectedPaths)
+		}
+	}
+
+	@Throws(IOException::class)
+	private fun copyClassLoaderPatternResources(targetRoot: Path, expectedPaths: MutableSet<Path>) {
 		val dataUrls = javaClass.classLoader.getResources("pattern")
 		while (dataUrls.hasMoreElements()) {
 			val url = dataUrls.nextElement()
 			val uri = url.toURI()
 
 			if (uri.scheme == "file") {
-				copyPatternTree(Paths.get(uri), normalizedPatternRoot, expectedPaths)
+				copyPatternTree(Paths.get(uri), targetRoot, expectedPaths)
 			} else if (uri.scheme == "jar") {
 				FileSystems.newFileSystem(uri, mutableMapOf<String, Any>()).use { fs ->
-					copyPatternTree(fs.getPath("pattern"), normalizedPatternRoot, expectedPaths)
+					copyPatternTree(fs.getPath("pattern"), targetRoot, expectedPaths)
 				}
 			}
 		}
-		prunePatternDirectory(normalizedPatternRoot, expectedPaths)
+	}
+
+	@Throws(IOException::class)
+	private fun copyDevPatternResources(targetRoot: Path, expectedPaths: MutableSet<Path>) {
+		if (!GTCEu.isDev()) return
+
+		val seenSources = HashSet<Path>()
+		var root: Path? = GTCEu.getGameDir().toAbsolutePath().normalize()
+		while (root != null) {
+			copyDevPatternResource(root.resolve("src/main/resources/pattern"), targetRoot, expectedPaths, seenSources)
+			copyDevPatternResource(root.resolve("build/resources/main/pattern"), targetRoot, expectedPaths, seenSources)
+			root = root.parent
+		}
+	}
+
+	@Throws(IOException::class)
+	private fun copyDevPatternResource(sourceRoot: Path, targetRoot: Path, expectedPaths: MutableSet<Path>, seenSources: MutableSet<Path>) {
+		val normalizedSourceRoot = sourceRoot.toAbsolutePath().normalize()
+		if (seenSources.add(normalizedSourceRoot)) {
+			copyPatternTree(normalizedSourceRoot, targetRoot, expectedPaths)
+		}
 	}
 
 	@Throws(IOException::class)
@@ -224,8 +291,20 @@ object StructureCache {
 		if (!Files.isDirectory(dataDir)) return
 
 		val claimedSources = HashMap<ResourceLocation, String>()
-		loadTypeFromFileSystem(dataDir, StructureDefinitionType.SERIALIZED_BLOCK_PATTERN, binaryMap, claimedSources, ::readBinaryStructureDefinition)
-		loadTypeFromFileSystem(dataDir, StructureDefinitionType.STRING_ARRAY_JSON, jsonMap, claimedSources, ::readJsonStructureDefinition)
+		loadTypeFromFileSystem(
+			dataDir,
+			StructureDefinitionType.SERIALIZED_BLOCK_PATTERN,
+			binaryMap,
+			claimedSources,
+			::readBinaryStructureDefinition,
+		)
+		loadTypeFromFileSystem(
+			dataDir,
+			StructureDefinitionType.STRING_ARRAY_JSON,
+			jsonMap,
+			claimedSources,
+			::readJsonStructureDefinition,
+		)
 	}
 
 	private fun <T> loadTypeFromFileSystem(
@@ -247,9 +326,9 @@ object StructureCache {
 	}
 
 	@JvmStatic
-	fun getSerializedBlockPattern(id: ResourceLocation): JsonNode? {
+	fun getSerializedBlockPattern(id: ResourceLocation): FactoryMultiBlockPattern? {
 		val f: CompletableFuture<StructureCaches>? = futureCache
-		return f!!.join().json[id]
+		return f!!.join().binary[id]
 	}
 
 	@JvmStatic
@@ -313,9 +392,9 @@ object StructureCache {
 	}
 
 	@JvmStatic
-	fun getStringArrayPattern(id: ResourceLocation): FactoryMultiBlockPattern? {
+	fun getStringArrayPattern(id: ResourceLocation): JsonNode? {
 		val f: CompletableFuture<StructureCaches>? = futureCache
-		return f!!.join().binary[id]
+		return f!!.join().json[id]
 	}
 
 	@JvmStatic
@@ -358,7 +437,15 @@ object StructureCache {
 	@Throws(IOException::class)
 	private fun readJsonStructureDefinition(file: Path): JsonNode {
 		val raw = Files.readAllBytes(file)
+		if (raw.isEmpty() || raw.all(::isJsonWhitespace)) {
+			throw IOException("Empty JSON structure definition")
+		}
 		return JSON_MAPPER.readTree(raw)
+	}
+
+	private fun isJsonWhitespace(byte: Byte): Boolean = when (byte.toInt()) {
+		0x09, 0x0A, 0x0D, 0x20 -> true
+		else -> false
 	}
 
 	private fun patternRoot(): Path = GTCEu.GTCEU_FOLDER.resolve("pattern")
@@ -369,16 +456,14 @@ object StructureCache {
 			return currentFuture.join()
 		}
 
-		val caches = loadCaches(true)
+		val caches = loadCaches()
 		futureCache = CompletableFuture.completedFuture(caches)
 		return caches
 	}
 
-	private fun loadCaches(syncResources: Boolean): StructureCaches {
+	private fun loadCaches(): StructureCaches {
 		val root = patternRoot()
-		if (syncResources) {
-			syncPatternResourcesToDisk(root)
-		}
+		syncPatternResourcesToDisk(root)
 		val binaryMap = HashMap<ResourceLocation, FactoryMultiBlockPattern>()
 		val jsonMap = HashMap<ResourceLocation, JsonNode>()
 		loadFromFileSystem(root, binaryMap, jsonMap)
