@@ -10,26 +10,18 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
-import com.gregtechceu.gtceu.api.multiblock.CenterOffset;
-import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
-import com.gregtechceu.gtceu.api.multiblock.MultiBlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
-import com.gregtechceu.gtceu.api.multiblock.Predicates;
-import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
-import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
-import com.gregtechceu.gtceu.data.pattern.StructureCache;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
 import com.gregtechceu.gtceu.utils.memoization.GTMemoizer;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import dev.latvian.mods.rhino.util.HideFromJS;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -55,7 +47,8 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
     private Function<MultiblockControllerMachine, Comparator<IMultiPart>> partSorter = (c) -> (a, b) -> 0;
     private @Nullable TriFunction<MultiblockControllerMachine, IMultiPart, Direction, BlockState> partAppearance;
     @Getter
-    private BiConsumer<MultiblockControllerMachine, List<Component>> additionalDisplay = (m, l) -> {};
+    private BiConsumer<MultiblockControllerMachine, List<Component>> additionalDisplay = (m, l) -> {
+    };
 
     public MultiblockMachineBuilder(GTRegistrate registrate, String name,
                                     BiFunction<BlockBehaviour.Properties, DEFINITION, MetaMachineBlock> blockFactory,
@@ -139,7 +132,7 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
                     name);
         }
         Supplier<BlockPattern> baselinePattern = GTMemoizer.memoize(() -> pattern.apply(definition));
-        definition.setPatternFactory(() -> getReloadablePattern(definition, baselinePattern));
+        definition.setPatternFactory(() -> StructurePatternResolver.resolveCachedPattern(definition, baselinePattern));
         definition.setShapes(() -> shapeInfos.stream().map(factory -> factory.apply(definition))
                 .flatMap(Collection::stream).toList());
         definition.setAllowFlip(allowFlip);
@@ -154,120 +147,5 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
         definition.setPartAppearance(partAppearance);
         definition.setAdditionalDisplay(additionalDisplay);
         return definition;
-    }
-
-    private BlockPattern getReloadablePattern(MultiblockMachineDefinition definition,
-                                              Supplier<BlockPattern> baselinePattern) {
-        ResourceLocation id = definition.getId();
-        MultiBlockPattern serializedPattern = StructureCache.getSerializedBlockPattern(id);
-        if (serializedPattern != null) {
-            BlockPattern pattern = serializedPattern.toBlockPattern();
-            pattern.condition = baselinePattern.get().condition;
-            return pattern;
-        }
-
-        JsonNode stringArrayPattern = StructureCache.getStringArrayPattern(id);
-        if (stringArrayPattern != null) {
-            return rebuildStringArrayPattern(id, baselinePattern.get(), stringArrayPattern);
-        }
-
-        return baselinePattern.get();
-    }
-
-    private BlockPattern rebuildStringArrayPattern(ResourceLocation id, BlockPattern baselinePattern,
-                                                   JsonNode jsonPattern) {
-        List<FactoryBlockPattern.JsonAisleUnit> jsonUnits = FactoryBlockPattern.parseJsonDefinition(id, jsonPattern);
-        List<String[]> aisles = jsonUnits.stream()
-                .flatMap(unit -> unit.slices().stream())
-                .toList();
-        MultiBlockPattern baselineDefinition = new MultiBlockPattern(baselinePattern);
-        Map<Character, TraceabilityPredicate> predicates = collectPredicates(id, baselineDefinition);
-
-        int aisleHeight = aisles.getFirst().length;
-        int rowWidth = aisles.getFirst()[0].length();
-        int aisleCount = aisles.size();
-        int unitCount = jsonUnits.size();
-
-        TraceabilityPredicate[][][] blockMatches = new TraceabilityPredicate[aisleCount][aisleHeight][rowWidth];
-        String[][] structureSlices = new String[aisleCount][];
-        int[][] aisleRepetitions = new int[unitCount][];
-        int[] unitStarts = new int[unitCount];
-        int[] unitDepths = new int[unitCount];
-        CenterOffset centerOffset = null;
-
-        for (int unitIndex = 0, aisleIndex = 0, minZ = 0, maxZ = 0; unitIndex < unitCount; unitIndex++) {
-            FactoryBlockPattern.JsonAisleUnit unit = jsonUnits.get(unitIndex);
-            int unitDepth = unit.slices().size();
-
-            unitStarts[unitIndex] = aisleIndex;
-            unitDepths[unitIndex] = unitDepth;
-            aisleRepetitions[unitIndex] = new int[] { unit.minRepeat(), unit.maxRepeat() };
-
-            for (int inner = 0; inner < unitDepth; inner++, aisleIndex++) {
-                String[] aisle = aisles.get(aisleIndex);
-                structureSlices[aisleIndex] = aisle.clone();
-                for (int row = 0; row < aisleHeight; row++) {
-                    for (int column = 0; column < rowWidth; column++) {
-                        char symbol = aisle[row].charAt(column);
-                        TraceabilityPredicate predicate = predicates.get(symbol);
-                        if (predicate == null) {
-                            throw new IllegalArgumentException("Unknown structure symbol '" + symbol +
-                                    "' in json structure definition for " + id);
-                        }
-                        blockMatches[aisleIndex][row][column] = predicate;
-                        if (predicate instanceof PredicateController) {
-                            centerOffset = new CenterOffset(column, row, aisleIndex, minZ + inner, maxZ + inner);
-                        }
-                    }
-                }
-            }
-
-            minZ += unitDepth * unit.minRepeat();
-            maxZ += unitDepth * unit.maxRepeat();
-        }
-
-        if (centerOffset == null) {
-            throw new IllegalArgumentException("Json structure definition for " + id +
-                    " does not contain a controller predicate symbol");
-        }
-
-        BlockPattern pattern = new BlockPattern(blockMatches, baselineDefinition.getStructureDir(), aisleRepetitions,
-                unitStarts, unitDepths, structureSlices, centerOffset, aisleCount, aisleHeight, rowWidth);
-        pattern.condition = baselinePattern.condition;
-        pattern.predicates = List.copyOf(predicates.values());
-        return pattern;
-    }
-
-    private Map<Character, TraceabilityPredicate> collectPredicates(ResourceLocation id,
-                                                                    MultiBlockPattern baselineDefinition) {
-        Map<Character, TraceabilityPredicate> predicates = new HashMap<>();
-        predicates.put(' ', Predicates.any());
-        for (MultiBlockPattern.Unit unit : baselineDefinition.getUnits()) {
-            if (unit.getPredicates() == null || unit.getPredicates().size() != unit.getSlices().size()) {
-                throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                        " is missing predicate slices");
-            }
-            for (int slice = 0; slice < unit.getSlices().size(); slice++) {
-                String[] rows = unit.getSlices().get(slice);
-                TraceabilityPredicate[][] predicateRows = unit.getPredicates().get(slice);
-                for (int row = 0; row < rows.length; row++) {
-                    String rowText = rows[row];
-                    for (int column = 0; column < rowText.length(); column++) {
-                        char symbol = rowText.charAt(column);
-                        TraceabilityPredicate predicate = predicateRows[row][column];
-                        if (predicate == null) {
-                            throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                                    " has no predicate for symbol '" + symbol + "'");
-                        }
-                        TraceabilityPredicate previous = predicates.putIfAbsent(symbol, predicate);
-                        if (previous != null && previous != predicate) {
-                            throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                                    " maps symbol '" + symbol + "' to multiple predicates");
-                        }
-                    }
-                }
-            }
-        }
-        return predicates;
     }
 }
