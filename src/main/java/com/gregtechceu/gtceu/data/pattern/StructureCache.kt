@@ -16,10 +16,8 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.UncheckedIOException
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.ArrayList
 import java.util.Collections
@@ -42,6 +40,8 @@ object StructureCache {
 	private val reloadInProgress = AtomicBoolean(false)
 
 	private data class StructureCaches(val binary: MutableMap<ResourceLocation, FactoryMultiBlockPattern>, val json: MutableMap<ResourceLocation, JsonNode>)
+
+	private data class PatternSource(val description: String, val root: Path)
 
 	private enum class CacheSection {
 		BINARY,
@@ -160,6 +160,51 @@ object StructureCache {
 		}
 	}
 
+	@JvmStatic
+	fun getSerializedBlockPattern(id: ResourceLocation): FactoryMultiBlockPattern? {
+		val f: CompletableFuture<StructureCaches>? = futureCache
+		return f!!.join().binary[id]
+	}
+
+	@JvmStatic
+	fun getBinaryCacheSize(): Int = requireCaches().binary.size
+
+	@JvmStatic
+	fun getStringArrayPattern(id: ResourceLocation): JsonNode? {
+		val f: CompletableFuture<StructureCaches>? = futureCache
+		return f!!.join().json[id]
+	}
+
+	@JvmStatic
+	fun getJsonCacheSize(): Int = requireCaches().json.size
+
+	private fun patternRoot(): Path = GTCEu.GTCEU_FOLDER.resolve("pattern")
+
+	private fun requireCaches(): StructureCaches {
+		val currentFuture = futureCache
+		if (currentFuture != null) {
+			return currentFuture.join()
+		}
+
+		val caches = loadCaches()
+		futureCache = CompletableFuture.completedFuture(caches)
+		return caches
+	}
+
+	private fun loadCaches(): StructureCaches {
+		val root = patternRoot()
+		syncPatternResourcesToDisk(root)
+		val binaryMap = HashMap<ResourceLocation, FactoryMultiBlockPattern>()
+		val jsonMap = HashMap<ResourceLocation, JsonNode>()
+		loadFromFileSystem(root, binaryMap, jsonMap)
+		return freezeCaches(binaryMap, jsonMap)
+	}
+
+	private fun freezeCaches(binaryMap: MutableMap<ResourceLocation, FactoryMultiBlockPattern>, jsonMap: MutableMap<ResourceLocation, JsonNode>): StructureCaches = StructureCaches(
+		Collections.unmodifiableMap(binaryMap),
+		Collections.unmodifiableMap(jsonMap),
+	)
+
 	@Throws(IOException::class)
 	private fun syncPatternResourcesToDisk(patternRoot: Path) {
 		val normalizedPatternRoot = normalizePatternRoot(patternRoot)
@@ -167,55 +212,74 @@ object StructureCache {
 		val expectedPaths = HashSet<Path>()
 		expectedPaths.add(normalizedPatternRoot)
 
-		copyModPatternResources(normalizedPatternRoot, expectedPaths)
-		copyClassLoaderPatternResources(normalizedPatternRoot, expectedPaths)
-		copyDevPatternResources(normalizedPatternRoot, expectedPaths)
+		copyPatternSources(collectPatternSources(), normalizedPatternRoot, expectedPaths)
 		prunePatternDirectory(normalizedPatternRoot, expectedPaths)
 	}
 
 	@Throws(IOException::class)
-	private fun copyModPatternResources(targetRoot: Path, expectedPaths: MutableSet<Path>) {
-		val modList = ModList.get() ?: return
-		for (modFileInfo in modList.modFiles) {
-			copyPatternTree(modFileInfo.file.findResource("pattern"), targetRoot, expectedPaths)
-		}
+	private fun collectPatternSources(): List<PatternSource> {
+		val sources = ArrayList<PatternSource>()
+		collectModPatternSources(sources)
+		return sources
 	}
 
-	@Throws(IOException::class)
-	private fun copyClassLoaderPatternResources(targetRoot: Path, expectedPaths: MutableSet<Path>) {
-		val dataUrls = javaClass.classLoader.getResources("pattern")
-		while (dataUrls.hasMoreElements()) {
-			val url = dataUrls.nextElement()
-			val uri = url.toURI()
-
-			if (uri.scheme == "file") {
-				copyPatternTree(Paths.get(uri), targetRoot, expectedPaths)
-			} else if (uri.scheme == "jar") {
-				FileSystems.newFileSystem(uri, mutableMapOf<String, Any>()).use { fs ->
-					copyPatternTree(fs.getPath("pattern"), targetRoot, expectedPaths)
-				}
+	private fun collectModPatternSources(sources: MutableList<PatternSource>) {
+		val modList = ModList.get() ?: return
+		for (modFileInfo in modList.modFiles) {
+			val patternRoot = modFileInfo.file.findResource("pattern")
+			if (Files.isDirectory(patternRoot)) {
+				sources += PatternSource("mod:${modFileInfo.file.fileName}", patternRoot)
 			}
 		}
 	}
 
 	@Throws(IOException::class)
-	private fun copyDevPatternResources(targetRoot: Path, expectedPaths: MutableSet<Path>) {
-		if (!GTCEu.isDev()) return
-
-		val seenSources = HashSet<Path>()
-		var root: Path? = GTCEu.getGameDir().toAbsolutePath().normalize()
-		while (root != null) {
-			copyDevPatternResource(root.resolve("src/main/resources/pattern"), targetRoot, expectedPaths, seenSources)
-			copyDevPatternResource(root.resolve("build/resources/main/pattern"), targetRoot, expectedPaths, seenSources)
-			root = root.parent
+	private fun copyPatternSources(sources: List<PatternSource>, targetRoot: Path, expectedPaths: MutableSet<Path>) {
+		val seenRoots = HashSet<Path>()
+		val claimedTargets = HashMap<Path, String>()
+		for (source in sources) {
+			val normalizedRoot = source.root.toAbsolutePath().normalize()
+			if (seenRoots.add(normalizedRoot)) {
+				copyPatternTree(PatternSource(source.description, normalizedRoot), targetRoot, expectedPaths, claimedTargets)
+			}
 		}
 	}
 
 	@Throws(IOException::class)
-	private fun copyDevPatternResource(sourceRoot: Path, targetRoot: Path, expectedPaths: MutableSet<Path>, seenSources: MutableSet<Path>) {
-		val normalizedSourceRoot = sourceRoot.toAbsolutePath().normalize()
-		if (seenSources.add(normalizedSourceRoot)) {
-			copyPatternTree(normalizedSourceRoot, targetRoot, expectedPaths)
+	private fun copyPatternTree(source: PatternSource, targetRoot: Path, expectedPaths: MutableSet<Path>, claimedTargets: MutableMap<Path, String>) {
+		val sourceRoot = source.root
+		if (!Files.isDirectory(sourceRoot)) return
+
+		Files.walk(sourceRoot).use { paths ->
+			paths.forEach { path ->
+				val relative = sourceRoot.relativize(path)
+				val target = targetRoot.resolve(relative.toString()).toAbsolutePath().normalize()
+				expectedPaths.add(target)
+				if (Files.isDirectory(path)) {
+					if (Files.exists(target) && !Files.isDirectory(target)) {
+						Files.delete(target)
+					}
+					Files.createDirectories(target)
+				} else {
+					if (Files.exists(target) && Files.isDirectory(target)) {
+						deleteRecursively(target)
+					}
+					Files.createDirectories(target.parent)
+					claimPatternTarget(targetRoot, target, source.description, path, claimedTargets)
+					if (shouldCopyFile(path, target)) {
+						Files.copy(path, target, StandardCopyOption.REPLACE_EXISTING)
+					}
+				}
+			}
+		}
+	}
+
+	private fun claimPatternTarget(targetRoot: Path, target: Path, sourceDescription: String, sourcePath: Path, claimedTargets: MutableMap<Path, String>) {
+		val source = "$sourceDescription:$sourcePath"
+		val previousSource = claimedTargets.putIfAbsent(target, source)
+		check(previousSource == null) {
+			val relative = targetRoot.relativize(target).toString().replace('\\', '/')
+			"Duplicate pattern resource target 'pattern/$relative' from $source; already provided by $previousSource"
 		}
 	}
 
@@ -239,33 +303,6 @@ object StructureCache {
 			"Refusing to clear pattern directory outside gtceu folder: $normalizedPatternRoot"
 		}
 		return normalizedPatternRoot
-	}
-
-	@Throws(IOException::class)
-	private fun copyPatternTree(sourceRoot: Path, targetRoot: Path, expectedPaths: MutableSet<Path>) {
-		if (!Files.isDirectory(sourceRoot)) return
-
-		Files.walk(sourceRoot).use { paths ->
-			paths.forEach { source ->
-				val relative = sourceRoot.relativize(source)
-				val target = targetRoot.resolve(relative.toString()).toAbsolutePath().normalize()
-				expectedPaths.add(target)
-				if (Files.isDirectory(source)) {
-					if (Files.exists(target) && !Files.isDirectory(target)) {
-						Files.delete(target)
-					}
-					Files.createDirectories(target)
-				} else {
-					if (Files.exists(target) && Files.isDirectory(target)) {
-						deleteRecursively(target)
-					}
-					Files.createDirectories(target.parent)
-					if (shouldCopyFile(source, target)) {
-						Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
-					}
-				}
-			}
-		}
 	}
 
 	@Throws(IOException::class)
@@ -325,15 +362,6 @@ object StructureCache {
 		CompletableFuture.allOf(*loadTasks.toTypedArray()).join()
 	}
 
-	@JvmStatic
-	fun getSerializedBlockPattern(id: ResourceLocation): FactoryMultiBlockPattern? {
-		val f: CompletableFuture<StructureCaches>? = futureCache
-		return f!!.join().binary[id]
-	}
-
-	@JvmStatic
-	fun getBinaryCacheSize(): Int = requireCaches().binary.size
-
 	private fun <T> enqueueStructureLoads(
 		modDir: Path,
 		type: StructureDefinitionType,
@@ -391,15 +419,6 @@ object StructureCache {
 		}
 	}
 
-	@JvmStatic
-	fun getStringArrayPattern(id: ResourceLocation): JsonNode? {
-		val f: CompletableFuture<StructureCaches>? = futureCache
-		return f!!.join().json[id]
-	}
-
-	@JvmStatic
-	fun getJsonCacheSize(): Int = requireCaches().json.size
-
 	private fun <T> reloadSingleEntry(
 		dataDir: Path,
 		type: StructureDefinitionType,
@@ -417,6 +436,24 @@ object StructureCache {
 		loadStructureFile(modDir, typeDir, type, file, map, claimedSources, reader)
 	}
 
+	private fun <T> createClaimedSources(map: Map<ResourceLocation, T>, section: CacheSection): MutableMap<ResourceLocation, String> {
+		val claimedSources = HashMap<ResourceLocation, String>()
+		for (id in map.keys) {
+			claimedSources[id] = when (section) {
+				CacheSection.BINARY -> "existing binary cache entry for $id"
+				CacheSection.JSON -> "existing json cache entry for $id"
+			}
+		}
+		return claimedSources
+	}
+
+	@Throws(IOException::class)
+	private fun readBinaryStructureDefinition(file: Path): FactoryMultiBlockPattern {
+		val compressed = Files.readAllBytes(file)
+		val raw = decompressZstd(compressed)
+		return CBOR_MAPPER.readValue(raw, FactoryMultiBlockPattern::class.java)
+	}
+
 	@Throws(IOException::class)
 	private fun decompressZstd(compressed: ByteArray): ByteArray {
 		ZstdInputStream(ByteArrayInputStream(compressed)).use { zis ->
@@ -425,13 +462,6 @@ object StructureCache {
 				return baos.toByteArray()
 			}
 		}
-	}
-
-	@Throws(IOException::class)
-	private fun readBinaryStructureDefinition(file: Path): FactoryMultiBlockPattern {
-		val compressed = Files.readAllBytes(file)
-		val raw = decompressZstd(compressed)
-		return CBOR_MAPPER.readValue(raw, FactoryMultiBlockPattern::class.java)
 	}
 
 	@Throws(IOException::class)
@@ -446,44 +476,6 @@ object StructureCache {
 	private fun isJsonWhitespace(byte: Byte): Boolean = when (byte.toInt()) {
 		0x09, 0x0A, 0x0D, 0x20 -> true
 		else -> false
-	}
-
-	private fun patternRoot(): Path = GTCEu.GTCEU_FOLDER.resolve("pattern")
-
-	private fun requireCaches(): StructureCaches {
-		val currentFuture = futureCache
-		if (currentFuture != null) {
-			return currentFuture.join()
-		}
-
-		val caches = loadCaches()
-		futureCache = CompletableFuture.completedFuture(caches)
-		return caches
-	}
-
-	private fun loadCaches(): StructureCaches {
-		val root = patternRoot()
-		syncPatternResourcesToDisk(root)
-		val binaryMap = HashMap<ResourceLocation, FactoryMultiBlockPattern>()
-		val jsonMap = HashMap<ResourceLocation, JsonNode>()
-		loadFromFileSystem(root, binaryMap, jsonMap)
-		return freezeCaches(binaryMap, jsonMap)
-	}
-
-	private fun freezeCaches(binaryMap: MutableMap<ResourceLocation, FactoryMultiBlockPattern>, jsonMap: MutableMap<ResourceLocation, JsonNode>): StructureCaches = StructureCaches(
-		Collections.unmodifiableMap(binaryMap),
-		Collections.unmodifiableMap(jsonMap),
-	)
-
-	private fun <T> createClaimedSources(map: Map<ResourceLocation, T>, section: CacheSection): MutableMap<ResourceLocation, String> {
-		val claimedSources = HashMap<ResourceLocation, String>()
-		for (id in map.keys) {
-			claimedSources[id] = when (section) {
-				CacheSection.BINARY -> "existing binary cache entry for $id"
-				CacheSection.JSON -> "existing json cache entry for $id"
-			}
-		}
-		return claimedSources
 	}
 
 	private fun <T> runReloadTask(action: () -> T): T {
