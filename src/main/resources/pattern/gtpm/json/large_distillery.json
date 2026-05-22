@@ -1,0 +1,9 @@
+[
+	["#YYY#", "YYYYY", "YYYYY", "YYYYY", "#YYY#"],
+	["#YSY#", "YAAAY", "YAAAY", "YAAAY", "#YYY#"],
+	{
+		"repeat": [1, 12],
+		"aisles": [["##X##", "#XAX#", "XAPAX", "#XAX#", "##X##"]]
+	},
+	["#####", "#ZZZ#", "#ZZZ#", "#ZZZ#", "#####"]
+]

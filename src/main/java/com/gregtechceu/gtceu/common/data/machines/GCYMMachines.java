@@ -632,13 +632,8 @@ public class GCYMMachines {
                 if (GTCEu.Mods.isAE2Loaded())
                     exportPredicate = exportPredicate.or(blocks(GTAEMachines.FLUID_EXPORT_HATCH_ME.get()));
                 exportPredicate.setMaxLayerLimited(1);
-                return FactoryBlockPattern.start(RIGHT, BACK, UP)
-                        .aisle("#YYY#", "YYYYY", "YYYYY", "YYYYY", "#YYY#")
-                        .aisle("#YSY#", "YAAAY", "YAAAY", "YAAAY", "#YYY#")
-                        .beginRepeatable()
-                        .aisle("##X##", "#XAX#", "XAPAX", "#XAX#", "##X##")
-                        .endRepeatable(1, 12)
-                        .aisle("#####", "#ZZZ#", "#ZZZ#", "#ZZZ#", "#####")
+                return FactoryBlockPattern.start(definition, RIGHT, BACK, UP)
+                        .aislesFromDefinition()
                         .where('S', controller(blocks(definition.get())))
                         .where('Y', casingPredicate.or(abilities(IMPORT_ITEMS))
                                 .or(abilities(INPUT_ENERGY).setMinGlobalLimited(1).setMaxGlobalLimited(2))

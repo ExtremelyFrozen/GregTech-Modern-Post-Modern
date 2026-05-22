@@ -1066,12 +1066,8 @@ public class GTMultiMachines {
                     Component.translatable("gtpm.machine.charcoal_pile.tooltip.1"),
                     Component.translatable("gtpm.machine.charcoal_pile.tooltip.2"),
                     Component.translatable("gtpm.machine.charcoal_pile.tooltip.3"))
-            .pattern((def) -> FactoryBlockPattern.start()
-                    .aisle("     ", " XXX ", " XXX ", " XXX ", "     ")
-                    .aisle(" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD ")
-                    .aisle(" BBB ", "XCCCX", "XCCCX", "XCCCX", " DSD ")
-                    .aisle(" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD ")
-                    .aisle("     ", " XXX ", " XXX ", " XXX ", "     ")
+            .pattern((def) -> FactoryBlockPattern.start(def)
+                    .aislesFromDefinition()
                     .where('S', controller(blocks(def.getBlock())))
                     .where('B', blocks(Blocks.BRICKS))
                     .where('X', blocks(Blocks.DIRT))
