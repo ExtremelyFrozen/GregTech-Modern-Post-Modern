@@ -13,10 +13,10 @@ import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
-import com.gregtechceu.gtceu.api.pattern.FactoryBlockPattern;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
-import com.gregtechceu.gtceu.api.pattern.Predicates;
-import com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate;
+import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
+import com.gregtechceu.gtceu.api.multiblock.Predicates;
+import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.client.renderer.machine.DynamicRenderHelper;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
@@ -40,8 +40,8 @@ import java.util.List;
 import static com.gregtechceu.gtceu.api.GTValues.*;
 import static com.gregtechceu.gtceu.api.machine.multiblock.PartAbility.*;
 import static com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties.IS_FORMED;
-import static com.gregtechceu.gtceu.api.pattern.Predicates.*;
-import static com.gregtechceu.gtceu.api.pattern.util.RelativeDirection.*;
+import static com.gregtechceu.gtceu.api.multiblock.Predicates.*;
+import static com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection.*;
 import static com.gregtechceu.gtceu.common.data.GCYMBlocks.*;
 import static com.gregtechceu.gtceu.common.data.GCYMRecipeTypes.ALLOY_BLAST_RECIPES;
 import static com.gregtechceu.gtceu.common.data.GTBlocks.*;
@@ -635,7 +635,9 @@ public class GCYMMachines {
                 return FactoryBlockPattern.start(RIGHT, BACK, UP)
                         .aisle("#YYY#", "YYYYY", "YYYYY", "YYYYY", "#YYY#")
                         .aisle("#YSY#", "YAAAY", "YAAAY", "YAAAY", "#YYY#")
-                        .aisle("##X##", "#XAX#", "XAPAX", "#XAX#", "##X##").setRepeatable(1, 12)
+                        .beginRepeatable()
+                        .aisle("##X##", "#XAX#", "XAPAX", "#XAX#", "##X##")
+                        .endRepeatable(1, 12)
                         .aisle("#####", "#ZZZ#", "#ZZZ#", "#ZZZ#", "#####")
                         .where('S', controller(blocks(definition.get())))
                         .where('Y', casingPredicate.or(abilities(IMPORT_ITEMS))
@@ -742,7 +744,9 @@ public class GCYMMachines {
             .appearanceBlock(CASING_STRESS_PROOF)
             .pattern(definition -> FactoryBlockPattern.start()
                     .aisle("##XXX", "##XXX", "##XXX")
-                    .aisle("##XXX", "##XPX", "##XGX").setRepeatable(2)
+                    .beginRepeatable()
+                    .aisle("##XXX", "##XPX", "##XGX")
+                    .endRepeatable(2)
                     .aisle("XXXXX", "XXXPX", "XXXGX")
                     .aisle("XXXXX", "XAXPX", "XXXGX")
                     .aisle("XXXXX", "XSXXX", "XXXXX")

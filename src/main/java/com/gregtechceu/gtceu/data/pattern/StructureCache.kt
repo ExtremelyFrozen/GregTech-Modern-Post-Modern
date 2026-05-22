@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.data.pattern
 
 import com.gregtechceu.gtceu.GTCEu
-import com.gregtechceu.gtceu.api.multiblock.FactoryMultiBlockPattern
+import com.gregtechceu.gtceu.api.multiblock.MultiBlockPattern
 import com.gregtechceu.gtceu.utils.dev.ResourceReloadDetector
 
 import net.minecraft.resources.ResourceLocation
@@ -43,7 +43,7 @@ object StructureCache {
 	private val cacheStateLock = Any()
 	private val cacheLoadLock = Any()
 
-	private data class StructureCaches(val binary: Map<ResourceLocation, FactoryMultiBlockPattern>, val json: Map<ResourceLocation, JsonNode>)
+	private data class StructureCaches(val binary: Map<ResourceLocation, MultiBlockPattern>, val json: Map<ResourceLocation, JsonNode>)
 
 	private data class PatternSource(val description: String, val root: Path)
 
@@ -196,7 +196,7 @@ object StructureCache {
 	}
 
 	@JvmStatic
-	fun getSerializedBlockPattern(id: ResourceLocation): FactoryMultiBlockPattern? {
+	fun getSerializedBlockPattern(id: ResourceLocation): MultiBlockPattern? {
 		val f: CompletableFuture<StructureCaches>? = futureCache
 		return f!!.join().binary[id]
 	}
@@ -229,7 +229,7 @@ object StructureCache {
 	private fun loadCaches(): StructureCaches {
 		val root = patternRoot()
 		publishPatternResourceIndex(syncPatternResourcesToDisk(root))
-		val binaryMap = HashMap<ResourceLocation, FactoryMultiBlockPattern>()
+		val binaryMap = HashMap<ResourceLocation, MultiBlockPattern>()
 		val jsonMap = HashMap<ResourceLocation, JsonNode>()
 		loadFromFileSystem(root, binaryMap, jsonMap)
 		return freezeCaches(binaryMap, jsonMap)
@@ -264,7 +264,7 @@ object StructureCache {
 		}
 	}
 
-	private fun freezeCaches(binaryMap: Map<ResourceLocation, FactoryMultiBlockPattern>, jsonMap: Map<ResourceLocation, JsonNode>): StructureCaches = StructureCaches(
+	private fun freezeCaches(binaryMap: Map<ResourceLocation, MultiBlockPattern>, jsonMap: Map<ResourceLocation, JsonNode>): StructureCaches = StructureCaches(
 		freezeMap(binaryMap),
 		freezeMap(jsonMap),
 	)
@@ -497,7 +497,7 @@ object StructureCache {
 	}
 
 	@Throws(IOException::class)
-	private fun loadFromFileSystem(dataDir: Path, binaryMap: MutableMap<ResourceLocation, FactoryMultiBlockPattern>, jsonMap: MutableMap<ResourceLocation, JsonNode>) {
+	private fun loadFromFileSystem(dataDir: Path, binaryMap: MutableMap<ResourceLocation, MultiBlockPattern>, jsonMap: MutableMap<ResourceLocation, JsonNode>) {
 		if (!Files.isDirectory(dataDir)) return
 
 		val claimedSources = HashMap<ResourceLocation, String>()
@@ -631,10 +631,10 @@ object StructureCache {
 	}
 
 	@Throws(IOException::class)
-	private fun readBinaryStructureDefinition(file: Path): FactoryMultiBlockPattern {
+	private fun readBinaryStructureDefinition(file: Path): MultiBlockPattern {
 		val compressed = Files.readAllBytes(file)
 		val raw = decompressZstd(compressed)
-		return CBOR_MAPPER.readValue(raw, FactoryMultiBlockPattern::class.java)
+		return CBOR_MAPPER.readValue(raw, MultiBlockPattern::class.java)
 	}
 
 	@Throws(IOException::class)

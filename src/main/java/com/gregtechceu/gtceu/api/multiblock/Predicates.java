@@ -64,6 +64,10 @@ public class Predicates {
         return new PredicateController(definition);
     }
 
+    public static TraceabilityPredicate controller(TraceabilityPredicate predicate) {
+        return new PredicateController(predicate);
+    }
+
     public static TraceabilityPredicate states(BlockState... allowedStates) {
         var candidates = new ArrayList<BlockState>();
         for (BlockState state : allowedStates) {

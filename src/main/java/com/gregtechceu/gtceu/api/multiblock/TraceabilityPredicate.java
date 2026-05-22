@@ -2,12 +2,14 @@ package com.gregtechceu.gtceu.api.multiblock;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +26,8 @@ public class TraceabilityPredicate {
     public List<SimplePredicate> common = new ArrayList<>();
     public List<SimplePredicate> limited = new ArrayList<>();
     public Function<MultiblockState, Direction> direction = o -> null;
+    public Direction fixedDirection;
+    public RelativeDirection relativeDirection;
 
     public TraceabilityPredicate() {}
 
@@ -31,6 +35,16 @@ public class TraceabilityPredicate {
                                  @Nullable Supplier<Block[]> candidates) {
         this();
         common.add(new SimplePredicate(predicate, blockInfo, candidates));
+    }
+
+    public TraceabilityPredicate(Predicate<MultiblockState> predicate, Supplier<BlockInfo[]> candidates) {
+        this(predicate, () -> {
+            BlockInfo[] infos = candidates.get();
+            return infos.length == 0 ? BlockInfo.EMPTY : infos[0];
+        }, () -> Arrays.stream(candidates.get())
+                .map(BlockInfo::getBlockState)
+                .map(BlockState::getBlock)
+                .toArray(Block[]::new));
     }
 
     public TraceabilityPredicate(SimplePredicate simplePredicate) {
@@ -46,11 +60,44 @@ public class TraceabilityPredicate {
         common.addAll(predicate.common);
         limited.addAll(predicate.limited);
         this.direction = predicate.direction;
+        this.fixedDirection = predicate.fixedDirection;
+        this.relativeDirection = predicate.relativeDirection;
     }
 
     public TraceabilityPredicate sort() {
         limited.sort(Comparator.comparingInt(a -> a.minCount));
         return this;
+    }
+
+    public TraceabilityPredicate setDirection(Direction direction) {
+        this.fixedDirection = direction;
+        this.relativeDirection = null;
+        this.direction = state -> direction;
+        return this;
+    }
+
+    public TraceabilityPredicate setRelativeDirection(RelativeDirection direction) {
+        this.fixedDirection = null;
+        this.relativeDirection = direction;
+        return this;
+    }
+
+    public Direction getDirection(MultiblockState state, Direction frontFacing, Direction upwardsFacing,
+                                  boolean isFlipped) {
+        if (relativeDirection != null) {
+            return relativeDirection.getRelative(frontFacing, upwardsFacing, isFlipped);
+        }
+        if (fixedDirection != null) {
+            return fixedDirection;
+        }
+        return direction.apply(state);
+    }
+
+    public Direction getPreviewDirection() {
+        if (relativeDirection != null) {
+            return relativeDirection.global;
+        }
+        return fixedDirection;
     }
 
     /**

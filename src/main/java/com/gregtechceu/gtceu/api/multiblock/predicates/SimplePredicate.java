@@ -17,6 +17,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
@@ -65,6 +66,16 @@ public class SimplePredicate {
         this.predicate = predicate;
         this.blockInfo = blockInfo == null ? NULL_BLOCK_INFO : blockInfo;
         this.candidates = candidates;
+    }
+
+    public SimplePredicate(Predicate<MultiblockState> predicate, @Nullable Supplier<BlockInfo[]> candidates) {
+        this(predicate, candidates == null ? null : () -> {
+            BlockInfo[] infos = candidates.get();
+            return infos.length == 0 ? BlockInfo.EMPTY : infos[0];
+        }, candidates == null ? null : () -> Arrays.stream(candidates.get())
+                .map(BlockInfo::getBlockState)
+                .map(BlockState::getBlock)
+                .toArray(Block[]::new));
     }
 
     public SimplePredicate buildPredicate() {

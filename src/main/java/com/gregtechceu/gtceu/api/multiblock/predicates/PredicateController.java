@@ -8,4 +8,8 @@ public class PredicateController extends TraceabilityPredicate {
     public PredicateController(MachineDefinition definition) {
         super(new PredicateBlocks(definition.get()));
     }
+
+    public PredicateController(TraceabilityPredicate predicate) {
+        super(predicate);
+    }
 }

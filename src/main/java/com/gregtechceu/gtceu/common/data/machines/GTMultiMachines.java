@@ -14,10 +14,10 @@ import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
-import com.gregtechceu.gtceu.api.pattern.FactoryBlockPattern;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
-import com.gregtechceu.gtceu.api.pattern.Predicates;
-import com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate;
+import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
+import com.gregtechceu.gtceu.api.multiblock.Predicates;
+import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.client.renderer.machine.*;
 import com.gregtechceu.gtceu.client.util.TooltipHelper;
 import com.gregtechceu.gtceu.common.block.BoilerFireboxType;
@@ -59,8 +59,8 @@ import java.util.List;
 import java.util.Locale;
 
 import static com.gregtechceu.gtceu.api.GTValues.*;
-import static com.gregtechceu.gtceu.api.pattern.Predicates.*;
-import static com.gregtechceu.gtceu.api.pattern.util.RelativeDirection.*;
+import static com.gregtechceu.gtceu.api.multiblock.Predicates.*;
+import static com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection.*;
 import static com.gregtechceu.gtceu.common.data.GTBlocks.*;
 import static com.gregtechceu.gtceu.common.data.GTMachines.*;
 import static com.gregtechceu.gtceu.common.data.GTMaterials.DrillingFluid;
@@ -459,7 +459,9 @@ public class GTMultiMachines {
                 return FactoryBlockPattern.start(RIGHT, BACK, UP)
                         .aisle("YSY", "YYY", "YYY")
                         .aisle("ZZZ", "Z#Z", "ZZZ")
-                        .aisle("XXX", "X#X", "XXX").setRepeatable(0, 10)
+                        .beginRepeatable()
+                        .aisle("XXX", "X#X", "XXX")
+                        .endRepeatable(0, 10)
                         .aisle("XXX", "XXX", "XXX")
                         .where('S', Predicates.controller(blocks(definition.getBlock())))
                         .where('Y', blocks(CASING_STAINLESS_CLEAN.get())
@@ -542,7 +544,9 @@ public class GTMultiMachines {
             .appearanceBlock(CASING_STEEL_SOLID)
             .pattern(definition -> FactoryBlockPattern.start(BACK, UP, RIGHT)
                     .aisle("FIF", "RTR", "SAG", "#Y#")
-                    .aisle("FIF", "RTR", "DAG", "#Y#").setRepeatable(3, 15)
+                    .beginRepeatable()
+                    .aisle("FIF", "RTR", "DAG", "#Y#")
+                    .endRepeatable(3, 15)
                     .aisle("FOF", "RTR", "DAG", "#Y#")
                     .where('S', Predicates.controller(blocks(definition.getBlock())))
                     .where('F', blocks(CASING_STEEL_SOLID.get())
@@ -1001,8 +1005,9 @@ public class GTMultiMachines {
             .pattern(definition -> FactoryBlockPattern.start(RIGHT, BACK, UP)
                     .aisle("XXSXX", "XXXXX", "XXXXX", "XXXXX", "XXXXX")
                     .aisle("XXXXX", "XCCCX", "XCCCX", "XCCCX", "XXXXX")
+                    .beginRepeatable()
                     .aisle("GGGGG", "GBBBG", "GBBBG", "GBBBG", "GGGGG")
-                    .setRepeatable(1, PowerSubstationMachine.MAX_BATTERY_LAYERS)
+                    .endRepeatable(1, PowerSubstationMachine.MAX_BATTERY_LAYERS)
                     .aisle("GGGGG", "GGGGG", "GGGGG", "GGGGG", "GGGGG")
                     .where('S', controller(blocks(definition.getBlock())))
                     .where('C', blocks(CASING_PALLADIUM_SUBSTATION.get()))

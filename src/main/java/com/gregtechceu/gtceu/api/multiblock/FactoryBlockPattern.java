@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.multiblock;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
-import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 
 import com.google.common.base.Joiner;
 import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
@@ -21,19 +20,20 @@ public class FactoryBlockPattern {
 
     private static final Joiner COMMA_JOIN = Joiner.on(",");
     private final MultiblockMachineDefinition definition;
-    private final List<String[]> depth;
-    private final List<int[]> aisleRepetitions;
+    private final List<AisleUnit> units;
     private final Char2ObjectMap<TraceabilityPredicate> symbolMap;
     private final StructureDir structureDir;
+    private List<String[]> repeatableGroup;
     private PatternCondition condition;
     private int aisleHeight;
     private int rowWidth;
 
+    private record AisleUnit(List<String[]> slices, int minRepeat, int maxRepeat) {}
+
     private FactoryBlockPattern(RelativeDirection charDir, RelativeDirection stringDir, RelativeDirection aisleDir,
                                 MultiblockMachineDefinition definition) {
         this.definition = definition;
-        depth = new ArrayList<>();
-        aisleRepetitions = new ArrayList<>();
+        units = new ArrayList<>();
         symbolMap = new Char2ObjectArrayMap<>();
         structureDir = new StructureDir(charDir, stringDir, aisleDir);
         structureDir.check();
@@ -41,11 +41,52 @@ public class FactoryBlockPattern {
     }
 
     /**
-     * Adds a repeatable aisle to this pattern.
+     * Adds a single aisle to this pattern. Multiple calls increase the aisleDir by 1.
      */
-    public FactoryBlockPattern aisleRepeatable(int minRepeat, int maxRepeat, String... aisle) {
+    public FactoryBlockPattern aisle(String... aisle) {
+        validateAisle(aisle);
+        if (repeatableGroup == null) {
+            units.add(new AisleUnit(List.<String[]>of(copyAisle(aisle)), 1, 1));
+        } else {
+            repeatableGroup.add(copyAisle(aisle));
+        }
+        return this;
+    }
+
+    public FactoryBlockPattern aisleFromDefinition(String... aisle) {
+        return aisle(aisle);
+    }
+
+    public FactoryBlockPattern beginRepeatable() {
+        if (repeatableGroup != null) {
+            throw new IllegalStateException("Cannot begin a nested repeatable aisle group");
+        }
+        repeatableGroup = new ArrayList<>();
+        return this;
+    }
+
+    public FactoryBlockPattern endRepeatable(int minRepeat, int maxRepeat) {
+        if (repeatableGroup == null) {
+            throw new IllegalStateException("No repeatable aisle group has been started");
+        }
+        if (repeatableGroup.isEmpty()) {
+            throw new IllegalStateException("Repeatable aisle group must contain at least one aisle");
+        }
+        if (minRepeat > maxRepeat) {
+            throw new IllegalArgumentException("Lower bound of repeat counting must smaller than upper bound!");
+        }
+        units.add(new AisleUnit(List.copyOf(repeatableGroup), minRepeat, maxRepeat));
+        repeatableGroup = null;
+        return this;
+    }
+
+    public FactoryBlockPattern endRepeatable(int repeatCount) {
+        return endRepeatable(repeatCount, repeatCount);
+    }
+
+    private void validateAisle(String... aisle) {
         if (!ArrayUtils.isEmpty(aisle) && !StringUtils.isEmpty(aisle[0])) {
-            if (this.depth.isEmpty()) {
+            if (this.units.isEmpty() && (repeatableGroup == null || repeatableGroup.isEmpty())) {
                 this.aisleHeight = aisle.length;
                 this.rowWidth = aisle[0].length();
             }
@@ -67,40 +108,14 @@ public class FactoryBlockPattern {
                         }
                     }
                 }
-
-                this.depth.add(aisle);
-                if (minRepeat > maxRepeat)
-                    throw new IllegalArgumentException("Lower bound of repeat counting must smaller than upper bound!");
-                aisleRepetitions.add(new int[] { minRepeat, maxRepeat });
-                return this;
             }
         } else {
             throw new IllegalArgumentException("Empty pattern for aisle");
         }
     }
 
-    /**
-     * Adds a single aisle to this pattern. (so multiple calls to this will increase the aisleDir by 1)
-     */
-    public FactoryBlockPattern aisle(String... aisle) {
-        return aisleRepeatable(1, 1, aisle);
-    }
-
-    /**
-     * Set last aisle repeatable
-     */
-    public FactoryBlockPattern setRepeatable(int minRepeat, int maxRepeat) {
-        if (minRepeat > maxRepeat)
-            throw new IllegalArgumentException("Lower bound of repeat counting must smaller than upper bound!");
-        aisleRepetitions.set(aisleRepetitions.size() - 1, new int[] { minRepeat, maxRepeat });
-        return this;
-    }
-
-    /**
-     * Set last aisle repeatable
-     */
-    public FactoryBlockPattern setRepeatable(int repeatCount) {
-        return setRepeatable(repeatCount, repeatCount);
+    private String[] copyAisle(String[] aisle) {
+        return aisle.clone();
     }
 
     public static FactoryBlockPattern start() {
@@ -130,6 +145,8 @@ public class FactoryBlockPattern {
     public FactoryBlockPattern where(char symbol, TraceabilityPredicate blockMatcher) {
         if (blockMatcher.isAny() || blockMatcher.isAir()) {
             this.symbolMap.put(symbol, blockMatcher);
+        } else if (blockMatcher instanceof PredicateController) {
+            this.symbolMap.put(symbol, blockMatcher.sort());
         } else {
             this.symbolMap.put(symbol, new TraceabilityPredicate(blockMatcher).sort());
         }
@@ -160,35 +177,56 @@ public class FactoryBlockPattern {
     }
 
     public BlockPattern build() {
+        if (repeatableGroup != null) {
+            throw new IllegalStateException("Repeatable aisle group must be closed before building the pattern");
+        }
         this.checkMissingPredicates();
-        int size = this.depth.size();
+        int unitCount = this.units.size();
+        int size = this.units.stream().mapToInt(unit -> unit.slices().size()).sum();
         CenterOffset centerOffset = null;
-        int[][] aisleRepetitions = this.aisleRepetitions.toArray(new int[this.aisleRepetitions.size()][]);
+        int[][] aisleRepetitions = new int[unitCount][];
+        int[] unitStarts = new int[unitCount];
+        int[] unitDepths = new int[unitCount];
+        String[][] structureSlices = new String[size][];
         TraceabilityPredicate[][][] predicate = new TraceabilityPredicate[size][][];
 
-        for (int i = 0, minZ = 0, maxZ = 0; i <
-                size; minZ += aisleRepetitions[i][0], maxZ += aisleRepetitions[i][1], i++) {
-            for (int j = 0; j < this.aisleHeight; j++) {
-                for (int k = 0; k < this.rowWidth; k++) {
-                    var tp = this.symbolMap.get(this.depth.get(i)[j].charAt(k));
-                    if (tp != null) {
-                        var pi = predicate[i];
-                        if (pi == null) {
-                            predicate[i] = pi = new TraceabilityPredicate[this.aisleHeight][];
+        for (int unitIndex = 0, sliceIndex = 0, minZ = 0, maxZ = 0; unitIndex < unitCount; unitIndex++) {
+            AisleUnit unit = units.get(unitIndex);
+            int unitDepth = unit.slices().size();
+            unitStarts[unitIndex] = sliceIndex;
+            unitDepths[unitIndex] = unitDepth;
+            aisleRepetitions[unitIndex] = new int[] { unit.minRepeat(), unit.maxRepeat() };
+
+            for (int inner = 0; inner < unitDepth; inner++, sliceIndex++) {
+                String[] aisle = unit.slices().get(inner);
+                structureSlices[sliceIndex] = aisle.clone();
+                for (int j = 0; j < this.aisleHeight; j++) {
+                    for (int k = 0; k < this.rowWidth; k++) {
+                        var tp = this.symbolMap.get(aisle[j].charAt(k));
+                        if (tp != null) {
+                            var pi = predicate[sliceIndex];
+                            if (pi == null) {
+                                predicate[sliceIndex] = pi = new TraceabilityPredicate[this.aisleHeight][];
+                            }
+                            var pj = pi[j];
+                            if (pj == null) {
+                                pi[j] = pj = new TraceabilityPredicate[this.rowWidth];
+                            }
+                            pj[k] = tp;
+                            if (tp instanceof PredicateController) {
+                                centerOffset = new CenterOffset(k, j, sliceIndex, minZ + inner, maxZ + inner);
+                            }
                         }
-                        var pj = pi[j];
-                        if (pj == null) {
-                            pi[j] = pj = new TraceabilityPredicate[this.rowWidth];
-                        }
-                        pj[k] = tp;
-                        if (tp instanceof PredicateController) centerOffset = new CenterOffset(k, j, i, minZ, maxZ);
                     }
                 }
             }
+
+            minZ += unitDepth * unit.minRepeat();
+            maxZ += unitDepth * unit.maxRepeat();
         }
 
-        var pattern = new BlockPattern(predicate, structureDir, aisleRepetitions, centerOffset, size, this.aisleHeight,
-                this.rowWidth);
+        var pattern = new BlockPattern(predicate, structureDir, aisleRepetitions, unitStarts, unitDepths,
+                structureSlices, centerOffset, size, this.aisleHeight, this.rowWidth);
         if (condition != null) pattern.condition = condition;
         if (definition != null) {
             pattern.predicates = symbolMap.values();

@@ -20,7 +20,7 @@ import com.gregtechceu.gtceu.api.machine.trait.hpca.HPCAComponentTrait;
 import com.gregtechceu.gtceu.api.machine.trait.hpca.HPCAComputationProviderTrait;
 import com.gregtechceu.gtceu.api.machine.trait.hpca.HPCACoolantProviderTrait;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
-import com.gregtechceu.gtceu.api.pattern.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 import com.gregtechceu.gtceu.api.sync_system.ISyncManaged;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;

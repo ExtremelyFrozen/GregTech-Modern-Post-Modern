@@ -25,9 +25,9 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -45,10 +45,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -59,7 +62,10 @@ public class BlockPattern {
             Direction.DOWN };
     static Direction[] FACINGS_H = { Direction.SOUTH, Direction.NORTH, Direction.WEST, Direction.EAST };
     public final int[][] aisleRepetitions;
+    public final int[] unitStarts;
+    public final int[] unitDepths;
     public final StructureDir structureDir;
+    public final String[][] structureSlices;
     protected final TraceabilityPredicate[][][] blockMatches; // [z][y][x]
     protected final int fingerLength; // z size
     protected final int thumbLength; // y size
@@ -73,14 +79,45 @@ public class BlockPattern {
     public BlockPattern(TraceabilityPredicate[][][] predicatesIn, StructureDir structureDir,
                         int[][] aisleRepetitions, CenterOffset centerOffset, int fingerLength, int thumbLength,
                         int palmLength) {
+        this(predicatesIn, structureDir, aisleRepetitions, createUnitStarts(predicatesIn.length),
+                createUnitDepths(predicatesIn.length), null, centerOffset, fingerLength, thumbLength, palmLength);
+    }
+
+    public BlockPattern(TraceabilityPredicate[][][] predicatesIn, StructureDir structureDir,
+                        int[][] aisleRepetitions, int[] unitStarts, int[] unitDepths, CenterOffset centerOffset,
+                        int fingerLength, int thumbLength, int palmLength) {
+        this(predicatesIn, structureDir, aisleRepetitions, unitStarts, unitDepths, null, centerOffset, fingerLength,
+                thumbLength, palmLength);
+    }
+
+    public BlockPattern(TraceabilityPredicate[][][] predicatesIn, StructureDir structureDir,
+                        int[][] aisleRepetitions, int[] unitStarts, int[] unitDepths, String[][] structureSlices,
+                        CenterOffset centerOffset, int fingerLength, int thumbLength, int palmLength) {
         this.blockMatches = predicatesIn;
         this.structureDir = structureDir;
         this.aisleRepetitions = aisleRepetitions;
+        this.unitStarts = unitStarts;
+        this.unitDepths = unitDepths;
+        this.structureSlices = structureSlices;
         this.formedRepetitionCount = new int[aisleRepetitions.length];
         this.centerOffset = centerOffset;
         this.fingerLength = fingerLength;
         this.thumbLength = thumbLength;
         this.palmLength = palmLength;
+    }
+
+    private static int[] createUnitStarts(int size) {
+        int[] result = new int[size];
+        for (int i = 0; i < size; i++) {
+            result[i] = i;
+        }
+        return result;
+    }
+
+    private static int[] createUnitDepths(int size) {
+        int[] result = new int[size];
+        Arrays.fill(result, 1);
+        return result;
     }
 
     public boolean checkPatternAt(MultiblockState worldState, boolean savePredicate) {
@@ -119,73 +156,82 @@ public class BlockPattern {
         PatternMatchContext matchContext = worldState.getMatchContext();
         Object2IntMap<SimplePredicate> globalCount = worldState.getGlobalCount();
         Object2IntMap<SimplePredicate> layerCount = worldState.getLayerCount();
-        // Checking aisles
-        for (int c = 0, z = minZ++, r; c < this.fingerLength; c++) {
-            // Checking repeatable slices
+        // Checking aisle units
+        for (int c = 0, z = minZ++, r; c < this.aisleRepetitions.length; c++) {
+            int unitStart = this.unitStarts[c];
+            int unitDepth = this.unitDepths[c];
+            // Checking repeatable unit
             int validRepetitions = 0;
             loop:
             for (r = 0; (findFirstAisle ? r < aisleRepetitions[c][1] : z <= -centerOffset.minZ()); r++) {
-                // Checking single slice
-                layerCount.clear();
+                int repeatStartZ = z;
+                for (int inner = 0; inner < unitDepth; inner++, z++) {
+                    // Checking single slice
+                    layerCount.clear();
 
-                for (int b = 0, y = -centerOffset.j(); b < this.thumbLength; b++, y++) {
-                    for (int a = 0, x = -centerOffset.k(); a < this.palmLength; a++, x++) {
-                        worldState.setError(null);
-                        TraceabilityPredicate predicate = this.blockMatches[c][b][a];
-                        BlockPos pos = setActualRelativeOffset(x, y, z, frontFacing, upwardsFacing, isFlipped)
-                                .offset(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                        if (!worldState.update(pos, predicate)) {
+                    for (int b = 0, y = -centerOffset.j(); b < this.thumbLength; b++, y++) {
+                        for (int a = 0, x = -centerOffset.k(); a < this.palmLength; a++, x++) {
+                            worldState.setError(null);
+                            TraceabilityPredicate predicate = this.blockMatches[unitStart + inner][b][a];
+                            BlockPos pos = setActualRelativeOffset(x, y, z, frontFacing, upwardsFacing, isFlipped)
+                                    .offset(centerPos.getX(), centerPos.getY(), centerPos.getZ());
+                            if (!worldState.update(pos, predicate)) {
+                                return false;
+                            }
+                            if (predicate.addCache()) {
+                                worldState.addPosCache(pos);
+                                if (savePredicate) {
+                                    matchContext.getOrCreate("predicates", HashMap::new).put(pos, predicate);
+                                }
+                            }
+                            boolean canPartShared = true;
+                            if (worldState.getBlockEntity() instanceof IMultiPart part) { // add detected parts
+                                if (!predicate.isAny()) {
+                                    if (part.isFormed() && !part.canShared() &&
+                                            !part.hasController(worldState.controllerPos)) { // check part can be shared
+                                        canPartShared = false;
+                                        worldState.setError(new PatternStringError("multiblocked.pattern.error.share"));
+                                    } else {
+                                        matchContext.getOrCreate("parts", HashSet::new).add(part);
+                                    }
+                                }
+                            }
+                            if (worldState.getBlockState().getBlock() instanceof ActiveBlock) {
+                                matchContext.getOrCreate("vaBlocks", LongOpenHashSet::new)
+                                        .add(worldState.getPos().asLong());
+                            }
+                            if (!predicate.test(worldState) || !canPartShared ||
+                                    !matchesDirectionalPredicate(predicate, worldState, frontFacing, upwardsFacing,
+                                            isFlipped)) { // matching failed
+                                if (findFirstAisle) {
+                                    if (r < aisleRepetitions[c][0]) {// retreat to see if the first aisle can start
+                                                                     // later
+                                        r = c = 0;
+                                        z = minZ++;
+                                        matchContext.reset();
+                                        findFirstAisle = false;
+                                    } else {
+                                        z = repeatStartZ + unitDepth;
+                                    }
+                                } else {
+                                    z = repeatStartZ + 1;// continue searching for the first aisle
+                                }
+                                continue loop;
+                            }
+                            matchContext.getOrCreate("ioMap", Long2ObjectOpenHashMap::new)
+                                    .put(worldState.getPos().asLong(), worldState.io);
+                        }
+                    }
+
+                    // Check layer-local matcher predicate
+                    for (var entry : layerCount.object2IntEntrySet()) {
+                        if (entry.getIntValue() < entry.getKey().minLayerCount) {
+                            worldState.setError(new SinglePredicateError(entry.getKey(), 3));
                             return false;
                         }
-                        if (predicate.addCache()) {
-                            worldState.addPosCache(pos);
-                            if (savePredicate) {
-                                matchContext.getOrCreate("predicates", HashMap::new).put(pos, predicate);
-                            }
-                        }
-                        boolean canPartShared = true;
-                        if (worldState.getBlockEntity() instanceof IMultiPart part) { // add detected parts
-                            if (!predicate.isAny()) {
-                                if (part.isFormed() && !part.canShared() &&
-                                        !part.hasController(worldState.controllerPos)) { // check part can be shared
-                                    canPartShared = false;
-                                    worldState.setError(new PatternStringError("multiblocked.pattern.error.share"));
-                                } else {
-                                    matchContext.getOrCreate("parts", HashSet::new).add(part);
-                                }
-                            }
-                        }
-                        if (worldState.getBlockState().getBlock() instanceof ActiveBlock) {
-                            matchContext.getOrCreate("vaBlocks", LongOpenHashSet::new)
-                                    .add(worldState.getPos().asLong());
-                        }
-                        if (!predicate.test(worldState) || !canPartShared) { // matching failed
-                            if (findFirstAisle) {
-                                if (r < aisleRepetitions[c][0]) {// retreat to see if the first aisle can start later
-                                    r = c = 0;
-                                    z = minZ++;
-                                    matchContext.reset();
-                                    findFirstAisle = false;
-                                }
-                            } else {
-                                z++;// continue searching for the first aisle
-                            }
-                            continue loop;
-                        }
-                        matchContext.getOrCreate("ioMap", Long2ObjectOpenHashMap::new).put(worldState.getPos().asLong(),
-                                worldState.io);
                     }
                 }
                 findFirstAisle = true;
-                z++;
-
-                // Check layer-local matcher predicate
-                for (var entry : layerCount.object2IntEntrySet()) {
-                    if (entry.getIntValue() < entry.getKey().minLayerCount) {
-                        worldState.setError(new SinglePredicateError(entry.getKey(), 3));
-                        return false;
-                    }
-                }
                 validRepetitions++;
             }
             // Repetitions out of range
@@ -228,51 +274,38 @@ public class BlockPattern {
         Long2ObjectOpenHashMap<MetaMachine> machines = new Long2ObjectOpenHashMap<>();
         Set<BlockPos> placeBlockPos = new HashSet<>();
         blocks.add(centerPos.asLong());
-        for (int c = 0, z = minZ++, r; c < this.fingerLength; c++) {
+        for (int c = 0, z = minZ++, r; c < this.aisleRepetitions.length; c++) {
+            int unitStart = this.unitStarts[c];
+            int unitDepth = this.unitDepths[c];
             for (r = 0; r < aisleRepetitions[c][0]; r++) {
-                cacheLayer.clear();
-                for (int b = 0, y = -centerOffset.j(); b < this.thumbLength; b++, y++) {
-                    for (int a = 0, x = -centerOffset.k(); a < this.palmLength; a++, x++) {
-                        var bc = this.blockMatches[c];
-                        if (bc == null) continue;
-                        var bb = bc[b];
-                        if (bb == null) continue;
-                        TraceabilityPredicate predicate = bb[a];
-                        if (predicate == null) continue;
-                        BlockPos pos = setActualRelativeOffset(x, y, z, facing, upwardsFacing, isFlipped)
-                                .offset(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                        worldState.update(pos, predicate);
-                        long posLong = pos.asLong();
-                        if (!world.isEmptyBlock(pos)) {
-                            blocks.add(posLong);
-                            for (SimplePredicate limit : predicate.limited) {
-                                limit.testLimited(worldState);
-                            }
-                        } else {
-                            boolean find = false;
-                            Block[] infos = new Block[0];
-                            for (SimplePredicate limit : predicate.limited) {
-                                if (limit.minLayerCount > 0) {
-                                    int curr = cacheLayer.getInt(limit);
-                                    if (curr < limit.minLayerCount &&
-                                            (limit.maxLayerCount == -1 || curr < limit.maxLayerCount)) {
-                                        cacheLayer.addTo(limit, 1);
-                                    } else {
-                                        continue;
-                                    }
-                                } else {
-                                    continue;
-                                }
-                                infos = limit.candidates == null ? null : limit.candidates.get();
-                                find = true;
-                                break;
-                            }
-                            if (!find) {
+                for (int inner = 0; inner < unitDepth; inner++, z++) {
+                    cacheLayer.clear();
+                    for (int b = 0, y = -centerOffset.j(); b < this.thumbLength; b++, y++) {
+                        for (int a = 0, x = -centerOffset.k(); a < this.palmLength; a++, x++) {
+                            var bc = this.blockMatches[unitStart + inner];
+                            if (bc == null) continue;
+                            var bb = bc[b];
+                            if (bb == null) continue;
+                            TraceabilityPredicate predicate = bb[a];
+                            if (predicate == null) continue;
+                            BlockPos pos = setActualRelativeOffset(x, y, z, facing, upwardsFacing, isFlipped)
+                                    .offset(centerPos.getX(), centerPos.getY(), centerPos.getZ());
+                            worldState.update(pos, predicate);
+                            long posLong = pos.asLong();
+                            if (!world.isEmptyBlock(pos)) {
+                                blocks.add(posLong);
                                 for (SimplePredicate limit : predicate.limited) {
-                                    if (limit.minCount > 0) {
-                                        int curr = cacheGlobal.getInt(limit);
-                                        if (curr < limit.minCount && (limit.maxCount == -1 || curr < limit.maxCount)) {
-                                            cacheGlobal.addTo(limit, 1);
+                                    limit.testLimited(worldState);
+                                }
+                            } else {
+                                boolean find = false;
+                                Block[] infos = new Block[0];
+                                for (SimplePredicate limit : predicate.limited) {
+                                    if (limit.minLayerCount > 0) {
+                                        int curr = cacheLayer.getInt(limit);
+                                        if (curr < limit.minLayerCount &&
+                                                (limit.maxLayerCount == -1 || curr < limit.maxLayerCount)) {
+                                            cacheLayer.addTo(limit, 1);
                                         } else {
                                             continue;
                                         }
@@ -283,82 +316,104 @@ public class BlockPattern {
                                     find = true;
                                     break;
                                 }
-                            }
-                            if (!find) { // no limited
-                                for (SimplePredicate limit : predicate.limited) {
-                                    if (limit.maxLayerCount != -1 &&
-                                            cacheLayer.getOrDefault(limit, Integer.MAX_VALUE) == limit.maxLayerCount) {
-                                        continue;
-                                    }
-                                    if (limit.maxCount != -1 &&
-                                            cacheGlobal.getOrDefault(limit, Integer.MAX_VALUE) == limit.maxCount) {
-                                        continue;
-                                    }
-                                    cacheLayer.addTo(limit, 1);
-                                    cacheGlobal.addTo(limit, 1);
-                                    infos = ArrayUtils.addAll(infos,
-                                            limit.candidates == null ? null : limit.candidates.get());
-                                }
-                                for (SimplePredicate common : predicate.common) {
-                                    infos = ArrayUtils.addAll(infos,
-                                            common.candidates == null ? null : common.candidates.get());
-                                }
-                            }
-                            List<ItemStack> candidates = new ArrayList<>();
-                            if (infos != null) {
-                                for (Block info : infos) {
-                                    if (info != Blocks.AIR) {
-                                        candidates.add(SimplePredicate.toItem(info).getDefaultInstance());
-                                    }
-                                }
-                            }
-
-                            // check inventory
-                            ItemStack found = null;
-                            int foundSlot = -1;
-                            IItemHandler handler = null;
-                            if (!player.isCreative()) {
-                                var foundHandler = getMatchStackWithHandler(candidates,
-                                        player.getCapability(Capabilities.ItemHandler.ENTITY));
-                                if (foundHandler != null) {
-                                    foundSlot = foundHandler.firstInt();
-                                    handler = foundHandler.second();
-                                    found = handler.getStackInSlot(foundSlot).copy();
-                                }
-                            } else {
-                                for (ItemStack candidate : candidates) {
-                                    found = candidate.copy();
-                                    if (!found.isEmpty() && found.getItem() instanceof BlockItem) {
+                                if (!find) {
+                                    for (SimplePredicate limit : predicate.limited) {
+                                        if (limit.minCount > 0) {
+                                            int curr = cacheGlobal.getInt(limit);
+                                            if (curr < limit.minCount &&
+                                                    (limit.maxCount == -1 || curr < limit.maxCount)) {
+                                                cacheGlobal.addTo(limit, 1);
+                                            } else {
+                                                continue;
+                                            }
+                                        } else {
+                                            continue;
+                                        }
+                                        infos = limit.candidates == null ? null : limit.candidates.get();
+                                        find = true;
                                         break;
                                     }
-                                    found = null;
                                 }
-                            }
-                            if (found == null) continue;
-                            BlockItem itemBlock = (BlockItem) found.getItem();
-                            BlockPlaceContext context = new BlockPlaceContext(world, player, InteractionHand.MAIN_HAND,
-                                    found, BlockHitResult.miss(player.getEyePosition(0), Direction.UP, pos));
-                            InteractionResult interactionResult = itemBlock.place(context);
-                            if (interactionResult != InteractionResult.FAIL) {
-                                if (handler != null) {
-                                    handler.extractItem(foundSlot, 1, false);
+                                if (!find) { // no limited
+                                    for (SimplePredicate limit : predicate.limited) {
+                                        if (limit.maxLayerCount != -1 &&
+                                                cacheLayer.getOrDefault(limit,
+                                                        Integer.MAX_VALUE) == limit.maxLayerCount) {
+                                            continue;
+                                        }
+                                        if (limit.maxCount != -1 &&
+                                                cacheGlobal.getOrDefault(limit, Integer.MAX_VALUE) == limit.maxCount) {
+                                            continue;
+                                        }
+                                        cacheLayer.addTo(limit, 1);
+                                        cacheGlobal.addTo(limit, 1);
+                                        infos = ArrayUtils.addAll(infos,
+                                                limit.candidates == null ? null : limit.candidates.get());
+                                    }
+                                    for (SimplePredicate common : predicate.common) {
+                                        infos = ArrayUtils.addAll(infos,
+                                                common.candidates == null ? null : common.candidates.get());
+                                    }
                                 }
-                                var direction = predicate.direction.apply(worldState);
-                                if (direction != null) {
-                                    world.setBlock(pos,
-                                            world.getBlockState(pos).setValue(DirectionalBlock.FACING, direction),
-                                            Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+                                List<ItemStack> candidates = new ArrayList<>();
+                                if (infos != null) {
+                                    for (Block info : infos) {
+                                        if (info != Blocks.AIR) {
+                                            candidates.add(SimplePredicate.toItem(info).getDefaultInstance());
+                                        }
+                                    }
+                                }
+
+                                // check inventory
+                                ItemStack found = null;
+                                int foundSlot = -1;
+                                IItemHandler handler = null;
+                                if (!player.isCreative()) {
+                                    var foundHandler = getMatchStackWithHandler(candidates,
+                                            player.getCapability(Capabilities.ItemHandler.ENTITY));
+                                    if (foundHandler != null) {
+                                        foundSlot = foundHandler.firstInt();
+                                        handler = foundHandler.second();
+                                        found = handler.getStackInSlot(foundSlot).copy();
+                                    }
                                 } else {
+                                    for (ItemStack candidate : candidates) {
+                                        found = candidate.copy();
+                                        if (!found.isEmpty() && found.getItem() instanceof BlockItem) {
+                                            break;
+                                        }
+                                        found = null;
+                                    }
+                                }
+                                if (found == null) continue;
+                                BlockItem itemBlock = (BlockItem) found.getItem();
+                                BlockPlaceContext context = new BlockPlaceContext(world, player,
+                                        InteractionHand.MAIN_HAND, found,
+                                        BlockHitResult.miss(player.getEyePosition(0), Direction.UP, pos));
+                                InteractionResult interactionResult = itemBlock.place(context);
+                                if (interactionResult != InteractionResult.FAIL) {
+                                    if (handler != null) {
+                                        handler.extractItem(foundSlot, 1, false);
+                                    }
+                                    Direction direction = predicate.getDirection(worldState, facing, upwardsFacing,
+                                            isFlipped);
+                                    if (direction != null) {
+                                        BlockState directedState = setDirectionalState(world.getBlockState(pos),
+                                                direction);
+                                        if (directedState != world.getBlockState(pos)) {
+                                            world.setBlock(pos, directedState,
+                                                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+                                        }
+                                    }
                                     if (world.getBlockEntity(pos) instanceof MetaMachine be) {
                                         machines.put(posLong, be);
                                     }
+                                    blocks.add(posLong);
                                 }
-                                blocks.add(posLong);
                             }
                         }
                     }
                 }
-                z++;
             }
         }
         Direction frontFacing = controller.getFrontFacing();
@@ -385,50 +440,32 @@ public class BlockPattern {
         int maxX = Integer.MIN_VALUE;
         int maxY = Integer.MIN_VALUE;
         int maxZ = Integer.MIN_VALUE;
-        for (int l = 0, x = 0; l < this.fingerLength; l++) {
-            for (int r = 0; r < repetition[l]; r++) {
-                // Checking single slice
-                Reference2IntOpenHashMap<SimplePredicate> cacheLayer = new Reference2IntOpenHashMap<>();
-                for (int y = 0; y < this.thumbLength; y++) {
-                    for (int z = 0; z < this.palmLength; z++) {
-                        var bl = this.blockMatches[l];
-                        if (bl == null) continue;
-                        var by = bl[y];
-                        if (by == null) continue;
-                        TraceabilityPredicate predicate = by[z];
-                        if (predicate == null) continue;
-                        BlockInfo info = null;
-                        boolean find = false;
-                        for (SimplePredicate limit : predicate.limited) {
-                            // check layer and previewCount
-                            if (limit.minLayerCount > 0) {
-                                if (cacheLayer.getInt(limit) < limit.minLayerCount) {
-                                    cacheLayer.addTo(limit, 1);
-                                } else {
-                                    continue;
-                                }
-                                if (cacheGlobal.getInt(limit) < limit.previewCount) {
-                                    cacheGlobal.addTo(limit, 1);
-                                } else {
-                                    continue;
-                                }
-                            } else {
-                                continue;
-                            }
-                            info = limit.blockInfo.get();
-                            if (info != null) {
-                                find = true;
-                                break;
-                            }
-                        }
-                        if (!find) {
-                            // check global and previewCount
+        for (int unit = 0, x = 0; unit < this.aisleRepetitions.length; unit++) {
+            int unitStart = this.unitStarts[unit];
+            int unitDepth = this.unitDepths[unit];
+            for (int r = 0; r < repetition[unit]; r++) {
+                for (int inner = 0; inner < unitDepth; inner++, x++) {
+                    // Checking single slice
+                    Reference2IntOpenHashMap<SimplePredicate> cacheLayer = new Reference2IntOpenHashMap<>();
+                    for (int y = 0; y < this.thumbLength; y++) {
+                        for (int z = 0; z < this.palmLength; z++) {
+                            var bl = this.blockMatches[unitStart + inner];
+                            if (bl == null) continue;
+                            var by = bl[y];
+                            if (by == null) continue;
+                            TraceabilityPredicate predicate = by[z];
+                            if (predicate == null) continue;
+                            BlockInfo info = null;
+                            boolean find = false;
                             for (SimplePredicate limit : predicate.limited) {
-                                if (limit.minCount == -1 && limit.previewCount == -1) continue;
-                                if (cacheGlobal.getInt(limit) < limit.previewCount) {
-                                    cacheGlobal.addTo(limit, 1);
-                                } else if (limit.minCount > 0) {
-                                    if (cacheGlobal.getInt(limit) < limit.minCount) {
+                                // check layer and previewCount
+                                if (limit.minLayerCount > 0) {
+                                    if (cacheLayer.getInt(limit) < limit.minLayerCount) {
+                                        cacheLayer.addTo(limit, 1);
+                                    } else {
+                                        continue;
+                                    }
+                                    if (cacheGlobal.getInt(limit) < limit.previewCount) {
                                         cacheGlobal.addTo(limit, 1);
                                     } else {
                                         continue;
@@ -442,30 +479,40 @@ public class BlockPattern {
                                     break;
                                 }
                             }
-                        }
-                        if (!find) {
-                            // check common with previewCount
-                            for (SimplePredicate common : predicate.common) {
-                                if (common.previewCount > 0) {
-                                    if (cacheGlobal.getInt(common) < common.previewCount) {
-                                        cacheGlobal.addTo(common, 1);
+                            if (!find) {
+                                // check global and previewCount
+                                for (SimplePredicate limit : predicate.limited) {
+                                    if (limit.minCount == -1 && limit.previewCount == -1) continue;
+                                    if (cacheGlobal.getInt(limit) < limit.previewCount) {
+                                        cacheGlobal.addTo(limit, 1);
+                                    } else if (limit.minCount > 0) {
+                                        if (cacheGlobal.getInt(limit) < limit.minCount) {
+                                            cacheGlobal.addTo(limit, 1);
+                                        } else {
+                                            continue;
+                                        }
                                     } else {
                                         continue;
                                     }
-                                } else {
-                                    continue;
-                                }
-                                info = common.blockInfo.get();
-                                if (info != null) {
-                                    find = true;
-                                    break;
+                                    info = limit.blockInfo.get();
+                                    if (info != null) {
+                                        find = true;
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                        if (!find) {
-                            // check without previewCount
-                            for (SimplePredicate common : predicate.common) {
-                                if (common.previewCount == -1) {
+                            if (!find) {
+                                // check common with previewCount
+                                for (SimplePredicate common : predicate.common) {
+                                    if (common.previewCount > 0) {
+                                        if (cacheGlobal.getInt(common) < common.previewCount) {
+                                            cacheGlobal.addTo(common, 1);
+                                        } else {
+                                            continue;
+                                        }
+                                    } else {
+                                        continue;
+                                    }
                                     info = common.blockInfo.get();
                                     if (info != null) {
                                         find = true;
@@ -473,43 +520,59 @@ public class BlockPattern {
                                     }
                                 }
                             }
-                        }
-                        if (!find) {
-                            // check max
-                            for (SimplePredicate limit : predicate.limited) {
-                                if (limit.previewCount != -1) continue;
-                                if (limit.maxCount != -1 || limit.maxLayerCount != -1) {
-                                    if (cacheGlobal.getOrDefault(limit, 0) < limit.maxCount) {
-                                        cacheGlobal.addTo(limit, 1);
-                                    } else if (cacheLayer.getOrDefault(limit, 0) < limit.maxLayerCount) {
-                                        cacheLayer.addTo(limit, 1);
-                                    } else {
-                                        continue;
+                            if (!find) {
+                                // check without previewCount
+                                for (SimplePredicate common : predicate.common) {
+                                    if (common.previewCount == -1) {
+                                        info = common.blockInfo.get();
+                                        if (info != null) {
+                                            find = true;
+                                            break;
+                                        }
                                     }
                                 }
-                                info = limit.blockInfo.get();
-                                if (info != null) {
-                                    break;
+                            }
+                            if (!find) {
+                                // check max
+                                for (SimplePredicate limit : predicate.limited) {
+                                    if (limit.previewCount != -1) continue;
+                                    if (limit.maxCount != -1 || limit.maxLayerCount != -1) {
+                                        if (cacheGlobal.getOrDefault(limit, 0) < limit.maxCount) {
+                                            cacheGlobal.addTo(limit, 1);
+                                        } else if (cacheLayer.getOrDefault(limit, 0) < limit.maxLayerCount) {
+                                            cacheLayer.addTo(limit, 1);
+                                        } else {
+                                            continue;
+                                        }
+                                    }
+                                    info = limit.blockInfo.get();
+                                    if (info != null) {
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                        if (info != null && info.getBlockState().getBlock() != Blocks.AIR) {
-                            BlockPos pos = gerPreviewOffset(z, y, x);
-                            if (info.getBlockState().getBlock() instanceof MetaMachineBlock) {
-                                machines.put(pos.asLong(), info);
-                            } else {
-                                blocks.put(pos.asLong(), info);
+                            if (info != null && info.getBlockState().getBlock() != Blocks.AIR) {
+                                Direction direction = predicate.getPreviewDirection();
+                                if (direction != null) {
+                                    info = BlockInfo.fromBlockState(setDirectionalState(info.getBlockState(),
+                                            direction));
+                                }
+                                BlockPos pos = gerPreviewOffset(z, y, x);
+                                if (info.getBlockState().getBlock() instanceof MetaMachineBlock) {
+                                    machines.put(pos.asLong(), info);
+                                } else {
+                                    blocks.put(pos.asLong(), info);
+                                }
+                                minX = Math.min(pos.getX(), minX);
+                                minY = Math.min(pos.getY(), minY);
+                                minZ = Math.min(pos.getZ(), minZ);
+                                maxX = Math.max(pos.getX(), maxX);
+                                maxY = Math.max(pos.getY(), maxY);
+                                maxZ = Math.max(pos.getZ(), maxZ);
                             }
-                            minX = Math.min(pos.getX(), minX);
-                            minY = Math.min(pos.getY(), minY);
-                            minZ = Math.min(pos.getZ(), minZ);
-                            maxX = Math.max(pos.getX(), maxX);
-                            maxY = Math.max(pos.getY(), maxY);
-                            maxZ = Math.max(pos.getZ(), maxZ);
                         }
                     }
                 }
-                x++;
             }
         }
         BlockInfo[][][] result = (BlockInfo[][][]) Array.newInstance(BlockInfo.class, maxX - minX + 1, maxY - minY + 1,
@@ -571,6 +634,47 @@ public class BlockPattern {
             found = Direction.NORTH;
         }
         consumer.accept(blockState.setValue(property, found));
+    }
+
+    private boolean matchesDirectionalPredicate(TraceabilityPredicate predicate, MultiblockState worldState,
+                                                Direction frontFacing, Direction upwardsFacing, boolean isFlipped) {
+        Direction direction = predicate.getDirection(worldState, frontFacing, upwardsFacing, isFlipped);
+        return direction == null || matchesDirectionalState(worldState.getBlockState(), direction);
+    }
+
+    private static boolean matchesDirectionalState(BlockState state, Direction direction) {
+        Optional<DirectionProperty> property = findDirectionProperty(state, direction);
+        return property.filter(directionProperty -> state.getValue(directionProperty) == direction).isPresent();
+    }
+
+    @Nullable
+    private static Direction getDirectionalState(BlockState state) {
+        return findDirectionProperty(state, null)
+                .map(state::getValue)
+                .orElse(null);
+    }
+
+    private static BlockState setDirectionalState(BlockState state, Direction direction) {
+        return findDirectionProperty(state, direction)
+                .map(property -> state.setValue(property, direction))
+                .orElse(state);
+    }
+
+    private static Optional<DirectionProperty> findDirectionProperty(BlockState state, @Nullable Direction direction) {
+        return state.getProperties().stream()
+                .filter(DirectionProperty.class::isInstance)
+                .map(DirectionProperty.class::cast)
+                .filter(property -> direction == null || property.getPossibleValues().contains(direction))
+                .min(Comparator.comparingInt(BlockPattern::directionPropertyPriority));
+    }
+
+    private static int directionPropertyPriority(DirectionProperty property) {
+        String name = property.getName();
+        if ("facing".equals(name)) return 0;
+        if ("horizontal_facing".equals(name)) return 1;
+        if (name.endsWith("_facing")) return 2;
+        if (name.contains("facing")) return 3;
+        return 4;
     }
 
     private BlockPos setActualRelativeOffset(int x, int y, int z, Direction facing, Direction upwardsFacing,
