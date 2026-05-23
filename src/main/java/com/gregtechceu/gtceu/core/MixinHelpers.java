@@ -11,9 +11,6 @@ import com.gregtechceu.gtceu.api.data.chemical.material.properties.OreProperty;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
 import com.gregtechceu.gtceu.api.data.chemical.material.stack.MaterialStack;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
-import com.gregtechceu.gtceu.api.data.worldgen.GTOreDefinition;
-import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidDefinition;
-import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreDefinition;
 import com.gregtechceu.gtceu.api.fluids.FluidState;
 import com.gregtechceu.gtceu.api.fluids.GTFluid;
 import com.gregtechceu.gtceu.api.fluids.store.FluidStorage;
@@ -64,7 +61,6 @@ import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -398,8 +394,7 @@ public class MixinHelpers {
         });
     }
 
-    public static void postKJSVeinEvents(RegistryAccess.Frozen registries) {
-    }
+    public static void postKJSVeinEvents(RegistryAccess.Frozen registries) {}
 
     public static void addFluidTexture(Material material, FluidStorage.FluidEntry value) {
         IClientFluidTypeExtensions extensions = IClientFluidTypeExtensions.of(value.getFluid().get());

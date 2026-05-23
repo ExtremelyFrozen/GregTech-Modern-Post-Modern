@@ -141,8 +141,8 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
     public MachineBuilder(GTRegistrate registrate, String name,
                           Function<ResourceLocation, DEFINITION> definition,
                           BiFunction<BlockBehaviour.Properties, DEFINITION, MetaMachineBlock> blockFactory,
-                           BiFunction<MetaMachineBlock, Item.Properties, MetaMachineItem> itemFactory,
-                           Function<BlockEntityCreationInfo, MetaMachine> blockEntityFactory) {
+                          BiFunction<MetaMachineBlock, Item.Properties, MetaMachineItem> itemFactory,
+                          Function<BlockEntityCreationInfo, MetaMachine> blockEntityFactory) {
         this.id = ResourceLocation.fromNamespaceAndPath(registrate.getModid(), name);
         this.registrate = registrate;
         this.name = name;

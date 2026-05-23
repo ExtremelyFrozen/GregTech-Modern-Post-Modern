@@ -478,5 +478,4 @@ public class CommonProxy {
                 GTBlocks.TREATED_WOOD_HANGING_SIGN.get(),
                 GTBlocks.TREATED_WOOD_WALL_HANGING_SIGN.get());
     }
-
 }

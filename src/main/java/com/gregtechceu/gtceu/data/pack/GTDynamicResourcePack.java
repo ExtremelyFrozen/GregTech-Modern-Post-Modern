@@ -63,7 +63,6 @@ public class GTDynamicResourcePack implements PackResources {
     public GTDynamicResourcePack(PackLocationInfo info, Collection<String> domains) {
         this.info = info;
         CLIENT_DOMAINS.addAll(domains);
-
     }
 
     public static void addNamespace(String namespace) {

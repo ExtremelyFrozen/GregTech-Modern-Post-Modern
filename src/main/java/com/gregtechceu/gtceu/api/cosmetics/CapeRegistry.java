@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.api.cosmetics;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.cosmetics.event.RegisterGTCapesEvent;
 import com.gregtechceu.gtceu.common.network.packets.SPacketNotifyCapeChange;
 
