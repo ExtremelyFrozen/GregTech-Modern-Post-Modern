@@ -25,10 +25,6 @@ import com.gregtechceu.gtceu.common.data.GTMaterialItems;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.core.mixins.BlockBehaviourAccessor;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
-import com.gregtechceu.gtceu.integration.kjs.GTCEuServerEvents;
-import com.gregtechceu.gtceu.integration.kjs.events.GTBedrockFluidVeinEventJS;
-import com.gregtechceu.gtceu.integration.kjs.events.GTBedrockOreVeinEventJS;
-import com.gregtechceu.gtceu.integration.kjs.events.GTOreVeinEventJS;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.*;
@@ -403,18 +399,6 @@ public class MixinHelpers {
     }
 
     public static void postKJSVeinEvents(RegistryAccess.Frozen registries) {
-        if (!GTCEu.Mods.isKubeJSLoaded()) {
-            return;
-        }
-
-        KJSCallWrapper.postEventWithRegistry(KJSCallWrapper::postOreVeinEvent,
-                registries.registryOrThrow(GTRegistries.ORE_VEIN_REGISTRY));
-
-        KJSCallWrapper.postEventWithRegistry(KJSCallWrapper::postBedrockFluidEvent,
-                registries.registryOrThrow(GTRegistries.BEDROCK_FLUID_REGISTRY));
-
-        KJSCallWrapper.postEventWithRegistry(KJSCallWrapper::postBedrockOreEvent,
-                registries.registryOrThrow(GTRegistries.BEDROCK_ORE_REGISTRY));
     }
 
     public static void addFluidTexture(Material material, FluidStorage.FluidEntry value) {
@@ -424,31 +408,6 @@ public class MixinHelpers {
 
             gtExtensions.setFlowingTexture(value.getBuilder().flowing());
             gtExtensions.setStillTexture(value.getBuilder().still());
-        }
-    }
-
-    private static final class KJSCallWrapper {
-
-        private static <T> void postEventWithRegistry(Consumer<WritableRegistry<T>> eventProvider,
-                                                      Registry<T> registry) {
-            if (registry instanceof MappedRegistry<T> writable) {
-                // unfreeze the registry, register to it, refreeze it.
-                writable.unfreeze();
-                eventProvider.accept(writable);
-                writable.freeze();
-            }
-        }
-
-        private static void postOreVeinEvent(WritableRegistry<GTOreDefinition> registry) {
-            GTCEuServerEvents.ORE_VEIN_MODIFICATION.post(new GTOreVeinEventJS(registry));
-        }
-
-        private static void postBedrockFluidEvent(WritableRegistry<BedrockFluidDefinition> registry) {
-            GTCEuServerEvents.FLUID_VEIN_MODIFICATION.post(new GTBedrockFluidVeinEventJS(registry));
-        }
-
-        private static void postBedrockOreEvent(WritableRegistry<BedrockOreDefinition> registry) {
-            GTCEuServerEvents.BEDROCK_ORE_VEIN_MODIFICATION.post(new GTBedrockOreVeinEventJS(registry));
         }
     }
 

@@ -17,7 +17,6 @@ dependencies {
 
     // Recipe Viewers
     compileOnly(forge.bundles.jei)
-    compileOnly(forge.bundles.rei)
     compileOnly(forge.emi)
 
     // WAILA-likes
@@ -81,7 +80,6 @@ dependencies {
     // Runtime Recipe Viewers - uncomment whichever one you want to use //
     localRuntime(forge.emi)
     localRuntime(forge.jei.neoforge.impl)
-//    localRuntime(forge.bundles.rei.runtime)
 
     // Client-only runtime mods //
     clientLocalRuntime(forge.sodium)
@@ -97,7 +95,7 @@ dependencies {
 //    extraLocalRuntime(forge.worldstripper)
     localRuntime(forge.cc.tweaked.forge.impl)
 
-    localRuntime(forge.bundles.kjs)
+    extraLocalRuntime(forge.bundles.kjs)
 
     extraLocalRuntime(forge.ftblibrary)
     extraLocalRuntime(forge.ftbteams)

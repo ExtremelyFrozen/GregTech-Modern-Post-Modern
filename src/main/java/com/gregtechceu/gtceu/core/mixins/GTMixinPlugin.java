@@ -29,7 +29,6 @@ public class GTMixinPlugin implements IMixinConfigPlugin {
     private static final String DEV_PACKAGE = MIXIN_PACKAGE + "dev.";
 
     static {
-        MOD_COMPAT_MIXINS.put("roughlyenoughitems", MIXIN_PACKAGE + "rei");
         addModCompatMixin("emi");
         addModCompatMixin("jei");
         addModCompatMixin("top");

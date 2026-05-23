@@ -68,12 +68,9 @@ repositories {
         forRepository { maven { url = "https://maven.terraformersmc.com/releases/" } }
         filter { includeGroup("dev.emi") }
     }
-    exclusiveContent { // shedaniel - REI, architectury, cloth-config
+    exclusiveContent { // Architectury, pulled transitively by FTB mods
         forRepository { maven { url = "https://maven.shedaniel.me/" } }
-        filter {
-            includeGroupAndSubgroups("me.shedaniel")
-            includeGroup("dev.architectury")
-        }
+        filter { includeGroup("dev.architectury") }
     }
     exclusiveContent { // tterrag - registrate
         forRepository { maven { url = "https://mvn.devos.one/snapshots/" } }

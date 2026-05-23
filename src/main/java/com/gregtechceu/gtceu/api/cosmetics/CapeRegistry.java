@@ -3,8 +3,6 @@ package com.gregtechceu.gtceu.api.cosmetics;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.cosmetics.event.RegisterGTCapesEvent;
 import com.gregtechceu.gtceu.common.network.packets.SPacketNotifyCapeChange;
-import com.gregtechceu.gtceu.integration.kjs.GTCEuServerEvents;
-import com.gregtechceu.gtceu.integration.kjs.events.RegisterCapesEventJS;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.*;
@@ -16,7 +14,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.latvian.mods.kubejs.script.ScriptType;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +45,6 @@ public class CapeRegistry extends SavedData {
     private static void initCapes() {
         RegisterGTCapesEvent event = new RegisterGTCapesEvent();
         NeoForge.EVENT_BUS.post(event);
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            KJSCallWrapper.fireKJSEvent(event);
-        }
         save();
     }
 
@@ -314,12 +308,5 @@ public class CapeRegistry extends SavedData {
 
     private static Set<ResourceLocation> makeSet(UUID ignored) {
         return new TreeSet<>(SET_COMPARATOR);
-    }
-
-    private static class KJSCallWrapper {
-
-        public static void fireKJSEvent(RegisterGTCapesEvent event) {
-            GTCEuServerEvents.REGISTER_CAPES.post(ScriptType.SERVER, new RegisterCapesEventJS(event));
-        }
     }
 }

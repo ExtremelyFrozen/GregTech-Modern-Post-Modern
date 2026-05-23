@@ -109,8 +109,6 @@ public class PhantomFluidWidget extends TankWidget implements IGhostIngredientTa
     private static Object convertIngredient(Object ingredient) {
         if (GTCEu.Mods.isEMILoaded()) {
             ingredient = EMICallWrapper.tryWrap(ingredient);
-        } else if (GTCEu.Mods.isREILoaded()) {
-            ingredient = REICallWrapper.tryWrap(ingredient);
         } else if (GTCEu.Mods.isJEILoaded()) {
             ingredient = JEICallWrapper.tryWrap(ingredient);
         }
@@ -262,17 +260,6 @@ public class PhantomFluidWidget extends TankWidget implements IGhostIngredientTa
                 } else {
                     ingredient = null;
                 }
-            }
-            return ingredient;
-        }
-    }
-
-    private static class REICallWrapper {
-
-        private static Object tryWrap(Object ingredient) {
-            if (ingredient instanceof dev.architectury.fluid.FluidStack fluidStack) {
-                ingredient = new FluidStack(fluidStack.getFluid().builtInRegistryHolder(), (int) fluidStack.getAmount(),
-                        fluidStack.getPatch());
             }
             return ingredient;
         }

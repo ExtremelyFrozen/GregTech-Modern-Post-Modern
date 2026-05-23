@@ -70,9 +70,6 @@ import com.gregtechceu.gtceu.data.pack.GTPackSource;
 import com.gregtechceu.gtceu.data.placeholder.GTPlaceholders;
 import com.gregtechceu.gtceu.data.recipe.*;
 import com.gregtechceu.gtceu.integration.cctweaked.CCTweakedPlugin;
-import com.gregtechceu.gtceu.integration.kjs.GTCEuStartupEvents;
-import com.gregtechceu.gtceu.integration.kjs.events.MaterialModificationEventJS;
-import com.gregtechceu.gtceu.integration.kjs.helpers.KubeGTRegistryEventHandler;
 import com.gregtechceu.gtceu.integration.map.WaypointManager;
 import com.gregtechceu.gtceu.utils.input.SyncedKeyMappings;
 
@@ -137,11 +134,6 @@ public class CommonProxy {
 
     public static void init(final IEventBus modBus) {
         CommonProxy.modBus = modBus;
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            // initialize this before the class's static listeners
-            // so KubeJS materials are registered before the material registry is closed.
-            modBus.register(KubeGTRegistryEventHandler.class);
-        }
         modBus.register(CommonProxy.class);
 
         UIFactory.register(MachineUIFactory.INSTANCE);
@@ -242,9 +234,6 @@ public class CommonProxy {
             // Block entirely new Materials from being added in the Post event
             ((MaterialRegistry) GTRegistries.MATERIALS).close();
             ModLoader.postEventWrapContainerInModOrder(new PostMaterialEvent());
-            if (GTCEu.Mods.isKubeJSLoaded()) {
-                KJSEventWrapper.materialModification();
-            }
             // --spacer--
         } else if (event.getRegistryKey() == Registries.FLUID) {
             // Material fluids
@@ -490,10 +479,4 @@ public class CommonProxy {
                 GTBlocks.TREATED_WOOD_WALL_HANGING_SIGN.get());
     }
 
-    public static final class KJSEventWrapper {
-
-        public static void materialModification() {
-            GTCEuStartupEvents.MATERIAL_MODIFICATION.post(new MaterialModificationEventJS());
-        }
-    }
 }

@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.data.pack;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.addon.AddonFinder;
 import com.gregtechceu.gtceu.config.ConfigHolder;
-import com.gregtechceu.gtceu.integration.kjs.GregTechKubeJSPlugin;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.client.renderer.texture.atlas.SpriteSource;
@@ -65,9 +64,6 @@ public class GTDynamicResourcePack implements PackResources {
         this.info = info;
         CLIENT_DOMAINS.addAll(domains);
 
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            GregTechKubeJSPlugin.generateMachineBlockModels();
-        }
     }
 
     public static void addNamespace(String namespace) {

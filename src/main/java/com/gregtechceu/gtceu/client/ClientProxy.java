@@ -209,9 +209,6 @@ public class ClientProxy {
         // do this last so addons can easily add new variants to the registered model set
         PipeModel.initDynamicModels();
 
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            GregTechKubeJSPlugin.generateMachineBlockModels();
-        }
         RuntimeBlockstateProvider.INSTANCE.run();
         PipeModelBuilder.clearRestrictorModelCache();
     }
