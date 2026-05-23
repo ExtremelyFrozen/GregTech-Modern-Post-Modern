@@ -69,9 +69,6 @@ public interface IGhostFluidTarget extends IGhostIngredientTarget {
             ingredient = fluid == null ? FluidStack.EMPTY :
                     new FluidStack(fluid.builtInRegistryHolder(),
                             (int) fluidEmiStack.getAmount(), fluidEmiStack.getComponentChanges());
-        } else if (GTCEu.Mods.isREILoaded() && ingredient instanceof dev.architectury.fluid.FluidStack fluidStack) {
-            ingredient = new FluidStack(fluidStack.getFluid().builtInRegistryHolder(),
-                    (int) fluidStack.getAmount(), fluidStack.getPatch());
         } else if (GTCEu.Mods.isJEILoaded() && ingredient instanceof ITypedIngredient<?> fluidJeiStack) {
             return fluidJeiStack.getIngredient(NeoForgeTypes.FLUID_STACK).orElse(FluidStack.EMPTY);
         }

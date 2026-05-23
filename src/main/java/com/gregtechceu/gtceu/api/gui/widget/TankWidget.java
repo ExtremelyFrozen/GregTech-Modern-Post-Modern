@@ -56,8 +56,6 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import me.shedaniel.rei.api.common.entry.EntryIngredient;
-import me.shedaniel.rei.api.common.util.EntryStacks;
 import mezz.jei.api.helpers.IPlatformFluidHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,8 +213,6 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
     private Object convertIngredient(FluidStack fluidStack) {
         if (GTCEu.Mods.isEMILoaded()) {
             return EMICallWrapper.getEMIIngredient(fluidStack, getXEIChance());
-        } else if (GTCEu.Mods.isREILoaded()) {
-            return REICallWrapper.getREIIngredient(fluidStack);
         } else if (GTCEu.Mods.isJEILoaded() && !fluidStack.isEmpty()) {
             return JEICallWrapper.getJEIFluidClickable(fluidStack, getPosition(), getSize());
         }
@@ -253,8 +249,6 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
         FluidEntryList entryList = handler.getEntry(index);
         if (GTCEu.Mods.isEMILoaded()) {
             return EMICallWrapper.getEMIIngredients(entryList, getXEIChance());
-        } else if (GTCEu.Mods.isREILoaded()) {
-            return REICallWrapper.getREIIngredients(entryList);
         } else if (GTCEu.Mods.isJEILoaded()) {
             return JEICallWrapper.getJEIIngredientsClickable(entryList, getPosition(), getSize());
         }
@@ -627,42 +621,6 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
                     .map(typedIngredient -> new ClickableIngredient<>(typedIngredient, pos.x, pos.y, size.width,
                             size.height))
                     .orElse(null);
-        }
-    }
-
-    public static final class REICallWrapper {
-
-        public static dev.architectury.fluid.FluidStack toREIStack(FluidStack stack) {
-            return dev.architectury.fluid.FluidStack.create(stack.getFluid(), stack.getAmount(),
-                    stack.getComponentsPatch());
-        }
-
-        private static EntryIngredient toREIIngredient(Stream<FluidStack> stream) {
-            return EntryIngredient.of(stream
-                    .map(REICallWrapper::toREIStack)
-                    .map(EntryStacks::of)
-                    .toList());
-        }
-
-        public static List<Object> getREIIngredients(FluidStackList list) {
-            return List.of(toREIIngredient(list.stream()));
-        }
-
-        public static List<Object> getREIIngredients(FluidTagList list) {
-            return list.getEntries().stream()
-                    .map(FluidTagList.FluidTagEntry::stacks)
-                    .map(REICallWrapper::toREIIngredient)
-                    .collect(Collectors.toList());
-        }
-
-        public static List<Object> getREIIngredients(FluidEntryList list) {
-            if (list instanceof FluidTagList tagList) return getREIIngredients(tagList);
-            if (list instanceof FluidStackList stackList) return getREIIngredients(stackList);
-            return Collections.emptyList();
-        }
-
-        public static Object getREIIngredient(FluidStack fluidStack) {
-            return EntryStacks.of(REICallWrapper.toREIStack(fluidStack));
         }
     }
 

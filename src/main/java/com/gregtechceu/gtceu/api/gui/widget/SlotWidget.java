@@ -29,8 +29,6 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import lombok.Getter;
-import me.shedaniel.rei.api.common.entry.EntryIngredient;
-import me.shedaniel.rei.api.common.util.EntryStacks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -190,8 +188,6 @@ public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
     private Object convertIngredient(ItemStack itemStack) {
         if (GTCEu.Mods.isEMILoaded()) {
             return EMICallWrapper.getEMIIngredient(itemStack, getXEIChance());
-        } else if (GTCEu.Mods.isREILoaded()) {
-            return REICallWrapper.getREIIngredient(itemStack);
         } else if (GTCEu.Mods.isJEILoaded() && !itemStack.isEmpty()) {
             return JEICallWrapper.getJEIStackClickable(itemStack, getPosition(), getSize());
         }
@@ -235,8 +231,6 @@ public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
         ItemEntryList entryList = handler.getEntry(index);
         if (GTCEu.Mods.isEMILoaded()) {
             return EMICallWrapper.getEMIIngredients(entryList, getXEIChance(), this::getRealStack);
-        } else if (GTCEu.Mods.isREILoaded()) {
-            return REICallWrapper.getREIIngredients(entryList, this::getRealStack);
         } else if (GTCEu.Mods.isJEILoaded()) {
             return JEICallWrapper.getJEIIngredientsClickable(entryList, getPosition(), getSize(), this::getRealStack);
         }
@@ -342,36 +336,6 @@ public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
                     .map(realStack)
                     .map(stack -> getJEIStackClickable(stack, pos, size))
                     .collect(Collectors.toList());
-        }
-    }
-
-    public static final class REICallWrapper {
-
-        private static EntryIngredient toREIIngredient(Stream<ItemStack> stream, UnaryOperator<ItemStack> realStack) {
-            return EntryIngredient.of(stream.map(realStack)
-                    .map(EntryStacks::of)
-                    .toList());
-        }
-
-        public static List<Object> getREIIngredients(ItemStackList list, UnaryOperator<ItemStack> realStack) {
-            return List.of(toREIIngredient(list.stream(), realStack));
-        }
-
-        public static List<Object> getREIIngredients(ItemTagList list, UnaryOperator<ItemStack> realStack) {
-            return list.getEntries().stream()
-                    .map(ItemTagList.ItemTagEntry::stacks)
-                    .map(stream -> toREIIngredient(stream, realStack))
-                    .collect(Collectors.toList());
-        }
-
-        public static List<Object> getREIIngredients(ItemEntryList list, UnaryOperator<ItemStack> realStack) {
-            if (list instanceof ItemTagList tagList) return getREIIngredients(tagList, realStack);
-            if (list instanceof ItemStackList stackList) return getREIIngredients(stackList, realStack);
-            return Collections.emptyList();
-        }
-
-        public static Object getREIIngredient(ItemStack stack) {
-            return EntryStacks.of(stack);
         }
     }
 

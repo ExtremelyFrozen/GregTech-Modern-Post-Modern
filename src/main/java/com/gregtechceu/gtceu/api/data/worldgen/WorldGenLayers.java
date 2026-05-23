@@ -1,10 +1,7 @@
 package com.gregtechceu.gtceu.api.data.worldgen;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.addon.AddonFinder;
 import com.gregtechceu.gtceu.api.addon.IGTAddon;
-import com.gregtechceu.gtceu.integration.kjs.GTCEuStartupEvents;
-import com.gregtechceu.gtceu.integration.kjs.events.WorldGenLayerEventJS;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
@@ -47,9 +44,6 @@ public enum WorldGenLayers implements IWorldGenLayer, StringRepresentable {
 
     public static void registerAll() {
         AddonFinder.getAddonList().forEach(IGTAddon::registerWorldgenLayers);
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            KJSCallWrapper.postEvent();
-        }
     }
 
     public static IWorldGenLayer getByName(String name) {
@@ -65,12 +59,5 @@ public enum WorldGenLayers implements IWorldGenLayer, StringRepresentable {
     @Override
     public boolean isApplicableForLevel(ResourceKey<Level> level) {
         return levels.contains(level);
-    }
-
-    private static final class KJSCallWrapper {
-
-        private static void postEvent() {
-            GTCEuStartupEvents.WORLD_GEN_LAYERS.post(new WorldGenLayerEventJS());
-        }
     }
 }
