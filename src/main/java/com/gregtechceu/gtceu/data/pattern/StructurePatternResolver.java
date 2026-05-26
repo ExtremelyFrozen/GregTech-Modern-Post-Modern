@@ -23,8 +23,7 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public final class StructurePatternResolver {
 
-    private StructurePatternResolver() {
-    }
+    private StructurePatternResolver() {}
 
     public static BlockPattern resolveCachedPattern(MultiblockMachineDefinition definition,
                                                     Supplier<BlockPattern> baselinePattern) {
@@ -116,12 +115,12 @@ public final class StructurePatternResolver {
                 minRepeat = maxRepeat = repeatNode.asInt();
             } else if (repeatNode.isArray() && repeatNode.size() == 2 &&
                     repeatNode.get(0).isInt() && repeatNode.get(1).isInt()) {
-                minRepeat = repeatNode.get(0).asInt();
-                maxRepeat = repeatNode.get(1).asInt();
-            } else {
-                throw new IllegalArgumentException("Json repeat unit for " + id +
-                        " must use integer repeat or [min, max] repeat");
-            }
+                        minRepeat = repeatNode.get(0).asInt();
+                        maxRepeat = repeatNode.get(1).asInt();
+                    } else {
+                        throw new IllegalArgumentException("Json repeat unit for " + id +
+                                " must use integer repeat or [min, max] repeat");
+                    }
         } else {
             JsonNode minNode = unitNode.get("min");
             JsonNode maxNode = unitNode.get("max");
@@ -205,7 +204,7 @@ public final class StructurePatternResolver {
 
             unitStarts[unitIndex] = aisleIndex;
             unitDepths[unitIndex] = unitDepth;
-            aisleRepetitions[unitIndex] = new int[]{unit.minRepeat(), unit.maxRepeat()};
+            aisleRepetitions[unitIndex] = new int[] { unit.minRepeat(), unit.maxRepeat() };
 
             for (int inner = 0; inner < unitDepth; inner++, aisleIndex++) {
                 String[] aisle = aisles.get(aisleIndex);
@@ -252,13 +251,15 @@ public final class StructurePatternResolver {
                         " is missing predicate slices");
             }
             for (int slice = 0; slice < unit.getSlices().size(); slice++) {
-                collectPredicatesFromSlice(id, predicates, unit.getSlices().get(slice), unit.getPredicates().get(slice));
+                collectPredicatesFromSlice(id, predicates, unit.getSlices().get(slice),
+                        unit.getPredicates().get(slice));
             }
         }
         return predicates;
     }
 
-    private static void collectPredicatesFromSlice(ResourceLocation id, Map<Character, TraceabilityPredicate> predicates,
+    private static void collectPredicatesFromSlice(ResourceLocation id,
+                                                   Map<Character, TraceabilityPredicate> predicates,
                                                    String[] rows, TraceabilityPredicate[][] predicateRows) {
         if (predicateRows == null || predicateRows.length != rows.length) {
             throw new IllegalStateException("Baseline multiblock pattern for " + id +

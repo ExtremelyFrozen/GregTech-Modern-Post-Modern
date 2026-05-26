@@ -32,8 +32,7 @@ public class FactoryBlockPattern {
     private int aisleHeight;
     private int rowWidth;
 
-    private record AisleUnit(List<String[]> slices, int minRepeat, int maxRepeat) {
-    }
+    private record AisleUnit(List<String[]> slices, int minRepeat, int maxRepeat) {}
 
     private FactoryBlockPattern(RelativeDirection charDir, RelativeDirection stringDir, RelativeDirection aisleDir,
                                 MultiblockMachineDefinition definition) {
@@ -246,7 +245,7 @@ public class FactoryBlockPattern {
             int unitDepth = unit.slices().size();
             unitStarts[unitIndex] = sliceIndex;
             unitDepths[unitIndex] = unitDepth;
-            aisleRepetitions[unitIndex] = new int[]{unit.minRepeat(), unit.maxRepeat()};
+            aisleRepetitions[unitIndex] = new int[] { unit.minRepeat(), unit.maxRepeat() };
 
             for (int inner = 0; inner < unitDepth; inner++, sliceIndex++) {
                 String[] aisle = unit.slices().get(inner);

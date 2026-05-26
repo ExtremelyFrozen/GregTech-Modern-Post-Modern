@@ -47,8 +47,7 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
     private Function<MultiblockControllerMachine, Comparator<IMultiPart>> partSorter = (c) -> (a, b) -> 0;
     private @Nullable TriFunction<MultiblockControllerMachine, IMultiPart, Direction, BlockState> partAppearance;
     @Getter
-    private BiConsumer<MultiblockControllerMachine, List<Component>> additionalDisplay = (m, l) -> {
-    };
+    private BiConsumer<MultiblockControllerMachine, List<Component>> additionalDisplay = (m, l) -> {};
 
     public MultiblockMachineBuilder(GTRegistrate registrate, String name,
                                     BiFunction<BlockBehaviour.Properties, DEFINITION, MetaMachineBlock> blockFactory,
