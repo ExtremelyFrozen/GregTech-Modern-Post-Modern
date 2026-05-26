@@ -9,13 +9,13 @@ import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.machine.*;
 import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-@NotNullByDefault
 public class QuantumTankMachine extends TieredMachine implements IControllable,
                                 IFancyUIMachine {
 
@@ -78,9 +77,9 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
     public QuantumTankMachine(BlockEntityCreationInfo info, int tier, long maxAmount) {
         super(info, tier);
         this.maxAmount = maxAmount;
-        this.cache = createCacheFluidHandler();
+        this.cache = attachTrait(createCacheFluidHandler());
         this.lockedFluid = new CustomFluidTank(1000);
-        this.autoOutput = AutoOutputTrait.ofFluids(this, cache);
+        this.autoOutput = attachTrait(AutoOutputTrait.ofFluids(cache));
     }
 
     //////////////////////////////////////
@@ -88,7 +87,7 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
     //////////////////////////////////////
 
     protected FluidCache createCacheFluidHandler() {
-        return new FluidCache(this);
+        return new FluidCache();
     }
 
     @Override
@@ -217,8 +216,8 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
 
         private final Predicate<FluidStack> filter = f -> !isLocked() || getLockedFluid().isFluidEqual(f);
 
-        public FluidCache(MetaMachine holder) {
-            super(holder);
+        public FluidCache() {
+            super();
         }
 
         @Override

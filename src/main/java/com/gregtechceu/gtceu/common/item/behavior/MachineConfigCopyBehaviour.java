@@ -5,9 +5,9 @@ import com.gregtechceu.gtceu.api.item.component.IAddInformation;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.*;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.owner.MachineOwner;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
@@ -186,7 +186,7 @@ public class MachineConfigCopyBehaviour implements IInteractionItem, IAddInforma
 
         tag.putString(FACING_DIR, directionToString(machine.getFrontFacing()));
 
-        var outputTrait = machine.getTraitHolder().getTrait(AutoOutputTrait.TYPE);
+        var outputTrait = machine.getTrait(AutoOutputTrait.TYPE);
         if (outputTrait != null && outputTrait.supportsAutoOutputItems() &&
                 outputTrait.getItemOutputDirection() != null) {
             tag.putString(ITEM_OUTPUT_SIDE, directionToString(outputTrait.getItemOutputDirection()));
@@ -221,7 +221,7 @@ public class MachineConfigCopyBehaviour implements IInteractionItem, IAddInforma
     }
 
     private static void pasteMachineConfig(ServerPlayer player, MetaMachine machine, CompoundTag tag) {
-        var outputTrait = machine.getTraitHolder().getTrait(AutoOutputTrait.TYPE);
+        var outputTrait = machine.getTrait(AutoOutputTrait.TYPE);
         if (outputTrait != null) {
             if (tag.contains(ITEM_OUTPUT_SIDE))
                 outputTrait.setItemOutputDirection(stringToDirection(tag.getString(ITEM_OUTPUT_SIDE)));

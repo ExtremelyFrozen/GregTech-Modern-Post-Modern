@@ -16,6 +16,7 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
+import com.gregtechceu.gtceu.common.machine.trait.CleanroomReceiverTrait;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
 import net.minecraft.core.BlockPos;
@@ -28,10 +29,10 @@ import it.unimi.dsi.fastutil.longs.LongSets;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 
 public abstract class WorkableMultiblockMachine extends MultiblockControllerMachine
                                                 implements IWorkableMultiController, IMufflableMachine {
@@ -68,19 +69,19 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     protected VoidingMode voidingMode = VoidingMode.VOID_NONE;
 
     public WorkableMultiblockMachine(BlockEntityCreationInfo info,
-                                     Function<WorkableMultiblockMachine, RecipeLogic> recipeLogicSupplier) {
+                                     RecipeLogic recipeLogic) {
         super(info);
         this.recipeTypes = getDefinition().getRecipeTypes();
         this.activeRecipeType = 0;
-        this.cleanroomReceiver = new CleanroomReceiverTrait(this);
-        this.recipeLogic = recipeLogicSupplier.apply(this);
+        this.cleanroomReceiver = attachTrait(new CleanroomReceiverTrait());
+        this.recipeLogic = attachTrait(recipeLogic);
         this.capabilitiesProxy = new EnumMap<>(IO.class);
         this.capabilitiesFlat = new EnumMap<>(IO.class);
         this.traitSubscriptions = new ArrayList<>();
     }
 
     public WorkableMultiblockMachine(BlockEntityCreationInfo info) {
-        this(info, RecipeLogic::new);
+        this(info, new RecipeLogic());
     }
 
     public void setMuffled(boolean muffled) {
@@ -102,7 +103,6 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         super.onUnload();
         traitSubscriptions.forEach(ISubscription::unsubscribe);
         traitSubscriptions.clear();
-        recipeLogic.inValid();
     }
 
     //////////////////////////////////////
@@ -133,7 +133,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
 
         // attach self traits
         Map<IO, List<IRecipeHandler<?>>> ioTraits = new EnumMap<>(IO.class);
-        for (MachineTrait trait : traitHolder.getAllTraits()) {
+        for (MachineTrait trait : getAllTraits()) {
             if (trait instanceof IRecipeHandlerTrait<?> handlerTrait) {
                 ioTraits.computeIfAbsent(handlerTrait.getHandlerIO(), i -> new ArrayList<>()).add(handlerTrait);
             }
@@ -186,8 +186,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         if (previouslyMuffled != isMuffled) {
             previouslyMuffled = isMuffled;
 
-            if (recipeLogic != null)
-                recipeLogic.updateSound();
+            recipeLogic.updateSound();
         }
     }
 
@@ -291,7 +290,6 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         IWorkableMultiController.super.setWorkingEnabled(isWorkingAllowed);
     }
 
-    @NotNull
     public GTRecipeType getRecipeType() {
         if (activeRecipeType >= recipeTypes.length) {
             GTCEu.LOGGER.warn("Preventing crash from bad recipe type index!");

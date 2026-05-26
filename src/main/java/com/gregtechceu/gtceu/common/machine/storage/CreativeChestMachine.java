@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.PhantomSlotWidget;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
@@ -39,7 +38,7 @@ public class CreativeChestMachine extends QuantumChestMachine {
 
     @Override
     protected ItemCache createCacheItemHandler() {
-        return new InfiniteCache(this);
+        return new InfiniteCache();
     }
 
     private void updateStored(ItemStack item) {
@@ -123,8 +122,8 @@ public class CreativeChestMachine extends QuantumChestMachine {
 
     private class InfiniteCache extends ItemCache {
 
-        public InfiniteCache(MetaMachine holder) {
-            super(holder);
+        public InfiniteCache() {
+            super();
         }
 
         @Override

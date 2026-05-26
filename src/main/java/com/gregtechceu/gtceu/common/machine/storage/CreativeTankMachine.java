@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.PhantomFluidWidget;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
@@ -28,10 +27,6 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
 public class CreativeTankMachine extends QuantumTankMachine {
 
     @Getter
@@ -46,7 +41,7 @@ public class CreativeTankMachine extends QuantumTankMachine {
     }
 
     protected FluidCache createCacheFluidHandler() {
-        return new InfiniteCache(this);
+        return new InfiniteCache();
     }
 
     @Override
@@ -170,12 +165,12 @@ public class CreativeTankMachine extends QuantumTankMachine {
 
     private class InfiniteCache extends FluidCache {
 
-        public InfiniteCache(MetaMachine holder) {
-            super(holder);
+        public InfiniteCache() {
+            super();
         }
 
         @Override
-        public @NotNull FluidStack getFluidInTank(int tank) {
+        public FluidStack getFluidInTank(int tank) {
             return stored;
         }
 
@@ -200,7 +195,7 @@ public class CreativeTankMachine extends QuantumTankMachine {
         }
 
         @Override
-        public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+        public boolean isFluidValid(int tank, FluidStack stack) {
             return true;
         }
 

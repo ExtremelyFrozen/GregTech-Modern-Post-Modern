@@ -21,9 +21,9 @@ import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
 import com.gregtechceu.gtceu.api.machine.feature.*;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitHolder;
+import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IFrontFacingTrait;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IInteractionTrait;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IRenderingTrait;
@@ -43,6 +43,7 @@ import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.common.machine.owner.MachineOwner;
 import com.gregtechceu.gtceu.common.machine.owner.PlayerOwner;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTUtil;
 import com.gregtechceu.gtceu.utils.data.TagCompatibilityFixer;
@@ -147,7 +148,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     @MustBeInvokedByOverriders
     public void onLoad() {
-        getTraitHolder().getAllTraits().forEach(MachineTrait::onMachineLoad);
+        getAllTraits().forEach(MachineTrait::onMachineLoad);
         coverContainer.onLoad();
 
         // update the painted model property if the machine is painted
@@ -172,7 +173,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     @MustBeInvokedByOverriders
     public void onUnload() {
-        getTraitHolder().getAllTraits().forEach(MachineTrait::onMachineUnload);
+        getAllTraits().forEach(MachineTrait::onMachineUnload);
         coverContainer.onUnload();
         for (TickableSubscription serverTick : serverTicks) {
             serverTick.unsubscribe();
@@ -272,6 +273,53 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     }
 
     //////////////////////////////////////
+    // ******* Machine Traits *******//
+    //////////////////////////////////////
+
+    public @UnmodifiableView List<MachineTrait> getAllTraits() {
+        return traitHolder.getAllTraits();
+    }
+
+    public <T extends MachineTrait> T attachTrait(T trait) {
+        return traitHolder.attachTrait(trait);
+    }
+
+    /**
+     * Registers a trait with data to be saved or synced to the client.
+     * Do not register a persistent trait and also store that trait as a syncable machine field, otherwise the trait
+     * data will be duplicated. Use only one sync method.
+     *
+     * @param traitName Unique identifier for this trait.
+     * @param trait     The trait to register
+     */
+    public void attachPersistentTrait(String traitName, MachineTrait trait) {
+        traitHolder.attachTrait(trait);
+        traitHolder.registerPersistentTrait(traitName, trait);
+    }
+
+    public @Nullable <T extends MachineTrait> T getPersistentTrait(String traitName) {
+        return traitHolder.getPersistentTrait(traitName);
+    }
+
+    /**
+     * Gets the first trait with the specified type.
+     */
+    public <T extends MachineTrait> @Nullable T getTrait(MachineTraitType<T> type) {
+        return traitHolder.getTrait(type);
+    }
+
+    public <T extends MachineTrait> Optional<T> getTraitOptional(MachineTraitType<T> type) {
+        return Optional.ofNullable(getTrait(type));
+    }
+
+    /**
+     * Get all traits with the specified type.
+     */
+    public <T extends MachineTrait> @Unmodifiable List<T> getTraits(MachineTraitType<T> type) {
+        return traitHolder.getTraits(type);
+    }
+
+    //////////////////////////////////////
     // ******* Interaction *******//
     //////////////////////////////////////
 
@@ -316,7 +364,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
         if (result != null && result.getSecond() != InteractionResult.PASS) return result;
 
-        for (var trait : getTraitHolder().getAllTraits()) {
+        for (var trait : getAllTraits()) {
             if (trait instanceof IInteractionTrait interactionTrait) {
                 var r = interactionTrait.onToolClick(context);
                 if (r.getSecond() != InteractionResult.PASS) return r;
@@ -412,7 +460,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
             if (cover != null) cover.onScrewdriverClick(context);
         }
 
-        for (var trait : getTraitHolder().getAllTraits()) {
+        for (var trait : getAllTraits()) {
             if (trait instanceof IInteractionTrait interactionTrait) {
                 InteractionResult result = interactionTrait.onUse(context);
                 if (result != InteractionResult.PASS) return result;
@@ -502,7 +550,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
             if (cover.shouldRenderGrid(player, pos, state, held, toolTypes)) return true;
         }
 
-        for (var trait : getTraitHolder().getAllTraits()) {
+        for (var trait : getAllTraits()) {
             if (trait instanceof IRenderingTrait renderingTrait) {
                 var result = renderingTrait.shouldRenderGridOverlay(player, pos, state, held, toolTypes);
                 if (result) return true;
@@ -537,7 +585,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
             }
         }
 
-        for (var trait : getTraitHolder().getAllTraits()) {
+        for (var trait : getAllTraits()) {
             if (trait instanceof IRenderingTrait renderingTrait) {
                 var result = renderingTrait.getGridOverlayIcon(player, pos, state, toolTypes, side);
                 if (result != null) return result;
@@ -604,7 +652,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
             }
         }
 
-        for (var trait : getTraitHolder().getAllTraits()) {
+        for (var trait : getAllTraits()) {
             if (trait instanceof IFrontFacingTrait modifyFacingTrait) {
                 if (!modifyFacingTrait.isValidFrontFace(facing)) return false;
             }
@@ -678,7 +726,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     public void onNeighborChanged(Block block, BlockPos fromPos, boolean isMoving) {
         coverContainer.onNeighborChanged(block, fromPos, isMoving);
-        getTraitHolder().getAllTraits().forEach(t -> t.onMachineNeighborChanged(block, fromPos, isMoving));
+        getAllTraits().forEach(t -> t.onMachineNeighborChanged(block, fromPos, isMoving));
     }
 
     public void animateTick(RandomSource random) {}
@@ -696,7 +744,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     @MustBeInvokedByOverriders
     public void updateModelData(ModelData.Builder builder) {
-        for (MachineTrait trait : traitHolder.getAllTraits()) {
+        for (MachineTrait trait : getAllTraits()) {
             if (trait instanceof IRenderingTrait renderingTrait) renderingTrait.updateModelData(builder);
         }
     }
@@ -800,7 +848,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     @Nullable
     public IItemHandlerModifiable getItemHandlerCap(@Nullable Direction side, boolean useCoverCapability) {
-        var list = traitHolder.getAllTraits().stream()
+        var list = getAllTraits().stream()
                 .filter(IItemHandlerModifiable.class::isInstance)
                 .filter(t -> t.hasCapability(side))
                 .map(IItemHandlerModifiable.class::cast)
@@ -809,7 +857,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
         if (list.isEmpty()) return null;
 
         var io = IO.BOTH;
-        var autoOutputTrait = getTraitHolder().getTrait(AutoOutputTrait.TYPE);
+        var autoOutputTrait = getTrait(AutoOutputTrait.TYPE);
         if (side != null && autoOutputTrait != null && autoOutputTrait.getItemOutputDirection() == side &&
                 !autoOutputTrait.allowsItemInputFromOutputSide()) {
             io = IO.OUT;
@@ -825,7 +873,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     @Nullable
     public IFluidHandlerModifiable getFluidHandlerCap(@Nullable Direction side, boolean useCoverCapability) {
-        var list = traitHolder.getAllTraits().stream()
+        var list = getAllTraits().stream()
                 .filter(IFluidHandler.class::isInstance)
                 .filter(t -> t.hasCapability(side))
                 .map(IFluidHandler.class::cast)
@@ -834,7 +882,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
         if (list.isEmpty()) return null;
 
         var io = IO.BOTH;
-        var autoOutputTrait = getTraitHolder().getTrait(AutoOutputTrait.TYPE);
+        var autoOutputTrait = getTrait(AutoOutputTrait.TYPE);
         if (side != null && autoOutputTrait != null && autoOutputTrait.getFluidOutputDirection() == side &&
                 !autoOutputTrait.allowsFluidInputFromOutputSide()) {
             io = IO.OUT;

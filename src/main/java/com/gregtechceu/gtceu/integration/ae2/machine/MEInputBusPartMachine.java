@@ -52,7 +52,7 @@ public class MEInputBusPartMachine extends MEBusPartMachine
 
     @Override
     protected NotifiableItemStackHandler createInventory() {
-        this.aeItemHandler = new ExportOnlyAEItemList(this, CONFIG_SIZE);
+        this.aeItemHandler = new ExportOnlyAEItemList(CONFIG_SIZE);
         return this.aeItemHandler;
     }
 
