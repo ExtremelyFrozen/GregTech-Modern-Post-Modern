@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.api.data.chemical.material;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.chemical.Element;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialFlag;
@@ -166,7 +165,7 @@ public class Material {
     }
 
     public void addFlags(MaterialFlag... flags) {
-        if (GTCEuAPI.materialManager.isFrozen())
+        if (((IMaterialRegistry) GTRegistries.MATERIALS).isFrozen())
             throw new IllegalStateException("Cannot add flag to material when registry is frozen!");
         this.flags.addFlags(flags).verify(this);
     }
@@ -522,7 +521,7 @@ public class Material {
     }
 
     public <T extends IMaterialProperty> void setProperty(PropertyKey<T> key, IMaterialProperty property) {
-        if (GTCEuAPI.materialManager.isFrozen()) {
+        if (((IMaterialRegistry) GTRegistries.MATERIALS).isFrozen()) {
             throw new IllegalStateException("Cannot add properties to a Material when registry is frozen!");
         }
         properties.setProperty(key, property);
