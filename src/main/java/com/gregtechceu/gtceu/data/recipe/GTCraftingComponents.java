@@ -1,13 +1,10 @@
 package com.gregtechceu.gtceu.data.recipe;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.data.recipe.event.CraftingComponentModificationEvent;
-import com.gregtechceu.gtceu.integration.kjs.GTCEuStartupEvents;
-import com.gregtechceu.gtceu.integration.kjs.events.CraftingComponentsEventJS;
 
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.Tags;
@@ -749,15 +746,5 @@ public class GTCraftingComponents {
                 .add(UHV, spring, Europium);
 
         NeoForge.EVENT_BUS.post(new CraftingComponentModificationEvent());
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            KJSCallWrapper.craftingComponentModification();
-        }
-    }
-
-    private static final class KJSCallWrapper {
-
-        private static void craftingComponentModification() {
-            GTCEuStartupEvents.CRAFTING_COMPONENTS.post(new CraftingComponentsEventJS());
-        }
     }
 }

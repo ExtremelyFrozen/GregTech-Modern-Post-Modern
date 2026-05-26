@@ -50,7 +50,6 @@ import dev.emi.emi.screen.RecipeScreen;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import me.shedaniel.rei.impl.client.gui.screen.AbstractDisplayViewingScreen;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
@@ -362,11 +361,7 @@ public class PatternPreviewWidget extends WidgetGroup {
         if (!isLoaded && GTCEu.Mods.isEMILoaded() && Minecraft.getInstance().screen instanceof RecipeScreen) {
             setPage(0);
             isLoaded = true;
-        } else if (!isLoaded && GTCEu.Mods.isREILoaded() &&
-                Minecraft.getInstance().screen instanceof AbstractDisplayViewingScreen) {
-                    setPage(0);
-                    isLoaded = true;
-                }
+        }
     }
 
     @Override
