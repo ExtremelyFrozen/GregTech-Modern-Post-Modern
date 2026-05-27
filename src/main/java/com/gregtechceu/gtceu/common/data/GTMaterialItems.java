@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.data;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialFlags;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.ArmorProperty;
@@ -70,11 +69,11 @@ public class GTMaterialItems {
     public static Table<TagPrefix, Material, ItemEntry<? extends Item>> MATERIAL_ITEMS;
 
     public final static Table<Material, GTToolType, ItemProviderEntry<Item, ? extends IGTTool>> TOOL_ITEMS = ArrayTable.create(
-            GTCEuAPI.materialManager.stream().filter(mat -> mat.hasProperty(PropertyKey.TOOL)).toList(),
+            GTRegistries.MATERIALS.stream().filter(mat -> mat.hasProperty(PropertyKey.TOOL)).toList(),
             GTToolType.getTypes().values().stream().toList());
 
     public static final Table<Material, ArmorItem.Type, ItemEntry<? extends ArmorItem>> ARMOR_ITEMS = ArrayTable.create(
-            GTCEuAPI.materialManager.stream().filter(mat -> mat.hasProperty(PropertyKey.ARMOR)).toList(),
+            GTRegistries.MATERIALS.stream().filter(mat -> mat.hasProperty(PropertyKey.ARMOR)).toList(),
             Arrays.asList(ArmorItem.Type.values()));
 
     // spotless:on
@@ -84,7 +83,7 @@ public class GTMaterialItems {
         REGISTRATE.creativeModeTab(MATERIAL_ITEM);
         for (TagPrefix tagPrefix : GTRegistries.TAG_PREFIXES) {
             if (tagPrefix.doGenerateItem()) {
-                for (Material material : GTCEuAPI.materialManager) {
+                for (Material material : GTRegistries.MATERIALS) {
                     GTRegistrate registrate = GTRegistrate.createIgnoringListenerErrors(material.getModid());
                     if (tagPrefix.doGenerateItem(material)) {
                         generateMaterialItem(tagPrefix, material, registrate);
@@ -114,7 +113,7 @@ public class GTMaterialItems {
     public static void generateTools() {
         REGISTRATE.creativeModeTab(TOOL);
         for (GTToolType toolType : GTToolType.getTypes().values()) {
-            for (Material material : GTCEuAPI.materialManager) {
+            for (Material material : GTRegistries.MATERIALS) {
                 GTRegistrate registrate = GTRegistrate.createIgnoringListenerErrors(material.getModid());
                 if (material.hasProperty(PropertyKey.TOOL)) {
                     var property = material.getProperty(PropertyKey.TOOL);
@@ -219,7 +218,7 @@ public class GTMaterialItems {
         for (ArmorItem.Type type : ArmorItem.Type.values()) {
             if (type.getSlot().getType() != EquipmentSlot.Type.HUMANOID_ARMOR) continue;
 
-            for (Material material : GTCEuAPI.materialManager) {
+            for (Material material : GTRegistries.MATERIALS) {
                 GTRegistrate registrate = GTRegistrate.createIgnoringListenerErrors(material.getModid());
                 if (material.hasProperty(PropertyKey.ARMOR)) {
                     generateArmor(material, type, registrate);

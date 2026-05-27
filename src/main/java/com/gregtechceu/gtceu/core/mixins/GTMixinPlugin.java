@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.core.mixins;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.LoadingModList;
+import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -23,10 +24,11 @@ public class GTMixinPlugin implements IMixinConfigPlugin {
         return null;
     }
 
-    private static final String MIXIN_PACKAGE = "com.gregtechceu.gtpm.core.mixins.";
+    private static final String MIXIN_PACKAGE = "com.gregtechceu.gtceu.core.mixins.";
     private static final Map<String, String> MOD_COMPAT_MIXINS = new HashMap<>();
 
-    private static final String DEV_PACKAGE = MIXIN_PACKAGE + "dev.";
+    private static final String DEV_PACKAGE = "dev.";
+    private static final String DATAGEN_PACKAGE = "datagen.";
 
     static {
         addModCompatMixin("emi");
@@ -40,8 +42,20 @@ public class GTMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (!mixinClassName.startsWith(MIXIN_PACKAGE)) {
+            return true;
+        }
+        mixinClassName = mixinClassName.substring(MIXIN_PACKAGE.length());
+
         if (mixinClassName.startsWith(DEV_PACKAGE)) {
-            return !FMLLoader.isProduction();
+            if (FMLLoader.isProduction()) {
+                return false;
+            }
+            mixinClassName = mixinClassName.substring(DEV_PACKAGE.length());
+            if (mixinClassName.startsWith(DATAGEN_PACKAGE)) {
+                return DatagenModLoader.isRunningDataGen();
+            }
+            return true;
         }
         for (var compatMod : MOD_COMPAT_MIXINS.entrySet()) {
             if (mixinClassName.startsWith(compatMod.getValue())) {
@@ -66,7 +80,7 @@ public class GTMixinPlugin implements IMixinConfigPlugin {
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {}
 
     private static void addModCompatMixin(String modId) {
-        MOD_COMPAT_MIXINS.put(modId, MIXIN_PACKAGE + modId);
+        MOD_COMPAT_MIXINS.put(modId, modId + ".");
     }
 
     private static boolean isModLoaded(String modId) {
