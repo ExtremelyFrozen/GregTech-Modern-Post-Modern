@@ -1,8 +1,11 @@
 package com.gregtechceu.gtceu.common.item.behavior;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
+import com.gregtechceu.gtceu.data.pattern.event.StructurePatternsReloadedEvent;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -12,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.common.NeoForge;
 
 public class TerminalBehavior implements IInteractionItem {
 
@@ -24,7 +28,18 @@ public class TerminalBehavior implements IInteractionItem {
                     MetaMachine.getMachine(level, blockPos) instanceof MultiblockControllerMachine controller) {
                 if (!controller.isFormed()) {
                     if (!level.isClientSide) {
-                        controller.getPattern().autoBuild(context.getPlayer(), controller.getMultiblockState());
+                        BlockPattern pattern = controller.getPattern();
+                        if (pattern == null) {
+                            NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.definition(
+                                    controller.getDefinition().getId()));
+                            pattern = controller.getPattern();
+                        }
+                        if (pattern == null) {
+                            GTCEu.LOGGER.warn("Cannot auto-build {}, structure pattern is not initialized",
+                                    controller.getDefinition().getId());
+                            return InteractionResult.PASS;
+                        }
+                        pattern.autoBuild(context.getPlayer(), controller.getMultiblockState());
                     }
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }

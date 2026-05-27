@@ -274,6 +274,9 @@ public final class StructurePatternResolver {
             }
             for (int column = 0; column < rowText.length(); column++) {
                 char symbol = rowText.charAt(column);
+                if (symbol == ' ') {
+                    continue;
+                }
                 TraceabilityPredicate predicate = predicateRows[row][column];
                 if (predicate == null) {
                     throw new IllegalStateException("Baseline multiblock pattern for " + id +
