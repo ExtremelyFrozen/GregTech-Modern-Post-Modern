@@ -21,7 +21,7 @@ public class CoverBehaviorTransformer implements ValueTransformer<CoverBehavior>
     public Tag serializeNBT(@Nullable CoverBehavior value,
                             CoverBehaviorTransformer.TransformerContext<CoverBehavior> context) {
         if (value != null) {
-            return serialize(value, context.isClientSync(), context.lookup());
+            return serialize(value, context.isClientSync(), context.isClientFullSyncUpdate(), context.lookup());
         }
         return new CompoundTag();
     }
@@ -38,12 +38,12 @@ public class CoverBehaviorTransformer implements ValueTransformer<CoverBehavior>
         return null;
     }
 
-    private CompoundTag serialize(CoverBehavior cover, boolean isSync, HolderLookup.Provider lookup) {
+    private CompoundTag serialize(CoverBehavior cover, boolean isSync, boolean fullSync, HolderLookup.Provider lookup) {
         var compound = new CompoundTag();
 
         compound.putInt("side", cover.attachedSide.ordinal());
         compound.putString("coverType", cover.coverDefinition.getId().toString());
-        CompoundTag serializedCover = cover.getSyncDataHolder().serializeNBT(lookup, isSync);
+        CompoundTag serializedCover = cover.getSyncDataHolder().serializeNBT(lookup, isSync, fullSync);
         compound.put("data", serializedCover);
 
         return compound;
@@ -65,7 +65,7 @@ public class CoverBehaviorTransformer implements ValueTransformer<CoverBehavior>
             return null;
         }
         ResourceLocation coverType = ResourceLocation.tryParse(tag.getString("coverType"));
-        if (cover == null || cover.coverDefinition.getId() != coverType) {
+        if (cover == null || !cover.coverDefinition.getId().equals(coverType)) {
             var coverReg = GTRegistries.COVERS.get(coverType);
             if (coverReg == null) {
                 GTCEu.LOGGER.error("Error during NBT load: unknown cover type {} ({})", coverType,
