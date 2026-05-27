@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
+import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformers;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -27,15 +28,19 @@ public class FieldSyncHandler {
             return nullCompound;
         }
 
-        try {
-            if (field.transformer != null) {
-                return ((ValueTransformer<Object>) field.transformer).serializeNBT(currentValue,
-                        new ValueTransformer.TransformerContext<>(holder, field.type, currentValue, field.fieldName,
-                                writeClientFields, fullSync, registries));
-            } else {
+        if (field.transformer == null) {
+            field.setTransformer(ValueTransformers.get(field.type.getRawType()));
+            if (field.transformer == null) {
                 GTCEu.LOGGER.error("Sync: Failed to serialize field {} in class {}: Missing value transformer for {}",
                         field.fieldName, holder.getClass().getName(), field.type);
+                return new CompoundTag();
             }
+        }
+
+        try {
+            return ((ValueTransformer<Object>) field.transformer).serializeNBT(currentValue,
+                    new ValueTransformer.TransformerContext<>(holder, field.type, currentValue, field.fieldName,
+                            writeClientFields, fullSync, registries));
 
         } catch (Exception e) {
             GTCEu.LOGGER.error("Sync: Failed to serialize field {}", field.fieldName, e);
@@ -56,9 +61,12 @@ public class FieldSyncHandler {
         }
 
         if (field.transformer == null) {
-            GTCEu.LOGGER.error("Sync: Failed to deserialize field {} in class {}: Missing value transformer for {}",
-                    field.fieldName, holder.getClass().getName(), field.type);
-            return;
+            field.setTransformer(ValueTransformers.get(field.type.getRawType()));
+            if (field.transformer == null) {
+                GTCEu.LOGGER.error("Sync: Failed to deserialize field {} in class {}: Missing value transformer for {}",
+                        field.fieldName, holder.getClass().getName(), field.type);
+                return;
+            }
         }
 
         try {
