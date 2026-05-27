@@ -17,8 +17,6 @@ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +45,8 @@ public class HullMachine extends TieredPartMachine implements IMonitorComponent 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (GTCEu.Mods.isAE2Loaded() && gridNodeHost instanceof GridNodeHostTrait connectedBlockEntity &&
-                getLevel() instanceof ServerLevel level) {
-            level.getServer().tell(new TickTask(0, connectedBlockEntity::init));
+        if (GTCEu.Mods.isAE2Loaded() && gridNodeHost instanceof GridNodeHostTrait connectedBlockEntity) {
+            scheduleForNextServerTick(connectedBlockEntity::init);
         }
     }
 

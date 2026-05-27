@@ -33,8 +33,6 @@ import com.lowdragmc.lowdraglib.jei.IngredientIO;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -115,9 +113,7 @@ public class ItemBusPartMachine extends TieredIOPartMachine
     @Override
     public void onLoad() {
         super.onLoad();
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateInventorySubscription));
-        }
+        scheduleForNextServerTick(this::updateInventorySubscription);
         getHandlerList().setDistinct(isDistinct);
         getHandlerList().setColor(getPaintingColor());
         inventorySubs = getInventory().addChangedListener(this::updateInventorySubscription);

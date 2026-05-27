@@ -19,8 +19,6 @@ import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
@@ -78,10 +76,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
             onStructureInvalid();
             return;
         }
-
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateTickSubscription));
-        }
+        updateTickSubscription();
     }
 
     protected int calculateEnergyUsage() {
@@ -116,9 +111,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     @Override
     public void onLoad() {
         super.onLoad();
-        if (this.isFormed() && getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateTickSubscription));
-        }
+        scheduleForNextServerTick(this::updateTickSubscription);
     }
 
     @Override

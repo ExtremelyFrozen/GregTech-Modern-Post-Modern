@@ -59,6 +59,8 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.TickTask;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -145,6 +147,12 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
         super.loadAdditional(tag, registries);
     }
 
+    /**
+     * Called when this machine is loaded.<br>
+     * On the server side, the entire world may not be loaded when this method is called.<br>
+     * On the client side, this method is called before this machine's data has been received.<br>
+     * To schedule code to run on the first full world tick, see {@link #scheduleForNextServerTick(Runnable)}
+     */
     @MustBeInvokedByOverriders
     public void onLoad() {
         getAllTraits().forEach(MachineTrait::onMachineLoad);
@@ -160,6 +168,18 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
         // in case the chunk was rendered before this BlockEntity was available
         if (isRemote()) {
             scheduleRenderUpdate();
+        }
+    }
+
+    /**
+     * Schedules a callback to be executed on the next server tick. Only works on the server-side. <br>
+     * Should be called from methods such as {@link #onLoad()}, when the world may not be fully loaded.
+     *
+     * @param runnable The callback to execute
+     */
+    public final void scheduleForNextServerTick(Runnable runnable) {
+        if (getLevel() instanceof ServerLevel serverLevel) {
+            serverLevel.getServer().tell(new TickTask(0, runnable));
         }
     }
 
@@ -234,6 +254,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     }
 
     public final void serverTick() {
+        super.serverTick();
         executeTick();
     }
 
