@@ -339,8 +339,8 @@ public class MultiblockControllerMachine extends MetaMachine {
      * Get structure pattern.
      * You can override it to create dynamic patterns.
      */
-    public BlockPattern getPattern() {
-        return getDefinition().getPatternFactory().get();
+    public @Nullable BlockPattern getPattern() {
+        return getDefinition().getPattern();
     }
 
     /**

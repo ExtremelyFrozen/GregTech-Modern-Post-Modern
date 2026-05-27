@@ -169,14 +169,16 @@ public class PatternPreviewWidget extends WidgetGroup {
                         .setWidth(170)
                         .setDropShadow(true)));
 
-        this.patterns = CACHE.computeIfAbsent(controllerDefinition, definition -> {
-            HashSet<ItemStackKey> drops = new HashSet<>();
-            drops.add(new ItemStackKey(this.controllerDefinition.asStack()));
-            return controllerDefinition.getMatchingShapes().stream()
-                    .map(it -> initializePattern(it, drops))
-                    .filter(Objects::nonNull)
-                    .toArray(MBPattern[]::new);
-        });
+        synchronized (CACHE) {
+            this.patterns = CACHE.computeIfAbsent(controllerDefinition, definition -> {
+                HashSet<ItemStackKey> drops = new HashSet<>();
+                drops.add(new ItemStackKey(this.controllerDefinition.asStack()));
+                return controllerDefinition.getMatchingShapes().stream()
+                        .map(it -> initializePattern(it, drops))
+                        .filter(Objects::nonNull)
+                        .toArray(MBPattern[]::new);
+            });
+        }
 
         addWidget(new ButtonWidget(138, 30, 18, 18, new GuiTextureGroup(
                 ColorPattern.T_GRAY.rectTexture(),
@@ -232,6 +234,12 @@ public class PatternPreviewWidget extends WidgetGroup {
             LEVEL = new TrackedDummyWorld();
         }
         return new PatternPreviewWidget(controllerDefinition);
+    }
+
+    public static void clearCache() {
+        synchronized (CACHE) {
+            CACHE.clear();
+        }
     }
 
     public void setPage(int index) {

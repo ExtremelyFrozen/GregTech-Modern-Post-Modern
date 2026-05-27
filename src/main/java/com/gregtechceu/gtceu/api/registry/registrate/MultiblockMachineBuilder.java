@@ -130,8 +130,8 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
                     "missing pattern while creating multiblock {}, something's likely gone very wrong! Check the full log.",
                     name);
         }
-        Supplier<BlockPattern> baselinePattern = GTMemoizer.memoize(() -> pattern.apply(definition));
-        definition.setPatternFactory(() -> StructurePatternResolver.resolveCachedPattern(definition, baselinePattern));
+        definition.setPatternFactory(multiblockDefinition -> StructurePatternResolver.resolveCachedPattern(
+                multiblockDefinition, () -> pattern.apply(multiblockDefinition)));
         definition.setShapes(() -> shapeInfos.stream().map(factory -> factory.apply(definition))
                 .flatMap(Collection::stream).toList());
         definition.setAllowFlip(allowFlip);

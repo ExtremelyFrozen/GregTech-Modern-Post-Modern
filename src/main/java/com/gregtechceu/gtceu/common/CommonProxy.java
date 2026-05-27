@@ -67,6 +67,8 @@ import com.gregtechceu.gtceu.data.loot.ChestGenHooks;
 import com.gregtechceu.gtceu.data.pack.GTDynamicDataPack;
 import com.gregtechceu.gtceu.data.pack.GTDynamicResourcePack;
 import com.gregtechceu.gtceu.data.pack.GTPackSource;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
+import com.gregtechceu.gtceu.data.pattern.event.StructurePatternsReloadedEvent;
 import com.gregtechceu.gtceu.data.placeholder.GTPlaceholders;
 import com.gregtechceu.gtceu.data.recipe.*;
 import com.gregtechceu.gtceu.integration.cctweaked.CCTweakedPlugin;
@@ -98,12 +100,14 @@ import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.IntersectionIngredient;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.BlockEntityTypeAddBlocksEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper;
 import net.neoforged.neoforge.fluids.crafting.*;
@@ -135,6 +139,8 @@ public class CommonProxy {
     public static void init(final IEventBus modBus) {
         CommonProxy.modBus = modBus;
         modBus.register(CommonProxy.class);
+        NeoForge.EVENT_BUS.addListener(StructurePatternRegistry::onStructurePatternsReloaded);
+        NeoForge.EVENT_BUS.addListener(CommonProxy::onServerStarted);
 
         UIFactory.register(MachineUIFactory.INSTANCE);
         UIFactory.register(CoverUIFactory.INSTANCE);
@@ -375,7 +381,13 @@ public class CommonProxy {
     }
 
     @SubscribeEvent
-    public static void loadComplete(FMLLoadCompleteEvent event) {}
+    public static void loadComplete(FMLLoadCompleteEvent event) {
+        event.enqueueWork(() -> NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.all()));
+    }
+
+    private static void onServerStarted(ServerStartedEvent event) {
+        NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.all());
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {

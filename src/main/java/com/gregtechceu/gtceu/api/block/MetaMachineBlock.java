@@ -191,7 +191,7 @@ public class MetaMachineBlock extends Block implements EntityBlock {
                 definition.getId().getPath());
         if (GTUtil.isShiftDown()) {
             if (definition instanceof MultiblockMachineDefinition multiblockDefinition) {
-                var pattern = multiblockDefinition.getPatternFactory().get();
+                var pattern = multiblockDefinition.getPattern();
                 if (pattern != null) {
                     var aisleDims = pattern.getDimensions();
                     assert aisleDims.length == 3;

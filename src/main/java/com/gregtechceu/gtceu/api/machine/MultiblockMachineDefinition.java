@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -28,10 +29,11 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     @Getter
     @Setter
     private boolean generator;
-    @Setter
-    @Getter
     @NotNull
-    private Supplier<BlockPattern> patternFactory;
+    private Function<MultiblockMachineDefinition, BlockPattern> patternFactory;
+    @Getter
+    @Nullable
+    private volatile BlockPattern pattern;
     @Setter
     @Getter
     private Supplier<List<MultiblockShapeInfo>> shapes;
@@ -63,9 +65,22 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     public List<MultiblockShapeInfo> getMatchingShapes() {
         var designs = shapes.get();
         if (!designs.isEmpty()) return designs;
-        var structurePattern = patternFactory.get();
+        var structurePattern = getPattern();
         int[][] aisleRepetitions = structurePattern.aisleRepetitions;
         return repetitionDFS(structurePattern, new ArrayList<>(), aisleRepetitions, new IntArrayList());
+    }
+
+    public void setPatternFactory(@NotNull Function<MultiblockMachineDefinition, BlockPattern> patternFactory) {
+        this.patternFactory = Objects.requireNonNull(patternFactory);
+        StructurePatternRegistry.register(this);
+    }
+
+    public void reloadPattern() {
+        if (patternFactory != null) {
+            synchronized (this) {
+                pattern = patternFactory.apply(this);
+            }
+        }
     }
 
     private List<MultiblockShapeInfo> repetitionDFS(BlockPattern pattern, List<MultiblockShapeInfo> pages,

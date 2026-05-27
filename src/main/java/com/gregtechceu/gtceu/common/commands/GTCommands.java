@@ -13,6 +13,7 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.core.mixins.ResourceKeyArgumentAccessor;
 import com.gregtechceu.gtceu.data.pattern.StructureCache;
 import com.gregtechceu.gtceu.data.pattern.StructureDefinitionType;
+import com.gregtechceu.gtceu.data.pattern.event.StructurePatternsReloadedEvent;
 
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -31,6 +32,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.BulkSectionAccess;
 import net.minecraft.world.level.levelgen.structure.templatesystem.AlwaysTrueTest;
+import net.neoforged.neoforge.common.NeoForge;
 
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
@@ -335,10 +337,11 @@ public class GTCommands {
     private static int reloadStructureCache(CommandSourceStack source) {
         try {
             int total = StructureCache.reloadAll();
+            StructurePatternsReloadedEvent event = NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.all());
             source.sendSuccess(() -> Component.literal("Reloaded structure cache: " +
                     StructureCache.getBinaryCacheSize() + " binary, " +
                     StructureCache.getJsonCacheSize() + " json, " +
-                    total + " total"), true);
+                    total + " total, refreshed " + event.getRefreshedPatterns() + " patterns"), true);
             return total;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to reload structure cache: " + e.getMessage()));
@@ -349,8 +352,10 @@ public class GTCommands {
     private static int reloadStructureCacheType(CommandSourceStack source, StructureDefinitionType type) {
         try {
             int count = StructureCache.reloadType(type);
+            StructurePatternsReloadedEvent event = NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.type(type));
             source.sendSuccess(() -> Component.literal("Reloaded " + type.getDirectoryName() +
-                    " structure cache: " + count + " entries"), true);
+                    " structure cache: " + count + " entries, refreshed " + event.getRefreshedPatterns() +
+                    " patterns"), true);
             return count;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to reload " + type.getDirectoryName() +
@@ -363,8 +368,11 @@ public class GTCommands {
                                                  ResourceLocation id) {
         try {
             StructureCache.reload(type, id);
+            StructurePatternsReloadedEvent event = NeoForge.EVENT_BUS
+                    .post(StructurePatternsReloadedEvent.entry(type, id));
             source.sendSuccess(() -> Component.literal("Reloaded " + type.getDirectoryName() +
-                    " structure cache entry " + id), true);
+                    " structure cache entry " + id +
+                    (event.getRefreshedPatterns() > 0 ? ", refreshed pattern" : "")), true);
             return 1;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to reload " + type.getDirectoryName() +
