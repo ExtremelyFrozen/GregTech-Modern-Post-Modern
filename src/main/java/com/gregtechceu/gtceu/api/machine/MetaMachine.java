@@ -45,7 +45,6 @@ import com.gregtechceu.gtceu.common.machine.owner.MachineOwner;
 import com.gregtechceu.gtceu.common.machine.owner.PlayerOwner;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
-import com.gregtechceu.gtceu.utils.GTUtil;
 import com.gregtechceu.gtceu.utils.data.TagCompatibilityFixer;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
@@ -130,8 +129,8 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     public MetaMachine(BlockEntityCreationInfo info) {
         super(info);
         this.renderState = getDefinition().defaultRenderState();
-        this.coverContainer = new MachineCoverContainer(this);
         this.traitHolder = new MachineTraitHolder(this);
+        this.coverContainer = attachTrait(new MachineCoverContainer(this));
         this.serverTicks = new ArrayList<>();
         this.waitingToAdd = new ArrayList<>();
     }
@@ -149,7 +148,6 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     @MustBeInvokedByOverriders
     public void onLoad() {
         getAllTraits().forEach(MachineTrait::onMachineLoad);
-        coverContainer.onLoad();
 
         // update the painted model property if the machine is painted
         MachineRenderState renderState = getRenderState();
@@ -174,7 +172,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     @MustBeInvokedByOverriders
     public void onUnload() {
         getAllTraits().forEach(MachineTrait::onMachineUnload);
-        coverContainer.onUnload();
+
         for (TickableSubscription serverTick : serverTicks) {
             serverTick.unsubscribe();
         }
@@ -189,9 +187,6 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     public void onMachineDestroyed() {
         getAllTraits().forEach(MachineTrait::onMachineDestroyed);
-        for (Direction direction : GTUtil.DIRECTIONS) {
-            getCoverContainer().removeCover(direction, null);
-        }
     }
 
     public void modifyDrops(List<ItemStack> drops) {}
@@ -585,10 +580,6 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
             return true;
         }
 
-        for (CoverBehavior cover : coverContainer.getCovers()) {
-            if (cover.shouldRenderGrid(player, pos, state, held, toolTypes)) return true;
-        }
-
         for (var trait : getAllTraits()) {
             if (trait instanceof IRenderingTrait renderingTrait) {
                 var result = renderingTrait.shouldRenderGridOverlay(player, pos, state, held, toolTypes);
@@ -602,12 +593,6 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     @Override
     public @Nullable ResourceTexture sideTips(Player player, BlockPos pos, BlockState state,
                                               Set<GTToolType> toolTypes, ItemStack held, Direction side) {
-        var cover = coverContainer.getCoverAtSide(side);
-        if (cover != null) {
-            var tips = cover.sideTips(player, pos, state, toolTypes, held, side);
-            if (tips != null) return tips;
-        }
-
         if (toolTypes.contains(GTToolType.WRENCH) || held.canPerformAction(GTItemAbilities.WRENCH_ROTATE)) {
             if (!player.isShiftKeyDown()) {
                 if (isFacingValid(side) || (allowExtendedFacing() && hasFrontFacing() && side == getFrontFacing())) {
@@ -626,7 +611,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
         for (var trait : getAllTraits()) {
             if (trait instanceof IRenderingTrait renderingTrait) {
-                var result = renderingTrait.getGridOverlayIcon(player, pos, state, toolTypes, side);
+                var result = renderingTrait.getGridOverlayIcon(player, pos, state, toolTypes, held, side);
                 if (result != null) return result;
             }
         }
@@ -681,15 +666,6 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
 
     public boolean isFacingValid(Direction facing) {
         if (hasFrontFacing() && facing == getFrontFacing()) return false;
-        var coverContainer = getCoverContainer();
-        if (coverContainer.hasCover(facing)) {
-            // noinspection DataFlowIssue
-            var coverDefinition = coverContainer.getCoverAtSide(facing).coverDefinition;
-            var behaviour = coverDefinition.createCoverBehavior(coverContainer, getFrontFacing());
-            if (!behaviour.canAttach()) {
-                return false;
-            }
-        }
 
         for (var trait : getAllTraits()) {
             if (trait instanceof IFrontFacingTrait modifyFacingTrait) {
@@ -771,7 +747,6 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     }
 
     public void onNeighborChanged(Block block, BlockPos fromPos, boolean isMoving) {
-        coverContainer.onNeighborChanged(block, fromPos, isMoving);
         getAllTraits().forEach(t -> t.onMachineNeighborChanged(block, fromPos, isMoving));
     }
 
