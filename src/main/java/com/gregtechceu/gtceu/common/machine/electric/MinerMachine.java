@@ -91,8 +91,6 @@ public class MinerMachine extends WorkableTieredMachine
     public void onMachineDestroyed() {
         super.onMachineDestroyed();
         // Remove the miner pipes below this miner
-        getRecipeLogic().onRemove();
-        exportItems.dropInventoryInWorld();
         chargerInventory.dropInventoryInWorld(getLevel(), getBlockPos());
     }
 

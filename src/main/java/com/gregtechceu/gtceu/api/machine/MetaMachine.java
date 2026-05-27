@@ -188,6 +188,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     }
 
     public void onMachineDestroyed() {
+        getAllTraits().forEach(MachineTrait::onMachineDestroyed);
         for (Direction direction : GTUtil.DIRECTIONS) {
             getCoverContainer().removeCover(direction, null);
         }
@@ -717,6 +718,13 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
         }
     }
 
+    @MustBeInvokedByOverriders
+    public void updateModelData(ModelData.Builder builder) {
+        for (MachineTrait trait : getAllTraits()) {
+            if (trait instanceof IRenderingTrait renderingTrait) renderingTrait.updateModelData(builder);
+        }
+    }
+
     @Override
     public ModelData getModelData() {
         ModelData.Builder data = super.getModelData().derive();
@@ -778,13 +786,6 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
             if (appearance != null) return appearance;
         }
         return getDefinition().getAppearance().get();
-    }
-
-    @MustBeInvokedByOverriders
-    public void updateModelData(ModelData.Builder builder) {
-        for (MachineTrait trait : getAllTraits()) {
-            if (trait instanceof IRenderingTrait renderingTrait) renderingTrait.updateModelData(builder);
-        }
     }
 
     public final long getOffsetTimer() {

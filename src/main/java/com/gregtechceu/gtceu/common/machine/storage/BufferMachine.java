@@ -85,14 +85,4 @@ public class BufferMachine extends TieredMachine implements IFancyUIMachine {
         group.addWidget(container);
         return group;
     }
-
-    ////////////////////////////////
-    // ********** Misc ***********//
-    ////////////////////////////////
-
-    @Override
-    public void onMachineDestroyed() {
-        super.onMachineDestroyed();
-        inventory.dropInventoryInWorld();
-    }
 }

@@ -419,8 +419,8 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
 
     @Override
     public void onMachineDestroyed() {
+        super.onMachineDestroyed();
         patternInventory.dropInventoryInWorld(getLevel(), getBlockPos());
-        shareInventory.dropInventoryInWorld();
     }
 
     @Override

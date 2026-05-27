@@ -47,6 +47,7 @@ public class MEInputBusPartMachine extends MEBusPartMachine
 
     @Override
     public void onMachineDestroyed() {
+        super.onMachineDestroyed();
         flushInventory();
     }
 

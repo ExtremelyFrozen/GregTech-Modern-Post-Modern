@@ -46,6 +46,7 @@ public class MEOutputBusPartMachine extends MEBusPartMachine {
 
     @Override
     public void onMachineDestroyed() {
+        super.onMachineDestroyed();
         var grid = getMainNode().getGrid();
         if (grid != null && !internalBuffer.isEmpty()) {
             for (var entry : internalBuffer) {
