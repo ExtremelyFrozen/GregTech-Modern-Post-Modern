@@ -68,7 +68,6 @@ import com.gregtechceu.gtceu.data.pack.GTDynamicDataPack;
 import com.gregtechceu.gtceu.data.pack.GTDynamicResourcePack;
 import com.gregtechceu.gtceu.data.pack.GTPackSource;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
-import com.gregtechceu.gtceu.data.pattern.event.StructurePatternsReloadedEvent;
 import com.gregtechceu.gtceu.data.placeholder.GTPlaceholders;
 import com.gregtechceu.gtceu.data.recipe.*;
 import com.gregtechceu.gtceu.integration.cctweaked.CCTweakedPlugin;
@@ -139,7 +138,7 @@ public class CommonProxy {
     public static void init(final IEventBus modBus) {
         CommonProxy.modBus = modBus;
         modBus.register(CommonProxy.class);
-        NeoForge.EVENT_BUS.addListener(StructurePatternRegistry::onStructurePatternsReloaded);
+        StructurePatternRegistry.init();
         NeoForge.EVENT_BUS.addListener(CommonProxy::onServerStarted);
 
         UIFactory.register(MachineUIFactory.INSTANCE);
@@ -382,11 +381,11 @@ public class CommonProxy {
 
     @SubscribeEvent
     public static void loadComplete(FMLLoadCompleteEvent event) {
-        event.enqueueWork(() -> NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.all()));
+        event.enqueueWork(StructurePatternRegistry::reloadAllPatterns);
     }
 
     private static void onServerStarted(ServerStartedEvent event) {
-        NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.all());
+        StructurePatternRegistry.reloadAllPatterns();
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

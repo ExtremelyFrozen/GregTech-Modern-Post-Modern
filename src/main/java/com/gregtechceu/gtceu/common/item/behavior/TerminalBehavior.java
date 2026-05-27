@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
-import com.gregtechceu.gtceu.data.pattern.event.StructurePatternsReloadedEvent;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -15,7 +15,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.NeoForge;
 
 public class TerminalBehavior implements IInteractionItem {
 
@@ -30,8 +29,7 @@ public class TerminalBehavior implements IInteractionItem {
                     if (!level.isClientSide) {
                         BlockPattern pattern = controller.getPattern();
                         if (pattern == null) {
-                            NeoForge.EVENT_BUS.post(StructurePatternsReloadedEvent.definition(
-                                    controller.getDefinition().getId()));
+                            StructurePatternRegistry.reloadPattern(controller.getDefinition().getId());
                             pattern = controller.getPattern();
                         }
                         if (pattern == null) {
