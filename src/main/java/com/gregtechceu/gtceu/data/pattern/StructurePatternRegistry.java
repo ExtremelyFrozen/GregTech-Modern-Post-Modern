@@ -4,29 +4,27 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.NeoForge;
 
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class StructurePatternRegistry {
 
-    private static final Map<ResourceLocation, MultiblockMachineDefinition> DEFINITIONS = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, ReloadTask> RELOAD_TASKS = new ConcurrentHashMap<>();
     private static final Set<Runnable> RELOAD_LISTENERS = ConcurrentHashMap.newKeySet();
+    private static final ExecutorService RELOAD_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     private StructurePatternRegistry() {}
 
-    @ApiStatus.Internal
-    public static void init() {
-        NeoForge.EVENT_BUS.addListener(StructurePatternRegistry::onStructurePatternsReloaded);
-    }
-
     public static void register(MultiblockMachineDefinition definition) {
-        DEFINITIONS.put(definition.getId(), definition);
+        RELOAD_TASKS.put(definition.getId(), new ReloadTask(definition.getId(), definition::reloadPattern));
     }
 
     @ApiStatus.Internal
@@ -35,59 +33,67 @@ public final class StructurePatternRegistry {
     }
 
     @ApiStatus.Internal
-    public static int reloadAllPatterns() {
-        return postReloadEvent(null);
+    public static CompletableFuture<Integer> reloadAllPatternsAsync() {
+        return runReloadTasksAsync(null);
     }
 
     @ApiStatus.Internal
-    public static int reloadTypePatterns(StructureDefinitionType type) {
+    public static CompletableFuture<Integer> reloadTypePatternsAsync(StructureDefinitionType type) {
         Objects.requireNonNull(type);
-        return postReloadEvent(null);
+        return runReloadTasksAsync(null);
     }
 
     @ApiStatus.Internal
-    public static int reloadPattern(ResourceLocation id) {
-        return postReloadEvent(id);
+    public static CompletableFuture<Integer> reloadPatternAsync(ResourceLocation id) {
+        return runReloadTasksAsync(id);
     }
 
     @ApiStatus.Internal
-    public static int reloadPattern(StructureDefinitionType type, ResourceLocation id) {
+    public static CompletableFuture<Integer> reloadPatternAsync(StructureDefinitionType type, ResourceLocation id) {
         Objects.requireNonNull(type);
-        return postReloadEvent(id);
+        return runReloadTasksAsync(id);
     }
 
-    private static int postReloadEvent(ResourceLocation id) {
-        StructurePatternsReloadedEvent event = NeoForge.EVENT_BUS.post(new StructurePatternsReloadedEvent(id));
-        return event.getRefreshedPatterns();
-    }
-
-    private static void onStructurePatternsReloaded(StructurePatternsReloadedEvent event) {
-        int refreshed = 0;
-        if (event.getId() != null) {
-            MultiblockMachineDefinition definition = DEFINITIONS.get(event.getId());
-            if (definition != null && reloadPattern(definition)) {
-                refreshed = 1;
+    private static CompletableFuture<Integer> runReloadTasksAsync(ResourceLocation id) {
+        if (id != null) {
+            ReloadTask task = RELOAD_TASKS.get(id);
+            if (task == null) {
+                return CompletableFuture.completedFuture(0);
             }
-        } else {
-            for (MultiblockMachineDefinition definition : DEFINITIONS.values()) {
-                if (reloadPattern(definition)) {
-                    refreshed++;
-                }
-            }
+            return CompletableFuture.supplyAsync(() -> runTask(task) ? 1 : 0, RELOAD_EXECUTOR)
+                    .thenApply(StructurePatternRegistry::notifyReloadListeners);
         }
-        event.addRefreshedPatterns(refreshed);
+
+        CompletableFuture<?>[] tasks = RELOAD_TASKS.values().stream()
+                .map(task -> CompletableFuture.supplyAsync(() -> runTask(task) ? 1 : 0, RELOAD_EXECUTOR))
+                .toArray(CompletableFuture[]::new);
+        return CompletableFuture.allOf(tasks)
+                .thenApply(unused -> {
+                    int refreshed = 0;
+                    for (CompletableFuture<?> task : tasks) {
+                        refreshed += (Integer) task.join();
+                    }
+                    return refreshed;
+                })
+                .thenApply(StructurePatternRegistry::notifyReloadListeners);
+    }
+
+    private static int notifyReloadListeners(int refreshed) {
         if (refreshed > 0) {
             RELOAD_LISTENERS.forEach(Runnable::run);
         }
+        return refreshed;
     }
 
-    private static boolean reloadPattern(MultiblockMachineDefinition definition) {
+    private static boolean runTask(ReloadTask task) {
         try {
-            definition.reloadPattern();
+            task.task().run();
             return true;
         } catch (Exception e) {
-            GTCEu.LOGGER.error("Failed to reload structure pattern for {}", definition.getId(), e);
+            GTCEu.LOGGER.error("Failed to reload structure pattern for {}", task.id(), e);
             return false;
         }
     }
+
+    private record ReloadTask(ResourceLocation id, Runnable task) {}
 }

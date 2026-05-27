@@ -138,7 +138,6 @@ public class CommonProxy {
     public static void init(final IEventBus modBus) {
         CommonProxy.modBus = modBus;
         modBus.register(CommonProxy.class);
-        StructurePatternRegistry.init();
         NeoForge.EVENT_BUS.addListener(CommonProxy::onServerStarted);
 
         UIFactory.register(MachineUIFactory.INSTANCE);
@@ -381,11 +380,11 @@ public class CommonProxy {
 
     @SubscribeEvent
     public static void loadComplete(FMLLoadCompleteEvent event) {
-        event.enqueueWork(StructurePatternRegistry::reloadAllPatterns);
+        event.enqueueWork(StructurePatternRegistry::reloadAllPatternsAsync);
     }
 
     private static void onServerStarted(ServerStartedEvent event) {
-        StructurePatternRegistry.reloadAllPatterns();
+        StructurePatternRegistry.reloadAllPatternsAsync();
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

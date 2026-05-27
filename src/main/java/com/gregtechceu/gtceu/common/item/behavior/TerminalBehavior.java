@@ -29,7 +29,7 @@ public class TerminalBehavior implements IInteractionItem {
                     if (!level.isClientSide) {
                         BlockPattern pattern = controller.getPattern();
                         if (pattern == null) {
-                            StructurePatternRegistry.reloadPattern(controller.getDefinition().getId());
+                            StructurePatternRegistry.reloadPatternAsync(controller.getDefinition().getId()).join();
                             pattern = controller.getPattern();
                         }
                         if (pattern == null) {

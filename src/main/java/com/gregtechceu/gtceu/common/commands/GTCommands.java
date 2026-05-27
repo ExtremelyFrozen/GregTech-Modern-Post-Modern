@@ -43,6 +43,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static net.minecraft.commands.Commands.*;
 
@@ -336,11 +337,11 @@ public class GTCommands {
     private static int reloadStructureCache(CommandSourceStack source) {
         try {
             int total = StructureCache.reloadAll();
-            int patterns = StructurePatternRegistry.reloadAllPatterns();
+            schedulePatternReload(source, StructurePatternRegistry.reloadAllPatternsAsync());
             source.sendSuccess(() -> Component.literal("Reloaded structure cache: " +
                     StructureCache.getBinaryCacheSize() + " binary, " +
                     StructureCache.getJsonCacheSize() + " json, " +
-                    total + " total, refreshed " + patterns + " patterns"), true);
+                    total + " total, refreshing patterns asynchronously"), true);
             return total;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to reload structure cache: " + e.getMessage()));
@@ -351,10 +352,9 @@ public class GTCommands {
     private static int reloadStructureCacheType(CommandSourceStack source, StructureDefinitionType type) {
         try {
             int count = StructureCache.reloadType(type);
-            int patterns = StructurePatternRegistry.reloadTypePatterns(type);
+            schedulePatternReload(source, StructurePatternRegistry.reloadTypePatternsAsync(type));
             source.sendSuccess(() -> Component.literal("Reloaded " + type.getDirectoryName() +
-                    " structure cache: " + count + " entries, refreshed " + patterns +
-                    " patterns"), true);
+                    " structure cache: " + count + " entries, refreshing patterns asynchronously"), true);
             return count;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to reload " + type.getDirectoryName() +
@@ -367,15 +367,24 @@ public class GTCommands {
                                                  ResourceLocation id) {
         try {
             StructureCache.reload(type, id);
-            int patterns = StructurePatternRegistry.reloadPattern(type, id);
+            schedulePatternReload(source, StructurePatternRegistry.reloadPatternAsync(type, id));
             source.sendSuccess(() -> Component.literal("Reloaded " + type.getDirectoryName() +
-                    " structure cache entry " + id +
-                    (patterns > 0 ? ", refreshed pattern" : "")), true);
+                    " structure cache entry " + id + ", refreshing pattern asynchronously"), true);
             return 1;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to reload " + type.getDirectoryName() +
                     " structure cache entry " + id + ": " + e.getMessage()));
             return 0;
         }
+    }
+
+    private static void schedulePatternReload(CommandSourceStack source, CompletableFuture<Integer> reloadFuture) {
+        reloadFuture.whenComplete((patterns, throwable) -> source.getServer().execute(() -> {
+            if (throwable != null) {
+                source.sendFailure(Component.literal("Failed to refresh structure patterns: " + throwable.getMessage()));
+            } else {
+                source.sendSuccess(() -> Component.literal("Refreshed " + patterns + " structure patterns"), true);
+            }
+        }));
     }
 }
