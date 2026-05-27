@@ -191,6 +191,12 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
         onUnload();
     }
 
+    @Override
+    public final void clearRemoved() {
+        super.clearRemoved();
+        onLoad();
+    }
+
     @MustBeInvokedByOverriders
     public void onUnload() {
         getAllTraits().forEach(MachineTrait::onMachineUnload);

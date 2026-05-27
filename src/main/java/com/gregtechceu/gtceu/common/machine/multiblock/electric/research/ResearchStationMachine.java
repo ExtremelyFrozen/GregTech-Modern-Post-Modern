@@ -22,7 +22,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;

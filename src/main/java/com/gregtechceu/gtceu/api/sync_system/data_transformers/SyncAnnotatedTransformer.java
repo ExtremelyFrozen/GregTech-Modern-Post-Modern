@@ -25,7 +25,8 @@ public class SyncAnnotatedTransformer implements ValueTransformer<ISyncAnnotated
 
         CompoundTag tag = new CompoundTag();
         for (var field : fieldsToSerialize) {
-            Tag nbtValue = FieldSyncHandler.serializeField(context.lookup(), value, field, context.isClientSync(), true);
+            Tag nbtValue = FieldSyncHandler.serializeField(context.lookup(), value, field, context.isClientSync(),
+                    true);
             tag.put(field.nbtSaveKey, nbtValue);
         }
 

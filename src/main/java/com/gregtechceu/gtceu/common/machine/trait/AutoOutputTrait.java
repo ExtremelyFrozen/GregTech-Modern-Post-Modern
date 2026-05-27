@@ -11,8 +11,6 @@ import com.gregtechceu.gtceu.api.machine.trait.feature.IRenderingTrait;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
-import com.gregtechceu.gtceu.common.item.tool.behavior.ToolModeSwitchBehavior;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ISubscription;
@@ -53,7 +51,7 @@ public class AutoOutputTrait extends MachineTrait implements IRenderingTrait, II
     @SaveField
     @SyncToClient
     @RerenderOnChanged
-    protected @Nullable Direction itemOutputDirection = Direction.UP, fluidOutputDirection = Direction.UP;
+    protected @Nullable Direction itemOutputDirection, fluidOutputDirection;
     @Getter
     @SaveField
     @SyncToClient
@@ -121,9 +119,14 @@ public class AutoOutputTrait extends MachineTrait implements IRenderingTrait, II
     public void onMachineLoad() {
         super.onMachineLoad();
 
-        this.itemOutputDirection = getMachine().hasFrontFacing() ? getMachine().getFrontFacing().getOpposite() :
+        Direction defaultOutputDirection = getMachine().hasFrontFacing() ? getMachine().getFrontFacing().getOpposite() :
                 Direction.UP;
-        this.fluidOutputDirection = itemOutputDirection;
+        if (itemOutputDirection == null) {
+            this.itemOutputDirection = defaultOutputDirection;
+        }
+        if (fluidOutputDirection == null) {
+            this.fluidOutputDirection = defaultOutputDirection;
+        }
 
         getMachine().scheduleForNextServerTick(this::updateFluidOutputSubscription);
         getMachine().scheduleForNextServerTick(this::updateItemOutputSubscription);

@@ -39,7 +39,6 @@ import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;

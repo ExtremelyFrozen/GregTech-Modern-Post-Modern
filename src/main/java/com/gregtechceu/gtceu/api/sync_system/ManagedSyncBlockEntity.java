@@ -53,7 +53,8 @@ public abstract class ManagedSyncBlockEntity extends BlockEntity implements ISyn
 
     /**
      * Loads BE data from world save.<br>
-     * Override this to add logic for modifying saved data before it is loaded (e.g. for cross-version compatibility).<br>
+     * Override this to add logic for modifying saved data before it is loaded (e.g. for cross-version
+     * compatibility).<br>
      * When overriding, {@code super.loadAdditional(tag, registries)} must be called <b>AFTER</b> any custom logic.
      */
     @Override
