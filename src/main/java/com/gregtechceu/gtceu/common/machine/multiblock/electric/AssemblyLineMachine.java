@@ -44,7 +44,7 @@ public class AssemblyLineMachine extends WorkableElectricMultiblockMachine {
     protected boolean allowCircuitSlots;
 
     public AssemblyLineMachine(BlockEntityCreationInfo info, boolean allowCircuitSlots) {
-        super(info, machine -> new AsslineRecipeLogic((AssemblyLineMachine) machine));
+        super(info, new AsslineRecipeLogic());
         this.allowCircuitSlots = allowCircuitSlots;
     }
 
@@ -261,43 +261,50 @@ public class AssemblyLineMachine extends WorkableElectricMultiblockMachine {
 
     private static class AsslineRecipeLogic extends RecipeLogic {
 
-        private final AssemblyLineMachine machine;
+        public AsslineRecipeLogic() {
+            super();
+        }
 
-        public AsslineRecipeLogic(AssemblyLineMachine machine) {
-            super(machine);
-            this.machine = machine;
+        @Override
+        public AssemblyLineMachine getMachine() {
+            return (AssemblyLineMachine) super.getMachine();
+        }
+
+        @Override
+        protected List<Class<?>> validMachineClasses() {
+            return List.of(AssemblyLineMachine.class);
         }
 
         @Override
         protected ActionResult handleRecipeIO(GTRecipe recipe, IO io) {
             if (io.equals(IO.IN)) {
-                return machine.consumeAll(recipe, false, this.getChanceCaches());
+                return getMachine().consumeAll(recipe, false, this.getChanceCaches());
             }
-            return RecipeHelper.handleRecipeIO(machine, recipe, io, this.chanceCaches);
+            return RecipeHelper.handleRecipeIO(getMachine(), recipe, io, this.chanceCaches);
         }
 
         @Override
         protected ActionResult handleTickRecipeIO(GTRecipe recipe, IO io) {
             if (io.equals(IO.IN)) {
-                return machine.consumeAll(recipe, true, this.getChanceCaches());
+                return getMachine().consumeAll(recipe, true, this.getChanceCaches());
             }
-            return RecipeHelper.handleTickRecipeIO(machine, recipe, io, this.chanceCaches);
+            return RecipeHelper.handleTickRecipeIO(getMachine(), recipe, io, this.chanceCaches);
         }
 
         @Override
         protected ActionResult matchRecipe(GTRecipe recipe) {
             // Match by normal inputs first
-            ActionResult normalMatch = RecipeHelper.matchContents(machine, recipe);
+            ActionResult normalMatch = RecipeHelper.matchContents(getMachine(), recipe);
             if (!normalMatch.isSuccess()) return normalMatch;
 
             var config = ConfigHolder.INSTANCE.machines;
             if (!config.orderedAssemblyLineItems && !config.orderedAssemblyLineFluids) return ActionResult.SUCCESS;
-            if (!machine.checkItemInputs(recipe, false)) return ActionResult.FAIL_NO_REASON;
-            if (!machine.checkItemInputs(recipe, true)) return ActionResult.FAIL_NO_REASON;
+            if (!getMachine().checkItemInputs(recipe, false)) return ActionResult.FAIL_NO_REASON;
+            if (!getMachine().checkItemInputs(recipe, true)) return ActionResult.FAIL_NO_REASON;
 
             if (!config.orderedAssemblyLineFluids) return ActionResult.SUCCESS;
-            if (!machine.checkFluidInputs(recipe, false)) return ActionResult.FAIL_NO_REASON;
-            if (!machine.checkFluidInputs(recipe, true)) return ActionResult.FAIL_NO_REASON;
+            if (!getMachine().checkFluidInputs(recipe, false)) return ActionResult.FAIL_NO_REASON;
+            if (!getMachine().checkFluidInputs(recipe, true)) return ActionResult.FAIL_NO_REASON;
             return ActionResult.SUCCESS;
         }
     }

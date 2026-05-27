@@ -36,7 +36,7 @@ public interface IRenderingTrait extends ITraitFeature {
      * segment on a specifc side.
      */
     default @Nullable ResourceTexture getGridOverlayIcon(Player player, BlockPos pos, BlockState state,
-                                                         Set<GTToolType> toolTypes,
+                                                         Set<GTToolType> toolTypes, ItemStack held,
                                                          Direction side) {
         return null;
     }

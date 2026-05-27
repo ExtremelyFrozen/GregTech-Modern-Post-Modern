@@ -63,6 +63,7 @@ public class WorldGeneratorUtils {
                     .filter(vein -> !(vein.value().veinGenerator() instanceof NoopVeinGenerator))
                     .filter(entry -> entry.value().dimensionFilter().stream()
                             .anyMatch(dim -> WorldGeneratorUtils.isSameDimension(dim, level.dimension())))
+                    .sorted(Comparator.comparing(vein -> vein.unwrapKey().orElseThrow().location()))
                     .collect(Collectors.toList());
         }
 

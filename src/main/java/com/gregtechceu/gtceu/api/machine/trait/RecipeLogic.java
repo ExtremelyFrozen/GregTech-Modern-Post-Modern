@@ -18,14 +18,13 @@ import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sound.AutoReleasedSound;
+import com.gregtechceu.gtceu.api.sync_system.ClassSyncData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ClientFieldChangeListener;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformers;
 import com.gregtechceu.gtceu.common.cover.MachineControllerCover;
-import com.gregtechceu.gtceu.core.MixinHelpers;
 import com.gregtechceu.gtceu.utils.GTMath;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
@@ -58,8 +57,6 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
         return TYPE;
     }
 
-    protected static class ChanceCacheMap extends IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> {}
-
     public enum Status implements StringRepresentable {
 
         IDLE("idle"),
@@ -77,7 +74,6 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
 
     public static final EnumProperty<RecipeLogic.Status> STATUS_PROPERTY = GTMachineModelProperties.RECIPE_LOGIC_STATUS;
 
-    public final IRecipeLogicMachine machine;
     public @Nullable List<GTRecipe> lastFailedMatches;
 
     @Getter
@@ -144,13 +140,21 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     protected boolean suspendAfterFinish = false;
     @Getter
     @SaveField(nbtKey = "chance_cache")
-    protected final ChanceCacheMap chanceCaches = makeChanceCaches();
+    protected final IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> chanceCaches = makeChanceCaches();
     protected @Nullable TickableSubscription subscription;
     protected @Nullable Object workingSound;
 
-    public RecipeLogic(IRecipeLogicMachine machine) {
-        super(machine.self());
-        this.machine = machine;
+    public RecipeLogic() {
+        super();
+    }
+
+    public IRecipeLogicMachine getRLMachine() {
+        return (IRecipeLogicMachine) getMachine();
+    }
+
+    @Override
+    protected List<Class<?>> validMachineClasses() {
+        return List.of(IRecipeLogicMachine.class);
     }
 
     @SuppressWarnings("unused")
@@ -188,7 +192,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     public void updateTickSubscription() {
-        if (isSuspend() || !machine.isRecipeLogicAvailable()) {
+        if (isSuspend() || !getRLMachine().isRecipeLogicAvailable()) {
             if (subscription != null) {
                 subscription.unsubscribe();
                 subscription = null;
@@ -229,7 +233,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
                 }
             } else if (lastRecipe != null) {
                 findAndHandleRecipe();
-            } else if (!machine.keepSubscribing() || getMachine().getOffsetTimer() % 5 == 0) {
+            } else if (!getRLMachine().keepSubscribing() || getMachine().getOffsetTimer() % 5 == 0) {
                 findAndHandleRecipe();
                 if (lastFailedMatches != null) {
                     for (GTRecipe match : lastFailedMatches) {
@@ -242,7 +246,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
         if (isSuspend()) {
             // Machine is paused and can unsubscribe
             unsubscribe = true;
-        } else if (lastRecipe == null && isIdle() && !machine.keepSubscribing() && !recipeDirty &&
+        } else if (lastRecipe == null && isIdle() && !getRLMachine().keepSubscribing() && !recipeDirty &&
                 lastFailedMatches == null) {
                     // No recipes available and the machine wants to unsubscribe until notified
                     unsubscribe = true;
@@ -258,7 +262,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     protected ActionResult matchRecipe(GTRecipe recipe) {
-        return RecipeHelper.matchContents(machine, recipe);
+        return RecipeHelper.matchContents(getRLMachine(), recipe);
     }
 
     protected ActionResult checkRecipe(GTRecipe recipe) {
@@ -269,7 +273,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     public boolean checkMatchedRecipeAvailable(GTRecipe match) {
-        var modified = machine.fullModifyRecipe(match);
+        var modified = getRLMachine().fullModifyRecipe(match);
         if (modified != null) {
             var recipeMatch = checkRecipe(modified);
             if (recipeMatch.isSuccess()) {
@@ -293,7 +297,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
             var handleTick = handleTickRecipe(lastRecipe);
             if (handleTick.isSuccess()) {
                 setStatus(Status.WORKING);
-                if (!machine.onWorking()) {
+                if (!getRLMachine().onWorking()) {
                     this.interruptRecipe();
                     return;
                 }
@@ -308,8 +312,8 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
                     runAttempt = (int) GTMath.clamp(runAttempt, 0, 5);
                     if (runAttempt == 5) {
                         boolean preventPowerFail = false;
-                        if (machine instanceof MultiblockControllerMachine) {
-                            var covers = machine.self().getCoverContainer().getCovers();
+                        if (getMachine() instanceof MultiblockControllerMachine) {
+                            var covers = getMachine().getCoverContainer().getCovers();
                             for (var cover : covers) {
                                 if (cover instanceof MachineControllerCover mcc) {
                                     if (mcc.preventPowerFail()) {
@@ -320,7 +324,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
                             }
                         }
 
-                        if (machine instanceof MultiblockControllerMachine && !preventPowerFail) {
+                        if (getMachine() instanceof MultiblockControllerMachine && !preventPowerFail) {
                             runAttempt = 0;
                             setStatus(Status.SUSPEND);
                         }
@@ -337,13 +341,13 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     protected void regressRecipe() {
-        if (progress > 0 && machine.regressWhenWaiting()) {
+        if (progress > 0 && getRLMachine().regressWhenWaiting()) {
             this.progress = 1;
         }
     }
 
     public Iterator<GTRecipe> searchRecipe() {
-        return machine.getRecipeType().searchRecipe(machine, r -> true);
+        return getRLMachine().getRecipeType().searchRecipe(getRLMachine(), r -> true);
     }
 
     public void findAndHandleRecipe() {
@@ -388,7 +392,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     public ActionResult handleTickRecipe(GTRecipe recipe) {
         if (!recipe.hasTick()) return ActionResult.SUCCESS;
 
-        var result = RecipeHelper.matchTickRecipe(machine, recipe);
+        var result = RecipeHelper.matchTickRecipe(getRLMachine(), recipe);
         if (!result.isSuccess()) return result;
 
         result = handleTickRecipeIO(recipe, IO.IN);
@@ -399,7 +403,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     public void setupRecipe(GTRecipe recipe) {
-        if (!machine.beforeWorking(recipe)) {
+        if (!getRLMachine().beforeWorking(recipe)) {
             setStatus(Status.IDLE);
             consecutiveRecipes = 0;
             progress = 0;
@@ -431,7 +435,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
                 status = Status.SUSPEND;
                 suspendAfterFinish = false;
             }
-            machine.notifyStatusChanged(this.status, status);
+            getRLMachine().notifyStatusChanged(this.status, status);
             this.status = status;
             syncDataHolder.markClientSyncFieldDirty("status");
             setRenderState(getRenderState().setValue(GTMachineModelProperties.RECIPE_LOGIC_STATUS, status));
@@ -445,7 +449,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     public void setWaiting(@Nullable Component reason) {
         setStatus(Status.WAITING);
         waitingReason = reason;
-        machine.onWaiting();
+        getRLMachine().onWaiting();
     }
 
     /**
@@ -513,7 +517,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     public void onRecipeFinish() {
-        machine.afterWorking();
+        getRLMachine().afterWorking();
         if (lastRecipe != null) {
             runAttempt = 0;
             runDelay = 0;
@@ -531,9 +535,9 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
                 lastRecipe = null;
                 return;
             }
-            if (machine.alwaysTryModifyRecipe()) {
+            if (getRLMachine().alwaysTryModifyRecipe()) {
                 if (lastOriginRecipe != null) {
-                    var modified = machine.fullModifyRecipe(lastOriginRecipe.copy());
+                    var modified = getRLMachine().fullModifyRecipe(lastOriginRecipe.copy());
                     if (modified == null) {
                         markLastRecipeDirty();
                     } else {
@@ -558,18 +562,18 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     protected ActionResult handleRecipeIO(GTRecipe recipe, IO io) {
-        return RecipeHelper.handleRecipeIO(machine, recipe, io, this.chanceCaches);
+        return RecipeHelper.handleRecipeIO(getRLMachine(), recipe, io, this.chanceCaches);
     }
 
     protected ActionResult handleTickRecipeIO(GTRecipe recipe, IO io) {
-        return RecipeHelper.handleTickRecipeIO(machine, recipe, io, this.chanceCaches);
+        return RecipeHelper.handleTickRecipeIO(getRLMachine(), recipe, io, this.chanceCaches);
     }
 
     /**
      * Interrupt current recipe without io.
      */
     public void interruptRecipe() {
-        machine.afterWorking();
+        getRLMachine().afterWorking();
         if (lastRecipe != null) {
             setStatus(Status.IDLE);
             progress = 0;
@@ -577,16 +581,13 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
         }
     }
 
-    // Remains for legacy + for subclasses
-    public void inValid() {}
-
     //////////////////////////////////////
     // ******** MISC *********//
     //////////////////////////////////////
     @OnlyIn(Dist.CLIENT)
     public void updateSound() {
-        if (isWorking() && machine.shouldWorkingPlaySound()) {
-            var sound = machine.getRecipeType().getSound();
+        if (isWorking() && getRLMachine().shouldWorkingPlaySound()) {
+            var sound = getRLMachine().getRecipeType().getSound();
             if (workingSound instanceof AutoReleasedSound soundEntry) {
                 if (soundEntry.soundEntry == sound && !soundEntry.isStopped()) {
                     return;
@@ -596,7 +597,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
             }
             if (sound != null) {
                 workingSound = sound.playAutoReleasedSound(
-                        () -> machine.shouldWorkingPlaySound() && isWorking() && !getMachine().isRemoved() &&
+                        () -> getRLMachine().shouldWorkingPlaySound() && isWorking() && !getMachine().isRemoved() &&
                                 getMachine().getLevel().isLoaded(getMachine().getBlockPos()) &&
                                 MetaMachine.getMachine(getMachine().getLevel(), getMachine().getBlockPos()) ==
                                         getMachine(),
@@ -632,8 +633,8 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
         return waitingReason != null || !failureReasons.isEmpty();
     }
 
-    protected ChanceCacheMap makeChanceCaches() {
-        ChanceCacheMap map = new ChanceCacheMap();
+    protected IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> makeChanceCaches() {
+        IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> map = new IdentityHashMap<>();
         for (RecipeCapability<?> cap : GTRegistries.RECIPE_CAPABILITIES) {
             map.put(cap, cap.makeChanceCache());
         }
@@ -641,56 +642,61 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     }
 
     static {
-        ValueTransformers.registerTransformer(ChanceCacheMap.class, new ValueTransformer<ChanceCacheMap>() {
+        ClassSyncData.getClassData(RecipeLogic.class)
+                .setCustomTransformerForField("chanceCaches",
+                        new ValueTransformer<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>>() {
 
-            @Override
-            public Tag serializeNBT(ChanceCacheMap value,
-                                    TransformerContext<ChanceCacheMap> context) {
-                CompoundTag chanceCache = new CompoundTag();
-                if (context.currentValue() == null) return chanceCache;
+                            @Override
+                            public Tag serializeNBT(IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> value,
+                                                    TransformerContext<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> context) {
+                                CompoundTag chanceCache = new CompoundTag();
+                                if (context.currentValue() == null) return chanceCache;
 
-                context.currentValue().forEach((cap, cache) -> {
-                    ListTag cacheTag = new ListTag();
-                    for (var entry : cache.object2IntEntrySet()) {
-                        CompoundTag compoundTag = new CompoundTag();
-                        var obj = cap.toNbt(entry.getKey(), MixinHelpers.getCurrentBERegistries());
-                        compoundTag.put("entry", obj);
-                        compoundTag.putInt("cached_chance", entry.getIntValue());
-                        cacheTag.add(compoundTag);
-                    }
-                    chanceCache.put(cap.name, cacheTag);
-                });
+                                context.currentValue().forEach((cap, cache) -> {
+                                    ListTag cacheTag = new ListTag();
+                                    for (var entry : cache.object2IntEntrySet()) {
+                                        CompoundTag compoundTag = new CompoundTag();
+                                        var obj = cap.toNbt(entry.getKey(), context.lookup());
+                                        compoundTag.put("entry", obj);
+                                        compoundTag.putInt("cached_chance", entry.getIntValue());
+                                        cacheTag.add(compoundTag);
+                                    }
+                                    chanceCache.put(cap.name, cacheTag);
+                                });
 
-                return chanceCache;
-            }
+                                return chanceCache;
+                            }
 
-            @Override
-            public @Nullable ChanceCacheMap deserializeNBT(Tag tag,
-                                                           TransformerContext<ChanceCacheMap> context) {
-                CompoundTag chanceCache = ValueTransformer.assertTagType(CompoundTag.class, tag, context);
-                if (context.currentValue() != null) {
-                    for (String key : chanceCache.getAllKeys()) {
-                        RecipeCapability<?> cap = GTRegistries.RECIPE_CAPABILITIES.get(ResourceLocation.parse(key));
-                        // Necessary since a RecipeCapability was removed when removing Create support, and for future
-                        // removals
-                        if (cap == null) continue;
-                        // noinspection rawtypes
-                        Object2IntMap map = context.currentValue().computeIfAbsent(cap,
-                                RecipeCapability::makeChanceCache);
+                            @Override
+                            public @Nullable IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> deserializeNBT(Tag tag,
+                                                                                                                   TransformerContext<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> context) {
+                                CompoundTag chanceCache = ValueTransformer.assertTagType(CompoundTag.class, tag,
+                                        context);
+                                if (context.currentValue() != null) {
+                                    for (String key : chanceCache.getAllKeys()) {
+                                        RecipeCapability<?> cap = GTRegistries.RECIPE_CAPABILITIES
+                                                .get(ResourceLocation.parse(key));
+                                        // Necessary since a RecipeCapability was removed when removing Create support,
+                                        // and for future
+                                        // removals
+                                        if (cap == null) continue;
+                                        // noinspection rawtypes
+                                        Object2IntMap map = context.currentValue().computeIfAbsent(cap,
+                                                RecipeCapability::makeChanceCache);
 
-                        ListTag chanceTag = chanceCache.getList(key, Tag.TAG_COMPOUND);
-                        for (int i = 0; i < chanceTag.size(); ++i) {
-                            CompoundTag chanceKey = chanceTag.getCompound(i);
-                            var entry = cap.fromNbt(chanceKey.get("entry"), GTRegistries.builtinRegistry());
-                            int value = chanceKey.getInt("cached_chance");
-                            // noinspection unchecked
-                            map.put(entry, value);
-                        }
-                    }
-                }
-                return context.currentValue();
-            }
-        });
+                                        ListTag chanceTag = chanceCache.getList(key, Tag.TAG_COMPOUND);
+                                        for (int i = 0; i < chanceTag.size(); ++i) {
+                                            CompoundTag chanceKey = chanceTag.getCompound(i);
+                                            var entry = cap.fromNbt(chanceKey.get("entry"), context.lookup());
+                                            int value = chanceKey.getInt("cached_chance");
+                                            // noinspection unchecked
+                                            map.put(entry, value);
+                                        }
+                                    }
+                                }
+                                return context.currentValue();
+                            }
+                        });
     }
 
     public static void putFailureReason(Object machine, GTRecipe recipe, Component reason) {

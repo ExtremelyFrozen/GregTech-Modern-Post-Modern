@@ -5,13 +5,13 @@ import com.gregtechceu.gtceu.api.block.PipeBlock;
 import com.gregtechceu.gtceu.api.blockentity.PipeBlockEntity;
 import com.gregtechceu.gtceu.api.capability.GTCapability;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.trait.hazard.EnvironmentalHazardCleanerTrait;
-import com.gregtechceu.gtceu.api.machine.trait.hazard.EnvironmentalHazardEmitterTrait;
 import com.gregtechceu.gtceu.api.pipenet.IPipeNode;
 import com.gregtechceu.gtceu.api.registry.registrate.provider.GTBlockstateProvider;
 import com.gregtechceu.gtceu.client.model.pipe.PipeModel;
 import com.gregtechceu.gtceu.common.blockentity.DuctPipeBlockEntity;
 import com.gregtechceu.gtceu.common.data.GTBlockEntities;
+import com.gregtechceu.gtceu.common.machine.trait.hazard.EnvironmentalHazardCleanerTrait;
+import com.gregtechceu.gtceu.common.machine.trait.hazard.EnvironmentalHazardEmitterTrait;
 import com.gregtechceu.gtceu.common.pipelike.duct.DuctPipeProperties;
 import com.gregtechceu.gtceu.common.pipelike.duct.DuctPipeType;
 import com.gregtechceu.gtceu.common.pipelike.duct.LevelDuctPipeNet;
@@ -100,14 +100,12 @@ public class DuctPipeBlock extends PipeBlock<DuctPipeType, DuctPipeProperties, L
         return selfTile instanceof DuctPipeBlockEntity && sideTile instanceof DuctPipeBlockEntity;
     }
 
-    @Override
     public boolean canPipeConnectToBlock(IPipeNode<DuctPipeType, DuctPipeProperties> selfTile,
                                          Direction side, Level level, BlockPos pos) {
         return (level.getCapability(GTCapability.CAPABILITY_HAZARD_CONTAINER, pos, side.getOpposite()) != null ||
                 level.getBlockEntity(pos) instanceof MetaMachine metaMachine &&
-                        (metaMachine.getTraitHolder().getTrait(EnvironmentalHazardCleanerTrait.TYPE) != null ||
-                                metaMachine.getTraitHolder().getTrait(EnvironmentalHazardEmitterTrait.TYPE) !=
-                                        null));
+                        (metaMachine.getTrait(EnvironmentalHazardCleanerTrait.TYPE) != null ||
+                                metaMachine.getTrait(EnvironmentalHazardEmitterTrait.TYPE) != null));
     }
 
     @Override

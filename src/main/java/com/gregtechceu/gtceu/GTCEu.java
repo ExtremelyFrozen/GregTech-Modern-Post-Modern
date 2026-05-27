@@ -2,8 +2,6 @@ package com.gregtechceu.gtceu;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.CommonProxy;
 import com.gregtechceu.gtceu.common.network.GTNetwork;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -51,9 +49,6 @@ public class GTCEu {
         GTCEu.gtModBus = modBus;
         ConfigHolder.init();
 
-        // must be set here because of KubeJS compat
-        // trying to read this before the pre-init stage
-        GTCEuAPI.materialManager = (IMaterialRegistry) GTRegistries.MATERIALS;
         GTCEuAPI.initializeHighTier();
         if (GTCEu.isDev()) {
             ConfigHolder.INSTANCE.recipes.generateLowQualityGems = true;

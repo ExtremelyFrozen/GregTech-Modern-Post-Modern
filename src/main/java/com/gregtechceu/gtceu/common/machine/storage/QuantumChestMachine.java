@@ -9,10 +9,8 @@ import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.item.datacomponents.LargeItemContent;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TieredMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -20,6 +18,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
@@ -86,9 +85,9 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
     public QuantumChestMachine(BlockEntityCreationInfo info, int tier, long maxAmount) {
         super(info, tier);
         this.maxAmount = maxAmount;
-        this.cache = createCacheItemHandler();
+        this.cache = attachTrait(createCacheItemHandler());
         this.lockedItem = new CustomItemStackHandler();
-        this.autoOutput = AutoOutputTrait.ofItems(this, cache);
+        this.autoOutput = attachTrait(AutoOutputTrait.ofItems(cache));
         lockedItem.setOnContentsChanged(() -> syncDataHolder.markClientSyncFieldDirty("lockedItem"));
     }
 
@@ -97,7 +96,7 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
     //////////////////////////////////////
 
     protected ItemCache createCacheItemHandler() {
-        return new ItemCache(this);
+        return new ItemCache();
     }
 
     protected void onItemChanged() {
@@ -321,8 +320,8 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         private final Predicate<ItemStack> filter = i -> !isLocked() ||
                 ItemStack.isSameItemSameComponents(i, getLockedItem());
 
-        public ItemCache(MetaMachine holder) {
-            super(holder);
+        public ItemCache() {
+            super();
         }
 
         @Override

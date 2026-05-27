@@ -1,10 +1,12 @@
 package com.gregtechceu.gtceu.api.sync_system.data_transformers;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
+import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.api.sync_system.ISyncAnnotated;
 import com.gregtechceu.gtceu.api.sync_system.ISyncManaged;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
 import com.gregtechceu.gtceu.api.sync_system.TypeDeclaration;
@@ -172,6 +174,7 @@ public final class ValueTransformers {
 
         registerTransformer(INBTSerializable.class, new NBTSerializableTransformer());
         registerTransformer(ISyncManaged.class, new SyncDataHolder.SyncManagedTransformer());
+        registerTransformer(ISyncAnnotated.class, new SyncAnnotatedTransformer());
 
         registerTransformerSupplier(List.class, ListTransformer::new);
         registerTransformerSupplier(Map.class, MapTransformer::new);
@@ -185,7 +188,7 @@ public final class ValueTransformers {
                 GTRecipeType::getRegistryName,
                 (r) -> (GTRecipeType) Objects.requireNonNull(BuiltInRegistries.RECIPE_TYPE.get(r))));
         registerTransformer(Material.class, new ResourceLocationReferenceTransformer<>(
-                Material::getResourceLocation, GTCEuAPI.materialManager::getMaterial));
+                Material::getResourceLocation, ((IMaterialRegistry) GTRegistries.MATERIALS)::getMaterial));
         registerTransformer(MonitorGroup.class, new MonitorGroupTransformer());
 
         registerTransformer(CoverBehavior.class, new CoverBehaviorTransformer());

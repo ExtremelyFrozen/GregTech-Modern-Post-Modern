@@ -62,6 +62,7 @@
 		"SidedRedstoneConnectivityMixin",
 		"TagLoaderMixin",
 		"TagManagerMixin",
+		"dev.datagen.FixParallelKeyMappingRegistrationMixin",
 		"dev.test.GameTestRegistryMixin",
 		"emi.FillRecipePacketMixin",
 		"emi.FluidEmiStackMixin",

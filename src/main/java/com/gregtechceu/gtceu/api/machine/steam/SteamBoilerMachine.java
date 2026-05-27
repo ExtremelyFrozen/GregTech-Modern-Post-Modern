@@ -33,7 +33,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -72,9 +71,9 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
     protected ISubscription steamTankSubs;
 
     public SteamBoilerMachine(BlockEntityCreationInfo info, boolean isHighPressure) {
-        super(info, isHighPressure, RecipeLogic::new,
-                m -> new NotifiableFluidTank(m, 1, 16 * FluidType.BUCKET_VOLUME, IO.OUT));
-        this.waterTank = createWaterTank();
+        super(info, isHighPressure, new RecipeLogic(),
+                new NotifiableFluidTank(1, 16 * FluidType.BUCKET_VOLUME, IO.OUT));
+        this.waterTank = attachTrait(createWaterTank());
         this.waterTank.setFilter(fluid -> fluid.getFluid().is(GTMaterials.Water.getFluidTag()));
     }
 
@@ -83,16 +82,15 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
     //////////////////////////////////////
 
     protected NotifiableFluidTank createWaterTank() {
-        return new NotifiableFluidTank(this, 1, 16 * FluidType.BUCKET_VOLUME, IO.IN);
+        return new NotifiableFluidTank(1, 16 * FluidType.BUCKET_VOLUME, IO.IN);
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateAutoOutputSubscription));
-        }
-        updateSteamSubscription();
+
+        scheduleForNextServerTick(this::updateAutoOutputSubscription);
+        scheduleForNextServerTick(this::updateSteamSubscription);
         steamTankSubs = steamTank.addChangedListener(this::updateAutoOutputSubscription);
     }
 
@@ -249,7 +247,7 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
      * @param recipe  recipe
      * @return A {@link ModifierFunction} for the given Steam Boiler
      */
-    public static ModifierFunction recipeModifier(@NotNull MetaMachine machine, @NotNull GTRecipe recipe) {
+    public static ModifierFunction recipeModifier(MetaMachine machine, GTRecipe recipe) {
         if (!(machine instanceof SteamBoilerMachine boilerMachine)) {
             return RecipeModifier.nullWrongType(SteamBoilerMachine.class, machine);
         }
