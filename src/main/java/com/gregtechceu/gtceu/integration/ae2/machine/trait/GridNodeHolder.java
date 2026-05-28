@@ -11,7 +11,7 @@ import net.minecraft.core.Direction;
 
 import appeng.api.networking.GridFlags;
 import appeng.me.helpers.BlockEntityNodeListener;
-import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
@@ -31,13 +31,20 @@ public class GridNodeHolder extends MachineTrait {
         return TYPE;
     }
 
-    @Getter
     @SaveField
-    protected final SerializableManagedGridNode mainNode;
+    protected @Nullable SerializableManagedGridNode mainNode;
+    private boolean mainNodeCreationScheduled;
 
     public GridNodeHolder(IGridConnectedMachine machine) {
         super();
         this.mainNode = createManagedNode(machine);
+    }
+
+    public SerializableManagedGridNode getMainNode() {
+        if (mainNode == null) {
+            mainNode = createManagedNode((IGridConnectedMachine) getMachine());
+        }
+        return mainNode;
     }
 
     protected SerializableManagedGridNode createManagedNode(IGridConnectedMachine machine) {
@@ -54,18 +61,28 @@ public class GridNodeHolder extends MachineTrait {
     }
 
     protected void createMainNode() {
-        this.mainNode.create(getLevel(), getBlockPos());
+        mainNodeCreationScheduled = false;
+        if (!getMainNode().isReady()) {
+            getMainNode().create(getLevel(), getBlockPos());
+        }
     }
 
     @Override
     public void onMachineLoad() {
         super.onMachineLoad();
-        getMachine().scheduleForNextServerTick(this::createMainNode);
+        if (!mainNodeCreationScheduled && !getMainNode().isReady()) {
+            mainNodeCreationScheduled = true;
+            getMachine().scheduleForNextServerTick(this::createMainNode);
+        }
     }
 
     @Override
     public void onMachineUnload() {
         super.onMachineUnload();
-        mainNode.destroy();
+        if (mainNode != null) {
+            mainNode.destroy();
+            mainNode = null;
+        }
+        mainNodeCreationScheduled = false;
     }
 }
