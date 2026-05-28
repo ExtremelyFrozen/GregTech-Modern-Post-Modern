@@ -381,7 +381,8 @@ public class GTCommands {
     private static void schedulePatternReload(CommandSourceStack source, CompletableFuture<Integer> reloadFuture) {
         reloadFuture.whenComplete((patterns, throwable) -> source.getServer().execute(() -> {
             if (throwable != null) {
-                source.sendFailure(Component.literal("Failed to refresh structure patterns: " + throwable.getMessage()));
+                source.sendFailure(
+                        Component.literal("Failed to refresh structure patterns: " + throwable.getMessage()));
             } else {
                 source.sendSuccess(() -> Component.literal("Refreshed " + patterns + " structure patterns"), true);
             }
