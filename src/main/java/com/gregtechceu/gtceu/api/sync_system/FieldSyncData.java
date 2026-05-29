@@ -6,7 +6,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToServer;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
 
 import com.mojang.serialization.Codec;
 import lombok.Setter;
@@ -29,16 +28,13 @@ public final class FieldSyncData {
     public final boolean triggerClientRerender;
     public final boolean hasSaveField, hasItemSave, hasSyncToClient, hasSyncToServer, hasSyncBoth;
     @Setter
-    public @Nullable ValueTransformer<?> transformer;
-    @Setter
     public @Nullable Codec<?> codec;
     @Setter
     public @Nullable ContextualFieldCodec<?> contextualCodec;
     public final List<MethodHandle> changeListenerHandles;
     public final TypeDeclaration type;
 
-    public FieldSyncData(Field field, VarHandle handle, @Nullable ValueTransformer<?> transformer,
-                         List<MethodHandle> changeListenerHandles) {
+    public FieldSyncData(Field field, VarHandle handle, List<MethodHandle> changeListenerHandles) {
         fieldName = field.getName();
         SaveField saveField = field.getAnnotation(SaveField.class);
         ItemSave itemSave = field.getAnnotation(ItemSave.class);
@@ -52,7 +48,6 @@ public final class FieldSyncData {
         this.handle = handle;
         this.triggerClientRerender = field.isAnnotationPresent(RerenderOnChanged.class);
         this.changeListenerHandles = changeListenerHandles;
-        this.transformer = transformer;
         this.codec = FieldCodecs.get(field.getGenericType());
         this.contextualCodec = FieldCodecs.getContextual(field.getGenericType());
         this.type = new TypeDeclaration(field.getGenericType());

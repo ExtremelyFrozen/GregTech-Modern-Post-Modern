@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
@@ -343,26 +342,4 @@ public class SyncDataHolder {
         }
     }
 
-    public static class SyncManagedTransformer implements ValueTransformer<ISyncManaged> {
-
-        @Override
-        public Tag serializeNBT(ISyncManaged value, TransformerContext<ISyncManaged> context) {
-            return value.getSyncDataHolder().serializeNBT(context.lookup(), context.isClientSync(),
-                    context.isClientFullSyncUpdate());
-        }
-
-        @Override
-        public @Nullable ISyncManaged deserializeNBT(Tag tag, TransformerContext<ISyncManaged> context) {
-            ISyncManaged syncManaged = context.currentValue();
-
-            if (syncManaged == null) {
-                GTCEu.LOGGER.error("Sync: ISyncManaged field was null, cannot instantiate {}",
-                        context.fieldName());
-                return null;
-            }
-
-            syncManaged.getSyncDataHolder().deserializeNBT(context.lookup(), (CompoundTag) tag, context.isClientSync());
-            return syncManaged;
-        }
-    }
 }

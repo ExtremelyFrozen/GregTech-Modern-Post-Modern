@@ -20,7 +20,8 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
     public static final Class<CoverBehavior> TYPE = CoverBehavior.class;
     public static final CoverBehaviorCodec INSTANCE = new CoverBehaviorCodec();
 
-    private CoverBehaviorCodec() {}
+    private CoverBehaviorCodec() {
+    }
 
     @Override
     public Tag serializeNBT(@Nullable CoverBehavior value, Context<CoverBehavior> context) {
@@ -50,6 +51,12 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
 
     public static @Nullable CoverBehavior deserialize(CompoundTag tag, ICoverable holder, @Nullable CoverBehavior cover,
                                                       boolean isSync, HolderLookup.Provider lookup) {
+        if (tag.contains("payload") && tag.contains("uid")) {
+            tag.putInt("side", tag.getCompound("uid").getInt("side"));
+            tag.putString("coverType", tag.getCompound("uid").getString("id"));
+            tag.put("data", tag.getCompound("payload").getCompound("d"));
+        }
+
         Direction side = Direction.values()[tag.getInt("side")];
 
         if (tag.isEmpty() || tag.getString("coverType").isEmpty()) {

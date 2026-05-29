@@ -18,7 +18,8 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
     public static final Class<MonitorGroup> TYPE = MonitorGroup.class;
     public static final MonitorGroupCodec INSTANCE = new MonitorGroupCodec();
 
-    private MonitorGroupCodec() {}
+    private MonitorGroupCodec() {
+    }
 
     @Override
     public CompoundTag serializeNBT(MonitorGroup value, Context<MonitorGroup> context) {
@@ -58,9 +59,9 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
             if (compoundTag.contains("targetSide", Tag.TAG_STRING)) {
                 group.setTargetCoverSide(Direction.byName(compoundTag.getString("targetSide")));
             }
-        }
-        if (compoundTag.contains("dataSlot", Tag.TAG_INT)) {
-            group.setDataSlot(compoundTag.getInt("dataSlot"));
+            if (compoundTag.contains("dataSlot", Tag.TAG_INT)) {
+                group.setDataSlot(compoundTag.getInt("dataSlot"));
+            }
         }
         return group;
     }

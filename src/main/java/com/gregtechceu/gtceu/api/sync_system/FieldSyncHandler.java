@@ -1,8 +1,6 @@
 package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformers;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -61,24 +59,8 @@ public class FieldSyncHandler {
             }
         }
 
-        if (field.transformer == null) {
-            field.setTransformer(ValueTransformers.get(field.type.getRawType()));
-            if (field.transformer == null) {
-                GTCEu.LOGGER.error("Sync: Failed to serialize field {} in class {}: Missing value transformer for {}",
-                        field.fieldName, holder.getClass().getName(), field.type);
-                return new CompoundTag();
-            }
-        }
-
-        try {
-            return ((ValueTransformer<Object>) field.transformer).serializeNBT(currentValue,
-                    new ValueTransformer.TransformerContext<>(holder, field.type, currentValue, field.fieldName,
-                            writeClientFields, fullSync, registries));
-
-        } catch (Exception e) {
-            GTCEu.LOGGER.error("Sync: Failed to serialize field {}", field.fieldName, e);
-        }
-
+        GTCEu.LOGGER.error("Sync: Failed to serialize field {} in class {}: Missing field codec for {}",
+                field.fieldName, holder.getClass().getName(), field.type);
         return new CompoundTag();
     }
 
@@ -147,35 +129,8 @@ public class FieldSyncHandler {
             return;
         }
 
-        if (field.transformer == null) {
-            field.setTransformer(ValueTransformers.get(field.type.getRawType()));
-            if (field.transformer == null) {
-                GTCEu.LOGGER.error("Sync: Failed to deserialize field {} in class {}: Missing value transformer for {}",
-                        field.fieldName, holder.getClass().getName(), field.type);
-                return;
-            }
-        }
-
-        try {
-            ValueTransformer<Object> transformer = (ValueTransformer<Object>) field.transformer;
-            var current = field.handle.get(holder);
-
-            Object result = transformer.deserializeNBT(savedValue, new ValueTransformer.TransformerContext<>(
-                    holder, field.type, current, field.fieldName, readingClientFields, false, registries));
-
-            if (result != current) {
-                field.handle.set(holder, result);
-            }
-
-        } catch (Exception e) {
-            if (e instanceof UnsupportedOperationException) {
-                GTCEu.LOGGER.error(
-                        "Sync: failed to perform VarHandle set: unsupported op on {} (you are probably trying to sync a final field)",
-                        field.fieldName);
-                return;
-            }
-            GTCEu.LOGGER.error("Sync: Failed to deserialize field {}", field.fieldName, e);
-        }
+        GTCEu.LOGGER.error("Sync: Failed to deserialize field {} in class {}: Missing field codec for {}",
+                field.fieldName, holder.getClass().getName(), field.type);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

@@ -16,6 +16,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.resources.ResourceLocation;
@@ -45,6 +48,7 @@ public final class FieldCodecs {
     private static final Map<Class<?>, Supplier<Codec<?>>> REGISTERED_SUPPLIERS = new Reference2ReferenceOpenHashMap<>();
     private static final Map<Type, Codec<?>> TYPE_CACHE = new Reference2ReferenceOpenHashMap<>();
     private static final Map<Type, ContextualFieldCodec<?>> CONTEXTUAL_REGISTERED = new Reference2ReferenceOpenHashMap<>();
+    private static final Map<Type, ContextualFieldCodec<?>> CONTEXTUAL_TYPE_CACHE = new Reference2ReferenceOpenHashMap<>();
 
     private static final Map<Type, Type> PRIMITIVE_TO_BOXED = Map.of(
             boolean.class, Boolean.class,
@@ -57,7 +61,8 @@ public final class FieldCodecs {
             double.class, Double.class,
             void.class, Void.class);
 
-    private FieldCodecs() {}
+    private FieldCodecs() {
+    }
 
     public static @Nullable Codec<?> get(Type type) {
         if (type instanceof Class<?> cls && cls.isPrimitive()) type = PRIMITIVE_TO_BOXED.get(cls);
@@ -76,13 +81,26 @@ public final class FieldCodecs {
 
     public static @Nullable ContextualFieldCodec<?> getContextual(Type type) {
         if (type instanceof Class<?> cls && cls.isPrimitive()) type = PRIMITIVE_TO_BOXED.get(cls);
+        return CONTEXTUAL_TYPE_CACHE.computeIfAbsent(type, FieldCodecs::generateOrGetContextualCodec);
+    }
+
+    private static @Nullable ContextualFieldCodec<?> generateOrGetContextualCodec(Type type) {
         ContextualFieldCodec<?> registered = CONTEXTUAL_REGISTERED.get(type);
         if (registered != null) return registered;
+
+        if (type instanceof ParameterizedType parameterizedType) {
+            Class<?> raw = (Class<?>) parameterizedType.getRawType();
+            if (List.class.isAssignableFrom(raw)) return makeContextualListCodec(parameterizedType);
+            if (Set.class.isAssignableFrom(raw)) return makeContextualSetCodec(parameterizedType);
+            if (Map.class.isAssignableFrom(raw)) return makeContextualMapCodec(parameterizedType);
+        }
+
         TypeDeclaration declaration = new TypeDeclaration(type);
         Class<?> clazz = declaration.getClassValue();
         if (clazz == null) return null;
         registered = CONTEXTUAL_REGISTERED.get(clazz);
         if (registered != null) return registered;
+        if (clazz.isArray()) return makeContextualArrayCodec(clazz.getComponentType());
         for (var entry : CONTEXTUAL_REGISTERED.entrySet()) {
             if (entry.getKey() instanceof Class<?> registeredClass && registeredClass.isAssignableFrom(clazz)) {
                 return entry.getValue();
@@ -93,6 +111,7 @@ public final class FieldCodecs {
 
     public static void registerContextual(Type type, ContextualFieldCodec<?> codec) {
         CONTEXTUAL_REGISTERED.putIfAbsent(type, codec);
+        CONTEXTUAL_TYPE_CACHE.remove(type);
     }
 
     @SuppressWarnings("unchecked")
@@ -148,7 +167,7 @@ public final class FieldCodecs {
         Codec<?> elementCodec = get(type.getActualTypeArguments()[0]);
         if (elementCodec == null) return null;
         return Codec.list((Codec<Object>) elementCodec)
-                .xmap(values -> (Set<Object>) new LinkedHashSet<>(values), ArrayList::new);
+                .xmap(values -> (Set<Object>) new LinkedHashSet<>(values), values -> new ArrayList<>((Set<?>) values));
     }
 
     @SuppressWarnings("unchecked")
@@ -159,8 +178,8 @@ public final class FieldCodecs {
         if (keyCodec == null || valueCodec == null) return null;
 
         Codec<Pair<Object, Object>> entryCodec = RecordCodecBuilder.create(instance -> instance.group(
-                ((Codec<Object>) keyCodec).fieldOf("k").forGetter(Pair::getFirst),
-                ((Codec<Object>) valueCodec).fieldOf("v").forGetter(Pair::getSecond))
+                        ((Codec<Object>) keyCodec).fieldOf("k").forGetter(Pair::getFirst),
+                        ((Codec<Object>) valueCodec).fieldOf("v").forGetter(Pair::getSecond))
                 .apply(instance, Pair::of));
 
         return Codec.list(entryCodec).xmap(entries -> {
@@ -199,7 +218,229 @@ public final class FieldCodecs {
                 });
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings("unchecked")
+    private static @Nullable ContextualFieldCodec<?> makeContextualListCodec(ParameterizedType type) {
+        ContextualFieldCodec<?> elementCodec = getContextual(type.getActualTypeArguments()[0]);
+        if (elementCodec == null) return null;
+        return new ContextualFieldCodec<List<?>>() {
+
+            @Override
+            public Tag serializeNBT(List<?> value, Context<List<?>> context) {
+                ListTag list = new ListTag();
+                ContextualFieldCodec<Object> typedElementCodec = (ContextualFieldCodec<Object>) elementCodec;
+                for (int i = 0; i < value.size(); i++) {
+                    Object element = value.get(i);
+                    if (element == null) {
+                        list.add(nullTag());
+                    } else {
+                        list.add(typedElementCodec.serializeNBT(element,
+                                nestedContext(context, type.getActualTypeArguments()[0], element, context.fieldName() + "[" + i + "]")));
+                    }
+                }
+                return list;
+            }
+
+            @Override
+            public @Nullable List<?> deserializeNBT(Tag tag, Context<List<?>> context) {
+                if (!(tag instanceof ListTag listTag)) return null;
+                List<?> current = context.currentValue();
+                List<Object> result = new ArrayList<>(listTag.size());
+                ContextualFieldCodec<Object> typedElementCodec = (ContextualFieldCodec<Object>) elementCodec;
+                for (int i = 0; i < listTag.size(); i++) {
+                    Object currentElement = current != null && i < current.size() ? current.get(i) : null;
+                    Tag elementTag = listTag.get(i);
+                    Object element = isNullTag(elementTag) ? null :
+                            typedElementCodec.deserializeNBT(elementTag,
+                                    nestedContext(context, type.getActualTypeArguments()[0], currentElement,
+                                            context.fieldName() + "[" + i + "]"));
+                    result.add(element);
+                }
+                return result;
+            }
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private static @Nullable ContextualFieldCodec<?> makeContextualSetCodec(ParameterizedType type) {
+        ContextualFieldCodec<?> elementCodec = getContextual(type.getActualTypeArguments()[0]);
+        if (elementCodec == null) return null;
+        return new ContextualFieldCodec<Set<?>>() {
+
+            @Override
+            public Tag serializeNBT(Set<?> value, Context<Set<?>> context) {
+                ListTag list = new ListTag();
+                ContextualFieldCodec<Object> typedElementCodec = (ContextualFieldCodec<Object>) elementCodec;
+                int index = 0;
+                for (Object element : value) {
+                    if (element == null) {
+                        list.add(nullTag());
+                    } else {
+                        list.add(typedElementCodec.serializeNBT(element,
+                                nestedContext(context, type.getActualTypeArguments()[0], element,
+                                        context.fieldName() + "[" + index + "]")));
+                    }
+                    index++;
+                }
+                return list;
+            }
+
+            @Override
+            public @Nullable Set<?> deserializeNBT(Tag tag, Context<Set<?>> context) {
+                if (!(tag instanceof ListTag listTag)) return null;
+                Set<Object> result = new LinkedHashSet<>();
+                ContextualFieldCodec<Object> typedElementCodec = (ContextualFieldCodec<Object>) elementCodec;
+                for (int i = 0; i < listTag.size(); i++) {
+                    Tag elementTag = listTag.get(i);
+                    Object element = isNullTag(elementTag) ? null :
+                            typedElementCodec.deserializeNBT(elementTag,
+                                    nestedContext(context, type.getActualTypeArguments()[0], null,
+                                            context.fieldName() + "[" + i + "]"));
+                    result.add(element);
+                }
+                return result;
+            }
+        };
+    }
+
+    private static @Nullable ContextualFieldCodec<?> makeContextualMapCodec(ParameterizedType type) {
+        if (type.getActualTypeArguments().length != 2) return null;
+        ContextualFieldCodec<?> keyCodec = getContextual(type.getActualTypeArguments()[0]);
+        ContextualFieldCodec<?> valueCodec = getContextual(type.getActualTypeArguments()[1]);
+        if (keyCodec == null && valueCodec == null) return null;
+        Codec<?> regularKeyCodec = keyCodec == null ? get(type.getActualTypeArguments()[0]) : null;
+        Codec<?> regularValueCodec = valueCodec == null ? get(type.getActualTypeArguments()[1]) : null;
+        if ((keyCodec == null && regularKeyCodec == null) || (valueCodec == null && regularValueCodec == null)) {
+            return null;
+        }
+        return new ContextualMapCodec(type, keyCodec, valueCodec, regularKeyCodec, regularValueCodec);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static @Nullable ContextualFieldCodec<?> makeContextualArrayCodec(Class<?> componentType) {
+        ContextualFieldCodec<?> elementCodec = getContextual(componentType);
+        if (elementCodec == null) return null;
+        return new ContextualFieldCodec<Object>() {
+
+            @Override
+            public Tag serializeNBT(Object value, Context<Object> context) {
+                ListTag list = new ListTag();
+                ContextualFieldCodec<Object> typedElementCodec = (ContextualFieldCodec<Object>) elementCodec;
+                int length = Array.getLength(value);
+                for (int i = 0; i < length; i++) {
+                    Object element = Array.get(value, i);
+                    if (element == null) {
+                        list.add(nullTag());
+                    } else {
+                        list.add(typedElementCodec.serializeNBT(element,
+                                nestedContext(context, componentType, element, context.fieldName() + "[" + i + "]")));
+                    }
+                }
+                return list;
+            }
+
+            @Override
+            public @Nullable Object deserializeNBT(Tag tag, Context<Object> context) {
+                if (!(tag instanceof ListTag listTag)) return null;
+                Object current = context.currentValue();
+                Object result = current != null && Array.getLength(current) == listTag.size() ?
+                        current : Array.newInstance(componentType, listTag.size());
+                ContextualFieldCodec<Object> typedElementCodec = (ContextualFieldCodec<Object>) elementCodec;
+                for (int i = 0; i < listTag.size(); i++) {
+                    Object currentElement = current != null && i < Array.getLength(current) ? Array.get(current, i) : null;
+                    Tag elementTag = listTag.get(i);
+                    Object element = isNullTag(elementTag) ? null :
+                            typedElementCodec.deserializeNBT(elementTag,
+                                    nestedContext(context, componentType, currentElement, context.fieldName() + "[" + i + "]"));
+                    Array.set(result, i, element);
+                }
+                return result;
+            }
+        };
+    }
+
+    private static CompoundTag nullTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("null", true);
+        return tag;
+    }
+
+    private static boolean isNullTag(Tag tag) {
+        return tag instanceof CompoundTag compoundTag && compoundTag.getBoolean("null");
+    }
+
+    private static <T> ContextualFieldCodec.Context<T> nestedContext(ContextualFieldCodec.Context<?> parent, Type type,
+                                                                     @Nullable T currentValue, String fieldName) {
+        return new ContextualFieldCodec.Context<>(parent.holder(), new TypeDeclaration(type), currentValue, fieldName,
+                parent.isClientSync(), parent.isClientFullSyncUpdate(), parent.lookup());
+    }
+
+    @SuppressWarnings("unchecked")
+    private record ContextualMapCodec(ParameterizedType type, @Nullable ContextualFieldCodec<?> keyCodec,
+                                      @Nullable ContextualFieldCodec<?> valueCodec, @Nullable Codec<?> regularKeyCodec,
+                                      @Nullable Codec<?> regularValueCodec) implements ContextualFieldCodec<Map<?, ?>> {
+
+        @Override
+        public Tag serializeNBT(Map<?, ?> value, Context<Map<?, ?>> context) {
+            ListTag list = new ListTag();
+            int index = 0;
+            for (Map.Entry<?, ?> entry : value.entrySet()) {
+                CompoundTag entryTag = new CompoundTag();
+                Object key = entry.getKey();
+                Object entryValue = entry.getValue();
+                entryTag.put("k", serializeMapElement(key, keyCodec, regularKeyCodec, context,
+                        type.getActualTypeArguments()[0], context.fieldName() + "[" + index + "].key"));
+                entryTag.put("v", serializeMapElement(entryValue, valueCodec, regularValueCodec, context,
+                        type.getActualTypeArguments()[1], context.fieldName() + "[" + index + "].value"));
+                list.add(entryTag);
+                index++;
+            }
+            return list;
+        }
+
+        @Override
+        public @Nullable Map<?, ?> deserializeNBT(Tag tag, Context<Map<?, ?>> context) {
+            if (!(tag instanceof ListTag listTag)) return null;
+            Map<Object, Object> result = new LinkedHashMap<>();
+            for (int i = 0; i < listTag.size(); i++) {
+                if (!(listTag.get(i) instanceof CompoundTag entryTag)) continue;
+                Object key = deserializeMapElement(entryTag.get("k"), keyCodec, regularKeyCodec, context,
+                        type.getActualTypeArguments()[0], context.fieldName() + "[" + i + "].key");
+                Object value = deserializeMapElement(entryTag.get("v"), valueCodec, regularValueCodec, context,
+                        type.getActualTypeArguments()[1], context.fieldName() + "[" + i + "].value");
+                result.put(key, value);
+            }
+            return result;
+        }
+
+        private static Tag serializeMapElement(@Nullable Object value, @Nullable ContextualFieldCodec<?> contextualCodec,
+                                               @Nullable Codec<?> regularCodec, Context<?> context, Type type,
+                                               String fieldName) {
+            if (value == null) return nullTag();
+            if (contextualCodec != null) {
+                return ((ContextualFieldCodec<Object>) contextualCodec).serializeNBT(value,
+                        nestedContext(context, type, value, fieldName));
+            }
+            return ((Codec<Object>) regularCodec)
+                    .encodeStart(context.lookup().createSerializationContext(NbtOps.INSTANCE), value)
+                    .getOrThrow();
+        }
+
+        private static @Nullable Object deserializeMapElement(@Nullable Tag tag,
+                                                              @Nullable ContextualFieldCodec<?> contextualCodec,
+                                                              @Nullable Codec<?> regularCodec, Context<?> context,
+                                                              Type type, String fieldName) {
+            if (tag == null || isNullTag(tag)) return null;
+            if (contextualCodec != null) {
+                return ((ContextualFieldCodec<Object>) contextualCodec).deserializeNBT(tag,
+                        nestedContext(context, type, null, fieldName));
+            }
+            return ((Codec<Object>) regularCodec)
+                    .parse(context.lookup().createSerializationContext(NbtOps.INSTANCE), tag)
+                    .getOrThrow();
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static Codec<?> makeEnumCodec(Class<?> clazz) {
         if (StringRepresentable.class.isAssignableFrom(clazz)) {
             Map<String, Enum<?>> valuesByName = new HashMap<>();

@@ -1,8 +1,6 @@
 package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.api.sync_system.annotations.ClientFieldChangeListener;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
-
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
 /**
@@ -20,7 +18,7 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
  * A field of type {@code T} can be marked with sync annotations if:
  * <ul>
  * <li>{@code T} is primitive
- * <li>{@code T} has an {@link ValueTransformer} registered
+ * <li>{@code T} has a {@link FieldCodecs} codec registered
  * <li>{@code T} implements {@link INBTSerializable}
  * <li>{@code T} is an {@link ISyncAnnotated} class
  * </ul>

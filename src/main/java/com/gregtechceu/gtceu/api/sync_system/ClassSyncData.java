@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToServer;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
 
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -137,7 +136,7 @@ public final class ClassSyncData {
                 throw e;
             }
 
-            FieldSyncData syncData = new FieldSyncData(field, handle, null, changeListeners.getOrDefault(field.getName(),
+            FieldSyncData syncData = new FieldSyncData(field, handle, changeListeners.getOrDefault(field.getName(),
                     List.of()));
             if (localFieldsByName.put(syncData.fieldName, syncData) != null) {
                 throw new IllegalArgumentException("Duplicate managed field name in %s: %s"
@@ -212,20 +211,6 @@ public final class ClassSyncData {
             throw new IllegalArgumentException("Duplicate %s key in %s: %s"
                     .formatted(kind, owner.getName(), key));
         }
-    }
-
-    /**
-     * Allows for a custom value transformer to be used for a specific field on this class, ignoring any other sync
-     * behaviour attached to the field.
-     *
-     * @param fieldName   The field name
-     * @param transformer The custom value transformer
-     */
-    @Deprecated(forRemoval = false)
-    public void setCustomTransformerForField(String fieldName, ValueTransformer<?> transformer) {
-        managedFields.stream().filter(f -> Objects.equals(f.fieldName, fieldName))
-                .findFirst()
-                .ifPresent(fieldData -> fieldData.setTransformer(transformer));
     }
 
     /**
