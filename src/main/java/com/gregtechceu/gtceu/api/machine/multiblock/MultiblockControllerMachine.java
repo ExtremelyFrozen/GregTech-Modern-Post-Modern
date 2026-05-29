@@ -47,6 +47,7 @@ public class MultiblockControllerMachine extends MetaMachine {
     private @Nullable ParallelHatchPartMachine parallelHatch = null;
     @Getter
     @SyncToClient
+    @RerenderOnChanged
     private BlockPos[] partPositions = new BlockPos[0];
 
     /**

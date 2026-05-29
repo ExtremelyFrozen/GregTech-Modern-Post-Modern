@@ -24,6 +24,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.sync_system.codecs.RecipeChanceCachesCodec;
+import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 import com.gregtechceu.gtceu.common.cover.MachineControllerCover;
 import com.gregtechceu.gtceu.utils.GTMath;
 
@@ -156,6 +157,10 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
     @SuppressWarnings("unused")
     @ClientFieldChangeListener(fieldName = "status")
     protected void onStatusSynced() {
+        MachineRenderState renderState = getRenderState();
+        if (renderState.hasProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS)) {
+            setRenderState(renderState.setValue(GTMachineModelProperties.RECIPE_LOGIC_STATUS, status));
+        }
         scheduleRenderUpdate();
         updateSound();
     }
