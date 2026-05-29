@@ -185,8 +185,9 @@ public final class ClassSyncData {
         for (String fieldName : clientListenerTargets) {
             FieldSyncData localField = localFieldsByName.get(fieldName);
             if (localField != null && !localField.hasSyncToClient && !localField.hasSyncBoth) {
-                throw new IllegalArgumentException("@ClientFieldChangeListener targets a field that never syncs to client: %s.%s"
-                        .formatted(clazz.getName(), fieldName));
+                throw new IllegalArgumentException(
+                        "@ClientFieldChangeListener targets a field that never syncs to client: %s.%s"
+                                .formatted(clazz.getName(), fieldName));
             }
             if (localField == null && clientSyncFields.stream().noneMatch(field -> field.fieldName.equals(fieldName))) {
                 throw new IllegalArgumentException("@ClientFieldChangeListener targets unknown field: %s.%s"

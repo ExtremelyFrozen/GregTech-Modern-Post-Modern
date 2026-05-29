@@ -153,5 +153,4 @@ public final class MachineTraitHolder {
         if (traitList == null) return List.of();
         return Collections.unmodifiableList(traitList);
     }
-
 }

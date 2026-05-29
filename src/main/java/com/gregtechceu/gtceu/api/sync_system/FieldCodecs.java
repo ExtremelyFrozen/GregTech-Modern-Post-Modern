@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.codecs.CoverBehaviorCodec;
@@ -61,8 +60,7 @@ public final class FieldCodecs {
             double.class, Double.class,
             void.class, Void.class);
 
-    private FieldCodecs() {
-    }
+    private FieldCodecs() {}
 
     public static @Nullable Codec<?> get(Type type) {
         if (type instanceof Class<?> cls && cls.isPrimitive()) type = PRIMITIVE_TO_BOXED.get(cls);
@@ -178,8 +176,8 @@ public final class FieldCodecs {
         if (keyCodec == null || valueCodec == null) return null;
 
         Codec<Pair<Object, Object>> entryCodec = RecordCodecBuilder.create(instance -> instance.group(
-                        ((Codec<Object>) keyCodec).fieldOf("k").forGetter(Pair::getFirst),
-                        ((Codec<Object>) valueCodec).fieldOf("v").forGetter(Pair::getSecond))
+                ((Codec<Object>) keyCodec).fieldOf("k").forGetter(Pair::getFirst),
+                ((Codec<Object>) valueCodec).fieldOf("v").forGetter(Pair::getSecond))
                 .apply(instance, Pair::of));
 
         return Codec.list(entryCodec).xmap(entries -> {
@@ -234,7 +232,8 @@ public final class FieldCodecs {
                         list.add(nullTag());
                     } else {
                         list.add(typedElementCodec.serializeNBT(element,
-                                nestedContext(context, type.getActualTypeArguments()[0], element, context.fieldName() + "[" + i + "]")));
+                                nestedContext(context, type.getActualTypeArguments()[0], element,
+                                        context.fieldName() + "[" + i + "]")));
                     }
                 }
                 return list;
@@ -346,11 +345,13 @@ public final class FieldCodecs {
                         current : Array.newInstance(componentType, listTag.size());
                 ContextualFieldCodec<Object> typedElementCodec = (ContextualFieldCodec<Object>) elementCodec;
                 for (int i = 0; i < listTag.size(); i++) {
-                    Object currentElement = current != null && i < Array.getLength(current) ? Array.get(current, i) : null;
+                    Object currentElement = current != null && i < Array.getLength(current) ? Array.get(current, i) :
+                            null;
                     Tag elementTag = listTag.get(i);
                     Object element = isNullTag(elementTag) ? null :
                             typedElementCodec.deserializeNBT(elementTag,
-                                    nestedContext(context, componentType, currentElement, context.fieldName() + "[" + i + "]"));
+                                    nestedContext(context, componentType, currentElement,
+                                            context.fieldName() + "[" + i + "]"));
                     Array.set(result, i, element);
                 }
                 return result;
@@ -377,7 +378,8 @@ public final class FieldCodecs {
     @SuppressWarnings("unchecked")
     private record ContextualMapCodec(ParameterizedType type, @Nullable ContextualFieldCodec<?> keyCodec,
                                       @Nullable ContextualFieldCodec<?> valueCodec, @Nullable Codec<?> regularKeyCodec,
-                                      @Nullable Codec<?> regularValueCodec) implements ContextualFieldCodec<Map<?, ?>> {
+                                      @Nullable Codec<?> regularValueCodec)
+            implements ContextualFieldCodec<Map<?, ?>> {
 
         @Override
         public Tag serializeNBT(Map<?, ?> value, Context<Map<?, ?>> context) {
@@ -412,7 +414,8 @@ public final class FieldCodecs {
             return result;
         }
 
-        private static Tag serializeMapElement(@Nullable Object value, @Nullable ContextualFieldCodec<?> contextualCodec,
+        private static Tag serializeMapElement(@Nullable Object value,
+                                               @Nullable ContextualFieldCodec<?> contextualCodec,
                                                @Nullable Codec<?> regularCodec, Context<?> context, Type type,
                                                String fieldName) {
             if (value == null) return nullTag();
@@ -440,7 +443,7 @@ public final class FieldCodecs {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private static Codec<?> makeEnumCodec(Class<?> clazz) {
         if (StringRepresentable.class.isAssignableFrom(clazz)) {
             Map<String, Enum<?>> valuesByName = new HashMap<>();

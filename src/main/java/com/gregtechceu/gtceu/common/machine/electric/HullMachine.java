@@ -15,6 +15,7 @@ import com.gregtechceu.gtceu.integration.ae2.machine.trait.GridNodeHostTrait;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 
 import net.minecraft.core.Direction;
+
 public class HullMachine extends TieredPartMachine implements IMonitorComponent {
 
     @SaveField(nbtKey = "grid_node")

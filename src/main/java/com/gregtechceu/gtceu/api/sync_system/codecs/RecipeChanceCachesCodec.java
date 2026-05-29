@@ -15,7 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.IdentityHashMap;
 
 public final class RecipeChanceCachesCodec
-        implements ContextualFieldCodec<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> {
+                                           implements
+                                           ContextualFieldCodec<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> {
 
     public static final RecipeChanceCachesCodec INSTANCE = new RecipeChanceCachesCodec();
 

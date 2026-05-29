@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.api.sync_system.annotations.ClientFieldChangeListener;
+
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
 /**

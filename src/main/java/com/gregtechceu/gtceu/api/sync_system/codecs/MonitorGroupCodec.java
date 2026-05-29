@@ -18,8 +18,7 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
     public static final Class<MonitorGroup> TYPE = MonitorGroup.class;
     public static final MonitorGroupCodec INSTANCE = new MonitorGroupCodec();
 
-    private MonitorGroupCodec() {
-    }
+    private MonitorGroupCodec() {}
 
     @Override
     public CompoundTag serializeNBT(MonitorGroup value, Context<MonitorGroup> context) {
