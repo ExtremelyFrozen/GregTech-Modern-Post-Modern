@@ -3,10 +3,14 @@ package com.gregtechceu.gtceu.api.cover;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 
+import com.gregtechceu.gtceu.common.network.packets.CPacketCoverSyncToServer;
+
 import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.utils.Position;
+
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import net.minecraft.world.entity.player.Player;
 
@@ -45,5 +49,16 @@ public interface IUICover extends IUIHolder {
     Widget createUIWidget();
 
     @Override
-    default void markAsDirty() {}
+    default void markAsDirty() {
+        var level = self().coverHolder.getLevel();
+        if (level == null || !level.isClientSide) {
+            return;
+        }
+
+        byte[] changes = self().getSyncDataHolder().collectServerNetworkChanges(level.registryAccess());
+        if (changes.length > 0) {
+            PacketDistributor.sendToServer(new CPacketCoverSyncToServer(self().coverHolder.getBlockPos(),
+                    self().attachedSide, changes));
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -13,6 +14,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -48,7 +50,7 @@ public abstract class ManagedSyncBlockEntity extends BlockEntity implements ISyn
     @Override
     protected final void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
-        tag.merge(getSyncDataHolder().serializeNBT(registries, false));
+        tag.merge(getSyncDataHolder().serializeToSaveNBT(registries));
     }
 
     /**
@@ -89,10 +91,8 @@ public abstract class ManagedSyncBlockEntity extends BlockEntity implements ISyn
      */
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = new CompoundTag();
         getSyncDataHolder().resyncAllFields();
-        tag.merge(getSyncDataHolder().serializeNBT(registries, true, true));
-        return tag;
+        return getSyncDataHolder().serializeFullClientSyncNBT(registries);
     }
 
     /**
@@ -100,7 +100,7 @@ public abstract class ManagedSyncBlockEntity extends BlockEntity implements ISyn
      */
     @Override
     public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this, (b, r) -> getSyncDataHolder().serializeNBT(r, true));
+        return ClientboundBlockEntityDataPacket.create(this, (b, r) -> getSyncDataHolder().getPendingChanges());
     }
 
     @Override
@@ -123,10 +123,24 @@ public abstract class ManagedSyncBlockEntity extends BlockEntity implements ISyn
     @MustBeInvokedByOverriders
     public void serverTick() {
         setChanged();
+        if (getLevel() != null && syncDataHolder.scanAndMarkChanges(getLevel().registryAccess())) {
+            isDirty = true;
+        }
         if (isDirty) {
             Objects.requireNonNull(getLevel()).sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(),
                     Block.UPDATE_CLIENTS);
             isDirty = false;
+        }
+    }
+
+    public void sendServerSyncChanges() {
+        if (getLevel() == null || !getLevel().isClientSide) {
+            return;
+        }
+
+        byte[] changes = syncDataHolder.collectServerNetworkChanges(getLevel().registryAccess());
+        if (changes.length > 0) {
+            PacketDistributor.sendToServer(new CPacketMachineSyncToServer(getBlockPos(), changes));
         }
     }
 }

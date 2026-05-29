@@ -18,6 +18,8 @@ public class GTNetwork {
         registar.playBidirectional(SCPacketMonitorGroupNBTChange.TYPE, SCPacketMonitorGroupNBTChange.CODEC, SCPacketMonitorGroupNBTChange::execute);
 
         registar.playToServer(CPacketImageRequest.TYPE, CPacketImageRequest.CODEC, CPacketImageRequest::execute);
+        registar.playToServer(CPacketMachineSyncToServer.TYPE, CPacketMachineSyncToServer.CODEC, CPacketMachineSyncToServer::execute);
+        registar.playToServer(CPacketCoverSyncToServer.TYPE, CPacketCoverSyncToServer.CODEC, CPacketCoverSyncToServer::execute);
         registar.playToClient(SPacketImageResponse.TYPE, SPacketImageResponse.CODEC, SPacketImageResponse::execute);
 
         registar.playToServer(CPacketKeyDown.TYPE, CPacketKeyDown.CODEC, CPacketKeyDown::execute);
