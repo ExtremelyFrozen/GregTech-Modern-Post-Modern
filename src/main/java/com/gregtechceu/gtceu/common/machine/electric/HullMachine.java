@@ -9,17 +9,12 @@ import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.sync_system.ClassSyncData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
+import com.gregtechceu.gtceu.api.sync_system.codecs.GridNodeHostCodec;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.GridNodeHostTrait;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-
-import org.jetbrains.annotations.Nullable;
-
 public class HullMachine extends TieredPartMachine implements IMonitorComponent {
 
     @SaveField(nbtKey = "grid_node")
@@ -31,7 +26,7 @@ public class HullMachine extends TieredPartMachine implements IMonitorComponent 
     public HullMachine(BlockEntityCreationInfo info, int tier) {
         super(info, tier);
         if (GTCEu.Mods.isAE2Loaded()) {
-            this.gridNodeHost = GridNodeHostTransformer.attachToMachine(this);
+            this.gridNodeHost = GridNodeHostFactory.attachToMachine(this);
         } else {
             this.gridNodeHost = null;
         }
@@ -72,38 +67,16 @@ public class HullMachine extends TieredPartMachine implements IMonitorComponent 
     // ********** Misc **********//
     //////////////////////////////////////
 
-    private static class GridNodeHostTransformer implements ValueTransformer<Object> {
+    private static class GridNodeHostFactory {
 
         private static Object attachToMachine(HullMachine machine) {
             return machine.attachTrait(new GridNodeHostTrait(machine));
         }
-
-        @Override
-        public Tag serializeNBT(Object value, TransformerContext<Object> context) {
-            if (GTCEu.Mods.isAE2Loaded() &&
-                    context.currentValue() instanceof GridNodeHostTrait connectedBlockEntity) {
-                var compound = new CompoundTag();
-                connectedBlockEntity.getMainNode().saveToNBT(compound);
-                return compound;
-            }
-            return new CompoundTag();
-        }
-
-        @Override
-        public @Nullable Object deserializeNBT(Tag tag, TransformerContext<Object> context) {
-            if (GTCEu.Mods.isAE2Loaded() &&
-                    context.currentValue() instanceof GridNodeHostTrait connectedBlockEntity &&
-                    tag instanceof CompoundTag c) {
-                connectedBlockEntity.getMainNode().loadFromNBT(c);
-                return context.currentValue();
-            }
-            return null;
-        }
     }
 
     static {
-        ClassSyncData.getClassData(HullMachine.class).setCustomTransformerForField("gridNodeHost",
-                new GridNodeHostTransformer());
+        ClassSyncData.getClassData(HullMachine.class).setCustomContextualCodecForField("gridNodeHost",
+                GridNodeHostCodec.INSTANCE);
     }
 
     @Override

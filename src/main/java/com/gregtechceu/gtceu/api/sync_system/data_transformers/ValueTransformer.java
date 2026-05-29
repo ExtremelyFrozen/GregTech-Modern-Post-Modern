@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param <T> The type which this transformer can encode
  */
+@Deprecated(forRemoval = false)
 public interface ValueTransformer<T> {
 
     /**

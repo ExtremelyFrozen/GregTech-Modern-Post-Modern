@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@Deprecated(forRemoval = false)
 public final class ValueTransformers {
 
     private static final Map<Class<?>, ValueTransformer<?>> REGISTERED = new Reference2ReferenceOpenHashMap<>();
