@@ -125,12 +125,54 @@ public final class MachineTraitHolder {
 
     public CompoundTag serializeSyncData(HolderLookup.Provider lookup, boolean isClientSync, boolean fullSync) {
         CompoundTag tag = new CompoundTag();
-        traitsToSave.forEach((key, trait) -> tag.put(key,
-                trait.getSyncDataHolder().serializeNBT(lookup, isClientSync, fullSync)));
+        if (isClientSync) {
+            for (int i = 0; i < traits.size(); i++) {
+                CompoundTag traitTag = traits.get(i).getSyncDataHolder().serializeNBT(lookup, true, fullSync);
+                if (fullSync || !traitTag.isEmpty()) {
+                    tag.put(Integer.toString(i), traitTag);
+                }
+            }
+        } else {
+            traitsToSave.forEach((key, trait) -> tag.put(key,
+                    trait.getSyncDataHolder().serializeNBT(lookup, false, fullSync)));
+        }
         return tag;
     }
 
+    public boolean scanAndMarkClientChanges(HolderLookup.Provider lookup, boolean fullSync) {
+        boolean changed = false;
+        for (MachineTrait trait : traits) {
+            if (fullSync) {
+                trait.getSyncDataHolder().resyncAllFields();
+                changed = true;
+            } else if (trait.getSyncDataHolder().scanAndMarkChanges(lookup)) {
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
     public void deserializeSyncData(HolderLookup.Provider lookup, CompoundTag tag, boolean isClientSync) {
+        if (isClientSync) {
+            for (var key : tag.getAllKeys()) {
+                int index;
+                try {
+                    index = Integer.parseInt(key);
+                } catch (NumberFormatException ignored) {
+                    GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but it is not a trait index",
+                            key);
+                    continue;
+                }
+                if (index < 0 || index >= traits.size()) {
+                    GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but only {} traits are attached",
+                            key, traits.size());
+                    continue;
+                }
+                traits.get(index).getSyncDataHolder().deserializeNBT(lookup, tag.getCompound(key), true);
+            }
+            return;
+        }
+
         for (var key : tag.getAllKeys()) {
             var trait = getPersistentTrait(key);
             if (trait == null) {

@@ -21,6 +21,13 @@ public final class MachineTraitHolderCodec implements ContextualFieldCodec<Machi
     }
 
     @Override
+    public boolean shouldSyncField(MachineTraitHolder value, Context<MachineTraitHolder> context, boolean fullSync,
+                                   boolean manuallyDirty) {
+        if (!context.isClientSync()) return fullSync || manuallyDirty;
+        return value.scanAndMarkClientChanges(context.lookup(), fullSync || manuallyDirty);
+    }
+
+    @Override
     public MachineTraitHolder deserializeNBT(Tag tag, Context<MachineTraitHolder> context) {
         MachineTraitHolder holder = Objects.requireNonNull(context.currentValue());
         holder.deserializeSyncData(context.lookup(), (CompoundTag) tag, context.isClientSync());

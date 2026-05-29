@@ -34,6 +34,17 @@ public class SyncDataHolder {
         }
 
         @Override
+        public boolean shouldSyncField(ISyncManaged value, Context<ISyncManaged> context, boolean fullSync,
+                                       boolean manuallyDirty) {
+            if (!context.isClientSync()) return fullSync || manuallyDirty;
+            if (fullSync || manuallyDirty) {
+                value.getSyncDataHolder().resyncAllFields();
+                return true;
+            }
+            return value.getSyncDataHolder().scanAndMarkChanges(context.lookup());
+        }
+
+        @Override
         public @Nullable ISyncManaged deserializeNBT(Tag tag, Context<ISyncManaged> context) {
             ISyncManaged syncManaged = context.currentValue();
             if (syncManaged == null) {
@@ -127,8 +138,9 @@ public class SyncDataHolder {
         for (var field : syncData.getClientSyncFields()) {
             Object currentValue = field.handle.get(holder);
             Object previousValue = cachedClientValues.get(field);
-            boolean changed = fullSync || dirtySyncFields.contains(field.fieldName) ||
-                    !Objects.equals(currentValue, previousValue);
+            boolean manuallyDirty = dirtySyncFields.contains(field.fieldName);
+            boolean changed = fullSync || manuallyDirty || !Objects.equals(currentValue, previousValue) ||
+                    shouldSyncContextualField(registries, field, currentValue, fullSync, manuallyDirty);
             if (changed) {
                 Tag nbtValue = FieldSyncHandler.serializeField(registries, holder, field, true, fullSync);
                 changes.put(field.nbtSaveKey, nbtValue);
@@ -143,6 +155,25 @@ public class SyncDataHolder {
             return true;
         }
         return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean shouldSyncContextualField(HolderLookup.Provider registries, FieldSyncData field,
+                                              @Nullable Object currentValue, boolean fullSync,
+                                              boolean manuallyDirty) {
+        if (currentValue == null) {
+            return false;
+        }
+        if (field.contextualCodec == null) {
+            field.setContextualCodec(FieldCodecs.getContextual(field.type.getRawType()));
+        }
+        if (field.contextualCodec == null) {
+            return false;
+        }
+        return ((ContextualFieldCodec<Object>) field.contextualCodec).shouldSyncField(currentValue,
+                new ContextualFieldCodec.Context<>(holder, field.type, currentValue, field.fieldName,
+                        true, fullSync, registries),
+                fullSync, manuallyDirty);
     }
 
     public CompoundTag getPendingChanges() {
@@ -240,7 +271,9 @@ public class SyncDataHolder {
         for (var field : fieldsToCheck) {
 
             Tag savedValue = tag.get(field.nbtSaveKey);
-            FieldSyncHandler.deserializeField(registries, holder, field, savedValue, readingClientFields);
+            if (savedValue != null) {
+                FieldSyncHandler.deserializeField(registries, holder, field, savedValue, readingClientFields);
+            }
 
             if (readingClientFields) {
                 cachedClientValues.put(field, field.handle.get(holder));
