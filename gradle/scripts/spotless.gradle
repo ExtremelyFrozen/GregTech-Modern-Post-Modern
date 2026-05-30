@@ -26,7 +26,7 @@ spotless {
         eclipse('4.31').configFile(formatFile)
     }
     kotlin {
-        target'src/main/java/**/*.kt', 'src/test/java/**/*.kt'
+        target 'src/main/java/**/*.kt', 'src/test/java/**/*.kt'
 
         def orderFile = file("$rootDir/gradle/spotless/spotless.ktlint")
         ktlint()
@@ -34,9 +34,15 @@ spotless {
             .editorConfigOverride([
                 'max_line_length': '200',
                 'ktlint_standard_no-unused-imports': 'enabled',
+                'ktlint_standard_package-name': 'disabled',
             ])
 
         toggleOffOn()
+        replaceRegex(
+            'empty Kotlin function bodies',
+            /(?m)(fun[^\n{=]*\([^)]*\)(?:\s*:\s*[^\n{=]+)?\s*)\{\r?\n[ \t]*\}/,
+            '$1{}'
+        )
         trimTrailingWhitespace()
         leadingSpacesToTabs()
         endWithNewline()
