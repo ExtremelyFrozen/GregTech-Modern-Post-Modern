@@ -49,11 +49,9 @@ class ItemSyncHolder(owner: ISyncManaged) : ISyncManaged {
 	}
 
 	@Nullable
-	override fun getParentSyncObject(): ISyncManaged = this
+	override fun getParentSyncObject(): ISyncManaged? = null
 
-	override fun scheduleRenderUpdate() {
-	}
+	override fun scheduleRenderUpdate() {}
 
-	override fun markAsChanged() {
-	}
+	override fun markAsChanged() {}
 }
