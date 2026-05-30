@@ -40,6 +40,7 @@ import com.gregtechceu.gtceu.client.util.ModelUtils;
 import com.gregtechceu.gtceu.common.cover.FluidFilterCover;
 import com.gregtechceu.gtceu.common.cover.ItemFilterCover;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
+import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.common.machine.owner.MachineOwner;
 import com.gregtechceu.gtceu.common.machine.owner.PlayerOwner;
@@ -224,14 +225,28 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
      *
      * @param componentInput Component Input
      */
-    protected void applyImplicitComponents(DataComponentInput componentInput) {}
+    protected void applyImplicitComponents(DataComponentInput componentInput) {
+        if (getLevel() == null) return;
+
+        CompoundTag itemData = componentInput.get(GTDataComponents.BLOCK_ITEM_DATA);
+        if (itemData != null && !itemData.isEmpty()) {
+            syncDataHolder.deserializeItemNBT(getLevel().registryAccess(), itemData);
+        }
+    }
 
     /**
      * Saves this machine's data to item stack components.
      *
      * @param components Component Builder
      */
-    public void collectImplicitComponents(DataComponentMap.Builder components) {}
+    public void collectImplicitComponents(DataComponentMap.Builder components) {
+        if (getLevel() == null) return;
+
+        CompoundTag itemData = syncDataHolder.serializeToItemNBT(getLevel().registryAccess());
+        if (!itemData.isEmpty()) {
+            components.set(GTDataComponents.BLOCK_ITEM_DATA, itemData);
+        }
+    }
 
     //////////////////////////////////////
     // ***** Tickable Manager ****//

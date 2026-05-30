@@ -1,19 +1,27 @@
-package com.gregtechceu.gtceu.api.sync_system.data_transformers.gtceu;
+package com.gregtechceu.gtceu.api.sync_system.codecs;
 
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
+import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 
 import org.jetbrains.annotations.Nullable;
 
-public class MonitorGroupTransformer implements ValueTransformer<MonitorGroup> {
+public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGroup> {
+
+    public static final Class<MonitorGroup> TYPE = MonitorGroup.class;
+    public static final MonitorGroupCodec INSTANCE = new MonitorGroupCodec();
+
+    private MonitorGroupCodec() {}
 
     @Override
-    public CompoundTag serializeNBT(MonitorGroup value, ValueTransformer.TransformerContext<MonitorGroup> context) {
+    public CompoundTag serializeNBT(MonitorGroup value, Context<MonitorGroup> context) {
         CompoundTag tag = new CompoundTag();
         tag.putString("name", value.getName());
         ListTag list = new ListTag();
@@ -32,10 +40,10 @@ public class MonitorGroupTransformer implements ValueTransformer<MonitorGroup> {
     }
 
     @Override
-    public @Nullable MonitorGroup deserializeNBT(Tag tag, ValueTransformer.TransformerContext<MonitorGroup> context) {
-        var compoundTag = ValueTransformer.assertTagType(CompoundTag.class, tag, context);
-        CustomItemStackHandler handler = new CustomItemStackHandler(),
-                placeholderSlotsHandler = new CustomItemStackHandler();
+    public @Nullable MonitorGroup deserializeNBT(Tag tag, Context<MonitorGroup> context) {
+        if (!(tag instanceof CompoundTag compoundTag)) return null;
+        CustomItemStackHandler handler = new CustomItemStackHandler();
+        CustomItemStackHandler placeholderSlotsHandler = new CustomItemStackHandler();
         handler.deserializeNBT(context.lookup(), compoundTag.getCompound("items"));
         placeholderSlotsHandler.deserializeNBT(context.lookup(), compoundTag.getCompound("placeholderSlots"));
         var group = new MonitorGroup(compoundTag.getString("name"), handler, placeholderSlotsHandler);

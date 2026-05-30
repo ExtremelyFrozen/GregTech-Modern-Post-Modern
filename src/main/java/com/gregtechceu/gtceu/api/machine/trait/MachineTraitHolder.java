@@ -2,11 +2,9 @@ package com.gregtechceu.gtceu.api.machine.trait;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformer;
-import com.gregtechceu.gtceu.api.sync_system.data_transformers.ValueTransformers;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -125,6 +123,67 @@ public final class MachineTraitHolder {
         return Optional.ofNullable(getTrait(type));
     }
 
+    public CompoundTag serializeSyncData(HolderLookup.Provider lookup, boolean isClientSync, boolean fullSync) {
+        CompoundTag tag = new CompoundTag();
+        if (isClientSync) {
+            for (int i = 0; i < traits.size(); i++) {
+                CompoundTag traitTag = traits.get(i).getSyncDataHolder().serializeNBT(lookup, true, fullSync);
+                if (fullSync || !traitTag.isEmpty()) {
+                    tag.put(Integer.toString(i), traitTag);
+                }
+            }
+        } else {
+            traitsToSave.forEach((key, trait) -> tag.put(key,
+                    trait.getSyncDataHolder().serializeNBT(lookup, false, fullSync)));
+        }
+        return tag;
+    }
+
+    public boolean scanAndMarkClientChanges(HolderLookup.Provider lookup, boolean fullSync) {
+        boolean changed = false;
+        for (MachineTrait trait : traits) {
+            if (fullSync) {
+                trait.getSyncDataHolder().resyncAllFields();
+                changed = true;
+            } else if (trait.getSyncDataHolder().scanAndMarkChanges(lookup)) {
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    public void deserializeSyncData(HolderLookup.Provider lookup, CompoundTag tag, boolean isClientSync) {
+        if (isClientSync) {
+            for (var key : tag.getAllKeys()) {
+                int index;
+                try {
+                    index = Integer.parseInt(key);
+                } catch (NumberFormatException ignored) {
+                    GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but it is not a trait index",
+                            key);
+                    continue;
+                }
+                if (index < 0 || index >= traits.size()) {
+                    GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but only {} traits are attached",
+                            key, traits.size());
+                    continue;
+                }
+                traits.get(index).getSyncDataHolder().deserializeNBT(lookup, tag.getCompound(key), true);
+            }
+            return;
+        }
+
+        for (var key : tag.getAllKeys()) {
+            var trait = getPersistentTrait(key);
+            if (trait == null) {
+                GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but no syncable trait has that ID",
+                        key);
+                continue;
+            }
+            trait.getSyncDataHolder().deserializeNBT(lookup, tag.getCompound(key), isClientSync);
+        }
+    }
+
     /**
      * Get all traits with the specified type.
      *
@@ -135,42 +194,5 @@ public final class MachineTraitHolder {
         List<T> traitList = (List<T>) traitsByType.get(type);
         if (traitList == null) return List.of();
         return Collections.unmodifiableList(traitList);
-    }
-
-    private static class MachineTraitHolderTransformer implements ValueTransformer<MachineTraitHolder> {
-
-        @Override
-        public Tag serializeNBT(MachineTraitHolder value, TransformerContext<MachineTraitHolder> context) {
-            CompoundTag tag = new CompoundTag();
-
-            value.traitsToSave.forEach((k, v) -> tag.put(k,
-                    v.getSyncDataHolder().serializeNBT(context.lookup(), context.isClientSync(),
-                            context.isClientFullSyncUpdate())));
-
-            return tag;
-        }
-
-        @Override
-        public @Nullable MachineTraitHolder deserializeNBT(Tag tag, TransformerContext<MachineTraitHolder> context) {
-            var traitHolder = Objects.requireNonNull(context.currentValue());
-            var compoundTag = (CompoundTag) tag;
-
-            for (var key : compoundTag.getAllKeys()) {
-                var trait = traitHolder.getPersistentTrait(key);
-                if (trait == null) {
-                    GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but no syncable trait has that ID",
-                            key);
-                    continue;
-                }
-                trait.getSyncDataHolder().deserializeNBT(context.lookup(), compoundTag.getCompound(key),
-                        context.isClientSync());
-            }
-
-            return null;
-        }
-    }
-
-    static {
-        ValueTransformers.registerTransformer(MachineTraitHolder.class, new MachineTraitHolderTransformer());
     }
 }
