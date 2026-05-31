@@ -252,7 +252,9 @@ public class Material {
      * @see #getFluid(FluidStorageKey, int)
      */
     public FluidStack getFluid(int amount) {
-        return new FluidStack(getFluid(), amount);
+        Fluid fluid = getFluid();
+        if (fluid != null) return new FluidStack(fluid, amount);
+        else return FluidStack.EMPTY;
     }
 
     /**
@@ -261,7 +263,9 @@ public class Material {
      * @return a FluidStack with the fluid and amount
      */
     public FluidStack getFluid(@NotNull FluidStorageKey key, int amount) {
-        return new FluidStack(getFluid(key), amount);
+        Fluid fluid = getFluid(key);
+        if (fluid != null) return new FluidStack(fluid, amount);
+        else return FluidStack.EMPTY;
     }
 
     /**
@@ -330,14 +334,23 @@ public class Material {
         return prop.getTier(this);
     }
 
+    /**
+     * @return the correct "molten" fluid for a material
+     */
     public Fluid getHotFluid() {
-        AlloyBlastProperty prop = properties.getProperty(PropertyKey.ALLOY_BLAST);
-        return prop == null ? null : prop.getFluid();
+        if (hasProperty(PropertyKey.ALLOY_BLAST)) {
+            return getFluid(FluidStorageKeys.MOLTEN);
+        }
+        if (!TagPrefix.ingotHot.doGenerateItem(this) && hasProperty(PropertyKey.FLUID)) {
+            return getFluid(FluidStorageKeys.LIQUID);
+        }
+        return null;
     }
 
     public FluidStack getHotFluid(int amount) {
-        AlloyBlastProperty prop = properties.getProperty(PropertyKey.ALLOY_BLAST);
-        return prop == null ? null : new FluidStack(prop.getFluid(), amount);
+        Fluid fluid = getHotFluid();
+        if (fluid != null) return new FluidStack(fluid, amount);
+        else return FluidStack.EMPTY;
     }
 
     public Item getBucket() {
