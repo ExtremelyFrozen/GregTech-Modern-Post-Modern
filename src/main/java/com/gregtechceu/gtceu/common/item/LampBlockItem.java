@@ -2,7 +2,7 @@ package com.gregtechceu.gtceu.common.item;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.client.renderer.block.LampItemRenderer;
-import com.gregtechceu.gtceu.client.util.ModelUtils;
+import com.gregtechceu.gtceu.client.util.ModelEventHelper;
 import com.gregtechceu.gtceu.common.block.LampBlock;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 
@@ -84,23 +84,19 @@ public class LampBlockItem extends BlockItem {
     private static class ClientCallWrapper {
 
         private static void registerEventListener(LampBlockItem item) {
-            ModelUtils.registerBakeEventListener(false, event -> {
+            ModelEventHelper.registerBakeEventListener(false, (resourceLocation, bakedModel, rootModel, modelBakery) -> {
                 ResourceLocation model = BuiltInRegistries.ITEM.getKey(item).withPrefix("item/");
-                BakedModel original = event.getModels().get(model);
-                ModelResourceLocation modelLoc;
-                if (original == null) {
-                    modelLoc = ModelResourceLocation.inventory(model);
-                    original = event.getModels().get(model);
-                } else {
-                    modelLoc = ModelResourceLocation.inventory(model);
+                ModelResourceLocation modelLoc = ModelResourceLocation.inventory(model);
+                if (!resourceLocation.equals(model) && !resourceLocation.equals(modelLoc)) {
+                    return bakedModel;
                 }
-                event.getModels().put(modelLoc, new BakedModelWrapper<>(original) {
+                return new BakedModelWrapper<>(bakedModel) {
 
                     @Override
                     public boolean isCustomRenderer() {
                         return true;
                     }
-                });
+                };
             });
         }
     }

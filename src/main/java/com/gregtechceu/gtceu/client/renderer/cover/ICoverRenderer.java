@@ -10,6 +10,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import org.jetbrains.annotations.NotNull;
@@ -23,4 +24,22 @@ public interface ICoverRenderer {
     void renderCover(List<BakedQuad> quads, @Nullable Direction side, RandomSource rand,
                      @NotNull CoverBehavior coverBehavior, BlockPos pos, BlockAndTintGetter level,
                      @NotNull ModelData modelData, @Nullable RenderType renderType);
+
+    @OnlyIn(Dist.CLIENT)
+    default ModelData getModelData(CoverBehavior coverBehavior, BlockPos pos, BlockAndTintGetter level,
+                                   ModelData holderModelData) {
+        return ModelData.EMPTY;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    default ChunkRenderTypeSet getRenderTypes(CoverBehavior coverBehavior, BlockPos pos, BlockAndTintGetter level,
+                                              RandomSource rand, ModelData modelData) {
+        return ChunkRenderTypeSet.none();
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    default boolean shouldRenderBackPlateForSide(CoverBehavior coverBehavior, BlockPos pos, BlockAndTintGetter level,
+                                                 @Nullable Direction side) {
+        return true;
+    }
 }
