@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.common;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
 import com.gregtechceu.gtceu.api.capability.IMedicalConditionTracker;
@@ -419,25 +418,25 @@ public class CommonEventListener {
             GlobalPosWithRot target = stack.get(GTDataComponents.MONITOR_TARGET);
             BlockPos pos = target.pos();
             event.addTooltipLines(Component.translatable(
-                    "gtceu.tooltip.wireless_transmitter_bind",
+                    "gtpm.tooltip.wireless_transmitter_bind",
                     Component.literal("" + pos.getX()).withStyle(ChatFormatting.GOLD),
                     Component.literal("" + pos.getY()).withStyle(ChatFormatting.GOLD),
                     Component.literal("" + pos.getZ()).withStyle(ChatFormatting.GOLD),
-                    Component.translatable("gtceu.direction.tooltip." + target.side().getName())
+                    Component.translatable("gtpm.direction.tooltip." + target.side().getName())
                             .withStyle(ChatFormatting.DARK_PURPLE),
                     Component.translatable(target.dimension().location().toLanguageKey(Level.TRANSLATION_PREFIX))
                             .withStyle(ChatFormatting.DARK_PURPLE)));
         }
         if (!stack.has(GTDataComponents.RESEARCH_ITEM) && stack.has(GTDataComponents.DATA_COPY_POS)) {
             BlockPos pos = stack.get(GTDataComponents.DATA_COPY_POS);
-            event.addTooltipLines(Component.translatable("gtceu.tooltip.proxy_bind",
+            event.addTooltipLines(Component.translatable("gtpm.tooltip.proxy_bind",
                     Component.literal("" + pos.getX()).withStyle(ChatFormatting.LIGHT_PURPLE),
                     Component.literal("" + pos.getY()).withStyle(ChatFormatting.LIGHT_PURPLE),
                     Component.literal("" + pos.getZ()).withStyle(ChatFormatting.LIGHT_PURPLE)));
         }
         if (stack.has(GTDataComponents.COMPUTER_MONITOR_DATA)) {
             FormatStringList list = stack.getOrDefault(GTDataComponents.COMPUTER_MONITOR_DATA, FormatStringList.EMPTY);
-            event.addTooltipLines(Component.translatable("gtceu.tooltip.computer_monitor_data",
+            event.addTooltipLines(Component.translatable("gtpm.tooltip.computer_monitor_data",
                     GTStringUtils.toCompactedComponent(list.lines())));
         }
         if (!stack.has(GTDataComponents.DATA_COPY_POS)) {
@@ -493,8 +492,9 @@ public class CommonEventListener {
         }
     }
 
+    @SubscribeEvent
     public static void addAlloyBlastProperties(PostMaterialEvent event) {
-        for (Material material : GTCEuAPI.materialManager) {
+        for (Material material : GTRegistries.MATERIALS) {
             if (!material.hasFlag(MaterialFlags.DISABLE_ALLOY_PROPERTY)) {
                 addAlloyBlastProperty(material);
             }

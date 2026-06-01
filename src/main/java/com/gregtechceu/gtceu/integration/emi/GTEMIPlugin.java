@@ -69,7 +69,7 @@ public class GTEMIPlugin implements EmiPlugin {
         registry.addCategory(GTProgrammedCircuitCategory.CATEGORY);
 
         // Recipes
-        MultiblockInfoEmiCategory.registerDisplays(registry);
+        // MultiblockInfoEmiCategory.registerDisplays(registry);
         GTRecipeEMICategory.registerDisplays(registry);
         if (!ConfigHolder.INSTANCE.compat.hideOreProcessingDiagrams)
             GTOreProcessingEmiCategory.registerDisplays(registry);

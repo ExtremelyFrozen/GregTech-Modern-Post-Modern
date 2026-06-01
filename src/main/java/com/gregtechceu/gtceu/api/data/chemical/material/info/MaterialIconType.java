@@ -2,8 +2,6 @@ package com.gregtechceu.gtceu.api.data.chemical.material.info;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.common.data.models.GTModels;
-import com.gregtechceu.gtceu.integration.kjs.GTCEuStartupEvents;
-import com.gregtechceu.gtceu.integration.kjs.events.MaterialIconInfoEventJS;
 
 import com.lowdragmc.lowdraglib.utils.ResourceHelper;
 
@@ -129,11 +127,7 @@ public record MaterialIconType(String name) {
         ICON_TYPES.put(this.name, this);
     }
 
-    public static void init() {
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            KJSCallWrapper.postEvent();
-        }
-    }
+    public static void init() {}
 
     public static MaterialIconType getByName(String name) {
         return ICON_TYPES.get(name);
@@ -294,12 +288,5 @@ public record MaterialIconType(String name) {
     @Override
     public String toString() {
         return this.name;
-    }
-
-    private static class KJSCallWrapper {
-
-        private static void postEvent() {
-            GTCEuStartupEvents.MATERIAL_ICON_INFO.post(new MaterialIconInfoEventJS());
-        }
     }
 }

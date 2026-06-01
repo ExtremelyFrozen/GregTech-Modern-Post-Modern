@@ -35,7 +35,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -60,7 +59,6 @@ public class RotorHolderPartMachine extends TieredPartMachine {
     public int rotorSpeed;
     @SaveField
     @SyncToClient
-    @NotNull
     public Material rotorMaterial = GTMaterials.NULL; // 0 - no rotor
     @Nullable
     protected TickableSubscription rotorSpeedSubs;
@@ -69,19 +67,13 @@ public class RotorHolderPartMachine extends TieredPartMachine {
 
     public RotorHolderPartMachine(BlockEntityCreationInfo info, int tier) {
         super(info, tier);
-        this.inventory = new NotifiableItemStackHandler(this, 1, IO.NONE, IO.BOTH);
+        this.inventory = attachTrait(new NotifiableItemStackHandler(1, IO.NONE, IO.BOTH));
         this.maxRotorHolderSpeed = 2000 + 1000 * tier;
     }
 
     //////////////////////////////////////
     // ***** Initialization ******//
     //////////////////////////////////////
-
-    @Override
-    public void onMachineDestroyed() {
-        super.onMachineDestroyed();
-        inventory.dropInventoryInWorld();
-    }
 
     @Override
     public int tintColor(int index) {
@@ -273,7 +265,7 @@ public class RotorHolderPartMachine extends TieredPartMachine {
     public void attachTooltips(TooltipsPanel tooltipsPanel) {
         tooltipsPanel.attachTooltips(new Basic(
                 () -> GuiTextures.INDICATOR_NO_STEAM.get(false),
-                () -> List.of(Component.translatable("gtceu.multiblock.universal.rotor_obstructed")
+                () -> List.of(Component.translatable("gtpm.multiblock.universal.rotor_obstructed")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED))),
                 () -> !isFrontFaceFree(),
                 () -> null));

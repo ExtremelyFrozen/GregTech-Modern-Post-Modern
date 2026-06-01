@@ -1,0 +1,8 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/tools/handle",
+		"layer1": "gtpm:item/tools/hoe",
+		"layer2": "gtpm:item/tools/hoe_overlay"
+	}
+}

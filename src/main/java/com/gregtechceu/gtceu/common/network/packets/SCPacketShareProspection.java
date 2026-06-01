@@ -78,7 +78,7 @@ public class SCPacketShareProspection implements CustomPacketPayload {
 
                 assert Minecraft.getInstance().player != null;
                 Minecraft.getInstance().player.sendSystemMessage(Component
-                        .translatable("command.gtceu.share_prospection_data.notification", playerName));
+                        .translatable("command.gtpm.share_prospection_data.notification", playerName));
             }
             ClientCacheManager.processProspectionShare(cacheName, key, isDimCache, dimension, data,
                     context.player().registryAccess());

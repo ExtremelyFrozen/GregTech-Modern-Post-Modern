@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/metallic/raw_ore",
+	"textures": {
+		"layer1": "gtpm:item/material_sets/radioactive/raw_ore_secondary"
+	}
+}

@@ -100,13 +100,13 @@ public class CreativeComputationProviderMachine extends MetaMachine
                 .widget(new LabelWidget(7, 7, "CWUt"))
                 .widget(new TextFieldWidget(9, 20, 122, 16, () -> String.valueOf(maxCWUt),
                         value -> maxCWUt = Integer.parseInt(value)).setNumbersOnly(0, Integer.MAX_VALUE))
-                .widget(new LabelWidget(7, 42, "gtceu.creative.computation.average"))
+                .widget(new LabelWidget(7, 42, "gtpm.creative.computation.average"))
                 .widget(new LabelWidget(7, 54, () -> String.valueOf(lastRequestedCWUt)))
                 .widget(new SwitchWidget(9, 66, 122, 20, (clickData, value) -> setActive(value))
                         .setSupplier(this::isActive)
                         .setTexture(new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtceu.creative.activity.off")),
+                                new TextTexture("gtpm.creative.activity.off")),
                                 new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                        new TextTexture("gtceu.creative.activity.on"))));
+                                        new TextTexture("gtpm.creative.activity.on"))));
     }
 }

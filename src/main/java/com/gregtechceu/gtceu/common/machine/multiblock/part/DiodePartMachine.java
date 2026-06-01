@@ -74,8 +74,9 @@ public class DiodePartMachine extends TieredIOPartMachine {
         long tierVoltage = GTValues.V[getTier()];
 
         this.amps = 1;
-        this.energyContainer = new NotifiableEnergyContainer(this, tierVoltage * MAX_AMPS * 2, tierVoltage, MAX_AMPS,
-                tierVoltage, MAX_AMPS);
+        this.energyContainer = attachTrait(
+                new NotifiableEnergyContainer(tierVoltage * MAX_AMPS * 2, tierVoltage, MAX_AMPS,
+                        tierVoltage, MAX_AMPS));
 
         reinitializeEnergyContainer();
     }
@@ -126,7 +127,7 @@ public class DiodePartMachine extends TieredIOPartMachine {
         cycleAmpMode();
         if (!isRemote()) {
             this.scheduleRenderUpdate();
-            context.getPlayer().sendSystemMessage(Component.translatable("gtceu.machine.diode.message", amps));
+            context.getPlayer().sendSystemMessage(Component.translatable("gtpm.machine.diode.message", amps));
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.CONSUME;

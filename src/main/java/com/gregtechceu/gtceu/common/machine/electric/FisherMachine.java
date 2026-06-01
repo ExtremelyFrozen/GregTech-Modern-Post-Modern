@@ -14,11 +14,11 @@ import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.ISubscription;
@@ -112,9 +112,9 @@ public class FisherMachine extends TieredEnergyMachine
         this.inventorySize = (tier + 1) * (tier + 1);
         this.maxProgress = calcMaxProgress(tier);
         this.energyPerTick = GTValues.V[tier - 1];
-        this.cache = new NotifiableItemStackHandler(this, inventorySize, IO.BOTH, IO.OUT);
+        this.cache = attachTrait(new NotifiableItemStackHandler(inventorySize, IO.BOTH, IO.OUT));
 
-        this.baitHandler = new NotifiableItemStackHandler(this, 1, IO.BOTH, IO.IN);
+        this.baitHandler = attachTrait(new NotifiableItemStackHandler(1, IO.BOTH, IO.IN));
         baitHandler.setFilter(item -> item.is(Items.STRING));
 
         this.chargerInventory = new CustomItemStackHandler();
@@ -122,7 +122,7 @@ public class FisherMachine extends TieredEnergyMachine
                 (ConfigHolder.INSTANCE.compat.energy.nativeEUToFE &&
                         GTCapabilityHelper.getForgeEnergyItem(item) != null));
 
-        autoOutput = AutoOutputTrait.ofItems(this, cache);
+        autoOutput = attachTrait(AutoOutputTrait.ofItems(cache));
         environmentalExplosionTrait.setEnableEnvironmentalExplosions(false);
     }
 
@@ -166,8 +166,6 @@ public class FisherMachine extends TieredEnergyMachine
     public void onMachineDestroyed() {
         super.onMachineDestroyed();
         chargerInventory.dropInventoryInWorld(getLevel(), getBlockPos());
-        baitHandler.dropInventoryInWorld();
-        cache.dropInventoryInWorld();
     }
 
     public static int calcMaxProgress(int tier) {
@@ -328,7 +326,7 @@ public class FisherMachine extends TieredEnergyMachine
             slotWidget.setHandlerSlot(machine.chargerInventory, 0);
             slotWidget.setCanPutItems(true);
             slotWidget.setCanTakeItems(true);
-            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtceu.gui.charger_slot.tooltip",
+            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
                     GTValues.VNF[machine.getTier()], GTValues.VNF[machine.getTier()]).toArray(new MutableComponent[0]));
         });
     }
@@ -342,7 +340,7 @@ public class FisherMachine extends TieredEnergyMachine
         }, (toggleButtonWidget, machine) -> {
             toggleButtonWidget.setSupplier(machine::isJunkEnabled);
             toggleButtonWidget.setOnPressCallback((data, bool) -> machine.setJunkEnabled(bool));
-            toggleButtonWidget.setHoverTooltips(LangHandler.getMultiLang("gtceu.gui.fisher_mode.tooltip",
+            toggleButtonWidget.setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.fisher_mode.tooltip",
                     GTValues.VNF[machine.getTier()], GTValues.VNF[machine.getTier()]).toArray(new MutableComponent[0]));
         });
     }

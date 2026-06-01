@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.client.model.BaseBakedModel;
 import com.gregtechceu.gtceu.client.model.GTModelProperties;
 import com.gregtechceu.gtceu.client.model.IBlockEntityRendererBakedModel;
@@ -13,8 +12,11 @@ import com.gregtechceu.gtceu.client.model.TextureOverrideModel;
 import com.gregtechceu.gtceu.client.model.machine.multipart.MultiPartBakedModel;
 import com.gregtechceu.gtceu.client.renderer.cover.ICoverableRenderer;
 import com.gregtechceu.gtceu.client.renderer.machine.DynamicRender;
+import com.gregtechceu.gtceu.client.util.FacadeBlockAndTintGetter;
 import com.gregtechceu.gtceu.client.util.StaticFaceBakery;
 import com.gregtechceu.gtceu.common.data.models.GTModels;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
+import com.gregtechceu.gtceu.core.mixins.neoforge.BakedModelWrapperAccessor;
 
 import com.lowdragmc.lowdraglib.client.bakedpipeline.FaceQuad;
 import com.lowdragmc.lowdraglib.client.model.custommodel.CustomBakedModel;
@@ -57,8 +59,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.gregtechceu.gtceu.api.machine.MetaMachine.*;
 
 public final class MachineModel extends BaseBakedModel implements ICoverableRenderer,
                                 IBlockEntityRendererBakedModel<BlockEntity> {
@@ -229,7 +229,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
         }
 
         // render output overlays
-        var outputTrait = machine.getTraitHolder().getTrait(AutoOutputTrait.TYPE);
+        var outputTrait = machine.getTrait(AutoOutputTrait.TYPE);
         if (outputTrait != null && outputTrait.supportsAutoOutputItems()) {
             var itemFace = outputTrait.getItemOutputDirection();
             if (itemFace != null && side == itemFace) {
@@ -272,13 +272,23 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
         }
         // the instanceof check also ensures it's not null
         if (machine instanceof IMultiPart part && part.replacePartModelWhenFormed()) {
-            quads = replacePartBaseModel(quads, part, machine.getFrontFacing(), side, rand, modelData, renderType);
+            quads = replacePartBaseModel(quads, part, machine.getFrontFacing(), level, pos, blockState,
+                    side, rand, modelData, renderType);
         }
 
         // we have to recalculate CTM ourselves.
         // this is the slowest part by a long shot because the LDLib quad logic isn't very optimized.
         if (level != null && pos != null && blockState != null) {
-            return CustomBakedModel.reBakeCustomQuads(quads, level, pos, blockState, side, 0.0f);
+            BlockState ctmState = blockState;
+            BlockAndTintGetter ctmLevel = level;
+            if (machine instanceof IMultiPart part && part.isFormed()) {
+                BlockState appearance = part.getFormedAppearance(blockState, pos, side);
+                if (appearance != null) {
+                    ctmState = appearance;
+                    ctmLevel = new FacadeBlockAndTintGetter(level, pos, appearance, level.getBlockEntity(pos));
+                }
+            }
+            return CustomBakedModel.reBakeCustomQuads(quads, ctmLevel, pos, ctmState, side, 0.0f);
         }
         return quads;
     }
@@ -296,6 +306,8 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
     }
 
     public List<BakedQuad> replacePartBaseModel(List<BakedQuad> originalQuads, IMultiPart part, Direction frontFacing,
+                                                @Nullable BlockAndTintGetter level, @Nullable BlockPos pos,
+                                                @Nullable BlockState blockState,
                                                 @Nullable Direction side, RandomSource rand,
                                                 ModelData modelData, @Nullable RenderType renderType) {
         var controllers = part.getControllers();
@@ -310,6 +322,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
                         rand, modelData, renderType);
             } else if (model instanceof MachineModel controllerModel) {
                 newQuads = renderPartOverrides(controllerModel, controller, originalQuads, part, frontFacing,
+                        level, pos, blockState,
                         side, rand, modelData, renderType);
             }
             if (newQuads != null) {
@@ -332,11 +345,14 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
 
     private List<BakedQuad> renderPartOverrides(MachineModel controllerModel, MultiblockControllerMachine controller,
                                                 List<BakedQuad> quads, IMultiPart part, Direction frontFacing,
+                                                @Nullable BlockAndTintGetter level, @Nullable BlockPos pos,
+                                                @Nullable BlockState blockState,
                                                 @Nullable Direction side, RandomSource rand,
                                                 ModelData modelData, @Nullable RenderType renderType) {
         var overrides = controllerModel.textureOverrides;
 
         List<BakedQuad> renderQuads = new LinkedList<>();
+        boolean controllerDrewBaseModel = false;
         for (var render : controllerModel.getDynamicRenders()) {
             if (render instanceof IControllerModelRenderer controllerRenderer) {
                 controllerRenderer.renderPartModel(renderQuads, controller, part, frontFacing, side,
@@ -347,6 +363,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
                     for (String key : this.replaceableTextures) {
                         overrides.put(key, blankSprite);
                     }
+                    controllerDrewBaseModel = true;
                     break;
                 }
 
@@ -374,10 +391,77 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
                         key -> finalOverrides.getOrDefault(remaps.get(key), missingno),
                         (o1, o2) -> o1));
 
+        if (!controllerDrewBaseModel) {
+            BlockState appearance = getPartAppearance(part, level, pos, blockState, side);
+            if (appearance != null) {
+                List<BakedQuad> appearanceQuads = getAppearanceQuads(appearance, level, pos, side,
+                        rand, modelData, renderType);
+                if (!appearanceQuads.isEmpty()) {
+                    quads = replaceBaseQuadsWithAppearance(quads, appearanceQuads, overrides);
+                    quads.addAll(renderQuads);
+                    return quads;
+                }
+            }
+        }
+
         // actually process the sprite replacement
         quads = TextureOverrideModel.retextureQuads(quads, overrides);
         quads.addAll(renderQuads);
         return quads;
+    }
+
+    private @Nullable BlockState getPartAppearance(IMultiPart part, @Nullable BlockAndTintGetter level,
+                                                   @Nullable BlockPos pos, @Nullable BlockState blockState,
+                                                   @Nullable Direction side) {
+        if (level == null || pos == null || blockState == null) {
+            return null;
+        }
+        return part.getFormedAppearance(blockState, pos, side);
+    }
+
+    private List<BakedQuad> getAppearanceQuads(BlockState appearance, BlockAndTintGetter level, BlockPos pos,
+                                               @Nullable Direction side, RandomSource rand, ModelData modelData,
+                                               @Nullable RenderType renderType) {
+        BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(appearance);
+        model = unwrapCustomBakedModel(model);
+
+        BlockAndTintGetter appearanceLevel = new FacadeBlockAndTintGetter(level, pos, appearance,
+                level.getBlockEntity(pos));
+        ModelData appearanceData = model.getModelData(appearanceLevel, pos, appearance, modelData);
+        return new LinkedList<>(model.getQuads(appearance, side, rand, appearanceData, renderType));
+    }
+
+    private static List<BakedQuad> replaceBaseQuadsWithAppearance(List<BakedQuad> originalQuads,
+                                                                  List<BakedQuad> appearanceQuads,
+                                                                  Map<String, TextureAtlasSprite> overrides) {
+        List<BakedQuad> newQuads = new LinkedList<>(appearanceQuads);
+        for (BakedQuad quad : originalQuads) {
+            String textureKey = normalizeTextureKey(quad);
+            if (textureKey != null && !overrides.containsKey(textureKey)) {
+                newQuads.add(quad);
+            }
+        }
+        return newQuads;
+    }
+
+    private static @Nullable String normalizeTextureKey(BakedQuad quad) {
+        String textureKey = quad.gtceu$getTextureKey();
+        if (textureKey == null || textureKey.isEmpty()) {
+            return null;
+        }
+        return textureKey.charAt(0) == '#' ? textureKey.substring(1) : textureKey;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static BakedModel unwrapCustomBakedModel(BakedModel model) {
+        while (model instanceof CustomBakedModel<?> && model instanceof BakedModelWrapperAccessor<?> accessor) {
+            BakedModel parent = ((BakedModelWrapperAccessor<BakedModel>) accessor).gtceu$getParent();
+            if (parent == model) {
+                break;
+            }
+            model = parent;
+        }
+        return model;
     }
 
     @Override

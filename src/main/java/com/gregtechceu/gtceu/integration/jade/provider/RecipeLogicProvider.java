@@ -26,14 +26,15 @@ import snownee.jade.api.config.IPluginConfig;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
-public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic> {
+public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic, CompoundTag> {
 
     public RecipeLogicProvider() {
         super(GTCEu.id("recipe_logic_provider"), RecipeLogic.TYPE);
     }
 
     @Override
-    protected void write(CompoundTag data, BlockAccessor blockAccessor, RecipeLogic capability) {
+    protected CompoundTag write(RecipeLogic capability) {
+        var data = new CompoundTag();
         data.putBoolean("Working", capability.isWorking());
         var recipeInfo = new CompoundTag();
         var recipe = capability.getLastRecipe();
@@ -48,10 +49,11 @@ public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic> {
         if (!recipeInfo.isEmpty()) {
             data.put("Recipe", recipeInfo);
         }
+        return data;
     }
 
     public static long getVoltage(RecipeLogic capability) {
-        long voltage = capability.machine.getDisplayRecipeVoltage();
+        long voltage = capability.getRLMachine().getDisplayRecipeVoltage();
 
         // default display as LV, this shouldn't happen because a machine is either electric or steam
         return voltage == -1 ? GTValues.V[GTValues.LV] : voltage;
@@ -79,7 +81,7 @@ public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic> {
                     MutableComponent text;
 
                     if (isSteam) {
-                        text = Component.translatable("gtceu.jade.fluid_use", FormattingUtil.formatNumbers(EUt))
+                        text = Component.translatable("gtpm.jade.fluid_use", FormattingUtil.formatNumbers(EUt))
                                 .withStyle(ChatFormatting.GREEN);
                     } else {
                         var voltage = recipeInfo.getLong("voltage");
@@ -87,10 +89,10 @@ public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic> {
                         float minAmperage = (float) EUt / voltage;
 
                         text = Component
-                                .translatable("gtceu.jade.amperage_use",
+                                .translatable("gtpm.jade.amperage_use",
                                         FormattingUtil.formatNumber2Places(minAmperage))
                                 .withStyle(ChatFormatting.RED)
-                                .append(Component.translatable("gtceu.jade.at").withStyle(ChatFormatting.GREEN));
+                                .append(Component.translatable("gtpm.jade.at").withStyle(ChatFormatting.GREEN));
                         if (tier < GTValues.TIER_COUNT) {
                             text = text.append(Component.literal(GTValues.VNF[tier])
                                     .withStyle(style -> style.withColor(GTValues.VC[tier])));
@@ -103,16 +105,16 @@ public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic> {
                                             .append(FormattingUtil.formatNumbers(speed))));
 
                         }
-                        text.append(Component.translatable("gtceu.universal.padded_parentheses",
-                                (Component.translatable("gtceu.recipe.eu.total",
+                        text.append(Component.translatable("gtpm.universal.padded_parentheses",
+                                (Component.translatable("gtpm.recipe.eu.total",
                                         FormattingUtil.formatNumbers(EUt))))
                                 .withStyle(ChatFormatting.WHITE));
                     }
 
                     if (isInput) {
-                        tooltip.add(Component.translatable("gtceu.top.energy_consumption").append(" ").append(text));
+                        tooltip.add(Component.translatable("gtpm.top.energy_consumption").append(" ").append(text));
                     } else {
-                        tooltip.add(Component.translatable("gtceu.top.energy_production").append(" ").append(text));
+                        tooltip.add(Component.translatable("gtpm.top.energy_production").append(" ").append(text));
                     }
                 }
             }
@@ -122,9 +124,9 @@ public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic> {
 
                 if (logic.showFancyTooltip() && logic.isWorkingEnabled()) {
                     Component status = logic.isWaiting() ?
-                            Component.translatable("gtceu.recipe_logic.recipe_waiting")
+                            Component.translatable("gtpm.recipe_logic.recipe_waiting")
                                     .withStyle(ChatFormatting.YELLOW) :
-                            Component.translatable("gtceu.recipe_logic.setup_fail").withStyle(ChatFormatting.RED);
+                            Component.translatable("gtpm.recipe_logic.setup_fail").withStyle(ChatFormatting.RED);
                     tooltip.add(status);
                     logic.getFancyTooltip().forEach(tooltip::add);
                 }

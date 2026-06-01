@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.IRecipeHandlerTrait;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ClientFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 
@@ -34,6 +35,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
 
     @SyncToClient
+    @RerenderOnChanged
     protected final Set<BlockPos> controllerPositions = new ObjectOpenHashSet<>(8);
     protected final SortedSet<MultiblockControllerMachine> controllers = new ReferenceLinkedOpenHashSet<>(8);
 
@@ -86,7 +88,7 @@ public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
         if (handlerList == null) {
             List<IRecipeHandler<?>> handlers = new ArrayList<>();
             IO handlerIO = null;
-            for (var trait : traitHolder.getAllTraits()) {
+            for (var trait : getAllTraits()) {
                 if (trait instanceof IRecipeHandlerTrait<?> rht) {
                     if (handlerIO == null) handlerIO = rht.getHandlerIO();
                     handlers.add(rht);

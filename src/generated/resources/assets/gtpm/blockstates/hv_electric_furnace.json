@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=east": {
+            "model": "gtpm:block/machine/hv_electric_furnace",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/hv_electric_furnace"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/hv_electric_furnace",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/hv_electric_furnace",
+            "y": 270
+        }
+    }
+}

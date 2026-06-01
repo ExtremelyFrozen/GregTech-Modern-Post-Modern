@@ -1,0 +1,6 @@
+{
+    "parent": "gtpm:block/lamp_borderless",
+    "textures": {
+        "active": "gtpm:block/lamps/blue_borderless"
+    }
+}

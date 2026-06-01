@@ -15,7 +15,6 @@ import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CircuitFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
@@ -23,6 +22,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.ISubscription;
@@ -70,7 +70,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
     public SimpleTieredMachine(BlockEntityCreationInfo info, int tier, Int2IntFunction tankScalingFunction) {
         super(info, tier, tankScalingFunction);
 
-        this.autoOutput = new AutoOutputTrait(this, List.of(exportItems), List.of(exportFluids));
+        this.autoOutput = attachTrait(new AutoOutputTrait(List.of(exportItems), List.of(exportFluids)));
 
         this.chargerInventory = new CustomItemStackHandler() {
 
@@ -82,8 +82,9 @@ public class SimpleTieredMachine extends WorkableTieredMachine
                 (ConfigHolder.INSTANCE.compat.energy.nativeEUToFE &&
                         GTCapabilityHelper.getForgeEnergyItem(item) != null));
 
-        this.circuitInventory = new NotifiableItemStackHandler(this, 1, IO.IN, IO.NONE)
-                .setFilter(IntCircuitBehaviour::isIntegratedCircuit);
+        this.circuitInventory = attachTrait(new NotifiableItemStackHandler(1, IO.IN, IO.NONE)
+                .shouldDropInventoryInWorld(!ConfigHolder.INSTANCE.machines.ghostCircuit)
+                .setFilter(IntCircuitBehaviour::isIntegratedCircuit));
     }
 
     //////////////////////////////////////
@@ -131,9 +132,6 @@ public class SimpleTieredMachine extends WorkableTieredMachine
     public void onMachineDestroyed() {
         super.onMachineDestroyed();
         chargerInventory.dropInventoryInWorld(getLevel(), getBlockPos());
-        if (!ConfigHolder.INSTANCE.machines.ghostCircuit) {
-            circuitInventory.dropInventoryInWorld();
-        }
     }
 
     /// //////////////////////////////////
@@ -168,7 +166,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
     private IFancyConfigurator createAutoOutputFluidConfigurator() {
         return createAutoOutputConfigurator(
                 GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON,
-                "gtceu.gui.fluid_auto_output",
+                "gtpm.gui.fluid_auto_output",
                 this.autoOutput::isAutoOutputFluids,
                 (cd, nextState) -> this.autoOutput.setAllowAutoOutputFluids(nextState));
     }
@@ -176,7 +174,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
     private IFancyConfigurator createAutoOutputItemConfigurator() {
         return createAutoOutputConfigurator(
                 GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON,
-                "gtceu.gui.item_auto_output",
+                "gtpm.gui.item_auto_output",
                 this.autoOutput::isAutoOutputItems,
                 (cd, nextState) -> this.autoOutput.setAllowAutoOutputItems(nextState));
     }
@@ -257,7 +255,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
             slotWidget.setHandlerSlot(machine.chargerInventory, 0);
             slotWidget.setCanPutItems(true);
             slotWidget.setCanTakeItems(true);
-            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtceu.gui.charger_slot.tooltip",
+            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
                     GTValues.VNF[machine.getTier()], GTValues.VNF[machine.getTier()]).toArray(Component[]::new));
         });
     }
@@ -275,7 +273,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
             slotWidget.setCanPutItems(false);
             slotWidget.setCanTakeItems(false);
             slotWidget.setHoverTooltips(
-                    LangHandler.getMultiLang("gtceu.gui.configurator_slot.tooltip").toArray(Component[]::new));
+                    LangHandler.getMultiLang("gtpm.gui.configurator_slot.tooltip").toArray(Component[]::new));
         });
     }
 

@@ -1,0 +1,20 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:ulv_battery_buffer_16x",
+    "variants": {
+        "": {
+            "model": {
+                "parent": "gtpm:block/machine/template/transformer_like_machine",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/ulv/bottom",
+                    "overlay_in_io": "gtpm:block/overlay/machine/overlay_energy_16a_out",
+                    "overlay_in_tinted": "gtpm:block/overlay/machine/overlay_energy_16a_tinted",
+                    "overlay_out_io": "gtpm:block/void",
+                    "side": "gtpm:block/casings/voltage/ulv/side",
+                    "top": "gtpm:block/casings/voltage/ulv/top"
+                }
+            }
+        }
+    }
+}

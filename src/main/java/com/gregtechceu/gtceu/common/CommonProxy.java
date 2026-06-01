@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.common;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.addon.AddonFinder;
 import com.gregtechceu.gtceu.api.addon.IGTAddon;
@@ -10,6 +9,7 @@ import com.gregtechceu.gtceu.api.capability.GTCapability;
 import com.gregtechceu.gtceu.api.capability.compat.EUToFEProvider;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
+import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.PostMaterialEvent;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconSet;
@@ -105,9 +105,6 @@ import com.gregtechceu.gtceu.data.pack.GTPackSource;
 import com.gregtechceu.gtceu.data.placeholder.GTPlaceholders;
 import com.gregtechceu.gtceu.data.recipe.GTIngredientTypes;
 import com.gregtechceu.gtceu.integration.cctweaked.CCTweakedPlugin;
-import com.gregtechceu.gtceu.integration.kjs.GTCEuStartupEvents;
-import com.gregtechceu.gtceu.integration.kjs.events.MaterialModificationEventJS;
-import com.gregtechceu.gtceu.integration.kjs.helpers.KubeGTRegistryEventHandler;
 import com.gregtechceu.gtceu.integration.map.WaypointManager;
 import com.gregtechceu.gtceu.utils.input.SyncedKeyMappings;
 
@@ -175,11 +172,6 @@ public class CommonProxy {
 
     public static void init(final IEventBus modBus) {
         CommonProxy.modBus = modBus;
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            // initialize this before the class's static listeners
-            // so KubeJS materials are registered before the material registry is closed.
-            modBus.register(KubeGTRegistryEventHandler.class);
-        }
         modBus.register(CommonProxy.class);
 
         UIFactory.register(MachineUIFactory.INSTANCE);
@@ -271,7 +263,7 @@ public class CommonProxy {
     public static void initMaterials() {
         GTCEu.LOGGER.info("Registering GTCEu Materials");
         GTMaterials.init();
-        GTCEuAPI.materialManager.setFallbackMaterial(GTCEu.MOD_ID, GTMaterials.Aluminium);
+        ((IMaterialRegistry) GTRegistries.MATERIALS).setFallbackMaterial(GTCEu.MOD_ID, GTMaterials.Aluminium);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
@@ -282,9 +274,6 @@ public class CommonProxy {
             // Block entirely new Materials from being added in the Post event
             ((MaterialRegistry) GTRegistries.MATERIALS).close();
             ModLoader.postEventWrapContainerInModOrder(new PostMaterialEvent());
-            if (GTCEu.Mods.isKubeJSLoaded()) {
-                KJSEventWrapper.materialModification();
-            }
             // --spacer--
         } else if (event.getRegistryKey() == Registries.FLUID) {
             // Material fluids
@@ -317,7 +306,7 @@ public class CommonProxy {
 
     private static void postInitMaterials(Registry<Material> registry) {
         // Register all material manager registries, for materials with mod ids.
-        GTCEuAPI.materialManager.getUsedNamespaces().forEach(namespace -> {
+        ((IMaterialRegistry) GTRegistries.MATERIALS).getUsedNamespaces().forEach(namespace -> {
             // Force the material lang generator to be at index 0, so that addons' lang generators can override it.
             GTRegistrate registrate = GTRegistrate.createIgnoringListenerErrors(namespace);
             AbstractRegistrateAccessor accessor = (AbstractRegistrateAccessor) registrate;
@@ -499,7 +488,7 @@ public class CommonProxy {
             // Clear old data
             GTDynamicResourcePack.clearClient();
 
-            event.addRepositorySource(new GTPackSource("gtceu:dynamic_assets",
+            event.addRepositorySource(new GTPackSource("gtpm:dynamic_assets",
                     event.getPackType(),
                     Pack.Position.BOTTOM,
                     GTDynamicResourcePack::new));
@@ -509,7 +498,7 @@ public class CommonProxy {
 
             // LOADING MOVED TO ReloadableServerResourcesMixin
 
-            event.addRepositorySource(new GTPackSource("gtceu:dynamic_data",
+            event.addRepositorySource(new GTPackSource("gtpm:dynamic_data",
                     event.getPackType(),
                     Pack.Position.BOTTOM,
                     GTDynamicDataPack::new));
@@ -528,12 +517,5 @@ public class CommonProxy {
                 GTBlocks.RUBBER_WALL_HANGING_SIGN.get(),
                 GTBlocks.TREATED_WOOD_HANGING_SIGN.get(),
                 GTBlocks.TREATED_WOOD_WALL_HANGING_SIGN.get());
-    }
-
-    public static final class KJSEventWrapper {
-
-        public static void materialModification() {
-            GTCEuStartupEvents.MATERIAL_MODIFICATION.post(new MaterialModificationEventJS());
-        }
     }
 }

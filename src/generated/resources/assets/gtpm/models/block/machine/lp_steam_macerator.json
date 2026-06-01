@@ -1,0 +1,124 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:lp_steam_macerator",
+    "multipart": [
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/machines/macerator/overlay_front",
+                        "overlay_front_emissive": "gtpm:block/machines/macerator/overlay_front_emissive",
+                        "overlay_top": "gtpm:block/machines/macerator/overlay_top",
+                        "overlay_top_emissive": "gtpm:block/machines/macerator/overlay_top_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "idle"
+            }
+        },
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/machines/macerator/overlay_front_active",
+                        "overlay_front_emissive": "gtpm:block/machines/macerator/overlay_front_active_emissive",
+                        "overlay_top": "gtpm:block/machines/macerator/overlay_top_active",
+                        "overlay_top_emissive": "gtpm:block/machines/macerator/overlay_top_active_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "working"
+            }
+        },
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/machines/macerator/overlay_front_active",
+                        "overlay_front_emissive": "gtpm:block/machines/macerator/overlay_front_active_emissive",
+                        "overlay_top": "gtpm:block/machines/macerator/overlay_top_active",
+                        "overlay_top_emissive": "gtpm:block/machines/macerator/overlay_top_active_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "waiting"
+            }
+        },
+        {
+            "apply": {
+                "model": {
+                    "parent": "gtpm:block/casings/steam/bricked_bronze",
+                    "textures": {
+                        "overlay_front": "gtpm:block/machines/macerator/overlay_front",
+                        "overlay_front_emissive": "gtpm:block/machines/macerator/overlay_front_emissive",
+                        "overlay_top": "gtpm:block/machines/macerator/overlay_top",
+                        "overlay_top_emissive": "gtpm:block/machines/macerator/overlay_top_emissive"
+                    }
+                }
+            },
+            "when": {
+                "recipe_logic_status": "suspend"
+            }
+        },
+        {
+            "apply": {
+                "model": "gtpm:block/overlay/machine/overlay_steam_vent",
+                "x": 270
+            },
+            "when": {
+                "steam_vent": "up"
+            }
+        },
+        {
+            "apply": {
+                "model": "gtpm:block/overlay/machine/overlay_steam_vent",
+                "x": 90
+            },
+            "when": {
+                "steam_vent": "down"
+            }
+        },
+        {
+            "apply": {
+                "model": "gtpm:block/overlay/machine/overlay_steam_vent",
+                "y": 270
+            },
+            "when": {
+                "steam_vent": "left"
+            }
+        },
+        {
+            "apply": {
+                "model": "gtpm:block/overlay/machine/overlay_steam_vent",
+                "y": 90
+            },
+            "when": {
+                "steam_vent": "right"
+            }
+        },
+        {
+            "apply": {
+                "model": "gtpm:block/overlay/machine/overlay_steam_vent"
+            },
+            "when": {
+                "steam_vent": "front"
+            }
+        },
+        {
+            "apply": {
+                "model": "gtpm:block/overlay/machine/overlay_steam_vent",
+                "y": 180
+            },
+            "when": {
+                "steam_vent": "back"
+            }
+        }
+    ]
+}

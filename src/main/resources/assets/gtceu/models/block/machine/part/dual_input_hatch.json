@@ -1,7 +1,0 @@
-{
-	"parent": "gtceu:block/machine/template/part/hatch_machine_emissive",
-	"textures": {
-		"overlay": "gtceu:block/overlay/machine/overlay_dual_hatch_input",
-		"overlay_emissive": "gtceu:block/overlay/machine/overlay_pipe_in_emissive"
-	}
-}

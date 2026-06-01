@@ -129,7 +129,7 @@ public class GTDynamicDataPack implements PackResources {
                 .encodeStart(provider.createSerializationContext(JsonOps.INSTANCE), builder.build().carrier())
                 .getOrThrow();
         byte[] dataMapBytes = dataMapJson.toString().getBytes(StandardCharsets.UTF_8);
-        Path parent = Platform.getGamePath().resolve("gtceu/dumped/data");
+        Path parent = Platform.getGamePath().resolve(GTCEu.MOD_ID + "/dumped/data");
         if (ConfigHolder.INSTANCE.dev.dumpRecipes) {
             writeJson(dataMapId, parent, dataMapBytes);
         }

@@ -1,11 +1,11 @@
 package com.gregtechceu.gtceu.integration.emi.oreprocessing;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialFlags;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.integration.emi.GTEMIPlugin;
 
 import net.minecraft.network.chat.Component;
@@ -30,7 +30,7 @@ public class GTOreProcessingEmiCategory extends EmiRecipeCategory {
     }
 
     public static void registerDisplays(EmiRegistry registry) {
-        for (Material mat : GTCEuAPI.materialManager) {
+        for (Material mat : GTRegistries.MATERIALS) {
             if (mat.hasProperty(ORE) && !mat.hasFlag(MaterialFlags.NO_ORE_PROCESSING_TAB)) {
                 registry.addRecipe(new GTEmiOreProcessing(mat));
             }
@@ -57,6 +57,6 @@ public class GTOreProcessingEmiCategory extends EmiRecipeCategory {
 
     @Override
     public Component getName() {
-        return Component.translatable("gtceu.jei.ore_processing_diagram");
+        return Component.translatable("gtpm.jei.ore_processing_diagram");
     }
 }

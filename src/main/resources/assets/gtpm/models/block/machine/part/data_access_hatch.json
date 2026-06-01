@@ -1,0 +1,7 @@
+{
+	"parent": "gtpm:block/overlay/2_layer/front_emissive",
+	"textures": {
+		"overlay": "gtpm:block/overlay/machine/overlay_data_hatch",
+		"overlay_emissive": "gtpm:block/overlay/machine/overlay_data_hatch_emissive"
+	}
+}

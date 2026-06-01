@@ -1,0 +1,6 @@
+{
+	"parent": "gtpm:item/material_sets/shiny/screw",
+	"textures": {
+		"layer2": "gtpm:item/material_sets/bright/screw_overlay"
+	}
+}

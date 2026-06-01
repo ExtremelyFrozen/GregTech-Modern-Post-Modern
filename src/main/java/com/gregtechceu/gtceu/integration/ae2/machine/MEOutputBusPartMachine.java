@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
@@ -42,11 +41,12 @@ public class MEOutputBusPartMachine extends MEBusPartMachine {
     @Override
     protected NotifiableItemStackHandler createInventory() {
         this.internalBuffer = new KeyStorage();
-        return new InaccessibleInfiniteHandler(this);
+        return new InaccessibleInfiniteHandler();
     }
 
     @Override
     public void onMachineDestroyed() {
+        super.onMachineDestroyed();
         var grid = getMainNode().getGrid();
         if (grid != null && !internalBuffer.isEmpty()) {
             for (var entry : internalBuffer) {
@@ -86,9 +86,9 @@ public class MEOutputBusPartMachine extends MEBusPartMachine {
         WidgetGroup group = new WidgetGroup(0, 0, 170, 65);
         // ME Network status
         group.addWidget(new LabelWidget(5, 0, () -> this.isOnline ?
-                "gtceu.gui.me_network.online" :
-                "gtceu.gui.me_network.offline"));
-        group.addWidget(new LabelWidget(5, 10, "gtceu.gui.waiting_list"));
+                "gtpm.gui.me_network.online" :
+                "gtpm.gui.me_network.offline"));
+        group.addWidget(new LabelWidget(5, 10, "gtpm.gui.waiting_list"));
         // display list
         group.addWidget(new AEListGridWidget.Item(5, 20, 3, this.internalBuffer));
 
@@ -97,8 +97,8 @@ public class MEOutputBusPartMachine extends MEBusPartMachine {
 
     private class InaccessibleInfiniteHandler extends NotifiableItemStackHandler {
 
-        public InaccessibleInfiniteHandler(MetaMachine holder) {
-            super(holder, 1, IO.OUT, IO.NONE, ItemStackHandlerDelegate::new);
+        public InaccessibleInfiniteHandler() {
+            super(1, IO.OUT, IO.NONE, ItemStackHandlerDelegate::new);
             internalBuffer.setOnContentsChanged(this::onContentsChanged);
         }
 

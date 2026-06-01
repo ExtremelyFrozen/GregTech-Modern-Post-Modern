@@ -1,0 +1,39 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:zpm_packer",
+    "variants": {
+        "recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/zpm",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/packer/overlay_front"
+                }
+            }
+        },
+        "recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/zpm",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/packer/overlay_front"
+                }
+            }
+        },
+        "recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/zpm",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/packer/overlay_front_active"
+                }
+            }
+        },
+        "recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/zpm",
+                "textures": {
+                    "overlay_front": "gtpm:block/machines/packer/overlay_front_active"
+                }
+            }
+        }
+    }
+}

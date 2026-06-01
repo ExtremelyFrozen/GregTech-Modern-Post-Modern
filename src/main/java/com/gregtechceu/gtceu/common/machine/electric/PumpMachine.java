@@ -9,11 +9,11 @@ import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
@@ -59,7 +59,7 @@ public class PumpMachine extends TieredEnergyMachine implements IUIMachine {
     public static final int EXTRA_PUMP_RADIUS = 4;
     public static final int PUMP_SPEED_BASE = 80;
     private final Set<BlockPos> forbiddenBlocks = new ObjectOpenHashSet<>();
-    private PumpQueue pumpQueue = null;
+    private @Nullable PumpQueue pumpQueue = null;
     @Getter
     @SaveField
     private int pumpHeadY;
@@ -72,10 +72,11 @@ public class PumpMachine extends TieredEnergyMachine implements IUIMachine {
 
     public PumpMachine(BlockEntityCreationInfo info, int tier) {
         super(info, tier);
-        this.cache = new NotifiableFluidTank(this, 1, 16 * FluidType.BUCKET_VOLUME * Math.max(1, getTier()), IO.NONE,
-                IO.OUT);
+        this.cache = attachTrait(
+                new NotifiableFluidTank(1, 16 * FluidType.BUCKET_VOLUME * Math.max(1, getTier()), IO.NONE,
+                        IO.OUT));
         environmentalExplosionTrait.setEnableEnvironmentalExplosions(false);
-        this.autoOutput = AutoOutputTrait.ofFluids(this, cache);
+        this.autoOutput = attachTrait(AutoOutputTrait.ofFluids(cache));
     }
 
     //////////////////////////////////////
@@ -533,7 +534,7 @@ public class PumpMachine extends TieredEnergyMachine implements IUIMachine {
         return new ModularUI(176, 166, this, entityPlayer)
                 .background(GuiTextures.BACKGROUND)
                 .widget(new ImageWidget(7, 16, 81, 55, GuiTextures.DISPLAY))
-                .widget(new LabelWidget(11, 20, "gtceu.gui.fluid_amount"))
+                .widget(new LabelWidget(11, 20, "gtpm.gui.fluid_amount"))
                 .widget(new LabelWidget(11, 30, () -> cache.getFluidInTank(0).getAmount() + "").setTextColor(-1)
                         .setDropShadow(true))
                 .widget(new LabelWidget(6, 6, getBlockState().getBlock().getDescriptionId()))
@@ -543,7 +544,7 @@ public class PumpMachine extends TieredEnergyMachine implements IUIMachine {
                         GuiTextures.BUTTON_FLUID_OUTPUT, this.autoOutput::isAutoOutputFluids,
                         this.autoOutput::setAllowAutoOutputFluids)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_auto_output.tooltip"))
+                        .setTooltipText("gtpm.gui.fluid_auto_output.tooltip"))
                 .widget(UITemplate.bindPlayerInventory(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 84, true));
     }
 }

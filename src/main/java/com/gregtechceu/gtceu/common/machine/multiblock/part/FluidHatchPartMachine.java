@@ -34,8 +34,6 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -73,15 +71,16 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
     public FluidHatchPartMachine(BlockEntityCreationInfo info, int tier, IO io, int initialCapacity, int slots) {
         super(info, tier, io);
         this.slots = slots;
-        this.tank = createTank(initialCapacity, slots);
+        this.tank = attachTrait(createTank(initialCapacity, slots));
 
         if (io == IO.IN) {
             this.circuitSlotEnabled = true;
-            this.circuitInventory = new NotifiableItemStackHandler(this, 1, IO.IN, IO.NONE)
-                    .setFilter(IntCircuitBehaviour::isIntegratedCircuit).shouldSearchContent(false);
+            this.circuitInventory = attachTrait(new NotifiableItemStackHandler(1, IO.IN, IO.NONE))
+                    .setFilter(IntCircuitBehaviour::isIntegratedCircuit).shouldSearchContent(false)
+                    .shouldDropInventoryInWorld(!ConfigHolder.INSTANCE.machines.ghostCircuit);
         } else {
             this.circuitSlotEnabled = false;
-            this.circuitInventory = new NotifiableItemStackHandler(this, 0, IO.NONE).shouldSearchContent(false);
+            this.circuitInventory = attachTrait(new NotifiableItemStackHandler(0, IO.NONE)).shouldSearchContent(false);
         }
     }
 
@@ -90,7 +89,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
     //////////////////////////////////////
 
     protected NotifiableFluidTank createTank(int initialCapacity, int slots) {
-        return new NotifiableFluidTank(this, slots, getTankCapacity(initialCapacity, getTier()), io);
+        return new NotifiableFluidTank(slots, getTankCapacity(initialCapacity, getTier()), io);
     }
 
     public static int getTankCapacity(int initialCapacity, int tier) {
@@ -98,19 +97,9 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
     }
 
     @Override
-    public void onMachineDestroyed() {
-        super.onMachineDestroyed();
-        if (!ConfigHolder.INSTANCE.machines.ghostCircuit) {
-            circuitInventory.dropInventoryInWorld();
-        }
-    }
-
-    @Override
     public void onLoad() {
         super.onLoad();
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateTankSubscription));
-        }
+        scheduleForNextServerTick(this::updateTankSubscription);
         getHandlerList().setColor(getPaintingColor());
         tankSubs = tank.addChangedListener(this::updateTankSubscription);
     }
@@ -301,7 +290,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
 
             group.addWidget(new ToggleButtonWidget(7, 40, 18, 18,
                     GuiTextures.BUTTON_LOCK, this.tank::isLocked, this.tank::setLocked)
-                    .setTooltipText("gtceu.gui.fluid_lock.tooltip")
+                    .setTooltipText("gtpm.gui.fluid_lock.tooltip")
                     .setShouldUseBaseBackground())
                     // ...and add the actual tank widget separately.
                     .addWidget(new TankWidget(tank.getStorages()[0], 67, 22, 18, 18, true, io.support(IO.IN))
@@ -311,7 +300,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
                     .setShowAmount(true).setDrawHoverTips(true).setBackground(GuiTextures.FLUID_SLOT));
         }
 
-        group.addWidget(new LabelWidget(8, 8, "gtceu.gui.fluid_amount"))
+        group.addWidget(new LabelWidget(8, 8, "gtpm.gui.fluid_amount"))
                 .addWidget(new LabelWidget(8, 18, () -> getFluidAmountText(tankWidget)))
                 .addWidget(new LabelWidget(8, 28, () -> getFluidNameText(tankWidget).getString()));
 

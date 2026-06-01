@@ -47,7 +47,7 @@ public class CircuitFancyConfigurator implements IFancyConfigurator, IFancyCusto
 
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.gui.circuit.title");
+        return Component.translatable("gtpm.gui.circuit.title");
     }
 
     @Override
@@ -167,7 +167,7 @@ public class CircuitFancyConfigurator implements IFancyConfigurator, IFancyCusto
     public List<Component> getTooltips() {
         var list = new ArrayList<>(IFancyConfigurator.super.getTooltips());
         list.addAll(Arrays.stream(
-                LangHandler.getMultiLang("gtceu.gui.configurator_slot.tooltip").toArray(new MutableComponent[0]))
+                LangHandler.getMultiLang("gtpm.gui.configurator_slot.tooltip").toArray(new MutableComponent[0]))
                 .toList());
         return list;
     }

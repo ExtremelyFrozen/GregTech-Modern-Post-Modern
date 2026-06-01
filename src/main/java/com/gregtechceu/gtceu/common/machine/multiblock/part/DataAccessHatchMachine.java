@@ -37,7 +37,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -54,12 +53,12 @@ public class DataAccessHatchMachine extends TieredPartMachine
         super(info, tier);
         this.isCreative = isCreative;
         this.recipes = isCreative ? Collections.emptySet() : new ObjectOpenHashSet<>();
-        this.importItems = createImportItemHandler();
+        this.importItems = attachTrait(createImportItemHandler());
     }
 
     protected NotifiableItemStackHandler createImportItemHandler() {
-        if (isCreative) return new NotifiableItemStackHandler(this, 0, IO.BOTH);
-        return new NotifiableItemStackHandler(this, getInventorySize(), IO.BOTH) {
+        if (isCreative) return new NotifiableItemStackHandler(0, IO.BOTH);
+        return new NotifiableItemStackHandler(getInventorySize(), IO.BOTH) {
 
             @Override
             public void onContentsChanged() {
@@ -67,9 +66,8 @@ public class DataAccessHatchMachine extends TieredPartMachine
                 rebuildData(isFormed() && getControllers().first() instanceof DataBankMachine);
             }
 
-            @NotNull
             @Override
-            public ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
                 boolean isDataBank = isFormed() && getControllers().first() instanceof DataBankMachine;
                 if (ResearchManager.isStackDataItem(stack, isDataBank) && stack.has(GTDataComponents.RESEARCH_ITEM)) {
                     return super.insertItem(slot, stack, simulate);
@@ -110,12 +108,6 @@ public class DataAccessHatchMachine extends TieredPartMachine
         };
     }
 
-    @Override
-    public void onMachineDestroyed() {
-        super.onMachineDestroyed();
-        importItems.dropInventoryInWorld();
-    }
-
     private void rebuildData(boolean isDataBank) {
         if (isCreative || getLevel() == null || getLevel().isClientSide) return;
         recipes.clear();
@@ -134,12 +126,11 @@ public class DataAccessHatchMachine extends TieredPartMachine
     }
 
     @Override
-    public boolean isRecipeAvailable(@NotNull GTRecipe recipe, @NotNull Collection<IDataAccessHatch> seen) {
+    public boolean isRecipeAvailable(GTRecipe recipe, Collection<IDataAccessHatch> seen) {
         seen.add(this);
         return recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance) || recipes.contains(recipe);
     }
 
-    @NotNull
     @Override
     public List<Component> getDataInfo(PortableScannerBehavior.DisplayMode mode) {
         if (mode == PortableScannerBehavior.DisplayMode.SHOW_ALL ||

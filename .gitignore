@@ -12,6 +12,7 @@ bin/
 */.factorypath
 .project
 .idea/
+.kotlin/
 .run/
 classes/
 .metadata

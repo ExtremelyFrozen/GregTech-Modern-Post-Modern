@@ -1,0 +1,74 @@
+{
+    "biomes": "#minecraft:is_overworld",
+    "cluster_size": {
+        "type": "minecraft:uniform",
+        "max_inclusive": 40,
+        "min_inclusive": 32
+    },
+    "density": 0.4,
+    "dimension_filter": [
+        "minecraft:overworld"
+    ],
+    "discard_chance_on_air_exposure": 0.0,
+    "generator": {
+        "type": "gtpm:layer",
+        "layer_patterns": [
+            [
+                {
+                    "max_size": 4,
+                    "min_size": 2,
+                    "targets": [
+                        "gtpm:cassiterite_sand"
+                    ],
+                    "weight": 3
+                },
+                {
+                    "max_size": 1,
+                    "min_size": 1,
+                    "targets": [
+                        "gtpm:garnet_sand"
+                    ],
+                    "weight": 2
+                },
+                {
+                    "max_size": 1,
+                    "min_size": 1,
+                    "targets": [
+                        "gtpm:asbestos"
+                    ],
+                    "weight": 2
+                },
+                {
+                    "max_size": 1,
+                    "min_size": 1,
+                    "targets": [
+                        "gtpm:diatomite"
+                    ],
+                    "weight": 1
+                }
+            ]
+        ]
+    },
+    "height_range": {
+        "height": {
+            "type": "minecraft:uniform",
+            "max_inclusive": {
+                "absolute": 60
+            },
+            "min_inclusive": {
+                "absolute": 30
+            }
+        }
+    },
+    "indicators": [
+        {
+            "type": "gtpm:surface",
+            "block": "gtpm:garnet_sand",
+            "density": 0.2,
+            "placement": "surface",
+            "radius": 5
+        }
+    ],
+    "layer": "stone",
+    "weight": 80
+}

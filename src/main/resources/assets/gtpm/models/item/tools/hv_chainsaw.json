@@ -1,0 +1,9 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/tools/power_unit_hv",
+		"layer1": "gtpm:item/tools/chainsaw",
+		"layer2": "gtpm:item/void",
+		"layer3": "gtpm:item/tools/chainsaw_body"
+	}
+}

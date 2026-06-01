@@ -1,0 +1,10 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:titanium_drum",
+    "variants": {
+        "": {
+            "model": "gtpm:block/machine/template/drum/metal_drum"
+        }
+    }
+}

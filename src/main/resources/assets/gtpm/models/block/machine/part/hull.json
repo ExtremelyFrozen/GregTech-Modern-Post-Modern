@@ -1,0 +1,7 @@
+{
+	"parent": "gtpm:block/overlay/2_layer/tinted/front",
+	"textures": {
+		"overlay": "gtpm:block/overlay/machine/overlay_energy_1a_out",
+		"overlay_tinted": "gtpm:block/overlay/machine/overlay_energy_1a_tinted"
+	}
+}

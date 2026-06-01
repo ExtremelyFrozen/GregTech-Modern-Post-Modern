@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/machine/charcoal_pile_igniter"
+        }
+    }
+}

@@ -119,7 +119,7 @@ public abstract class GuiMapMixin extends ScreenBase implements IRightClickableE
                         ButtonState.toggleButton(button);
                         init(minecraft, width, height);
                     },
-                    () -> new Tooltip("gtceu.button." + button.name));
+                    () -> new Tooltip("gtpm.button." + button.name));
 
             addButton(mapButton);
             offset++;

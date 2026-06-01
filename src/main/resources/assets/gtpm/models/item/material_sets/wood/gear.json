@@ -1,0 +1,7 @@
+{
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/wood/gear",
+		"layer1": "gtpm:item/material_sets/wood/gear_secondary"
+	}
+}

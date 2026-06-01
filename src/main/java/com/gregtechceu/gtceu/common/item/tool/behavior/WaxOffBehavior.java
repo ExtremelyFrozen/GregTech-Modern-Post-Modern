@@ -103,7 +103,7 @@ public class WaxOffBehavior implements IToolBehavior<WaxOffBehavior> {
     @Override
     public void addInformation(@NotNull ItemStack stack, Item.TooltipContext Level, @NotNull List<Component> tooltip,
                                @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.gtceu.tool.behavior.remove_wax"));
+        tooltip.add(Component.translatable("item.gtpm.tool.behavior.remove_wax"));
     }
 
     @Override

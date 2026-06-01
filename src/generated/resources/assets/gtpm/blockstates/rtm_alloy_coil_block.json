@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "active=false": {
+            "model": "gtpm:block/rtm_alloy_coil_block"
+        },
+        "active=true": {
+            "model": "gtpm:block/rtm_alloy_coil_block_active"
+        }
+    }
+}

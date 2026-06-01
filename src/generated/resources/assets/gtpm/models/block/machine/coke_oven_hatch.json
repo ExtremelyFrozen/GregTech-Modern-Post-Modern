@@ -1,0 +1,13 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:coke_oven_hatch",
+    "variants": {
+        "is_formed=false": {
+            "model": "gtpm:block/machine/part/coke_oven_hatch"
+        },
+        "is_formed=true": {
+            "model": "gtpm:block/machine/part/coke_oven_hatch"
+        }
+    }
+}

@@ -1,7 +1,7 @@
 {
     "values": [
-        "gtceu:nanomuscle_boots",
-        "gtceu:hazmat_boots",
-        "gtceu:quarktech_boots"
+        "gtpm:nanomuscle_boots",
+        "gtpm:hazmat_boots",
+        "gtpm:quarktech_boots"
     ]
 }

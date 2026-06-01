@@ -1,0 +1,7 @@
+{
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/rough/gear_small",
+		"layer1": "gtpm:item/material_sets/rough/gear_small_secondary"
+	}
+}

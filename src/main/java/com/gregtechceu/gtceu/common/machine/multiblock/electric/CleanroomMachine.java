@@ -15,8 +15,6 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.CleanroomProviderTrait;
-import com.gregtechceu.gtceu.api.machine.trait.CleanroomReceiverTrait;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.pattern.BlockPattern;
 import com.gregtechceu.gtceu.api.pattern.FactoryBlockPattern;
@@ -35,6 +33,8 @@ import com.gregtechceu.gtceu.common.machine.multiblock.primitive.CokeOvenMachine
 import com.gregtechceu.gtceu.common.machine.multiblock.primitive.PrimitiveBlastFurnaceMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.primitive.PrimitivePumpMachine;
 import com.gregtechceu.gtceu.common.machine.trait.CleanroomLogic;
+import com.gregtechceu.gtceu.common.machine.trait.CleanroomProviderTrait;
+import com.gregtechceu.gtceu.common.machine.trait.CleanroomReceiverTrait;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import com.gregtechceu.gtceu.utils.GTUtil;
@@ -60,7 +60,6 @@ import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -94,12 +93,11 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     private final CleanroomProviderTrait cleanroomProviderTrait;
 
     public CleanroomMachine(BlockEntityCreationInfo info) {
-        super(info, (m) -> new CleanroomLogic((CleanroomMachine) m));
-        this.cleanroomProviderTrait = new CleanroomProviderTrait(this);
+        super(info, new CleanroomLogic());
+        this.cleanroomProviderTrait = attachTrait(new CleanroomProviderTrait());
     }
 
     @Override
-    @NotNull
     public CleanroomLogic getRecipeLogic() {
         return (CleanroomLogic) super.getRecipeLogic();
     }
@@ -261,8 +259,8 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
      * @param direction the direction to move
      * @return if a block is a valid wall block at pos moved in direction
      */
-    public boolean isBlockEdge(@NotNull Level world, @NotNull BlockPos.MutableBlockPos pos,
-                               @NotNull Direction direction) {
+    public boolean isBlockEdge(Level world, BlockPos.MutableBlockPos pos,
+                               Direction direction) {
         var state = world.getBlockState(pos.move(direction));
         return state == getCasingState() || state == getGlassState();
     }
@@ -273,13 +271,12 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
      * @param direction the direction to move
      * @return if a block is a valid floor block at pos moved in direction
      */
-    public boolean isBlockFloor(@NotNull Level world, @NotNull BlockPos.MutableBlockPos pos,
-                                @NotNull Direction direction) {
+    public boolean isBlockFloor(Level world, BlockPos.MutableBlockPos pos,
+                                Direction direction) {
         var state = world.getBlockState(pos.move(direction));
         return state == getCasingState() || state == getGlassState() || state.is(CustomTags.CLEANROOM_FLOORS);
     }
 
-    @NotNull
     @Override
     public BlockPattern getPattern() {
         // return the default structure, even if there is no valid size found
@@ -384,17 +381,14 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     }
 
     // protected to allow easy addition of addon "cleanrooms"
-    @NotNull
     protected BlockState getCasingState() {
         return GTBlocks.PLASTCRETE.getDefaultState();
     }
 
-    @NotNull
     protected BlockState getGlassState() {
         return GTBlocks.CLEANROOM_GLASS.getDefaultState();
     }
 
-    @NotNull
     protected static TraceabilityPredicate doorPredicate() {
         return Predicates.custom(blockWorldState -> blockWorldState.getBlockState().is(CustomTags.CLEANROOM_DOORS),
                 () -> new BlockInfo[] { new BlockInfo(Blocks.IRON_DOOR.defaultBlockState()), new BlockInfo(
@@ -405,7 +399,6 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
         return Predicates.blockTag(CustomTags.CLEANROOM_FLOORS);
     }
 
-    @NotNull
     protected TraceabilityPredicate innerPredicate() {
         return new TraceabilityPredicate(blockWorldState -> {
             Set<CleanroomReceiverTrait> receivers = blockWorldState.getMatchContext().getOrCreate("cleanroomReceiver",
@@ -416,7 +409,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
                 if (isMachineBanned(machine)) {
                     return false;
                 }
-                machine.getTraitHolder().getTraitOptional(CleanroomReceiverTrait.TYPE).ifPresent(receivers::add);
+                machine.getTraitOptional(CleanroomReceiverTrait.TYPE).ifPresent(receivers::add);
             }
             return true;
         }, null) {
@@ -435,7 +428,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
 
     protected boolean isMachineBanned(MetaMachine machine) {
         // blacklisted machines: mufflers and all generators, miners/drills, primitives
-        if (machine.getTraitHolder().getTrait(CleanroomProviderTrait.TYPE) != null) return true;
+        if (machine.getTrait(CleanroomProviderTrait.TYPE) != null) return true;
         if (machine instanceof MufflerPartMachine) return true;
         if (machine instanceof SimpleGeneratorMachine) return true;
         if (machine instanceof LargeCombustionEngineMachine) return true;
@@ -456,7 +449,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
             var maxVoltage = getMaxVoltage();
             if (maxVoltage > 0) {
                 String voltageName = GTValues.VNF[GTUtil.getFloorTierByVoltage(maxVoltage)];
-                textList.add(Component.translatable("gtceu.multiblock.max_energy_per_tick", maxVoltage, voltageName));
+                textList.add(Component.translatable("gtpm.multiblock.max_energy_per_tick", maxVoltage, voltageName));
             }
 
             if (cleanroomType != null) {
@@ -464,38 +457,38 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
             }
 
             if (!isWorkingEnabled()) {
-                textList.add(Component.translatable("gtceu.multiblock.work_paused"));
+                textList.add(Component.translatable("gtpm.multiblock.work_paused"));
 
             } else if (isActive()) {
-                textList.add(Component.translatable("gtceu.multiblock.running"));
+                textList.add(Component.translatable("gtpm.multiblock.running"));
                 int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
                 double maxInSec = (float) recipeLogic.getDuration() / 20.0f;
                 double currentInSec = (float) recipeLogic.getProgress() / 20.0f;
                 textList.add(
-                        Component.translatable("gtceu.multiblock.progress", String.format("%.2f", (float) currentInSec),
+                        Component.translatable("gtpm.multiblock.progress", String.format("%.2f", (float) currentInSec),
                                 String.format("%.2f", (float) maxInSec), currentProgress));
             } else {
-                textList.add(Component.translatable("gtceu.multiblock.idling"));
+                textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
             if (recipeLogic.isWaiting()) {
-                textList.add(Component.translatable("gtceu.multiblock.waiting")
+                textList.add(Component.translatable("gtpm.multiblock.waiting")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }
 
             if (cleanroomProviderTrait.isActive()) {
-                textList.add(Component.translatable("gtceu.multiblock.cleanroom.clean_state"));
+                textList.add(Component.translatable("gtpm.multiblock.cleanroom.clean_state"));
             } else {
-                textList.add(Component.translatable("gtceu.multiblock.cleanroom.dirty_state"));
+                textList.add(Component.translatable("gtpm.multiblock.cleanroom.dirty_state"));
             }
-            textList.add(Component.translatable("gtceu.multiblock.cleanroom.clean_amount", this.cleanAmount));
-            textList.add(Component.translatable("gtceu.multiblock.dimensions.0"));
-            textList.add(Component.translatable("gtceu.multiblock.dimensions.1", lDist + rDist + 1, hDist + 1,
+            textList.add(Component.translatable("gtpm.multiblock.cleanroom.clean_amount", this.cleanAmount));
+            textList.add(Component.translatable("gtpm.multiblock.dimensions.0"));
+            textList.add(Component.translatable("gtpm.multiblock.dimensions.1", lDist + rDist + 1, hDist + 1,
                     fDist + bDist + 1));
         } else {
-            Component tooltip = Component.translatable("gtceu.multiblock.invalid_structure.tooltip")
+            Component tooltip = Component.translatable("gtpm.multiblock.invalid_structure.tooltip")
                     .withStyle(ChatFormatting.GRAY);
-            textList.add(Component.translatable("gtceu.multiblock.invalid_structure")
+            textList.add(Component.translatable("gtpm.multiblock.invalid_structure")
                     .withStyle(Style.EMPTY.withColor(ChatFormatting.RED)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
         }
@@ -512,14 +505,13 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
         cleanroomProviderTrait.setActive(this.cleanAmount >= CLEAN_AMOUNT_THRESHOLD);
     }
 
-    @NotNull
     @Override
     public List<Component> getDataInfo(PortableScannerBehavior.DisplayMode mode) {
         if (mode == PortableScannerBehavior.DisplayMode.SHOW_ALL ||
                 mode == PortableScannerBehavior.DisplayMode.SHOW_MACHINE_INFO) {
             return Collections.singletonList(Component.translatable(
-                    cleanroomProviderTrait.isActive() ? "gtceu.multiblock.cleanroom.clean_state" :
-                            "gtceu.multiblock.cleanroom.dirty_state"));
+                    cleanroomProviderTrait.isActive() ? "gtpm.multiblock.cleanroom.clean_state" :
+                            "gtpm.multiblock.cleanroom.dirty_state"));
         }
         return new ArrayList<>();
     }

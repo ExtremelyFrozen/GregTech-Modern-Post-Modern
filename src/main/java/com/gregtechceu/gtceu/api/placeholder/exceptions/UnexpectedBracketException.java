@@ -5,6 +5,6 @@ import net.minecraft.network.chat.Component;
 public class UnexpectedBracketException extends RuntimeException {
 
     public UnexpectedBracketException() {
-        super(Component.translatable("gtceu.computer_monitor_cover.error.unexpected_bracket").getString());
+        super(Component.translatable("gtpm.computer_monitor_cover.error.unexpected_bracket").getString());
     }
 }

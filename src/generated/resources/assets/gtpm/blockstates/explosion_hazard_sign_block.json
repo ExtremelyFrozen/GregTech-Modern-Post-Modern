@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/explosion_hazard_sign_block"
+        }
+    }
+}

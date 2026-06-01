@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.misc;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
+import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.stack.MaterialEntry;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidVeinSave
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.FluidVeinWorldEntry;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreVeinSavedData;
 import com.gregtechceu.gtceu.api.gui.texture.ProspectingTexture;
+import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
@@ -337,7 +338,7 @@ public abstract class ProspectorMode<T> {
         public OreInfo deserialize(FriendlyByteBuf buf) {
             ResourceLocation materialId = buf.readResourceLocation();
             return new OreInfo(
-                    GTCEuAPI.materialManager.getMaterial(materialId),
+                    ((IMaterialRegistry) GTRegistries.MATERIALS).getMaterial(materialId),
                     buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
         }
 
@@ -353,7 +354,7 @@ public abstract class ProspectorMode<T> {
                 for (OreInfo item : array) {
                     float chance = (float) item.weight / totalWeight * 100;
                     tooltips.add(getDescription(item).append(" (")
-                            .append(Component.translatable("gtceu.gui.content.chance_base",
+                            .append(Component.translatable("gtpm.gui.content.chance_base",
                                     FormattingUtil.formatNumber2Places(chance)))
                             .append(") --- %s (%s%%)".formatted(item.yield, item.left)));
                 }

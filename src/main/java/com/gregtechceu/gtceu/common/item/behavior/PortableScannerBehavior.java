@@ -310,13 +310,12 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
                 }
 
                 // Recipe logic for EU production/consumption
-                RecipeLogic recipeLogic = tileEntity.getLevel().getCapability(GTCapability.CAPABILITY_RECIPE_LOGIC,
-                        tileEntity.getBlockPos(), null);
+                RecipeLogic recipeLogic = machine.getTrait(RecipeLogic.TYPE);
                 if (recipeLogic != null) {
                     GTRecipe recipe = recipeLogic.getLastRecipe();
                     if (recipeLogic.getStatus().equals(RecipeLogic.Status.WAITING)) {
                         list.add(Component.translatable("behavior.portable_scanner.divider"));
-                        list.add(Component.translatable("gtceu.multiblock.waiting"));
+                        list.add(Component.translatable("gtpm.multiblock.waiting"));
                         list.addAll(recipeLogic.getFancyTooltip());
                     } else if (recipe != null) {
                         list.add(Component.translatable("behavior.portable_scanner.divider"));
@@ -410,7 +409,7 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
                 var environmentHazardZone = environmental.getZoneByContainedPos(pos);
                 if (environmentHazardZone != null) {
                     list.add(Component.translatable("behavior.portable_scanner.environmental_hazard",
-                            Component.translatable("gtceu.medical_condition." + environmentHazardZone.condition().name),
+                            Component.translatable("gtpm.medical_condition." + environmentHazardZone.condition().name),
                             Component.literal(FormattingUtil.formatNumbers(environmentHazardZone.strength()))));
                 } else {
                     list.add(Component.translatable("behavior.portable_scanner.environmental_hazard.nothing"));
@@ -420,7 +419,7 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
                 var localHazardZone = local.getZoneByContainedPos(pos);
                 if (localHazardZone != null) {
                     list.add(Component.translatable("behavior.portable_scanner.local_hazard",
-                            Component.translatable("gtceu.medical_condition." + localHazardZone.condition().name),
+                            Component.translatable("gtpm.medical_condition." + localHazardZone.condition().name),
                             Component.literal(FormattingUtil.formatNumbers(localHazardZone.strength()))));
                 } else {
                     list.add(Component.translatable("behavior.portable_scanner.local_hazard.nothing"));

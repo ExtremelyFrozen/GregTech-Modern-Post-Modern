@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.fancy.TabsWidget;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.AutoStockingFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -82,7 +81,7 @@ public class MEStockingBusPartMachine extends MEInputBusPartMachine implements I
 
     @Override
     protected NotifiableItemStackHandler createInventory() {
-        this.aeItemHandler = new ExportOnlyAEStockingItemList(this, CONFIG_SIZE);
+        this.aeItemHandler = new ExportOnlyAEStockingItemList(CONFIG_SIZE);
         return this.aeItemHandler;
     }
 
@@ -265,10 +264,10 @@ public class MEStockingBusPartMachine extends MEInputBusPartMachine implements I
             setAutoPull(!autoPull);
             if (autoPull) {
                 context.getPlayer().sendSystemMessage(
-                        Component.translatable("gtceu.machine.me.stocking_auto_pull_enabled"));
+                        Component.translatable("gtpm.machine.me.stocking_auto_pull_enabled"));
             } else {
                 context.getPlayer().sendSystemMessage(
-                        Component.translatable("gtceu.machine.me.stocking_auto_pull_disabled"));
+                        Component.translatable("gtpm.machine.me.stocking_auto_pull_disabled"));
             }
         }
         return InteractionResult.sidedSuccess(isRemote());
@@ -308,8 +307,8 @@ public class MEStockingBusPartMachine extends MEInputBusPartMachine implements I
 
     private class ExportOnlyAEStockingItemList extends ExportOnlyAEItemList {
 
-        public ExportOnlyAEStockingItemList(MetaMachine holder, int slots) {
-            super(holder, slots, ExportOnlyAEStockingItemSlot::new);
+        public ExportOnlyAEStockingItemList(int slots) {
+            super(slots, ExportOnlyAEStockingItemSlot::new);
         }
 
         @Override

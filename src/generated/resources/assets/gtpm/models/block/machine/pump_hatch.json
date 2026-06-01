@@ -1,0 +1,18 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:pump_hatch",
+    "replaceable_textures": [
+        "bottom",
+        "top",
+        "side"
+    ],
+    "variants": {
+        "is_formed=false": {
+            "model": "gtpm:block/machine/part/pump_hatch"
+        },
+        "is_formed=true": {
+            "model": "gtpm:block/machine/part/pump_hatch"
+        }
+    }
+}

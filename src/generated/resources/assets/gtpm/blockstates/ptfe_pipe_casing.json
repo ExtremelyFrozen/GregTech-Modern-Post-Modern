@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/ptfe_pipe_casing"
+        }
+    }
+}

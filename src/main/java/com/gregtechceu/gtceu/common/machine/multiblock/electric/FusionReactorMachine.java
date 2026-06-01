@@ -75,23 +75,20 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
     @Nullable
     protected TickableSubscription preHeatSubs;
 
+    // Used for rendering
+    public float delta = 0;
+    public int lastColor = -1;
+
     public FusionReactorMachine(BlockEntityCreationInfo info, int tier) {
         super(info);
         this.tier = tier;
-        this.energyContainer = createEnergyContainer();
+        this.energyContainer = attachTrait(new NotifiableEnergyContainer(0, 0, 0, 0, 0));
+        energyContainer.setCapabilityValidator(Objects::isNull);
     }
 
     //////////////////////////////////////
     // ***** Initialization ******//
     //////////////////////////////////////
-
-    public NotifiableEnergyContainer createEnergyContainer() {
-        // create an internal energy container for temp storage. its capacity is decided when the structure formed.
-        // it doesn't provide any capability of all sides, but null for the goggles mod to check it storages.
-        var container = new NotifiableEnergyContainer(this, 0, 0, 0, 0, 0);
-        container.setCapabilityValidator(Objects::isNull);
-        return container;
-    }
 
     @Override
     public void onLoad() {
@@ -172,7 +169,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
                 !recipe.data.contains("eu_to_start") ||
                 recipe.data.getLong("eu_to_start") > fusionReactorMachine.energyContainer.getEnergyCapacity()) {
             return ModifierFunction
-                    .cancel(Component.translatable("gtceu.recipe_modifier.insufficient_eu_to_start_fusion"));
+                    .cancel(Component.translatable("gtpm.recipe_modifier.insufficient_eu_to_start_fusion"));
         }
 
         long heatDiff = recipe.data.getLong("eu_to_start") - fusionReactorMachine.heat;
@@ -184,7 +181,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         // if the remaining energy needed is more than stored, do not run
         if (fusionReactorMachine.energyContainer.getEnergyStored() < heatDiff)
             return ModifierFunction
-                    .cancel(Component.translatable("gtceu.recipe_modifier.insufficient_eu_to_start_fusion"));
+                    .cancel(Component.translatable("gtpm.recipe_modifier.insufficient_eu_to_start_fusion"));
 
         // remove the energy needed
         fusionReactorMachine.energyContainer.removeEnergy(heatDiff);
@@ -202,7 +199,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
             long heatDiff = recipe.data.getLong("eu_to_start") - this.heat;
             // if the remaining energy needed is more than stored, do not run
             if (heatDiff > 0) {
-                recipeLogic.setWaiting(Component.translatable("gtceu.recipe_logic.insufficient_fuel"));
+                recipeLogic.setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_fuel"));
 
                 // if the remaining energy needed is more than stored, do not run
                 if (this.energyContainer.getEnergyStored() < heatDiff)
@@ -273,9 +270,9 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
     public void addDisplayText(List<Component> textList) {
         super.addDisplayText(textList);
         if (isFormed()) {
-            textList.add(Component.translatable("gtceu.multiblock.fusion_reactor.energy",
+            textList.add(Component.translatable("gtpm.multiblock.fusion_reactor.energy",
                     this.energyContainer.getEnergyStored(), this.energyContainer.getEnergyCapacity()));
-            textList.add(Component.translatable("gtceu.multiblock.fusion_reactor.heat", heat));
+            textList.add(Component.translatable("gtpm.multiblock.fusion_reactor.heat", heat));
         }
     }
 
@@ -286,7 +283,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         int fusionTier = findCeilingTier(euToStart);
         int tier = Math.max(MINIMUM_TIER, Math.max(recipeTier, fusionTier));
         group.addWidget(new LabelWidget(-8, group.getSizeHeight() - 10,
-                LocalizationUtils.format("gtceu.recipe.eu_to_start",
+                LocalizationUtils.format("gtpm.recipe.eu_to_start",
                         FormattingUtil.formatNumberReadable2F(euToStart, false),
                         FUSION_NAMES.get(tier))));
     }

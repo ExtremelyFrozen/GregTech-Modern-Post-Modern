@@ -2,8 +2,6 @@ package com.gregtechceu.gtceu;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
-import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.CommonProxy;
 import com.gregtechceu.gtceu.common.network.GTNetwork;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -24,7 +22,6 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import com.mojang.serialization.Codec;
 import dev.emi.emi.config.EmiConfig;
-import me.shedaniel.rei.api.client.REIRuntime;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,15 +31,15 @@ import java.nio.file.Path;
 @Mod(GTCEu.MOD_ID)
 public class GTCEu {
 
-    public static final String MOD_ID = "gtceu";
+    public static final String MOD_ID = "gtpm";
     private static final ResourceLocation TEMPLATE_LOCATION = ResourceLocation.fromNamespaceAndPath(MOD_ID, "");
     public static final Codec<ResourceLocation> GTCEU_ID = Codec.STRING.comapFlatMap(
             str -> ResourceLocation.read(appendIdString(str)),
             s -> s.getNamespace().equals(MOD_ID) ? s.getPath() : s.toString());
 
-    public static final String NAME = "GTCEu";
+    public static final String NAME = "GTPM";
     public static final Logger LOGGER = LogManager.getLogger(NAME);
-    public static final Path GTCEU_FOLDER = getGameDir().resolve("gtceu");
+    public static final Path GTCEU_FOLDER = getGameDir().resolve("gtpm");
 
     @ApiStatus.Internal
     public static IEventBus gtModBus;
@@ -52,9 +49,6 @@ public class GTCEu {
         GTCEu.gtModBus = modBus;
         ConfigHolder.init();
 
-        // must be set here because of KubeJS compat
-        // trying to read this before the pre-init stage
-        GTCEuAPI.materialManager = (IMaterialRegistry) GTRegistries.MATERIALS;
         GTCEuAPI.initializeHighTier();
         if (GTCEu.isDev()) {
             ConfigHolder.INSTANCE.recipes.generateLowQualityGems = true;
@@ -177,17 +171,11 @@ public class GTCEu {
     public static class Mods {
 
         public static boolean isAnyRecipeViewerLoaded() {
-            return isModLoaded(GTValues.MODID_EMI) || isModLoaded(GTValues.MODID_JEI) ||
-                    isModLoaded(GTValues.MODID_REI);
+            return isModLoaded(GTValues.MODID_EMI) || isModLoaded(GTValues.MODID_JEI);
         }
 
         public static boolean isJEILoaded() {
-            return !(isModLoaded(GTValues.MODID_EMI) || isModLoaded(GTValues.MODID_REI)) &&
-                    isModLoaded(GTValues.MODID_JEI);
-        }
-
-        public static boolean isREILoaded() {
-            return isModLoaded(GTValues.MODID_REI) && (!isClientSide() || REIRuntime.getInstance().isOverlayVisible());
+            return !isModLoaded(GTValues.MODID_EMI) && isModLoaded(GTValues.MODID_JEI);
         }
 
         public static boolean isEMILoaded() {

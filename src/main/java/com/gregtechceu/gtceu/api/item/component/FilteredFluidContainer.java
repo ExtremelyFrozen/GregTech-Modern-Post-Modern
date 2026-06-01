@@ -32,7 +32,7 @@ public class FilteredFluidContainer implements IItemComponent, IComponentCapabil
                                 TooltipFlag isAdvanced) {
         FluidStack tank = FluidUtil.getFluidContained(stack).orElse(FluidStack.EMPTY);
         if (!tank.isEmpty()) {
-            tooltipComponents.add(Component.translatable("gtceu.universal.tooltip.fluid_stored",
+            tooltipComponents.add(Component.translatable("gtpm.universal.tooltip.fluid_stored",
                     tank.getHoverName(), FormattingUtil.formatNumbers(tank.getAmount())));
         }
     }

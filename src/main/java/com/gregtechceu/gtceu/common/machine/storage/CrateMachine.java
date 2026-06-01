@@ -48,7 +48,7 @@ public class CrateMachine extends MetaMachine implements IUIMachine {
         super(info);
         this.material = material;
         this.inventorySize = inventorySize;
-        this.inventory = new NotifiableItemStackHandler(this, inventorySize, IO.BOTH);
+        this.inventory = attachTrait(new NotifiableItemStackHandler(inventorySize, IO.BOTH));
     }
 
     @Override
@@ -86,6 +86,7 @@ public class CrateMachine extends MetaMachine implements IUIMachine {
                     stack.shrink(1);
                 }
                 isTaped = true;
+                inventory.shouldDropInventoryInWorld(false);
                 setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_TAPED, isTaped));
                 syncDataHolder.markClientSyncFieldDirty("isTaped");
                 return InteractionResult.sidedSuccess(context.getLevel().isClientSide);
@@ -112,11 +113,5 @@ public class CrateMachine extends MetaMachine implements IUIMachine {
             components.set(GTDataComponents.TAPED, Unit.INSTANCE);
             components.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(inventory.storage.getStacks()));
         }
-    }
-
-    @Override
-    public void onMachineDestroyed() {
-        super.onMachineDestroyed();
-        if (!isTaped) inventory.dropInventoryInWorld();
     }
 }

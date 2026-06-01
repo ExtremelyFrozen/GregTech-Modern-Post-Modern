@@ -14,11 +14,11 @@ import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.WorkableTieredMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
 import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.common.machine.trait.miner.MinerLogic;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
@@ -67,11 +67,11 @@ public class MinerMachine extends WorkableTieredMachine
 
     public MinerMachine(BlockEntityCreationInfo info, int tier, int speed, int maximumRadius, int fortune) {
         super(info, tier,
-                (m) -> new MinerLogic(m, fortune, speed, maximumRadius),
+                new MinerLogic(fortune, speed, maximumRadius),
                 0, (tier + 1) * (tier + 1), 0, 0, ($) -> 0);
         this.energyPerTick = GTValues.V[tier - 1];
         this.chargerInventory = createChargerItemHandler();
-        this.autoOutput = AutoOutputTrait.ofItems(this, exportItems);
+        this.autoOutput = attachTrait(AutoOutputTrait.ofItems(exportItems));
         autoOutput.setItemOutputDirectionValidator(d -> d != Direction.DOWN);
     }
 
@@ -91,8 +91,6 @@ public class MinerMachine extends WorkableTieredMachine
     public void onMachineDestroyed() {
         super.onMachineDestroyed();
         // Remove the miner pipes below this miner
-        getRecipeLogic().onRemove();
-        exportItems.dropInventoryInWorld();
         chargerInventory.dropInventoryInWorld(getLevel(), getBlockPos());
     }
 
@@ -225,34 +223,34 @@ public class MinerMachine extends WorkableTieredMachine
             slotWidget.setHandlerSlot(machine.chargerInventory, 0);
             slotWidget.setCanPutItems(true);
             slotWidget.setCanTakeItems(true);
-            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtceu.gui.charger_slot.tooltip",
+            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
                     GTValues.VNF[machine.getTier()], GTValues.VNF[machine.getTier()]).toArray(new MutableComponent[0]));
         });
     }
 
-    private void addDisplayText(@NotNull List<Component> textList) {
+    private void addDisplayText(List<Component> textList) {
         int workingArea = IMiner.getWorkingArea(getRecipeLogic().getCurrentRadius());
         textList.add(recipeLogic.getCustomProgressLine());
-        textList.add(Component.translatable("gtceu.machine.miner.startx", getRecipeLogic().getX()).append(" ")
-                .append(Component.translatable("gtceu.machine.miner.minex", getRecipeLogic().getMineX())));
-        textList.add(Component.translatable("gtceu.machine.miner.starty", getRecipeLogic().getY()).append(" ")
-                .append(Component.translatable("gtceu.machine.miner.miney", getRecipeLogic().getMineY())));
-        textList.add(Component.translatable("gtceu.machine.miner.startz", getRecipeLogic().getZ()).append(" ")
-                .append(Component.translatable("gtceu.machine.miner.minez", getRecipeLogic().getMineZ())));
-        textList.add(Component.translatable("gtceu.universal.tooltip.working_area", workingArea, workingArea));
+        textList.add(Component.translatable("gtpm.machine.miner.startx", getRecipeLogic().getX()).append(" ")
+                .append(Component.translatable("gtpm.machine.miner.minex", getRecipeLogic().getMineX())));
+        textList.add(Component.translatable("gtpm.machine.miner.starty", getRecipeLogic().getY()).append(" ")
+                .append(Component.translatable("gtpm.machine.miner.miney", getRecipeLogic().getMineY())));
+        textList.add(Component.translatable("gtpm.machine.miner.startz", getRecipeLogic().getZ()).append(" ")
+                .append(Component.translatable("gtpm.machine.miner.minez", getRecipeLogic().getMineZ())));
+        textList.add(Component.translatable("gtpm.universal.tooltip.working_area", workingArea, workingArea));
         if (getRecipeLogic().isDone())
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.done")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.done")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
         else if (getRecipeLogic().isWorking())
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.working")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.working")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
         else if (!this.isWorkingEnabled())
-            textList.add(Component.translatable("gtceu.multiblock.work_paused"));
+            textList.add(Component.translatable("gtpm.multiblock.work_paused"));
         if (getRecipeLogic().isInventoryFull())
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.invfull")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.invfull")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
         if (!drainInput(true))
-            textList.add(Component.translatable("gtceu.multiblock.large_miner.needspower")
+            textList.add(Component.translatable("gtpm.multiblock.large_miner.needspower")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
     }
 
@@ -287,9 +285,9 @@ public class MinerMachine extends WorkableTieredMachine
 
             int workingArea = IMiner.getWorkingArea(getRecipeLogic().getCurrentRadius());
             context.getPlayer().sendSystemMessage(
-                    Component.translatable("gtceu.universal.tooltip.working_area", workingArea, workingArea));
+                    Component.translatable("gtpm.universal.tooltip.working_area", workingArea, workingArea));
         } else {
-            context.getPlayer().sendSystemMessage(Component.translatable("gtceu.multiblock.large_miner.errorradius"));
+            context.getPlayer().sendSystemMessage(Component.translatable("gtpm.multiblock.large_miner.errorradius"));
         }
         return InteractionResult.SUCCESS;
     }
@@ -301,7 +299,7 @@ public class MinerMachine extends WorkableTieredMachine
                 mode == PortableScannerBehavior.DisplayMode.SHOW_MACHINE_INFO) {
             int workingArea = IMiner.getWorkingArea(getRecipeLogic().getCurrentRadius());
             return Collections.singletonList(
-                    Component.translatable("gtceu.universal.tooltip.working_area", workingArea, workingArea));
+                    Component.translatable("gtpm.universal.tooltip.working_area", workingArea, workingArea));
         }
         return new ArrayList<>();
     }

@@ -35,6 +35,6 @@ public class GTBedrockFluidEmiCategory extends EmiRecipeCategory {
 
     @Override
     public Component getName() {
-        return Component.translatable("gtceu.jei.bedrock_fluid_diagram");
+        return Component.translatable("gtpm.jei.bedrock_fluid_diagram");
     }
 }

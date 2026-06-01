@@ -27,6 +27,6 @@ public interface IAutoPullPart extends IMultiPart {
                 GuiTextures.BUTTON_AUTO_PULL.getSubTexture(0, 0.5, 1, 0.5),
                 this::isAutoPull,
                 (clickData, pressed) -> setAutoPull(pressed))
-                .setTooltipsSupplier(pressed -> List.of(Component.translatable("gtceu.gui.me_bus.auto_pull_button"))));
+                .setTooltipsSupplier(pressed -> List.of(Component.translatable("gtpm.gui.me_bus.auto_pull_button"))));
     }
 }

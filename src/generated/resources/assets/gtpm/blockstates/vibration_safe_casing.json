@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/vibration_safe_casing"
+        }
+    }
+}

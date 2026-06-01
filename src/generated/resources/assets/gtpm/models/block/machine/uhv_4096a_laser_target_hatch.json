@@ -1,0 +1,32 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:uhv_4096a_laser_target_hatch",
+    "replaceable_textures": [
+        "bottom",
+        "top",
+        "side"
+    ],
+    "variants": {
+        "is_formed=false": {
+            "model": {
+                "parent": "gtpm:block/machine/part/laser_target_hatch",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/uhv/bottom",
+                    "side": "gtpm:block/casings/voltage/uhv/side",
+                    "top": "gtpm:block/casings/voltage/uhv/top"
+                }
+            }
+        },
+        "is_formed=true": {
+            "model": {
+                "parent": "gtpm:block/machine/part/laser_target_hatch",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/uhv/bottom",
+                    "side": "gtpm:block/casings/voltage/uhv/side",
+                    "top": "gtpm:block/casings/voltage/uhv/top"
+                }
+            }
+        }
+    }
+}

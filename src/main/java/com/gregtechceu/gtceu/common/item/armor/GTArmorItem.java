@@ -45,7 +45,7 @@ public class GTArmorItem extends ArmorItem {
         if (Language.getInstance().has(matSpecificKey)) {
             return matSpecificKey;
         }
-        return "item.gtceu.armor." + type.getName();
+        return "item.gtpm.armor." + type.getName();
     }
 
     @Override

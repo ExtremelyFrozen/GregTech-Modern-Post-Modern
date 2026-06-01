@@ -21,7 +21,6 @@ import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEFluidKey;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -92,9 +91,9 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
         WidgetGroup group = new WidgetGroup(0, 0, 170, 65);
         // ME Network status
         group.addWidget(new LabelWidget(5, 0, () -> this.isOnline ?
-                "gtceu.gui.me_network.online" :
-                "gtceu.gui.me_network.offline"));
-        group.addWidget(new LabelWidget(5, 10, "gtceu.gui.waiting_list"));
+                "gtpm.gui.me_network.online" :
+                "gtpm.gui.me_network.offline"));
+        group.addWidget(new LabelWidget(5, 10, "gtpm.gui.waiting_list"));
         // display list
         group.addWidget(new AEListGridWidget.Fluid(5, 20, 3, this.internalBuffer));
 
@@ -106,7 +105,7 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
         FluidStorageDelegate storage;
 
         public InaccessibleInfiniteTank(MetaMachine holder) {
-            super(holder, List.of(new FluidStorageDelegate()), IO.OUT, IO.NONE);
+            super(List.of(new FluidStorageDelegate()), IO.OUT, IO.NONE);
             internalBuffer.setOnContentsChanged(this::onContentsChanged);
             storage = (FluidStorageDelegate) getStorages()[0];
             allowSameFluids = true;
@@ -118,7 +117,7 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
         }
 
         @Override
-        public @NotNull List<Object> getContents() {
+        public List<Object> getContents() {
             return Collections.emptyList();
         }
 
@@ -133,12 +132,12 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
         }
 
         @Override
-        public @NotNull FluidStack getFluidInTank(int tank) {
+        public FluidStack getFluidInTank(int tank) {
             return FluidStack.EMPTY;
         }
 
         @Override
-        public void setFluidInTank(int tank, @NotNull FluidStack fluidStack) {}
+        public void setFluidInTank(int tank, FluidStack fluidStack) {}
 
         @Override
         public int getTankCapacity(int tank) {
@@ -146,7 +145,7 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
         }
 
         @Override
-        public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+        public boolean isFluidValid(int tank, FluidStack stack) {
             return true;
         }
 

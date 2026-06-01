@@ -25,7 +25,7 @@ public class SteamItemBusPartMachine extends ItemBusPartMachine {
 
     public SteamItemBusPartMachine(BlockEntityCreationInfo info, IO io) {
         super(info, 1, io);
-        autoTooltipKey = io == IO.IN ? "gtceu.gui.item_auto_input.tooltip" : "gtceu.gui.item_auto_output.tooltip";
+        autoTooltipKey = io == IO.IN ? "gtpm.gui.item_auto_input.tooltip" : "gtpm.gui.item_auto_output.tooltip";
     }
 
     @NotNull

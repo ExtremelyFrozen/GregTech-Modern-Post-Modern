@@ -15,13 +15,10 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -30,14 +27,13 @@ import java.util.Objects;
 
 public abstract class LongDistanceEndpointMachine extends MetaMachine implements ILDEndpoint, IDataInfoProvider {
 
-    @NotNull
     @Getter
     private final LongDistancePipeType pipeType;
     @SaveField
     @Getter
     @Setter
     private IO ioType = IO.NONE;
-    private ILDEndpoint link;
+    private @Nullable ILDEndpoint link;
     private boolean placed = false;
     @Nullable
     protected TickableSubscription refreshNetSubs;
@@ -102,9 +98,7 @@ public abstract class LongDistanceEndpointMachine extends MetaMachine implements
     @Override
     public void onLoad() {
         super.onLoad();
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateRefreshNetSubscription));
-        }
+        scheduleForNextServerTick(this::updateRefreshNetSubscription);
     }
 
     @Override
@@ -200,9 +194,7 @@ public abstract class LongDistanceEndpointMachine extends MetaMachine implements
     public void invalidateLink() {
         if (link != null) {
             this.link = null;
-            if (getLevel() instanceof ServerLevel serverLevel) {
-                serverLevel.getServer().tell(new TickTask(0, this::updateRefreshNetSubscription));
-            }
+            scheduleForNextServerTick(this::updateRefreshNetSubscription);
         }
     }
 
@@ -219,22 +211,22 @@ public abstract class LongDistanceEndpointMachine extends MetaMachine implements
                 mode == PortableScannerBehavior.DisplayMode.SHOW_MACHINE_INFO) {
             LongDistanceNetwork network = LongDistanceNetwork.get(getLevel(), getBlockPos());
             if (network == null) {
-                textComponents.add(Component.translatable("block.gtceu.long_distance_item_pipeline_no_network"));
+                textComponents.add(Component.translatable("block.gtpm.long_distance_item_pipeline_no_network"));
             } else {
-                textComponents.add(Component.translatable("block.gtceu.long_distance_item_pipeline_network_header"));
-                textComponents.add(Component.translatable("block.gtceu.long_distance_item_pipeline_pipe_count",
+                textComponents.add(Component.translatable("block.gtpm.long_distance_item_pipeline_network_header"));
+                textComponents.add(Component.translatable("block.gtpm.long_distance_item_pipeline_pipe_count",
                         FormattingUtil.formatNumbers(network.getTotalSize())));
                 ILDEndpoint in = network.getActiveInputIndex(), out = network.getActiveOutputIndex();
-                textComponents.add(Component.translatable("block.gtceu.long_distance_item_pipeline_input_pos",
+                textComponents.add(Component.translatable("block.gtpm.long_distance_item_pipeline_input_pos",
                         Component.literal(in == null ? "none" : in.getBlockPos().toString())));
-                textComponents.add(Component.translatable("block.gtceu.long_distance_item_pipeline_output_pos",
+                textComponents.add(Component.translatable("block.gtpm.long_distance_item_pipeline_output_pos",
                         Component.literal(out == null ? "none" : out.getBlockPos().toString())));
             }
             if (isInput()) {
-                textComponents.add(Component.translatable("block.gtceu.long_distance_item_pipeline_input_endpoint"));
+                textComponents.add(Component.translatable("block.gtpm.long_distance_item_pipeline_input_endpoint"));
             }
             if (isOutput()) {
-                textComponents.add(Component.translatable("block.gtceu.long_distance_item_pipeline_output_endpoint"));
+                textComponents.add(Component.translatable("block.gtpm.long_distance_item_pipeline_output_endpoint"));
             }
         }
 

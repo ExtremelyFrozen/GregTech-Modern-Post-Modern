@@ -16,7 +16,7 @@ public class GTJukeboxSongs {
     public static void bootstrap(BootstrapContext<JukeboxSong> ctx) {
         ctx.register(SUS, new JukeboxSong(
                 BuiltInRegistries.SOUND_EVENT.wrapAsHolder(GTSoundEntries.SUS_RECORD.getMainEvent()),
-                Component.translatable("item.gtceu.sus_record.desc"),
+                Component.translatable("item.gtpm.sus_record.desc"),
                 820, 1));
     }
 }

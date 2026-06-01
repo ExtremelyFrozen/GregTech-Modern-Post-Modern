@@ -32,7 +32,7 @@ public class CoverConfigurator implements IFancyConfigurator {
 
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.gui.cover_setting.title");
+        return Component.translatable("gtpm.gui.cover_setting.title");
     }
 
     @Override

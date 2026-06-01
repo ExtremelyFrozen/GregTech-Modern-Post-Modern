@@ -37,7 +37,6 @@ import com.gregtechceu.gtceu.common.item.QuantumTankMachineItem;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.model.builder.PipeModelBuilder;
 import com.gregtechceu.gtceu.data.pack.event.RegisterDynamicResourcesEvent;
-import com.gregtechceu.gtceu.integration.kjs.GregTechKubeJSPlugin;
 import com.gregtechceu.gtceu.integration.map.ClientCacheManager;
 import com.gregtechceu.gtceu.integration.map.cache.client.GTClientCache;
 import com.gregtechceu.gtceu.integration.map.ftbchunks.FTBChunksPlugin;
@@ -69,7 +68,7 @@ public class ClientProxy {
     public static void init(IEventBus modBus) {
         modBus.register(ClientProxy.class);
         if (!GTCEu.isDataGen()) {
-            ClientCacheManager.registerClientCache(GTClientCache.instance, "gtceu");
+            ClientCacheManager.registerClientCache(GTClientCache.instance, GTCEu.MOD_ID);
             Layers.registerLayer(OreRenderLayer::new, "ore_veins");
             Layers.registerLayer(FluidRenderLayer::new, "bedrock_fluids");
             CommonEventListener.registerCapes(new RegisterGTCapesEvent());
@@ -209,9 +208,6 @@ public class ClientProxy {
         // do this last so addons can easily add new variants to the registered model set
         PipeModel.initDynamicModels();
 
-        if (GTCEu.Mods.isKubeJSLoaded()) {
-            GregTechKubeJSPlugin.generateMachineBlockModels();
-        }
         RuntimeBlockstateProvider.INSTANCE.run();
         PipeModelBuilder.clearRestrictorModelCache();
     }

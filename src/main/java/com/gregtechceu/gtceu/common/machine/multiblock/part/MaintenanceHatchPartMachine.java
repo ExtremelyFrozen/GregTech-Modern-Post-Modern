@@ -77,7 +77,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
     public MaintenanceHatchPartMachine(BlockEntityCreationInfo info, boolean isConfigurable) {
         super(info, isConfigurable ? GTValues.HV : GTValues.LV);
         this.isConfigurable = isConfigurable;
-        this.itemStackHandler = createInventory();
+        this.itemStackHandler = attachTrait(createInventory());
         this.itemStackHandler.setFilter(itemStack -> itemStack.is(GTItems.DUCT_TAPE.get()));
     }
 
@@ -85,13 +85,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
     // ****** Initialization ******//
     //////////////////////////////////////
     protected NotifiableItemStackHandler createInventory() {
-        return new NotifiableItemStackHandler(this, 1, IO.BOTH, IO.BOTH);
-    }
-
-    @Override
-    public void onMachineDestroyed() {
-        super.onMachineDestroyed();
-        itemStackHandler.dropInventoryInWorld();
+        return new NotifiableItemStackHandler(1, IO.BOTH, IO.BOTH);
     }
 
     @Override
@@ -209,7 +203,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
      * @param entityPlayer Target Player which their inventory would be scanned for tools to fix
      */
     private void fixProblemsWithTools(byte problems, Player entityPlayer) {
-        List<GTToolType> toolsToMatch = Arrays.asList(new GTToolType[6]);
+        List<@Nullable GTToolType> toolsToMatch = Arrays.asList(new GTToolType[6]);
         boolean proceed = false;
         for (byte index = 0; index < 6; index++) {
             if (((problems >> index) & 1) == 0) {
@@ -336,7 +330,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
                     .addWidget(new ComponentPanelWidget(4, 5, list -> {
                         list.add(getTextWidgetText("duration", this::getDurationMultiplier));
                         list.add(getTextWidgetText("time", this::getTimeMultiplier));
-                        var buttonText = Component.translatable("gtceu.maintenance.configurable_duration.modify");
+                        var buttonText = Component.translatable("gtpm.maintenance.configurable_duration.modify");
                         buttonText.append(" ");
                         buttonText.append(ComponentPanelWidget.withButton(Component.literal("[-]"), "sub"));
                         buttonText.append(" ");
@@ -359,10 +353,10 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
         }
         group.addWidget(new SlotWidget(itemStackHandler, 0, group.getSize().width - 4 - 18, 4)
                 .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.DUCT_TAPE_OVERLAY))
-                .setHoverTooltips("gtceu.machine.maintenance_hatch_tape_slot.tooltip"));
+                .setHoverTooltips("gtpm.machine.maintenance_hatch_tape_slot.tooltip"));
         group.addWidget(new ButtonWidget(group.getSize().width - 4 - 18, 4 + 20, 18, 18, GuiTextures.MAINTENANCE_BUTTON,
                 data -> fixMaintenanceProblems(group.getGui().entityPlayer))
-                .setHoverTooltips("gtceu.machine.maintenance_hatch_tool_slot.tooltip"));
+                .setHoverTooltips("gtpm.machine.maintenance_hatch_tool_slot.tooltip"));
         group.setBackground(GuiTextures.BACKGROUND_INVERSE);
         return group;
     }
@@ -370,13 +364,13 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
     private static Component getTextWidgetText(String type, DoubleSupplier multiplier) {
         Component tooltip;
         if (multiplier.getAsDouble() == 1.0) {
-            tooltip = Component.translatable("gtceu.maintenance.configurable_" + type + ".unchanged_description");
+            tooltip = Component.translatable("gtpm.maintenance.configurable_" + type + ".unchanged_description");
         } else {
-            tooltip = Component.translatable("gtceu.maintenance.configurable_" + type + ".changed_description",
+            tooltip = Component.translatable("gtpm.maintenance.configurable_" + type + ".changed_description",
                     FormattingUtil.formatNumber2Places(multiplier.getAsDouble()));
         }
         return Component
-                .translatable("gtceu.maintenance.configurable_" + type,
+                .translatable("gtpm.maintenance.configurable_" + type,
                         FormattingUtil.formatNumber2Places(multiplier.getAsDouble()))
                 .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip)));
     }

@@ -40,7 +40,7 @@ public class WorkableBlockProvider extends CapabilityBlockProvider<IWorkable> {
         data.putInt("Progress", capability.getProgress());
         data.putInt("MaxProgress", capability.getMaxProgress());
         // Check if IWorkable is a research station and add flag to data
-        if (capability instanceof ResearchStationMachine rsm) {
+        if (capability instanceof ResearchStationMachine) {
             data.putBoolean("Research", true);
         }
     }
@@ -58,7 +58,7 @@ public class WorkableBlockProvider extends CapabilityBlockProvider<IWorkable> {
         if (capData.getBoolean("Research")) {
             String current = FormattingUtil.formatNumberReadable(currentProgress);
             String max = FormattingUtil.formatNumberReadable(maxProgress);
-            text = Component.translatable("gtceu.jade.progress_computation", current, max);
+            text = Component.translatable("gtpm.jade.progress_computation", current, max);
 
             tooltip.add(
                     IElementHelper.get().progress(
@@ -73,9 +73,9 @@ public class WorkableBlockProvider extends CapabilityBlockProvider<IWorkable> {
         }
 
         if (maxProgress < 20) {
-            text = Component.translatable("gtceu.jade.progress_tick", currentProgress, maxProgress);
+            text = Component.translatable("gtpm.jade.progress_tick", currentProgress, maxProgress);
         } else {
-            text = Component.translatable("gtceu.jade.progress_sec", Math.round(currentProgress / 20.0F),
+            text = Component.translatable("gtpm.jade.progress_sec", Math.round(currentProgress / 20.0F),
                     Math.round(maxProgress / 20.0F));
         }
 

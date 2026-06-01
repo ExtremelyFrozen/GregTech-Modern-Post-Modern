@@ -19,8 +19,6 @@ import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerLevel;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
@@ -78,10 +76,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
             onStructureInvalid();
             return;
         }
-
-        if (getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateTickSubscription));
-        }
+        updateTickSubscription();
     }
 
     protected int calculateEnergyUsage() {
@@ -116,9 +111,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     @Override
     public void onLoad() {
         super.onLoad();
-        if (this.isFormed() && getLevel() instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().tell(new TickTask(0, this::updateTickSubscription));
-        }
+        scheduleForNextServerTick(this::updateTickSubscription);
     }
 
     @Override
@@ -157,12 +150,12 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
                 if (consumed == energyToConsume) {
                     getRecipeLogic().setStatus(RecipeLogic.Status.WORKING);
                 } else {
-                    getRecipeLogic().setWaiting(Component.translatable("gtceu.recipe_logic.insufficient_in")
+                    getRecipeLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
                             .append(": ").append(EURecipeCapability.CAP.getName()));
                 }
             }
         } else {
-            getRecipeLogic().setWaiting(Component.translatable("gtceu.recipe_logic.insufficient_in").append(": ")
+            getRecipeLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in").append(": ")
                     .append(EURecipeCapability.CAP.getName()));
         }
         updateTickSubscription();
@@ -173,9 +166,9 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
         MultiblockDisplayText.builder(textList, isFormed())
                 .setWorkingStatus(true, isActive() && isWorkingEnabled()) // transform into two-state system for display
                 .setWorkingStatusKeys(
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.idling",
-                        "gtceu.multiblock.data_bank.providing")
+                        "gtpm.multiblock.idling",
+                        "gtpm.multiblock.idling",
+                        "gtpm.multiblock.data_bank.providing")
                 .addEnergyUsageExactLine(getEnergyUsage())
                 .addWorkingStatusLine();
     }

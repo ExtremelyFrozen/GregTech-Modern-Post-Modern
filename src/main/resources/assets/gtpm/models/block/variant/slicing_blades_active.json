@@ -1,0 +1,8 @@
+{
+	"parent": "block/cube_bottom_top",
+	"textures": {
+		"bottom": "#side",
+		"side": "gtpm:block/casings/gcym/shock_proof_cutting_casing",
+		"top": "gtpm:block/casings/unique/slicing_blades_active"
+	}
+}

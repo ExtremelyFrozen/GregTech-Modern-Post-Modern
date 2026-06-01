@@ -25,7 +25,7 @@ public class AutoStockingFancyConfigurator implements IFancyConfigurator {
 
     @Override
     public Component getTitle() {
-        return Component.translatable("gtceu.gui.adv_stocking_config.title");
+        return Component.translatable("gtpm.gui.adv_stocking_config.title");
     }
 
     @Override
@@ -39,14 +39,14 @@ public class AutoStockingFancyConfigurator implements IFancyConfigurator {
 
         String suffix = machine instanceof MEStockingBusPartMachine ? "min_item_count" : "min_fluid_count";
 
-        group.addWidget(new LabelWidget(4, 2, "gtceu.gui.title.adv_stocking_config." + suffix));
+        group.addWidget(new LabelWidget(4, 2, "gtpm.gui.title.adv_stocking_config." + suffix));
         group.addWidget(new IntInputWidget(4, 12, 81, 14, machine::getMinStackSize,
                 machine::setMinStackSize).setMin(1)
-                .appendHoverTooltips(Component.translatable("gtceu.gui.adv_stocking_config." + suffix)));
-        group.addWidget(new LabelWidget(4, 36, "gtceu.gui.title.adv_stocking_config.ticks_per_cycle"));
+                .appendHoverTooltips(Component.translatable("gtpm.gui.adv_stocking_config." + suffix)));
+        group.addWidget(new LabelWidget(4, 36, "gtpm.gui.title.adv_stocking_config.ticks_per_cycle"));
         group.addWidget(new IntInputWidget(4, 46, 81, 14, machine::getTicksPerCycle,
                 machine::setTicksPerCycle).setMin(ConfigHolder.INSTANCE.compat.ae2.updateIntervals)
-                .setHoverTooltips(Component.translatable("gtceu.gui.adv_stocking_config.ticks_per_cycle")));
+                .setHoverTooltips(Component.translatable("gtpm.gui.adv_stocking_config.ticks_per_cycle")));
 
         return group;
     }

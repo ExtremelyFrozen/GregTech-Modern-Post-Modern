@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.api.data.chemical.material;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
 import com.gregtechceu.gtceu.api.data.chemical.Element;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialFlag;
@@ -18,7 +17,6 @@ import com.gregtechceu.gtceu.api.item.tool.MaterialToolTier;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.data.GTMedicalConditions;
-import com.gregtechceu.gtceu.integration.kjs.helpers.MaterialStackWrapper;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
 import com.gregtechceu.gtceu.utils.TagUtil;
@@ -167,7 +165,7 @@ public class Material {
     }
 
     public void addFlags(MaterialFlag... flags) {
-        if (GTCEuAPI.materialManager.isFrozen())
+        if (((IMaterialRegistry) GTRegistries.MATERIALS).isFrozen())
             throw new IllegalStateException("Cannot add flag to material when registry is frozen!");
         this.flags.addFlags(flags).verify(this);
     }
@@ -523,7 +521,7 @@ public class Material {
     }
 
     public <T extends IMaterialProperty> void setProperty(PropertyKey<T> key, IMaterialProperty property) {
-        if (GTCEuAPI.materialManager.isFrozen()) {
+        if (((IMaterialRegistry) GTRegistries.MATERIALS).isFrozen()) {
             throw new IllegalStateException("Cannot add properties to a Material when registry is frozen!");
         }
         properties.setProperty(key, property);
@@ -585,7 +583,6 @@ public class Material {
          * The temporary list of components for this Material.
          */
         private List<MaterialStack> composition = new ArrayList<>();
-        private List<MaterialStackWrapper> compositionSupplier;
 
         /*
          * Temporary value to use to determine how to calculate default RGB.
@@ -1200,18 +1197,6 @@ public class Material {
          */
         public Builder componentStacks(ImmutableList<MaterialStack> components) {
             composition = components;
-            return this;
-        }
-
-        /** @see #componentStacks(MaterialStack...) */
-        public Builder kjs$components(MaterialStackWrapper... components) {
-            compositionSupplier = Arrays.asList(components);
-            return this;
-        }
-
-        /** @see #componentStacks(ImmutableList) componentStacks(ImmutableList&lt;MaterialStack&gt;) */
-        public Builder kjs$components(ImmutableList<MaterialStackWrapper> components) {
-            compositionSupplier = components;
             return this;
         }
 
@@ -1836,10 +1821,7 @@ public class Material {
          * @return The finalized Material.
          */
         public Material buildAndRegister() {
-            materialInfo.componentList = composition.isEmpty() && this.compositionSupplier != null ?
-                    ImmutableList.copyOf(compositionSupplier.stream().map(MaterialStackWrapper::toMatStack)
-                            .toArray(MaterialStack[]::new)) :
-                    ImmutableList.copyOf(composition);
+            materialInfo.componentList = ImmutableList.copyOf(composition);
             if (!properties.hasProperty(PropertyKey.HAZARD)) {
                 for (MaterialStack materialStack : materialInfo.componentList) {
                     Material material = materialStack.material();

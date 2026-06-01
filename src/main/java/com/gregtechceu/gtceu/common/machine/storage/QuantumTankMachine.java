@@ -9,13 +9,13 @@ import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.machine.*;
 import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
@@ -39,12 +39,10 @@ import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-@NotNullByDefault
 public class QuantumTankMachine extends TieredMachine implements IControllable,
                                 IFancyUIMachine {
 
@@ -78,9 +76,9 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
     public QuantumTankMachine(BlockEntityCreationInfo info, int tier, long maxAmount) {
         super(info, tier);
         this.maxAmount = maxAmount;
-        this.cache = createCacheFluidHandler();
+        this.cache = attachTrait(createCacheFluidHandler());
         this.lockedFluid = new CustomFluidTank(1000);
-        this.autoOutput = AutoOutputTrait.ofFluids(this, cache);
+        this.autoOutput = attachTrait(AutoOutputTrait.ofFluids(cache));
     }
 
     //////////////////////////////////////
@@ -88,7 +86,7 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
     //////////////////////////////////////
 
     protected FluidCache createCacheFluidHandler() {
-        return new FluidCache(this);
+        return new FluidCache();
     }
 
     @Override
@@ -178,7 +176,7 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
     public Widget createUIWidget() {
         var group = new WidgetGroup(0, 0, 90, 63);
         group.addWidget(new ImageWidget(4, 4, 82, 55, GuiTextures.DISPLAY))
-                .addWidget(new LabelWidget(8, 8, "gtceu.gui.fluid_amount"))
+                .addWidget(new LabelWidget(8, 8, "gtpm.gui.fluid_amount"))
                 .addWidget(new LabelWidget(8, 18, () -> FormattingUtil.formatBuckets(storedAmount))
                         .setTextColor(-1)
                         .setDropShadow(false))
@@ -193,15 +191,15 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
                         GuiTextures.BUTTON_FLUID_OUTPUT, this.autoOutput::isAutoOutputFluids,
                         this.autoOutput::setAllowAutoOutputFluids)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_auto_output.tooltip"))
+                        .setTooltipText("gtpm.gui.fluid_auto_output.tooltip"))
                 .addWidget(new ToggleButtonWidget(22, 41, 18, 18,
                         GuiTextures.BUTTON_LOCK, this::isLocked, this::setLocked)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_lock.tooltip"))
+                        .setTooltipText("gtpm.gui.fluid_lock.tooltip"))
                 .addWidget(new ToggleButtonWidget(40, 41, 18, 18,
                         GuiTextures.BUTTON_VOID, () -> isVoiding, (b) -> isVoiding = b)
                         .setShouldUseBaseBackground()
-                        .setTooltipText("gtceu.gui.fluid_voiding_partial.tooltip"));
+                        .setTooltipText("gtpm.gui.fluid_voiding_partial.tooltip"));
         group.setBackground(GuiTextures.BACKGROUND_INVERSE);
         return group;
     }
@@ -217,8 +215,8 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
 
         private final Predicate<FluidStack> filter = f -> !isLocked() || getLockedFluid().isFluidEqual(f);
 
-        public FluidCache(MetaMachine holder) {
-            super(holder);
+        public FluidCache() {
+            super();
         }
 
         @Override

@@ -1,0 +1,28 @@
+{
+    "variants": {
+        "facing=down": {
+            "model": "gtpm:block/machine/uev_transformer_1a",
+            "x": 90
+        },
+        "facing=east": {
+            "model": "gtpm:block/machine/uev_transformer_1a",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/uev_transformer_1a"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/uev_transformer_1a",
+            "y": 180
+        },
+        "facing=up": {
+            "gtpm:z": 180,
+            "model": "gtpm:block/machine/uev_transformer_1a",
+            "x": 270
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/uev_transformer_1a",
+            "y": 270
+        }
+    }
+}

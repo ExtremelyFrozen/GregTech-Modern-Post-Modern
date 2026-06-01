@@ -1,0 +1,6 @@
+{
+    "parent": "gtpm:block/lamp_off",
+    "textures": {
+        "inactive": "gtpm:block/lamps/black_off"
+    }
+}

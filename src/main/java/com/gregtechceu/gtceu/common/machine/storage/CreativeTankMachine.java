@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.PhantomFluidWidget;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
@@ -16,7 +15,6 @@ import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
@@ -28,10 +26,6 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
 public class CreativeTankMachine extends QuantumTankMachine {
 
     @Getter
@@ -46,7 +40,7 @@ public class CreativeTankMachine extends QuantumTankMachine {
     }
 
     protected FluidCache createCacheFluidHandler() {
-        return new InfiniteCache(this);
+        return new InfiniteCache();
     }
 
     @Override
@@ -130,23 +124,23 @@ public class CreativeTankMachine extends QuantumTankMachine {
         group.addWidget(new PhantomFluidWidget(cache, 0, 36, 6, 18, 18, this::getStored, this::updateStored)
                 .setShowAmount(false)
                 .setBackground(GuiTextures.FLUID_SLOT));
-        group.addWidget(new LabelWidget(7, 9, "gtceu.creative.tank.fluid"));
+        group.addWidget(new LabelWidget(7, 9, "gtpm.creative.tank.fluid"));
         group.addWidget(new ImageWidget(7, 45, 154, 14, GuiTextures.DISPLAY));
         group.addWidget(new TextFieldWidget(9, 47, 152, 10, () -> String.valueOf(mBPerCycle), this::setmBPerCycle)
                 .setMaxStringLength(11)
                 .setNumbersOnly(1, Integer.MAX_VALUE));
-        group.addWidget(new LabelWidget(7, 28, "gtceu.creative.tank.mbpc"));
+        group.addWidget(new LabelWidget(7, 28, "gtpm.creative.tank.mbpc"));
         group.addWidget(new ImageWidget(7, 82, 154, 14, GuiTextures.DISPLAY));
         group.addWidget(new TextFieldWidget(9, 84, 152, 10, () -> String.valueOf(ticksPerCycle), this::setTicksPerCycle)
                 .setMaxStringLength(11)
                 .setNumbersOnly(1, Integer.MAX_VALUE));
-        group.addWidget(new LabelWidget(7, 65, "gtceu.creative.tank.tpc"));
+        group.addWidget(new LabelWidget(7, 65, "gtpm.creative.tank.tpc"));
         group.addWidget(new SwitchWidget(7, 101, 162, 20, (clickData, value) -> setWorkingEnabled(value))
                 .setTexture(
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtceu.creative.activity.off")),
+                                new TextTexture("gtpm.creative.activity.off")),
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtceu.creative.activity.on")))
+                                new TextTexture("gtpm.creative.activity.on")))
                 .setPressed(isWorkingEnabled()));
 
         return group;
@@ -170,12 +164,12 @@ public class CreativeTankMachine extends QuantumTankMachine {
 
     private class InfiniteCache extends FluidCache {
 
-        public InfiniteCache(MetaMachine holder) {
-            super(holder);
+        public InfiniteCache() {
+            super();
         }
 
         @Override
-        public @NotNull FluidStack getFluidInTank(int tank) {
+        public FluidStack getFluidInTank(int tank) {
             return stored;
         }
 
@@ -200,7 +194,7 @@ public class CreativeTankMachine extends QuantumTankMachine {
         }
 
         @Override
-        public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+        public boolean isFluidValid(int tank, FluidStack stack) {
             return true;
         }
 

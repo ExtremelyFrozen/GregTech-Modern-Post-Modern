@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/machine/stainless_steel_drum"
+        }
+    }
+}

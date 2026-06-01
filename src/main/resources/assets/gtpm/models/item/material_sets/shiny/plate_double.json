@@ -1,0 +1,8 @@
+{
+	"parent": "gtpm:item/material_sets/shiny/plate",
+	"textures": {
+		"layer0": "gtpm:item/material_sets/shiny/plate_double",
+		"layer1": "gtpm:item/material_sets/shiny/plate_double_secondary",
+		"layer2": "gtpm:item/material_sets/shiny/plate_double_overlay"
+	}
+}

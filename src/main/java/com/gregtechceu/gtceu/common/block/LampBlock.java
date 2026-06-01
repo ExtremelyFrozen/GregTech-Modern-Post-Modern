@@ -143,11 +143,11 @@ public class LampBlock extends Block {
                                 TooltipFlag flag) {
         LampBlockItem.LampData data = stack.getOrDefault(GTDataComponents.LAMP_DATA, LampBlockItem.LampData.EMPTY);
         if (data.inverted())
-            tooltip.add(Component.translatable("block.gtceu.lamp.tooltip.inverted"));
+            tooltip.add(Component.translatable("block.gtpm.lamp.tooltip.inverted"));
         if (!data.bloom())
-            tooltip.add(Component.translatable("block.gtceu.lamp.tooltip.no_bloom"));
+            tooltip.add(Component.translatable("block.gtpm.lamp.tooltip.no_bloom"));
         if (!data.lit())
-            tooltip.add(Component.translatable("block.gtceu.lamp.tooltip.no_light"));
+            tooltip.add(Component.translatable("block.gtpm.lamp.tooltip.no_light"));
     }
 
     @Override

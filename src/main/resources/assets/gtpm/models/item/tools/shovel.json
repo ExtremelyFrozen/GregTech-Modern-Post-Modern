@@ -1,0 +1,8 @@
+{
+	"parent": "item/handheld",
+	"textures": {
+		"layer0": "gtpm:item/tools/handle_shovel",
+		"layer1": "gtpm:item/tools/shovel",
+		"layer2": "gtpm:item/tools/shovel_overlay"
+	}
+}

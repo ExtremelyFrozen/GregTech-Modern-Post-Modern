@@ -1,0 +1,32 @@
+{
+    "values": [
+        "gtpm:lv_conveyor_module",
+        "gtpm:mv_conveyor_module",
+        "gtpm:hv_conveyor_module",
+        "gtpm:ev_conveyor_module",
+        "gtpm:iv_conveyor_module",
+        "gtpm:luv_conveyor_module",
+        "gtpm:zpm_conveyor_module",
+        "gtpm:uv_conveyor_module",
+        {
+            "id": "gtpm:uhv_conveyor_module",
+            "required": false
+        },
+        {
+            "id": "gtpm:uev_conveyor_module",
+            "required": false
+        },
+        {
+            "id": "gtpm:uiv_conveyor_module",
+            "required": false
+        },
+        {
+            "id": "gtpm:uxv_conveyor_module",
+            "required": false
+        },
+        {
+            "id": "gtpm:opv_conveyor_module",
+            "required": false
+        }
+    ]
+}

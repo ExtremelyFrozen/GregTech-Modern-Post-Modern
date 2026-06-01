@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=east": {
+            "model": "gtpm:block/machine/ev_forge_hammer",
+            "y": 90
+        },
+        "facing=north": {
+            "model": "gtpm:block/machine/ev_forge_hammer"
+        },
+        "facing=south": {
+            "model": "gtpm:block/machine/ev_forge_hammer",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "gtpm:block/machine/ev_forge_hammer",
+            "y": 270
+        }
+    }
+}

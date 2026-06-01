@@ -39,7 +39,7 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanFunction;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,13 +83,10 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
     @SyncToClient
     @RerenderOnChanged
     private boolean active = false;
-    private TickableSubscription tickSubs;
+    private @Nullable TickableSubscription tickSubs;
 
     public WorldAcceleratorMachine(BlockEntityCreationInfo info, int tier) {
-        super(info, tier, (TieredEnergyMachine machine) -> {
-            long tierVoltage = GTValues.V[machine.getTier()];
-            return new NotifiableEnergyContainer(machine, tierVoltage * 256L, tierVoltage, 8, 0L, 0L);
-        });
+        super(info, tier, new NotifiableEnergyContainer(GTValues.V[tier] * 256L, GTValues.V[tier], 8, 0L, 0L));
         this.speed = (int) Math.pow(2, tier);
         this.successLimit = SUCCESS_LIMITS[tier - 1];
         this.randRange = (getTier() << 1) + 1;
@@ -163,7 +160,7 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
         return false;
     }
 
-    private <T extends BlockEntity> void tickBlockEntity(@NotNull T blockEntity) {
+    private <T extends BlockEntity> void tickBlockEntity(T blockEntity) {
         BlockPos pos = blockEntity.getBlockPos();
         // noinspection unchecked
         BlockEntityTicker<T> blockEntityTicker = this.getLevel().getBlockState(pos).getTicker(this.getLevel(),
@@ -236,7 +233,7 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
             setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_RANDOM_TICK_MODE, isRandomTickMode));
             syncDataHolder.markClientSyncFieldDirty("isRandomTickMode");
             context.getPlayer().sendSystemMessage(Component.translatable(isRandomTickMode ?
-                    "gtceu.machine.world_accelerator.mode_entity" : "gtceu.machine.world_accelerator.mode_tile"));
+                    "gtpm.machine.world_accelerator.mode_entity" : "gtpm.machine.world_accelerator.mode_tile"));
             scheduleRenderUpdate();
         }
         return InteractionResult.CONSUME;

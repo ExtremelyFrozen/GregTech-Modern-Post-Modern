@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "gtpm:block/iv_hermetic_casing"
+        }
+    }
+}

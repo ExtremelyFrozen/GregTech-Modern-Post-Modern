@@ -1,0 +1,20 @@
+{
+    "variants": {
+        "": [
+            {
+                "model": "gtpm:block/marble"
+            },
+            {
+                "model": "gtpm:block/marble",
+                "y": 180
+            },
+            {
+                "model": "gtpm:block/marble_mirrored"
+            },
+            {
+                "model": "gtpm:block/marble_mirrored",
+                "y": 180
+            }
+        ]
+    }
+}

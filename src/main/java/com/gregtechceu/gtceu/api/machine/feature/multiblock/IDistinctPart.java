@@ -24,10 +24,10 @@ public interface IDistinctPart extends IMultiPart {
                 GuiTextures.BUTTON_DISTINCT_BUSES.getSubTexture(0, 0, 1, 0.5),
                 this::isDistinct, (clickData, pressed) -> setDistinct(pressed))
                 .setTooltipsSupplier(pressed -> List.of(
-                        Component.translatable("gtceu.multiblock.universal.distinct")
+                        Component.translatable("gtpm.multiblock.universal.distinct")
                                 .setStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW))
-                                .append(Component.translatable(pressed ? "gtceu.multiblock.universal.distinct.yes" :
-                                        "gtceu.multiblock.universal.distinct.no")))));
+                                .append(Component.translatable(pressed ? "gtpm.multiblock.universal.distinct.yes" :
+                                        "gtpm.multiblock.universal.distinct.no")))));
     }
 
     default void superAttachConfigurators(ConfiguratorPanel configuratorPanel) {

@@ -1,0 +1,32 @@
+{
+    "values": [
+        "gtpm:lv_fluid_regulator",
+        "gtpm:mv_fluid_regulator",
+        "gtpm:hv_fluid_regulator",
+        "gtpm:ev_fluid_regulator",
+        "gtpm:iv_fluid_regulator",
+        "gtpm:luv_fluid_regulator",
+        "gtpm:zpm_fluid_regulator",
+        "gtpm:uv_fluid_regulator",
+        {
+            "id": "gtpm:uhv_fluid_regulator",
+            "required": false
+        },
+        {
+            "id": "gtpm:uev_fluid_regulator",
+            "required": false
+        },
+        {
+            "id": "gtpm:uiv_fluid_regulator",
+            "required": false
+        },
+        {
+            "id": "gtpm:uxv_fluid_regulator",
+            "required": false
+        },
+        {
+            "id": "gtpm:opv_fluid_regulator",
+            "required": false
+        }
+    ]
+}

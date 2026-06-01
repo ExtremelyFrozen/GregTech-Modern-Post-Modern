@@ -1,0 +1,67 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:opv_arc_furnace",
+    "variants": {
+        "recipe_logic_status=idle": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/opv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/arc_furnace/overlay_back",
+                    "overlay_back_emissive": "gtpm:block/machines/arc_furnace/overlay_back_emissive",
+                    "overlay_bottom": "gtpm:block/machines/arc_furnace/overlay_bottom",
+                    "overlay_bottom_emissive": "gtpm:block/machines/arc_furnace/overlay_bottom_emissive",
+                    "overlay_front": "gtpm:block/machines/arc_furnace/overlay_front",
+                    "overlay_front_emissive": "gtpm:block/machines/arc_furnace/overlay_front_emissive",
+                    "overlay_side": "gtpm:block/machines/arc_furnace/overlay_side",
+                    "overlay_side_emissive": "gtpm:block/machines/arc_furnace/overlay_side_emissive"
+                }
+            }
+        },
+        "recipe_logic_status=suspend": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/opv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/arc_furnace/overlay_back",
+                    "overlay_back_emissive": "gtpm:block/machines/arc_furnace/overlay_back_emissive",
+                    "overlay_bottom": "gtpm:block/machines/arc_furnace/overlay_bottom",
+                    "overlay_bottom_emissive": "gtpm:block/machines/arc_furnace/overlay_bottom_emissive",
+                    "overlay_front": "gtpm:block/machines/arc_furnace/overlay_front",
+                    "overlay_front_emissive": "gtpm:block/machines/arc_furnace/overlay_front_emissive",
+                    "overlay_side": "gtpm:block/machines/arc_furnace/overlay_side",
+                    "overlay_side_emissive": "gtpm:block/machines/arc_furnace/overlay_side_emissive"
+                }
+            }
+        },
+        "recipe_logic_status=waiting": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/opv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/arc_furnace/overlay_back_active",
+                    "overlay_back_emissive": "gtpm:block/machines/arc_furnace/overlay_back_active_emissive",
+                    "overlay_bottom": "gtpm:block/machines/arc_furnace/overlay_bottom_active",
+                    "overlay_bottom_emissive": "gtpm:block/machines/arc_furnace/overlay_bottom_active_emissive",
+                    "overlay_front": "gtpm:block/machines/arc_furnace/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/machines/arc_furnace/overlay_front_active_emissive",
+                    "overlay_side": "gtpm:block/machines/arc_furnace/overlay_side_active",
+                    "overlay_side_emissive": "gtpm:block/machines/arc_furnace/overlay_side_active_emissive"
+                }
+            }
+        },
+        "recipe_logic_status=working": {
+            "model": {
+                "parent": "gtpm:block/casings/voltage/opv",
+                "textures": {
+                    "overlay_back": "gtpm:block/machines/arc_furnace/overlay_back_active",
+                    "overlay_back_emissive": "gtpm:block/machines/arc_furnace/overlay_back_active_emissive",
+                    "overlay_bottom": "gtpm:block/machines/arc_furnace/overlay_bottom_active",
+                    "overlay_bottom_emissive": "gtpm:block/machines/arc_furnace/overlay_bottom_active_emissive",
+                    "overlay_front": "gtpm:block/machines/arc_furnace/overlay_front_active",
+                    "overlay_front_emissive": "gtpm:block/machines/arc_furnace/overlay_front_active_emissive",
+                    "overlay_side": "gtpm:block/machines/arc_furnace/overlay_side_active",
+                    "overlay_side_emissive": "gtpm:block/machines/arc_furnace/overlay_side_active_emissive"
+                }
+            }
+        }
+    }
+}

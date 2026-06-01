@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:item/handheld",
+    "textures": {
+        "layer0": "gtpm:item/nano_saber/active"
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "parent": "minecraft:block/block",
+    "loader": "gtpm:machine",
+    "machine": "gtpm:zpm_substation_output_hatch_64a",
+    "replaceable_textures": [
+        "bottom",
+        "top",
+        "side"
+    ],
+    "variants": {
+        "is_formed=false": {
+            "model": {
+                "parent": "gtpm:block/machine/part/energy_output_hatch_64a",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/zpm/bottom",
+                    "side": "gtpm:block/casings/voltage/zpm/side",
+                    "top": "gtpm:block/casings/voltage/zpm/top"
+                }
+            }
+        },
+        "is_formed=true": {
+            "model": {
+                "parent": "gtpm:block/machine/part/energy_output_hatch_64a",
+                "textures": {
+                    "bottom": "gtpm:block/casings/voltage/zpm/bottom",
+                    "side": "gtpm:block/casings/voltage/zpm/side",
+                    "top": "gtpm:block/casings/voltage/zpm/top"
+                }
+            }
+        }
+    }
+}

@@ -8,7 +8,7 @@ import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
-import com.gregtechceu.gtceu.api.machine.trait.MultiblockMachineTrait;
+import com.gregtechceu.gtceu.api.machine.trait.multiblock.MultiblockMachineTrait;
 import com.gregtechceu.gtceu.api.pattern.BlockPattern;
 import com.gregtechceu.gtceu.api.pattern.MultiblockState;
 import com.gregtechceu.gtceu.api.pattern.MultiblockWorldSavedData;
@@ -47,6 +47,7 @@ public class MultiblockControllerMachine extends MetaMachine {
     private @Nullable ParallelHatchPartMachine parallelHatch = null;
     @Getter
     @SyncToClient
+    @RerenderOnChanged
     private BlockPos[] partPositions = new BlockPos[0];
 
     /**
@@ -123,7 +124,7 @@ public class MultiblockControllerMachine extends MetaMachine {
         }
         updatePartPositions();
 
-        for (var trait : getTraitHolder().getAllTraits()) {
+        for (var trait : getAllTraits()) {
             if (trait instanceof MultiblockMachineTrait multiblockMachineTrait)
                 multiblockMachineTrait.onStructureFormed();
         }
@@ -152,7 +153,7 @@ public class MultiblockControllerMachine extends MetaMachine {
         parts.clear();
         updatePartPositions();
 
-        for (var trait : getTraitHolder().getAllTraits()) {
+        for (var trait : getAllTraits()) {
             if (trait instanceof MultiblockMachineTrait multiblockMachineTrait)
                 multiblockMachineTrait.onStructureInvalid();
         }

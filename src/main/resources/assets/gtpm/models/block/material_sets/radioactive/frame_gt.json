@@ -1,0 +1,21 @@
+{
+	"parent": "gtpm:block/material_sets/dull/frame_gt",
+	"loader": "neoforge:composite",
+	"children": {
+		"base": {
+			"parent": "gtpm:block/cube/tinted/all_0",
+			"render_type": "cutout",
+			"textures": {
+				"all": "gtpm:block/material_sets/dull/frame_gt"
+			}
+		},
+		"secondary": {
+			"parent": "gtpm:block/cube/tinted/all",
+			"render_type": "translucent",
+			"textures": {
+				"all": "gtpm:block/material_sets/radioactive/frame_gt_secondary"
+			}
+		}
+	},
+	"item_render_order": ["base", "secondary"]
+}

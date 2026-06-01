@@ -41,5 +41,7 @@ public interface IUIMachine extends IUIHolder, IMachineFeature {
     }
 
     @Override
-    default void markAsDirty() {};
+    default void markAsDirty() {
+        self().sendServerSyncChanges();
+    };
 }

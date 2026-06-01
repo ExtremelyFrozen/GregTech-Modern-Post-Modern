@@ -66,20 +66,20 @@ public class ProspectingBehavior implements IToolBehavior<ProspectingBehavior> {
         int found = 0;
         for (BlockState state : foundBlocks) {
             if (state.is(Tags.Blocks.ORES)) {
-                result.add(Component.translatable("item.gtceu.tool.behavior.prospecting.found",
+                result.add(Component.translatable("item.gtpm.tool.behavior.prospecting.found",
                         state.getBlock().getName()));
             } else if (state.isAir()) {
-                result.add(Component.translatable("item.gtceu.tool.behavior.prospecting.air"));
+                result.add(Component.translatable("item.gtpm.tool.behavior.prospecting.air"));
             } else {
                 found++;
             }
         }
         for (Fluid fluid : foundFluids) {
-            result.add(Component.translatable("item.gtceu.tool.behavior.prospecting.found",
+            result.add(Component.translatable("item.gtpm.tool.behavior.prospecting.found",
                     fluid.getFluidType().getDescription()));
         }
         if (found >= 2) {
-            result.add(Component.translatable("item.gtceu.tool.behavior.prospecting.changing"));
+            result.add(Component.translatable("item.gtpm.tool.behavior.prospecting.changing"));
         }
         return result;
     }

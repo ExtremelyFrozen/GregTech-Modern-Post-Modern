@@ -36,7 +36,7 @@ public class FluidDrillMachine extends WorkableElectricMultiblockMachine impleme
     private final int tier;
 
     public FluidDrillMachine(BlockEntityCreationInfo info, int tier) {
-        super(info, (m) -> new FluidDrillLogic((FluidDrillMachine) m));
+        super(info, new FluidDrillLogic());
         this.tier = tier;
     }
 
@@ -60,14 +60,14 @@ public class FluidDrillMachine extends WorkableElectricMultiblockMachine impleme
             int energyContainer = getEnergyTier();
             long maxVoltage = GTValues.V[energyContainer];
             String voltageName = GTValues.VNF[energyContainer];
-            textList.add(Component.translatable("gtceu.multiblock.max_energy_per_tick", maxVoltage, voltageName));
+            textList.add(Component.translatable("gtpm.multiblock.max_energy_per_tick", maxVoltage, voltageName));
 
             if (getRecipeLogic().getVeinFluid() != null) {
                 // Fluid name
                 Fluid drilledFluid = getRecipeLogic().getVeinFluid();
                 Component fluidInfo = drilledFluid.getFluidType().getDescription().copy()
                         .withStyle(ChatFormatting.GREEN);
-                textList.add(Component.translatable("gtceu.multiblock.fluid_rig.drilled_fluid", fluidInfo)
+                textList.add(Component.translatable("gtpm.multiblock.fluid_rig.drilled_fluid", fluidInfo)
                         .withStyle(ChatFormatting.GRAY));
 
                 // Fluid amount
@@ -75,18 +75,18 @@ public class FluidDrillMachine extends WorkableElectricMultiblockMachine impleme
                 produced = Mth.floor(produced / FluidDrillLogic.MAX_PROGRESS);
                 Component amountInfo = Component.literal(FormattingUtil.formatNumbers(produced) + " mB/s")
                         .withStyle(ChatFormatting.BLUE);
-                textList.add(Component.translatable("gtceu.multiblock.fluid_rig.fluid_amount", amountInfo)
+                textList.add(Component.translatable("gtpm.multiblock.fluid_rig.fluid_amount", amountInfo)
                         .withStyle(ChatFormatting.GRAY));
             } else {
-                Component noFluid = Component.translatable("gtceu.multiblock.fluid_rig.no_fluid_in_area")
+                Component noFluid = Component.translatable("gtpm.multiblock.fluid_rig.no_fluid_in_area")
                         .withStyle(ChatFormatting.RED);
-                textList.add(Component.translatable("gtceu.multiblock.fluid_rig.drilled_fluid", noFluid)
+                textList.add(Component.translatable("gtpm.multiblock.fluid_rig.drilled_fluid", noFluid)
                         .withStyle(ChatFormatting.GRAY));
             }
         } else {
-            Component tooltip = Component.translatable("gtceu.multiblock.invalid_structure.tooltip")
+            Component tooltip = Component.translatable("gtpm.multiblock.invalid_structure.tooltip")
                     .withStyle(ChatFormatting.GRAY);
-            textList.add(Component.translatable("gtceu.multiblock.invalid_structure")
+            textList.add(Component.translatable("gtpm.multiblock.invalid_structure")
                     .withStyle(Style.EMPTY.withColor(ChatFormatting.RED)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
         }
