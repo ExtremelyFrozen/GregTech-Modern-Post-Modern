@@ -13,6 +13,7 @@ import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidDefiniti
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreDefinition;
 import com.gregtechceu.gtceu.api.item.tool.behavior.ToolBehaviorType;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicateType;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
@@ -67,6 +68,8 @@ public final class GTRegistries {
     public static final ResourceKey<Registry<SoundEntry>> SOUND_REGISTRY = makeRegistryKey(GTCEu.id("sound"));
     public static final ResourceKey<Registry<DimensionMarker>> DIMENSION_MARKER_REGISTRY = makeRegistryKey(GTCEu.id("dimension_marker"));
 
+    public static final ResourceKey<Registry<StructurePredicateType<?>>> STRUCTURE_PREDICATE_REGISTRY = makeRegistryKey(GTCEu.id("block_predicate"));
+
     // GT Registries
     public static final Registry<Element> ELEMENTS = makeRegistry(ELEMENT_REGISTRY);
     public static final Registry<Material> MATERIALS = makeMaterialRegistry();
@@ -83,6 +86,8 @@ public final class GTRegistries {
 
     public static final Registry<ToolBehaviorType<?>> TOOL_BEHAVIORS = makeRegistry(TOOL_BEHAVIOR_REGISTRY);
     public static final Registry<DimensionMarker> DIMENSION_MARKERS = makeRegistry(DIMENSION_MARKER_REGISTRY, false);
+
+    public static final Registry<StructurePredicateType<?>> STRUCTURE_PREDICATE_TYPES = makeRegistry(STRUCTURE_PREDICATE_REGISTRY);
     // spotless:on
 
     public static <T> ResourceKey<Registry<T>> makeRegistryKey(ResourceLocation registryId) {
