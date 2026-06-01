@@ -120,6 +120,9 @@ neoForge {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             jvmArgument('-ea:com.gregtechceu.gtceu...')
             logLevel = org.slf4j.event.Level.INFO
+
+            // Disable JOML using scientific notation for its types' toString() outputs
+            systemProperty 'joml.format', 'false'
         }
     }
 }

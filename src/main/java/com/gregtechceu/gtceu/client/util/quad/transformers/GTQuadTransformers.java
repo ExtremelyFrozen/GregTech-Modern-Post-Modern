@@ -114,5 +114,15 @@ public final class GTQuadTransformers {
                 .gtceu$setTextureKey(quad.gtceu$getTextureKey());
     }
 
+    public static int[] getPackedLights(BakedQuad quad) {
+        int[] vertices = quad.getVertices();
+
+        int[] lights = new int[4];
+        for (int i = 0; i < 4; i++) {
+            lights[i] = vertices[i * IQuadTransformer.STRIDE + IQuadTransformer.UV2];
+        }
+        return lights;
+    }
+
     private GTQuadTransformers() {}
 }
