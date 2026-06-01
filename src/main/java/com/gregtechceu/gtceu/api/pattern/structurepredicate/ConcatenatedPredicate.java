@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 
-import com.gregtechceu.gtceu.api.pattern.MultiblockState;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
+import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -23,6 +24,16 @@ public record ConcatenatedPredicate(List<StructurePredicate> predicates) impleme
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.CONCATENATED;
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public SimplePredicate asLegacy() {
+        return new SimplePredicate(this::testLegacy, () -> candidates().toArray(BlockInfo[]::new));
+    }
+
+    private boolean testLegacy(MultiblockState multiblockState) {
+        return test(multiblockState, true);
     }
 
     @Override

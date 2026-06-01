@@ -42,6 +42,9 @@ public class FactoryBlockPattern {
         structureDir = new StructureDir(charDir, stringDir, aisleDir);
         structureDir.check();
         this.symbolMap.put(' ', Predicates.any());
+        if (definition != null) {
+            this.symbolMap.put('~', Predicates.controller(Predicates.blocks(definition.getBlock())));
+        }
     }
 
     /**

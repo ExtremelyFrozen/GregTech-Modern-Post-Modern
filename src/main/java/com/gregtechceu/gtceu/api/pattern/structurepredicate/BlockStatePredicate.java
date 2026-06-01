@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.api.pattern.structurepredicate;
 
-import com.gregtechceu.gtceu.api.pattern.MultiblockState;
-import com.gregtechceu.gtceu.api.pattern.predicates.PredicateStates;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
+import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateStates;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 

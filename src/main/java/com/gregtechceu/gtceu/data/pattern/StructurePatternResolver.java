@@ -8,10 +8,15 @@ import com.gregtechceu.gtceu.api.multiblock.MultiBlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.Predicates;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
+import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicate;
+import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
@@ -37,7 +42,7 @@ public final class StructurePatternResolver {
 
         JsonNode stringArrayPattern = StructureCache.getStringArrayPattern(id);
         if (stringArrayPattern != null) {
-            return rebuildStringArrayPattern(id, baselinePattern.get(), parseStringArrayDefinition(id,
+            return rebuildStringArrayPattern(definition, id, baselinePattern.get(), parseStringArrayDefinition(id,
                     stringArrayPattern));
         }
 
@@ -58,17 +63,25 @@ public final class StructurePatternResolver {
     }
 
     public static StringArrayDefinition parseStringArrayDefinition(ResourceLocation id, JsonNode jsonPattern) {
-        if (!jsonPattern.isArray() || jsonPattern.isEmpty()) {
-            throw new IllegalArgumentException("Json structure definition for " + id +
-                    " must be a non-empty string array, array of string arrays, or array of structure units");
+        JsonNode predicatesNode = null;
+        if (jsonPattern.isObject()) {
+            predicatesNode = jsonPattern.get("predicates");
+            jsonPattern = jsonPattern.get("aisles");
         }
 
+        if (jsonPattern == null || !jsonPattern.isArray() || jsonPattern.isEmpty()) {
+            throw new IllegalArgumentException("Json structure definition for " + id +
+                    " must be a non-empty string array, array of string arrays, array of structure units, " +
+                    "or an object with 'aisles'");
+        }
+
+        Map<Character, TraceabilityPredicate> predicates = parsePredicates(id, predicatesNode);
         JsonNode first = jsonPattern.get(0);
         if (first.isTextual()) {
             List<String[]> aisles = new ArrayList<>();
             aisles.add(parseAisle(id, jsonPattern));
             validateAisles(id, aisles);
-            return new StringArrayDefinition(List.of(new Unit(aisles, 1, 1)));
+            return new StringArrayDefinition(List.of(new Unit(aisles, 1, 1)), predicates);
         }
 
         List<Unit> units = new ArrayList<>();
@@ -86,7 +99,7 @@ public final class StructurePatternResolver {
             }
         }
         validateAisles(id, units.stream().flatMap(unit -> unit.slices().stream()).toList());
-        return new StringArrayDefinition(List.copyOf(units));
+        return new StringArrayDefinition(List.copyOf(units), predicates);
     }
 
     private static Unit parseRepeatUnit(ResourceLocation id, JsonNode unitNode) {
@@ -180,11 +193,14 @@ public final class StructurePatternResolver {
         }
     }
 
-    private static BlockPattern rebuildStringArrayPattern(ResourceLocation id, BlockPattern baselinePattern,
+    private static BlockPattern rebuildStringArrayPattern(MultiblockMachineDefinition owner, ResourceLocation id,
+                                                          BlockPattern baselinePattern,
                                                           StringArrayDefinition definition) {
         List<String[]> aisles = definition.aisles();
         MultiBlockPattern baselineDefinition = new MultiBlockPattern(baselinePattern);
-        Map<Character, TraceabilityPredicate> predicates = collectPredicates(id, baselineDefinition);
+        Map<Character, TraceabilityPredicate> baselinePredicates = collectPredicates(id, baselineDefinition);
+        Map<Character, TraceabilityPredicate> predicates = collectPredicates(owner, id, aisles, definition.predicates(),
+                baselinePredicates);
 
         int aisleHeight = aisles.getFirst().length;
         int rowWidth = aisles.getFirst()[0].length();
@@ -258,6 +274,49 @@ public final class StructurePatternResolver {
         return predicates;
     }
 
+    private static Map<Character, TraceabilityPredicate> collectPredicates(MultiblockMachineDefinition owner,
+                                                                           ResourceLocation id, List<String[]> aisles,
+                                                                           Map<Character, TraceabilityPredicate> jsonPredicates,
+                                                                           Map<Character, TraceabilityPredicate> baselinePredicates) {
+        if (jsonPredicates.isEmpty()) {
+            return baselinePredicates;
+        }
+
+        Map<Character, TraceabilityPredicate> predicates = new LinkedHashMap<>();
+        predicates.put(' ', Predicates.any());
+        for (String[] aisle : aisles) {
+            for (String row : aisle) {
+                for (int column = 0; column < row.length(); column++) {
+                    char symbol = row.charAt(column);
+                    if (symbol == ' ' || predicates.containsKey(symbol)) {
+                        continue;
+                    }
+                    if (symbol == '~') {
+                        predicates.put(symbol, defaultControllerPredicate(owner));
+                        continue;
+                    }
+                    TraceabilityPredicate baselinePredicate = baselinePredicates.get(symbol);
+                    if (baselinePredicate instanceof PredicateController) {
+                        predicates.put(symbol, baselinePredicate);
+                        continue;
+                    }
+                    TraceabilityPredicate jsonPredicate = jsonPredicates.get(symbol);
+                    if (jsonPredicate != null) {
+                        predicates.put(symbol, jsonPredicate);
+                        continue;
+                    }
+                    throw new IllegalArgumentException("Json structure definition for " + id +
+                            " uses symbol '" + symbol + "' without a serialized predicate");
+                }
+            }
+        }
+        return predicates;
+    }
+
+    private static TraceabilityPredicate defaultControllerPredicate(MultiblockMachineDefinition owner) {
+        return Predicates.controller(Predicates.blocks(owner.getBlock()));
+    }
+
     private static void collectPredicatesFromSlice(ResourceLocation id,
                                                    Map<Character, TraceabilityPredicate> predicates,
                                                    String[] rows, TraceabilityPredicate[][] predicateRows) {
@@ -291,10 +350,37 @@ public final class StructurePatternResolver {
         }
     }
 
-    public record StringArrayDefinition(List<Unit> units) {
+    private static Map<Character, TraceabilityPredicate> parsePredicates(ResourceLocation id, JsonNode predicatesNode) {
+        if (predicatesNode == null || predicatesNode.isNull()) {
+            return Map.of();
+        }
+        if (!predicatesNode.isObject()) {
+            throw new IllegalArgumentException("Json structure definition for " + id +
+                    " must define 'predicates' as an object");
+        }
+
+        Map<Character, TraceabilityPredicate> predicates = new LinkedHashMap<>();
+        var ops = RegistryOps.create(JsonOps.INSTANCE, GTRegistries.builtinRegistry());
+        predicatesNode.fields().forEachRemaining(entry -> {
+            String symbol = entry.getKey();
+            if (symbol.length() != 1) {
+                throw new IllegalArgumentException("Json structure definition for " + id +
+                        " has predicate key '" + symbol + "', expected a single character");
+            }
+            StructurePredicate structurePredicate = StructurePredicate.CODEC
+                    .parse(ops, JsonParser.parseString(entry.getValue().toString()))
+                    .getOrThrow(error -> new IllegalArgumentException("Failed to parse structure predicate '" +
+                            symbol + "' for " + id + ": " + error));
+            predicates.put(symbol.charAt(0), new TraceabilityPredicate(structurePredicate.asLegacy()));
+        });
+        return Map.copyOf(predicates);
+    }
+
+    public record StringArrayDefinition(List<Unit> units, Map<Character, TraceabilityPredicate> predicates) {
 
         public StringArrayDefinition {
             units = List.copyOf(units);
+            predicates = Map.copyOf(predicates);
         }
 
         public List<String[]> aisles() {
@@ -315,6 +401,7 @@ public final class StructurePatternResolver {
                     builder.endRepeatable(unit.minRepeat(), unit.maxRepeat());
                 }
             }
+            predicates.forEach(builder::where);
             return builder;
         }
     }
