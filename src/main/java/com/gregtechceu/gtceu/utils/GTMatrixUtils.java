@@ -5,7 +5,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import org.jetbrains.annotations.Contract;
@@ -13,16 +12,15 @@ import org.joml.*;
 
 import java.lang.Math;
 import java.security.InvalidParameterException;
-import java.util.Objects;
+import java.util.EnumMap;
+import java.util.Map;
 
 public class GTMatrixUtils {
 
-    private static final ImmutableMap<Direction, Vector3fc> directionAxises = Util.make(() -> {
-        ImmutableMap.Builder<Direction, Vector3fc> map = ImmutableMap.builderWithExpectedSize(6);
+    private static final Map<Direction, Vector3fc> directionAxes = Util.make(new EnumMap<>(Direction.class), map -> {
         for (Direction dir : GTUtil.DIRECTIONS) {
             map.put(dir, dir.step());
         }
-        return map.build();
     });
     private static final Table<Direction, Direction, Matrix4fc> rotations = Tables
             .synchronizedTable(HashBasedTable.create());
@@ -154,6 +152,6 @@ public class GTMatrixUtils {
     }
 
     public static Vector3fc getDirectionAxis(Direction dir) {
-        return Objects.requireNonNull(directionAxises.get(dir));
+        return directionAxes.get(dir);
     }
 }

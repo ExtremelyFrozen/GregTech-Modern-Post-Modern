@@ -1,5 +1,5 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/lamps/light_blue_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/lamps/light_blue_ctm"
 	}
 }

@@ -21,6 +21,7 @@ import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import com.gregtechceu.gtceu.integration.map.ClientCacheManager;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.resources.PlayerSkin;
@@ -47,6 +48,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerHeartTypeEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.mutable.MutableInt;
 
@@ -61,12 +63,21 @@ public class ClientEventListener {
 
     @SubscribeEvent
     public static void onRenderLevelStageEvent(RenderLevelStageEvent event) {
+        Camera camera = event.getCamera();
+        PoseStack poseStack = event.getPoseStack();
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
             // to render the preview after block entities, before the translucent. so it can be seen through the
             // transparent blocks.
             MultiblockInWorldPreviewRenderer.renderInWorldPreview(event.getPoseStack(), event.getCamera(),
                     event.getPartialTick().getGameTimeDeltaPartialTick(false));
         }
+    }
+
+    @SubscribeEvent
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        FacadeCoverRenderer.clearItemModelCache();
     }
 
     private static final Map<UUID, ResourceLocation> DEFAULT_CAPES = new Object2ObjectOpenHashMap<>();

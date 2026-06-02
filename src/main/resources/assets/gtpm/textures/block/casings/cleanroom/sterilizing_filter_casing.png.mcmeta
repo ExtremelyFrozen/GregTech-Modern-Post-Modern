@@ -1,5 +1,5 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/casings/cleanroom/sterilizing_filter_casing_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/casings/cleanroom/sterilizing_filter_casing_ctm"
 	}
 }

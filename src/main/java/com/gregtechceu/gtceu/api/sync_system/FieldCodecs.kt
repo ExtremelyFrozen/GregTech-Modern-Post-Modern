@@ -2,7 +2,6 @@
 
 package com.gregtechceu.gtceu.api.sync_system
 
-import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry
 import com.gregtechceu.gtceu.api.data.chemical.material.Material
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType
 import com.gregtechceu.gtceu.api.registry.GTRegistries
@@ -551,7 +550,7 @@ object FieldCodecs {
 			Material::class.java,
 			resourceLocationReferenceCodec(
 				Material::getResourceLocation,
-				(GTRegistries.MATERIALS as IMaterialRegistry)::getMaterial,
+				GTRegistries.MATERIALS::getMaterial,
 			),
 		)
 		registerContextual(ISyncManaged::class.java, SyncDataHolder.SYNC_MANAGED_CODEC)

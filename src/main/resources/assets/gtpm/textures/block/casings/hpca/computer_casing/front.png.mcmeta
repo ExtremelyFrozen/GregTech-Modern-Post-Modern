@@ -1,5 +1,5 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/casings/hpca/computer_casing/front_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/casings/hpca/computer_casing/front_ctm"
 	}
 }

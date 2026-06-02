@@ -46,12 +46,6 @@ public class GTValues {
     public static final long MONTHS = 30 * DAYS;
     public static final long YEARS = 365 * DAYS;
 
-    /**
-     * The Item WildCard Tag. Even shorter than the "-1" of the past
-     */
-
-    // public static final short W = OreDictionary.WILDCARD_VALUE;
-
     /** Current time on the Client. Will always be zero on the server. */
     public static long CLIENT_TIME = 0;
 
@@ -120,6 +114,7 @@ public class GTValues {
             MODID_KUBEJS = "kubejs",
             MODID_IRIS = "iris",
             MODID_SODIUM = "sodium",
+            MODID_OPTIFINE = "optifine",
             MODID_CURIOS = "curios",
             MODID_MODERNFIX = "modernfix",
             MODID_JOURNEYMAP = "journeymap",
@@ -265,6 +260,7 @@ public class GTValues {
             0x7EC3C4, 0x7EB07E, 0xBF74C0, 0x0B5CFE, 0x914E91, 0x488748, 0x8C0000, 0x2828F5 };
 
     // Main colour for each tier
+    @SuppressWarnings("DataFlowIssue")
     public static final int[] VCM = new int[] {
             DARK_GRAY.getColor(),
             GRAY.getColor(),
