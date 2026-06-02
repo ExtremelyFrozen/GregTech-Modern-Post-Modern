@@ -1,6 +1,6 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/casings/slicing_blades/top_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/casings/slicing_blades/top_ctm"
 	},
 	"animation": {
 		"interpolate": false,

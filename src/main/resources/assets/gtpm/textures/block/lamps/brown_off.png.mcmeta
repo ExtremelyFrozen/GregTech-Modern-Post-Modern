@@ -1,5 +1,5 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/lamps/brown_off_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/lamps/brown_off_ctm"
 	}
 }

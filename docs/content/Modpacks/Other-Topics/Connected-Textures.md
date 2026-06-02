@@ -54,7 +54,7 @@ Combining sections 0/2, 2/3, 5/4, and 3/1, we can generate a texture in the shap
     (For a texture `mypack/assets/textures/blocks/texture.png` with a ctm texture `mypack/assets/textures/blocks/texture_ctm.png`)
     ```json title="mypack:blocks/texture.png.mcmeta"
     {
-        "gtceu": {
+        "gtpm": {
             "connection_texture": "mypack:blocks/texture_ctm"
         }
     }

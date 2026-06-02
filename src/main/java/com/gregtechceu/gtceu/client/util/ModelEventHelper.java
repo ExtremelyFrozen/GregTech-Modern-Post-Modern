@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.client.model.ctm.CTMBakedModel;
 import com.gregtechceu.gtceu.client.model.machine.MachineModel;
 import com.gregtechceu.gtceu.client.renderer.cover.ICoverableRenderer;
 import com.gregtechceu.gtceu.core.mixins.ReloadableResourceManagerAccessor;
+import com.gregtechceu.gtceu.core.mixins.client.ModelBakeryAccessor;
 import com.gregtechceu.gtceu.integration.modernfix.GTModernFixIntegration;
 
 import net.minecraft.client.Minecraft;
@@ -46,7 +47,7 @@ public class ModelEventHelper {
     public static final Map<ResourceLocation, TextureAtlasSprite> CTM_SPRITE_CACHE = new ConcurrentHashMap<>();
 
     private static final Multimap<ResourceLocation, Material> SCRAPED_TEXTURES = HashMultimap.create();
-    private static final Object2BooleanMap<ResourceLocation> WRAPPED_MODELS = new Object2BooleanOpenHashMap<>();
+    private static final Object2BooleanMap<ModelResourceLocation> WRAPPED_MODELS = new Object2BooleanOpenHashMap<>();
 
     @ApiStatus.Internal
     public static void markTextureUsedForModel(ResourceLocation modelLocation, Material material) {
@@ -112,13 +113,15 @@ public class ModelEventHelper {
         // don't process baked model replacement here if ModernFix is loaded & dynamic resources is enabled
         if (GTCEu.Mods.isModernFixLoaded() && GTModernFixIntegration.isDynamicResourcesEnabled()) return;
 
+        ModelBakeryAccessor modelBakeryAccessor = (ModelBakeryAccessor) event.getModelBakery();
         for (var entry : event.getModels().entrySet()) {
             BakedModel model = entry.getValue();
+            UnbakedModel rootModel = modelBakeryAccessor.gtceu$getTopLevelModels().get(entry.getKey());
 
             // process all model replacers
             for (var listener : EVENT_LISTENERS) {
                 if (!(listener.listener instanceof AssetEventListener.BakedModelReplacement modelReplacement)) continue;
-                model = modelReplacement.modifyBakedModel(entry.getKey(), model, null, event.getModelBakery());
+                model = modelReplacement.modifyBakedModel(entry.getKey(), model, rootModel, event.getModelBakery());
             }
             entry.setValue(model);
         }
@@ -174,13 +177,14 @@ public class ModelEventHelper {
                 return baked;
             }
             ResourceLocation modelId = rl.id();
+            ModelBakeryAccessor modelBakeryAccessor = (ModelBakeryAccessor) modelBakery;
             Deque<ResourceLocation> dependencies = new ArrayDeque<>();
             Set<ResourceLocation> seenModels = new HashSet<>();
             dependencies.push(modelId);
             seenModels.add(modelId);
 
-            boolean shouldWrap = WRAPPED_MODELS.getOrDefault(modelId, false);
-            if (WRAPPED_MODELS.containsKey(modelId)) {
+            boolean shouldWrap = WRAPPED_MODELS.getOrDefault(rl, false);
+            if (WRAPPED_MODELS.containsKey(rl)) {
                 // shortcut if the model's already been checked
                 if (shouldWrap) return new CTMBakedModel<>(baked);
                 else return baked;
@@ -195,17 +199,19 @@ public class ModelEventHelper {
                     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
                     Set<Material> textures = new HashSet<>(SCRAPED_TEXTURES.get(dependencyName));
                     for (Material tex : textures) {
-                        if (TextureMetadataHelper.getMetadata(tex).isPresent()) {
-                            // At least one texture has CTM metadata, so we should wrap this model
+                        var metadata = TextureMetadataHelper.getMetadata(tex);
+                        if (metadata.isPresent() && metadata.get().connectionTexture() != null) {
+                            // At least one texture has CTM metadata, so we should wrap this model.
+                            // Bloom-only metadata shares the same section in this fork and must not trigger CTM.
                             shouldWrap = true;
                             break PARENT_LOOP;
                         }
                     }
-                    if (rootModel == null || !dependencyName.equals(modelId)) {
-                        continue;
-                    }
+                    UnbakedModel unbaked = dependencyName.equals(modelId) ? rootModel :
+                            modelBakeryAccessor.gtceu$getModel(dependencyName);
+                    if (unbaked == null) continue;
                     // shouldWrap is always false here because of the `break` above
-                    for (ResourceLocation newDep : rootModel.getDependencies()) {
+                    for (ResourceLocation newDep : unbaked.getDependencies()) {
                         if (seenModels.add(newDep)) {
                             dependencies.push(newDep);
                         }
@@ -215,7 +221,7 @@ public class ModelEventHelper {
                             dependencyName, rl, e);
                 }
             }
-            ModelEventHelper.WRAPPED_MODELS.put(modelId, shouldWrap);
+            ModelEventHelper.WRAPPED_MODELS.put(rl, shouldWrap);
             if (shouldWrap) {
                 return new CTMBakedModel<>(baked);
             }
