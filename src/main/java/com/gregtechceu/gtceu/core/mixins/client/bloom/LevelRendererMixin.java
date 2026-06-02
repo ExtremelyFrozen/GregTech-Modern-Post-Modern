@@ -34,6 +34,6 @@ public abstract class LevelRendererMixin {
     private void gtpm$processBloomAfterLevel(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera,
                                              GameRenderer gameRenderer, LightTexture lightTexture,
                                              Matrix4f modelViewMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
-        BloomRenderer.processPostEffect(deltaTracker.getGameTimeDeltaPartialTick(false));
+        BloomRenderer.processPostEffectAfterLevel(deltaTracker.getGameTimeDeltaPartialTick(false));
     }
 }
