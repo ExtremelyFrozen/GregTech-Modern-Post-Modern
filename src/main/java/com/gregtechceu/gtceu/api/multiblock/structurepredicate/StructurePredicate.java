@@ -1,14 +1,16 @@
-package com.gregtechceu.gtceu.api.pattern.structurepredicate;
+package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -16,10 +18,26 @@ import java.util.*;
 
 public interface StructurePredicate {
 
-    Codec<StructurePredicate> CODEC = GTRegistries.STRUCTURE_PREDICATE_TYPES.byNameCodec()
-            .dispatch("type", StructurePredicate::type, StructurePredicateType::codec);
+    Codec<StructurePredicate> CODEC = typeCodec()
+            .dispatch("type", StructurePredicate::type, StructurePredicate::dispatchCodec);
 
     StructurePredicateType<?> type();
+
+    private static Codec<StructurePredicateType<?>> typeCodec() {
+        return ResourceLocation.CODEC.comapFlatMap(
+                id -> {
+                    StructurePredicateType<?> type = StructurePredicateType.byId(id);
+                    return type == null ?
+                            DataResult.error(() -> "Unknown structure predicate type: " + id) :
+                            DataResult.success(type);
+                },
+                type -> Objects.requireNonNull(StructurePredicateType.id(type),
+                        "Unregistered structure predicate type"));
+    }
+
+    private static MapCodec<? extends StructurePredicate> dispatchCodec(StructurePredicateType<?> type) {
+        return type.codec();
+    }
 
     @Contract(" -> new")
     @Deprecated // TODO: remove when this new design fully replaces the old one

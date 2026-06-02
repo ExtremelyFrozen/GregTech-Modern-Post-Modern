@@ -1,4 +1,4 @@
-package com.gregtechceu.gtceu.api.pattern.structurepredicate;
+package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;

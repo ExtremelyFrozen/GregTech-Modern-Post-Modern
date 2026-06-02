@@ -1,4 +1,4 @@
-package com.gregtechceu.gtceu.api.pattern.structurepredicate;
+package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateStates;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
-import static com.gregtechceu.gtceu.api.pattern.structurepredicate.Util.oneOrMore;
+import static com.gregtechceu.gtceu.api.multiblock.structurepredicate.Util.oneOrMore;
 
 public record BlockStatePredicate(List<BlockState> blockStates) implements StructurePredicate {
 

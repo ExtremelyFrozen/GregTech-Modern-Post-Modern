@@ -1,4 +1,4 @@
-package com.gregtechceu.gtceu.api.pattern.structurepredicate;
+package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
@@ -69,7 +69,9 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
 
     @Override
     public boolean test(MultiblockState multiblockState, boolean mutateCount) {
-        return testGlobal(multiblockState, mutateCount) && testLayer(multiblockState, mutateCount);
+        return predicate.test(multiblockState, mutateCount) &&
+                testGlobal(multiblockState, mutateCount) &&
+                testLayer(multiblockState, mutateCount);
     }
 
     private boolean testGlobal(MultiblockState multiblockState, boolean mutateCount) {

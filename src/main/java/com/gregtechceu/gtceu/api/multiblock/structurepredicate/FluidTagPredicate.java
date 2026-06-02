@@ -1,4 +1,4 @@
-package com.gregtechceu.gtceu.api.pattern.structurepredicate;
+package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateFluidTag;
@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
-import static com.gregtechceu.gtceu.api.pattern.structurepredicate.Util.oneOrMore;
+import static com.gregtechceu.gtceu.api.multiblock.structurepredicate.Util.oneOrMore;
 
 public final class FluidTagPredicate implements StructurePredicate {
 
