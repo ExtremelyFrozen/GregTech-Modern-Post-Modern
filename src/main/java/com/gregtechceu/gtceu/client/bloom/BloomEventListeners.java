@@ -30,7 +30,7 @@ public class BloomEventListeners {
     public static void afterParticlesRendered(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
 
-        BloomRenderer.renderBloom(event.getCamera(), event.getPoseStack(), event.getFrustum(),
+        BloomRenderer.renderBloomInput(event.getCamera(), event.getPoseStack(), event.getFrustum(),
                 event.getModelViewMatrix(), event.getProjectionMatrix(),
                 event.getPartialTick().getGameTimeDeltaPartialTick(false), event.getLevelRenderer(),
                 Minecraft.getInstance().getProfiler());
