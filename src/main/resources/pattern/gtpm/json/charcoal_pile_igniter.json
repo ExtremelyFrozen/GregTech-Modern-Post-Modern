@@ -1,7 +1,37 @@
-[
-	["     ", " XXX ", " XXX ", " XXX ", "     "],
-	[" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD "],
-	[" BBB ", "XCCCX", "XCCCX", "XCCCX", " DSD "],
-	[" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD "],
-	["     ", " XXX ", " XXX ", " XXX ", "     "]
-]
+{
+	"aisles": [
+		{
+			"slices": [["     ", " XXX ", " XXX ", " XXX ", "     "]]
+		},
+		{
+			"slices": [[" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD "]]
+		},
+		{
+			"slices": [[" BBB ", "XCCCX", "XCCCX", "XCCCX", " D~D "]]
+		},
+		{
+			"slices": [[" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD "]]
+		},
+		{
+			"slices": [["     ", " XXX ", " XXX ", " XXX ", "     "]]
+		}
+	],
+	"predicates": {
+		"B": {
+			"type": "gtpm:blocks",
+			"blocks": "minecraft:bricks"
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "minecraft:oak_log"
+		},
+		"D": {
+			"type": "gtpm:blocks",
+			"blocks": "minecraft:dirt"
+		},
+		"X": {
+			"type": "gtpm:blocks",
+			"blocks": "minecraft:dirt"
+		}
+	}
+}
