@@ -61,6 +61,15 @@ public class BloomRenderer {
     static void renderBloom(Camera camera, PoseStack poseStack, Frustum frustum, Matrix4f modelViewMatrix,
                             Matrix4f projectionMatrix, float partialTicks, LevelRenderer levelRenderer,
                             ProfilerFiller profilerFiller) {
+        renderBloomInput(camera, poseStack, frustum, modelViewMatrix, projectionMatrix, partialTicks, levelRenderer,
+                profilerFiller);
+        processPostEffect(partialTicks, profilerFiller);
+    }
+
+    @ApiStatus.Internal
+    public static void renderBloomInput(Camera camera, PoseStack poseStack, Frustum frustum, Matrix4f modelViewMatrix,
+                                        Matrix4f projectionMatrix, float partialTicks, LevelRenderer levelRenderer,
+                                        ProfilerFiller profilerFiller) {
         if (!BloomShaderManager.isBloomActive()) return;
 
         Vec3 camPos = camera.getPosition();
@@ -85,12 +94,17 @@ public class BloomRenderer {
             SafeMode.drawBlockBloom(camera, poseStack, frustum, projectionMatrix, levelRenderer, profilerFiller);
         }
 
-        processPostEffect(partialTicks, profilerFiller);
-
         // clear state. again.
         GTRenderTypes.bloom().clearRenderState();
 
         // profiler section is popped by popPush() in the calling function; don't pop it here
+    }
+
+    @ApiStatus.Internal
+    public static void processPostEffect(float partialTicks, ProfilerFiller profilerFiller) {
+        if (!BloomShaderManager.isBloomActive()) return;
+
+        processPostEffectInternal(partialTicks, profilerFiller);
     }
 
     static void renderSpecialBloom(Camera camera, PoseStack poseStack, Frustum frustum, float partialTicks,
@@ -130,7 +144,7 @@ public class BloomRenderer {
         profilerFiller.pop();
     }
 
-    static void processPostEffect(float partialTicks, ProfilerFiller profilerFiller) {
+    static void processPostEffectInternal(float partialTicks, ProfilerFiller profilerFiller) {
         Minecraft minecraft = Minecraft.getInstance();
         RenderTarget mainTarget = minecraft.getMainRenderTarget();
 

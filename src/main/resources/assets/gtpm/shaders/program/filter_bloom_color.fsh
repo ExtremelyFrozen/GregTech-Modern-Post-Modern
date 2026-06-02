@@ -24,8 +24,11 @@ void main() {
     // calculate linear depth
     float mainDepth = linearizeDepth(texture(MainDepthSampler, texCoord).r);
     float diffuseDepth = linearizeDepth(texture(DiffuseDepthSampler, texCoord).r);
+    // The bloom pass may be rendered through a different shader path than the main scene
+    // (notably with Iris/Sodium), so allow small precision differences for the same surface.
+    float depthTolerance = max(0.02, max(mainDepth, diffuseDepth) * 5.0e-4);
     // clear bloom color fragment if the main sampler's depth isn't the same as the bloom sampler's depth
-    if (abs(mainDepth - diffuseDepth) > 1.0e-5) {
+    if (abs(mainDepth - diffuseDepth) > depthTolerance) {
         fragColor = vec4(0.0);
     } else {
         fragColor = texture(DiffuseSampler, texCoord);

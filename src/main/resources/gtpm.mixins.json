@@ -39,6 +39,7 @@
 		"ftbchunks.FTBChunksClientMixin",
 		"ftbchunks.LargeMapScreenMixin",
 		"ftbchunks.RegionMapPanelMixin",
+		"iris.SodiumProgramsMixin",
 		"iris.WorldRenderingPhaseMixin",
 		"ldlib.WorldSceneRendererMixin",
 		"neoforge.BakedModelWrapperAccessor",
