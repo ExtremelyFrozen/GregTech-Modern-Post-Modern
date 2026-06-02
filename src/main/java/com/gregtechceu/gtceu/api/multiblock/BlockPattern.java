@@ -10,6 +10,8 @@ import com.gregtechceu.gtceu.api.multiblock.error.PatternError;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
 import com.gregtechceu.gtceu.api.multiblock.error.SinglePredicateError;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.RestrictedPredicate;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
 import com.gregtechceu.gtceu.api.multiblock.util.PatternMatchContext;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
@@ -33,6 +35,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.unimi.dsi.fastutil.ints.IntObjectPair;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -76,6 +82,34 @@ public class BlockPattern {
     public Collection<TraceabilityPredicate> predicates;
     public PatternCondition condition;
 
+    private record DecodedPattern(TraceabilityPredicate[][][] predicates, StructureDir structureDir,
+                                  int[][] aisleRepetitions, int[] unitStarts, int[] unitDepths,
+                                  String[][] structureSlices, CenterOffset centerOffset, int fingerLength,
+                                  int thumbLength, int palmLength) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record Unit(List<String[]> slices, List<TraceabilityPredicate[][]> predicates, Repeat repeat) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record Repeat(int min, int max) {}
+
+    @JsonCreator
+    public BlockPattern(@JsonProperty("structureDir") StructureDir structureDir,
+                        @JsonProperty("centerOffset") CenterOffset centerOffset,
+                        @JsonProperty("thumbLength") int thumbLength,
+                        @JsonProperty("palmLength") int palmLength,
+                        @JsonProperty("units") List<Unit> units) {
+        this(decodeSerializedPattern(structureDir, centerOffset, thumbLength, palmLength, units));
+    }
+
+    private BlockPattern(DecodedPattern pattern) {
+        this(pattern.predicates, pattern.structureDir, pattern.aisleRepetitions, pattern.unitStarts,
+                pattern.unitDepths, pattern.structureSlices, pattern.centerOffset, pattern.fingerLength,
+                pattern.thumbLength, pattern.palmLength);
+    }
+
     public BlockPattern(TraceabilityPredicate[][][] predicatesIn, StructureDir structureDir,
                         int[][] aisleRepetitions, CenterOffset centerOffset, int fingerLength, int thumbLength,
                         int palmLength) {
@@ -104,6 +138,68 @@ public class BlockPattern {
         this.fingerLength = fingerLength;
         this.thumbLength = thumbLength;
         this.palmLength = palmLength;
+    }
+
+    private static DecodedPattern decodeSerializedPattern(StructureDir structureDir, CenterOffset centerOffset,
+                                                          int thumbLength, int palmLength, List<Unit> units) {
+        if (units == null || units.isEmpty()) {
+            throw new IllegalStateException("Serialized binary multiblock pattern is missing units");
+        }
+
+        int size = units.stream().mapToInt(unit -> unit.slices().size()).sum();
+        TraceabilityPredicate[][][] blockMatches = new TraceabilityPredicate[size][][];
+        String[][] structureSlices = new String[size][];
+        int[][] aisleRepetitions = new int[units.size()][];
+        int[] unitStarts = new int[units.size()];
+        int[] unitDepths = new int[units.size()];
+
+        int sliceIndex = 0;
+        for (int unitIndex = 0; unitIndex < units.size(); unitIndex++) {
+            Unit unit = units.get(unitIndex);
+            if (unit.slices() == null || unit.slices().isEmpty()) {
+                throw new IllegalStateException("Serialized binary multiblock pattern is missing unit slices");
+            }
+            if (unit.predicates() == null || unit.predicates().size() != unit.slices().size()) {
+                throw new IllegalStateException("Serialized binary multiblock pattern is missing predicate slices");
+            }
+
+            Repeat repeat = unit.repeat() == null ? new Repeat(1, 1) : unit.repeat();
+            if (repeat.min() > repeat.max()) {
+                throw new IllegalArgumentException("Lower bound of repeat counting must smaller than upper bound!");
+            }
+
+            unitStarts[unitIndex] = sliceIndex;
+            unitDepths[unitIndex] = unit.slices().size();
+            aisleRepetitions[unitIndex] = new int[] { repeat.min(), repeat.max() };
+
+            for (int inner = 0; inner < unit.slices().size(); inner++) {
+                structureSlices[sliceIndex] = unit.slices().get(inner);
+                blockMatches[sliceIndex] = unit.predicates().get(inner);
+                sliceIndex++;
+            }
+        }
+
+        return new DecodedPattern(blockMatches, structureDir, aisleRepetitions, unitStarts, unitDepths,
+                structureSlices, centerOffset, size, thumbLength, palmLength);
+    }
+
+    public List<Unit> getUnits() {
+        List<Unit> units = new ArrayList<>(aisleRepetitions.length);
+        for (int unitIndex = 0; unitIndex < aisleRepetitions.length; unitIndex++) {
+            int start = unitStarts[unitIndex];
+            int depth = unitDepths[unitIndex];
+            List<String[]> slices = new ArrayList<>(depth);
+            List<TraceabilityPredicate[][]> predicates = blockMatches == null ? null : new ArrayList<>(depth);
+            for (int inner = 0; inner < depth; inner++) {
+                slices.add(structureSlices == null ? null : structureSlices[start + inner]);
+                if (predicates != null) {
+                    predicates.add(blockMatches[start + inner]);
+                }
+            }
+            int[] repetition = aisleRepetitions[unitIndex];
+            units.add(new Unit(slices, predicates, new Repeat(repetition[0], repetition[1])));
+        }
+        return units;
     }
 
     private static int[] createUnitStarts(int size) {
@@ -156,6 +252,8 @@ public class BlockPattern {
         PatternMatchContext matchContext = worldState.getMatchContext();
         Object2IntMap<SimplePredicate> globalCount = worldState.getGlobalCount();
         Object2IntMap<SimplePredicate> layerCount = worldState.getLayerCount();
+        Object2IntMap<StructurePredicate> structureGlobalCount = worldState.getStructureGlobalCount();
+        Object2IntMap<StructurePredicate> structureLayerCount = worldState.getStructureLayerCount();
         // Checking aisle units
         for (int c = 0, z = minZ++, r; c < this.aisleRepetitions.length; c++) {
             int unitStart = this.unitStarts[c];
@@ -168,6 +266,7 @@ public class BlockPattern {
                 for (int inner = 0; inner < unitDepth; inner++, z++) {
                     // Checking single slice
                     layerCount.clear();
+                    structureLayerCount.clear();
 
                     for (int b = 0, y = -centerOffset.j(); b < this.thumbLength; b++, y++) {
                         for (int a = 0, x = -centerOffset.k(); a < this.palmLength; a++, x++) {
@@ -230,6 +329,14 @@ public class BlockPattern {
                             return false;
                         }
                     }
+                    for (var entry : structureLayerCount.object2IntEntrySet()) {
+                        if (entry.getKey() instanceof RestrictedPredicate predicate &&
+                                predicate.minCountByLayer().isPresent() &&
+                                entry.getIntValue() < predicate.minCountByLayer().get()) {
+                            worldState.setError(new PatternStringError("gtpm.multiblock.pattern.error.limited"));
+                            return false;
+                        }
+                    }
                 }
                 findFirstAisle = true;
                 validRepetitions++;
@@ -250,6 +357,13 @@ public class BlockPattern {
         for (var entry : globalCount.object2IntEntrySet()) {
             if (entry.getIntValue() < entry.getKey().minCount) {
                 worldState.setError(new SinglePredicateError(entry.getKey(), 1));
+                return false;
+            }
+        }
+        for (var entry : structureGlobalCount.object2IntEntrySet()) {
+            if (entry.getKey() instanceof RestrictedPredicate predicate && predicate.minCount().isPresent() &&
+                    entry.getIntValue() < predicate.minCount().get()) {
+                worldState.setError(new PatternStringError("gtpm.multiblock.pattern.error.limited"));
                 return false;
             }
         }
@@ -280,6 +394,7 @@ public class BlockPattern {
             for (r = 0; r < aisleRepetitions[c][0]; r++) {
                 for (int inner = 0; inner < unitDepth; inner++, z++) {
                     cacheLayer.clear();
+                    worldState.getStructureLayerCount().clear();
                     for (int b = 0, y = -centerOffset.j(); b < this.thumbLength; b++, y++) {
                         for (int a = 0, x = -centerOffset.k(); a < this.palmLength; a++, x++) {
                             var bc = this.blockMatches[unitStart + inner];

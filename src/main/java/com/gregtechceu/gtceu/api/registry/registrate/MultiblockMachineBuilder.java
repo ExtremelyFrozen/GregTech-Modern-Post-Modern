@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
-import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
 import com.gregtechceu.gtceu.utils.memoization.GTMemoizer;
 
 import net.minecraft.core.Direction;
@@ -130,8 +129,7 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
                     "missing pattern while creating multiblock {}, something's likely gone very wrong! Check the full log.",
                     name);
         }
-        definition.setPatternFactory(multiblockDefinition -> StructurePatternResolver.resolveCachedPattern(
-                multiblockDefinition, () -> pattern.apply(multiblockDefinition)));
+        definition.setPatternFactory(pattern);
         definition.setShapes(() -> shapeInfos.stream().map(factory -> factory.apply(definition))
                 .flatMap(Collection::stream).toList());
         definition.setAllowFlip(allowFlip);

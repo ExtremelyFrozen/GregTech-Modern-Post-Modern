@@ -4,18 +4,22 @@ import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.CenterOffset;
 import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
-import com.gregtechceu.gtceu.api.multiblock.MultiBlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.Predicates;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
-import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicate;
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
 
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -23,184 +27,147 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class StructurePatternResolver {
 
     private StructurePatternResolver() {}
 
-    public static BlockPattern resolveCachedPattern(MultiblockMachineDefinition definition,
-                                                    Supplier<BlockPattern> baselinePattern) {
-        ResourceLocation id = definition.getId();
-        MultiBlockPattern serializedPattern = StructureCache.getSerializedBlockPattern(id);
-        if (serializedPattern != null) {
-            BlockPattern pattern = serializedPattern.toBlockPattern();
-            pattern.condition = baselinePattern.get().condition;
-            return pattern;
-        }
-
-        JsonNode stringArrayPattern = StructureCache.getStringArrayPattern(id);
-        if (stringArrayPattern != null) {
-            return rebuildStringArrayPattern(definition, id, baselinePattern.get(), parseStringArrayDefinition(id,
-                    stringArrayPattern));
-        }
-
-        return baselinePattern.get();
-    }
-
     public static FactoryBlockPattern applyStringArrayDefinition(FactoryBlockPattern builder, ResourceLocation id) {
         return loadStringArrayDefinition(id).applyTo(builder);
     }
 
     public static StringArrayDefinition loadStringArrayDefinition(ResourceLocation id) {
-        JsonNode jsonPattern = StructureCache.getStringArrayPattern(id);
-        if (jsonPattern == null) {
+        StringArrayDefinition definition = StructureCache.getStringArrayPattern(id);
+        if (definition == null) {
             throw new IllegalStateException("Json structure definition for " + id +
                     " was not found in structure cache");
         }
-        return parseStringArrayDefinition(id, jsonPattern);
+        return definition;
+    }
+
+    public static StringArrayDefinition decodeStringArrayDefinition(String id, JsonNode jsonPattern) {
+        return StringArrayDefinition.CODEC
+                .parse(JsonOps.INSTANCE, JsonParser.parseString(jsonPattern.toString()))
+                .getOrThrow(error -> new IllegalArgumentException("Failed to parse json structure definition for " +
+                        id + ": " + error));
     }
 
     public static StringArrayDefinition parseStringArrayDefinition(ResourceLocation id, JsonNode jsonPattern) {
-        JsonNode predicatesNode = null;
-        if (jsonPattern.isObject()) {
-            predicatesNode = jsonPattern.get("predicates");
-            jsonPattern = jsonPattern.get("aisles");
-        }
-
-        if (jsonPattern == null || !jsonPattern.isArray() || jsonPattern.isEmpty()) {
-            throw new IllegalArgumentException("Json structure definition for " + id +
-                    " must be a non-empty string array, array of string arrays, array of structure units, " +
-                    "or an object with 'aisles'");
-        }
-
-        Map<Character, TraceabilityPredicate> predicates = parsePredicates(id, predicatesNode);
-        JsonNode first = jsonPattern.get(0);
-        if (first.isTextual()) {
-            List<String[]> aisles = new ArrayList<>();
-            aisles.add(parseAisle(id, jsonPattern));
-            validateAisles(id, aisles);
-            return new StringArrayDefinition(List.of(new Unit(aisles, 1, 1)), predicates);
-        }
-
-        List<Unit> units = new ArrayList<>();
-        for (JsonNode unitNode : jsonPattern) {
-            if (unitNode.isArray()) {
-                List<String[]> aisles = new ArrayList<>();
-                aisles.add(parseAisle(id, unitNode));
-                validateAisles(id, aisles);
-                units.add(new Unit(aisles, 1, 1));
-            } else if (unitNode.isObject()) {
-                units.add(parseRepeatUnit(id, unitNode));
-            } else {
-                throw new IllegalArgumentException("Json structure definition for " + id +
-                        " must contain string-array aisles or repeat objects");
-            }
-        }
-        validateAisles(id, units.stream().flatMap(unit -> unit.slices().stream()).toList());
-        return new StringArrayDefinition(List.copyOf(units), predicates);
+        return decodeStringArrayDefinition(id.toString(), jsonPattern);
     }
 
-    private static Unit parseRepeatUnit(ResourceLocation id, JsonNode unitNode) {
-        JsonNode aislesNode = unitNode.get("aisles");
-        if (aislesNode == null || !aislesNode.isArray() || aislesNode.isEmpty()) {
-            throw new IllegalArgumentException("Json repeat unit for " + id +
-                    " must contain a non-empty 'aisles' array");
+    private static DataResult<StringArrayDefinition> parseStringArrayDefinition(JsonElement jsonPattern) {
+        try {
+            if (!jsonPattern.isJsonObject()) {
+                return DataResult.error(() -> "Json structure definition must be an object");
+            }
+
+            JsonObject patternObject = jsonPattern.getAsJsonObject();
+            JsonElement predicatesElement = patternObject.get("predicates");
+            JsonElement aislesElement = patternObject.get("aisles");
+            if (aislesElement == null || !aislesElement.isJsonArray() || aislesElement.getAsJsonArray().isEmpty()) {
+                return DataResult.error(() -> "Json structure definition must define a non-empty 'aisles' array");
+            }
+
+            Map<Character, StructurePredicate> predicates = parsePredicates(predicatesElement);
+            JsonArray jsonArray = aislesElement.getAsJsonArray();
+            List<Unit> units = new ArrayList<>();
+            for (JsonElement unitElement : jsonArray) {
+                if (unitElement.isJsonObject()) {
+                    units.add(parseRepeatUnit(unitElement.getAsJsonObject()));
+                } else {
+                    return DataResult.error(() -> "Json structure definition 'aisles' must contain repeat objects");
+                }
+            }
+            validateAisles(units.stream().flatMap(unit -> unit.slices().stream()).toList());
+            return DataResult.success(new StringArrayDefinition(List.copyOf(units), predicates));
+        } catch (RuntimeException e) {
+            return DataResult.error(e::getMessage);
+        }
+    }
+
+    private static Unit parseRepeatUnit(JsonObject unitObject) {
+        JsonElement slicesElement = unitObject.get("slices");
+        if (slicesElement == null || !slicesElement.isJsonArray() || slicesElement.getAsJsonArray().isEmpty()) {
+            throw new IllegalArgumentException("Json repeat unit must contain a non-empty 'slices' array");
         }
 
         List<String[]> aisles = new ArrayList<>();
-        JsonNode first = aislesNode.get(0);
-        if (first.isTextual()) {
-            aisles.add(parseAisle(id, aislesNode));
-        } else {
-            for (JsonNode aisleNode : aislesNode) {
-                aisles.add(parseAisle(id, aisleNode));
+        JsonArray slicesArray = slicesElement.getAsJsonArray();
+        for (JsonElement aisleElement : slicesArray) {
+            if (!aisleElement.isJsonArray()) {
+                throw new IllegalArgumentException("Json repeat unit must contain string-array slices");
             }
+            aisles.add(parseAisle(aisleElement.getAsJsonArray()));
         }
-        validateAisles(id, aisles);
+        validateAisles(aisles);
 
         int minRepeat = 1;
         int maxRepeat = 1;
-        JsonNode repeatNode = unitNode.get("repeat");
-        if (repeatNode != null) {
-            if (repeatNode.isInt()) {
-                minRepeat = maxRepeat = repeatNode.asInt();
-            } else if (repeatNode.isArray() && repeatNode.size() == 2 &&
-                    repeatNode.get(0).isInt() && repeatNode.get(1).isInt()) {
-                        minRepeat = repeatNode.get(0).asInt();
-                        maxRepeat = repeatNode.get(1).asInt();
-                    } else {
-                        throw new IllegalArgumentException("Json repeat unit for " + id +
-                                " must use integer repeat or [min, max] repeat");
-                    }
-        } else {
-            JsonNode minNode = unitNode.get("min");
-            JsonNode maxNode = unitNode.get("max");
-            if (minNode != null || maxNode != null) {
-                if (minNode == null || maxNode == null || !minNode.isInt() || !maxNode.isInt()) {
-                    throw new IllegalArgumentException("Json repeat unit for " + id +
-                            " must define integer 'min' and 'max' together");
-                }
-                minRepeat = minNode.asInt();
-                maxRepeat = maxNode.asInt();
+        JsonElement repeatElement = unitObject.get("repeat");
+        if (repeatElement != null && repeatElement.isJsonObject()) {
+            JsonObject repeatObject = repeatElement.getAsJsonObject();
+            JsonElement minElement = repeatObject.get("min");
+            JsonElement maxElement = repeatObject.get("max");
+            if (minElement != null) {
+                minRepeat = minElement.getAsInt();
+            }
+            if (maxElement != null) {
+                maxRepeat = maxElement.getAsInt();
             }
         }
         if (minRepeat > maxRepeat) {
-            throw new IllegalArgumentException("Json repeat unit for " + id +
-                    " has repeat min greater than repeat max");
+            throw new IllegalArgumentException("Json repeat unit has repeat min greater than repeat max");
         }
         return new Unit(List.copyOf(aisles), minRepeat, maxRepeat);
     }
 
-    private static String[] parseAisle(ResourceLocation id, JsonNode aisleNode) {
-        if (!aisleNode.isArray() || aisleNode.isEmpty()) {
-            throw new IllegalArgumentException("Json structure aisle for " + id + " must be a non-empty string array");
+    private static String[] parseAisle(JsonArray aisleArray) {
+        if (aisleArray.isEmpty()) {
+            throw new IllegalArgumentException("Json structure aisle must be a non-empty string array");
         }
 
-        String[] aisle = new String[aisleNode.size()];
-        for (int row = 0; row < aisleNode.size(); row++) {
-            JsonNode rowNode = aisleNode.get(row);
-            if (!rowNode.isTextual()) {
-                throw new IllegalArgumentException("Json structure aisle row " + row + " for " + id +
-                        " must be a string");
+        String[] aisle = new String[aisleArray.size()];
+        for (int row = 0; row < aisleArray.size(); row++) {
+            JsonElement rowElement = aisleArray.get(row);
+            if (!rowElement.isJsonPrimitive() || !rowElement.getAsJsonPrimitive().isString()) {
+                throw new IllegalArgumentException("Json structure aisle row " + row + " must be a string");
             }
-            aisle[row] = rowNode.asText();
+            aisle[row] = rowElement.getAsString();
         }
         return aisle;
     }
 
-    private static void validateAisles(ResourceLocation id, List<String[]> aisles) {
+    private static void validateAisles(List<String[]> aisles) {
         int aisleHeight = aisles.getFirst().length;
         int rowWidth = aisles.getFirst()[0].length();
         if (rowWidth == 0) {
-            throw new IllegalArgumentException("Json structure definition for " + id + " must not contain empty rows");
+            throw new IllegalArgumentException("Json structure definition must not contain empty rows");
         }
 
         for (int aisleIndex = 0; aisleIndex < aisles.size(); aisleIndex++) {
             String[] aisle = aisles.get(aisleIndex);
             if (aisle.length != aisleHeight) {
-                throw new IllegalArgumentException("Json structure aisle " + aisleIndex + " for " + id +
-                        " has height " + aisle.length + ", expected " + aisleHeight);
+                throw new IllegalArgumentException("Json structure aisle " + aisleIndex + " has height " +
+                        aisle.length + ", expected " + aisleHeight);
             }
             for (int row = 0; row < aisle.length; row++) {
                 String rowText = aisle[row];
                 if (rowText.length() != rowWidth) {
                     throw new IllegalArgumentException("Json structure aisle " + aisleIndex + ", row " + row +
-                            " for " + id + " has width " + rowText.length() + ", expected " + rowWidth);
+                            " has width " + rowText.length() + ", expected " + rowWidth);
                 }
             }
         }
     }
 
-    private static BlockPattern rebuildStringArrayPattern(MultiblockMachineDefinition owner, ResourceLocation id,
-                                                          BlockPattern baselinePattern,
-                                                          StringArrayDefinition definition) {
+    static BlockPattern rebuildStringArrayPattern(MultiblockMachineDefinition owner, ResourceLocation id,
+                                                  BlockPattern baselinePattern,
+                                                  StringArrayDefinition definition) {
         List<String[]> aisles = definition.aisles();
-        MultiBlockPattern baselineDefinition = new MultiBlockPattern(baselinePattern);
-        Map<Character, TraceabilityPredicate> baselinePredicates = collectPredicates(id, baselineDefinition);
-        Map<Character, TraceabilityPredicate> predicates = collectPredicates(owner, id, aisles, definition.predicates(),
-                baselinePredicates);
+        Map<Character, TraceabilityPredicate> predicates = collectPredicates(owner, id, aisles,
+                definition.predicates());
 
         int aisleHeight = aisles.getFirst().length;
         int rowWidth = aisles.getFirst()[0].length();
@@ -250,38 +217,16 @@ public final class StructurePatternResolver {
                     " does not contain a controller predicate symbol");
         }
 
-        BlockPattern pattern = new BlockPattern(blockMatches, baselineDefinition.getStructureDir(), aisleRepetitions,
+        BlockPattern pattern = new BlockPattern(blockMatches, baselinePattern.structureDir, aisleRepetitions,
                 unitStarts, unitDepths, structureSlices, centerOffset, aisleCount, aisleHeight, rowWidth);
         pattern.condition = baselinePattern.condition;
         pattern.predicates = List.copyOf(predicates.values());
         return pattern;
     }
 
-    private static Map<Character, TraceabilityPredicate> collectPredicates(ResourceLocation id,
-                                                                           MultiBlockPattern baselineDefinition) {
-        Map<Character, TraceabilityPredicate> predicates = new LinkedHashMap<>();
-        predicates.put(' ', Predicates.any());
-        for (MultiBlockPattern.Unit unit : baselineDefinition.getUnits()) {
-            if (unit.getPredicates() == null || unit.getPredicates().size() != unit.getSlices().size()) {
-                throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                        " is missing predicate slices");
-            }
-            for (int slice = 0; slice < unit.getSlices().size(); slice++) {
-                collectPredicatesFromSlice(id, predicates, unit.getSlices().get(slice),
-                        unit.getPredicates().get(slice));
-            }
-        }
-        return predicates;
-    }
-
     private static Map<Character, TraceabilityPredicate> collectPredicates(MultiblockMachineDefinition owner,
                                                                            ResourceLocation id, List<String[]> aisles,
-                                                                           Map<Character, TraceabilityPredicate> jsonPredicates,
-                                                                           Map<Character, TraceabilityPredicate> baselinePredicates) {
-        if (jsonPredicates.isEmpty()) {
-            return baselinePredicates;
-        }
-
+                                                                           Map<Character, StructurePredicate> jsonPredicates) {
         Map<Character, TraceabilityPredicate> predicates = new LinkedHashMap<>();
         predicates.put(' ', Predicates.any());
         for (String[] aisle : aisles) {
@@ -295,14 +240,9 @@ public final class StructurePatternResolver {
                         predicates.put(symbol, defaultControllerPredicate(owner));
                         continue;
                     }
-                    TraceabilityPredicate baselinePredicate = baselinePredicates.get(symbol);
-                    if (baselinePredicate instanceof PredicateController) {
-                        predicates.put(symbol, baselinePredicate);
-                        continue;
-                    }
-                    TraceabilityPredicate jsonPredicate = jsonPredicates.get(symbol);
+                    StructurePredicate jsonPredicate = jsonPredicates.get(symbol);
                     if (jsonPredicate != null) {
-                        predicates.put(symbol, jsonPredicate);
+                        predicates.put(symbol, new TraceabilityPredicate(jsonPredicate));
                         continue;
                     }
                     throw new IllegalArgumentException("Json structure definition for " + id +
@@ -317,66 +257,46 @@ public final class StructurePatternResolver {
         return Predicates.controller(Predicates.blocks(owner.getBlock()));
     }
 
-    private static void collectPredicatesFromSlice(ResourceLocation id,
-                                                   Map<Character, TraceabilityPredicate> predicates,
-                                                   String[] rows, TraceabilityPredicate[][] predicateRows) {
-        if (predicateRows == null || predicateRows.length != rows.length) {
-            throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                    " has malformed predicate rows");
-        }
-
-        for (int row = 0; row < rows.length; row++) {
-            String rowText = rows[row];
-            if (predicateRows[row] == null || predicateRows[row].length != rowText.length()) {
-                throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                        " has malformed predicate columns");
-            }
-            for (int column = 0; column < rowText.length(); column++) {
-                char symbol = rowText.charAt(column);
-                if (symbol == ' ') {
-                    continue;
-                }
-                TraceabilityPredicate predicate = predicateRows[row][column];
-                if (predicate == null) {
-                    throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                            " has no predicate for symbol '" + symbol + "'");
-                }
-                TraceabilityPredicate previous = predicates.putIfAbsent(symbol, predicate);
-                if (previous != null && previous != predicate) {
-                    throw new IllegalStateException("Baseline multiblock pattern for " + id +
-                            " maps symbol '" + symbol + "' to multiple predicates");
-                }
-            }
-        }
-    }
-
-    private static Map<Character, TraceabilityPredicate> parsePredicates(ResourceLocation id, JsonNode predicatesNode) {
-        if (predicatesNode == null || predicatesNode.isNull()) {
+    private static Map<Character, StructurePredicate> parsePredicates(JsonElement predicatesElement) {
+        if (predicatesElement == null || predicatesElement.isJsonNull()) {
             return Map.of();
         }
-        if (!predicatesNode.isObject()) {
-            throw new IllegalArgumentException("Json structure definition for " + id +
-                    " must define 'predicates' as an object");
+        if (!predicatesElement.isJsonObject()) {
+            throw new IllegalArgumentException("Json structure definition must define 'predicates' as an object");
         }
 
-        Map<Character, TraceabilityPredicate> predicates = new LinkedHashMap<>();
-        var ops = RegistryOps.create(JsonOps.INSTANCE, GTRegistries.builtinRegistry());
-        predicatesNode.fields().forEachRemaining(entry -> {
+        Map<Character, StructurePredicate> predicates = new LinkedHashMap<>();
+        predicatesElement.getAsJsonObject().entrySet().forEach(entry -> {
             String symbol = entry.getKey();
             if (symbol.length() != 1) {
-                throw new IllegalArgumentException("Json structure definition for " + id +
-                        " has predicate key '" + symbol + "', expected a single character");
+                throw new IllegalArgumentException("Json structure definition has predicate key '" + symbol +
+                        "', expected a single character");
             }
             StructurePredicate structurePredicate = StructurePredicate.CODEC
-                    .parse(ops, JsonParser.parseString(entry.getValue().toString()))
+                    .parse(JsonOps.INSTANCE, entry.getValue())
                     .getOrThrow(error -> new IllegalArgumentException("Failed to parse structure predicate '" +
-                            symbol + "' for " + id + ": " + error));
-            predicates.put(symbol.charAt(0), new TraceabilityPredicate(structurePredicate.asLegacy()));
+                            symbol + "': " + error));
+            predicates.put(symbol.charAt(0), structurePredicate);
         });
         return Map.copyOf(predicates);
     }
 
-    public record StringArrayDefinition(List<Unit> units, Map<Character, TraceabilityPredicate> predicates) {
+    public record StringArrayDefinition(List<Unit> units, Map<Character, StructurePredicate> predicates) {
+
+        public static final Codec<StringArrayDefinition> CODEC = new Codec<>() {
+
+            @Override
+            public <T> DataResult<Pair<StringArrayDefinition, T>> decode(DynamicOps<T> ops, T input) {
+                JsonElement json = ops.convertTo(JsonOps.INSTANCE, input);
+                return parseStringArrayDefinition(json)
+                        .map(definition -> Pair.of(definition, input));
+            }
+
+            @Override
+            public <T> DataResult<T> encode(StringArrayDefinition input, DynamicOps<T> ops, T prefix) {
+                return DataResult.error(() -> "String array structure definition encoding is not supported");
+            }
+        };
 
         public StringArrayDefinition {
             units = List.copyOf(units);
@@ -401,7 +321,7 @@ public final class StructurePatternResolver {
                     builder.endRepeatable(unit.minRepeat(), unit.maxRepeat());
                 }
             }
-            predicates.forEach(builder::where);
+            predicates.forEach((symbol, predicate) -> builder.where(symbol, new TraceabilityPredicate(predicate)));
             return builder;
         }
     }

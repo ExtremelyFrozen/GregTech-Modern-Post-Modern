@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternError;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
 import com.gregtechceu.gtceu.api.multiblock.util.PatternMatchContext;
 
 import net.minecraft.core.BlockPos;
@@ -42,6 +43,10 @@ public class MultiblockState {
     private Object2IntOpenHashMap<SimplePredicate> globalCount;
     @Getter
     private Object2IntOpenHashMap<SimplePredicate> layerCount;
+    @Getter
+    private Object2IntOpenHashMap<StructurePredicate> structureGlobalCount;
+    @Getter
+    private Object2IntOpenHashMap<StructurePredicate> structureLayerCount;
     public TraceabilityPredicate predicate;
     public IO io;
     public PatternError error;
@@ -66,6 +71,8 @@ public class MultiblockState {
         this.matchContext.reset();
         this.globalCount = new Object2IntOpenHashMap<>();
         this.layerCount = new Object2IntOpenHashMap<>();
+        this.structureGlobalCount = new Object2IntOpenHashMap<>();
+        this.structureLayerCount = new Object2IntOpenHashMap<>();
         cache = new LongOpenHashSet();
     }
 

@@ -30,7 +30,6 @@ import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.misc.forge.QuantumFluidHandlerItemStack;
-import com.gregtechceu.gtceu.api.pattern.structurepredicate.StructurePredicateType;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntCircuitIngredient;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntProviderFluidIngredient;
@@ -259,8 +258,6 @@ public class CommonProxy {
         SyncedKeyMappings.init();
         MachineOwner.init();
         ChestGenHooks.init();
-
-        StructurePredicateType.init();
     }
 
     @ApiStatus.Internal

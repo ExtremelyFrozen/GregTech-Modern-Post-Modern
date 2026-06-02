@@ -37,7 +37,9 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     @Setter
     @Getter
     private Supplier<List<MultiblockShapeInfo>> shapes;
-    /** Set this to false only if your multiblock is set up such that it could have a wall-shared controller. */
+    /**
+     * Set this to false only if your multiblock is set up such that it could have a wall-shared controller.
+     */
     @Getter
     @Setter
     private boolean allowFlip;
@@ -72,15 +74,19 @@ public class MultiblockMachineDefinition extends MachineDefinition {
 
     public void setPatternFactory(@NotNull Function<MultiblockMachineDefinition, BlockPattern> patternFactory) {
         this.patternFactory = Objects.requireNonNull(patternFactory);
-        StructurePatternRegistry.register(this);
+        StructurePatternRegistry.registerJavaDefinition(this);
     }
 
     public void reloadPattern() {
         if (patternFactory != null) {
             synchronized (this) {
-                pattern = patternFactory.apply(this);
+                pattern = StructurePatternRegistry.resolvePattern(this);
             }
         }
+    }
+
+    public BlockPattern createJavaPattern() {
+        return patternFactory.apply(this);
     }
 
     private List<MultiblockShapeInfo> repetitionDFS(BlockPattern pattern, List<MultiblockShapeInfo> pages,

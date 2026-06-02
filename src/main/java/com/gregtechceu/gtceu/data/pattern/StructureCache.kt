@@ -1,13 +1,13 @@
 package com.gregtechceu.gtceu.data.pattern
 
 import com.gregtechceu.gtceu.GTCEu
-import com.gregtechceu.gtceu.api.multiblock.MultiBlockPattern
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition
+import com.gregtechceu.gtceu.api.multiblock.BlockPattern
 import com.gregtechceu.gtceu.utils.dev.ResourceReloadDetector
 
 import net.minecraft.resources.ResourceLocation
 import net.neoforged.fml.ModList
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.github.luben.zstd.ZstdInputStream
@@ -23,6 +23,7 @@ import java.util.Collections
 import java.util.Comparator
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -43,7 +44,12 @@ object StructureCache {
 	private val cacheStateLock = Any()
 	private val cacheLoadLock = Any()
 
-	private data class StructureCaches(val binary: Map<ResourceLocation, MultiBlockPattern>, val json: Map<ResourceLocation, JsonNode>)
+	private data class StructureCaches(
+		val binaryDefinitions: Map<ResourceLocation, BlockPattern>,
+		val jsonDefinitions: Map<ResourceLocation, StructurePatternResolver.StringArrayDefinition>,
+		val binaryPatterns: ConcurrentHashMap<ResourceLocation, BlockPattern> = ConcurrentHashMap(),
+		val jsonPatterns: ConcurrentHashMap<ResourceLocation, BlockPattern> = ConcurrentHashMap(),
+	)
 
 	private data class PatternSource(val description: String, val root: Path)
 
@@ -74,8 +80,8 @@ object StructureCache {
 					clearFailedCache(loadingFuture)
 					GTCEu.LOGGER.error("Failed to load pattern cache", unwrapReloadException(throwable))
 				} else {
-					GTCEu.LOGGER.info("Loaded binary patterns: ${caches.binary.size}")
-					GTCEu.LOGGER.info("Loaded json patterns: ${caches.json.size}")
+					GTCEu.LOGGER.info("Loaded binary patterns: ${caches.binaryDefinitions.size}")
+					GTCEu.LOGGER.info("Loaded json patterns: ${caches.jsonDefinitions.size}")
 				}
 			} finally {
 				reloadInProgress.set(false)
@@ -96,7 +102,7 @@ object StructureCache {
 	fun reloadAll(): Int = runReloadTask {
 		runOnVirtualThread {
 			val caches = loadAndPublishCaches()
-			caches.binary.size + caches.json.size
+			caches.binaryDefinitions.size + caches.jsonDefinitions.size
 		}
 	}
 
@@ -107,8 +113,8 @@ object StructureCache {
 			val root = patternRoot()
 			val current = requireCaches()
 			publishPatternResourceIndex(syncPatternResourcesToDisk(root))
-			val binaryMap = HashMap(current.binary)
-			val jsonMap = HashMap(current.json)
+			val binaryMap = HashMap(current.binaryDefinitions)
+			val jsonMap = HashMap(current.jsonDefinitions)
 			when (type) {
 				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> {
 					binaryMap.clear()
@@ -132,11 +138,14 @@ object StructureCache {
 					)
 				}
 			}
-			val caches = freezeCaches(binaryMap, jsonMap)
+			val caches = when (type) {
+				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> freezeCaches(binaryMap, jsonMap, ConcurrentHashMap(), current.jsonPatterns)
+				StructureDefinitionType.STRING_ARRAY_JSON -> freezeCaches(binaryMap, jsonMap, current.binaryPatterns, ConcurrentHashMap())
+			}
 			publishCaches(caches)
 			when (type) {
-				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> caches.binary.size
-				StructureDefinitionType.STRING_ARRAY_JSON -> caches.json.size
+				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> caches.binaryDefinitions.size
+				StructureDefinitionType.STRING_ARRAY_JSON -> caches.jsonDefinitions.size
 			}
 		}
 	}
@@ -152,43 +161,47 @@ object StructureCache {
 			}
 			when (type) {
 				StructureDefinitionType.SERIALIZED_BLOCK_PATTERN -> {
-					check(id !in current.json) {
+					check(id !in current.jsonDefinitions) {
 						"Duplicate structure id '$id' found while loading existing json cache entry for $id"
 					}
-					val binaryMap = HashMap(current.binary)
+					val binaryMap = HashMap(current.binaryDefinitions)
 					binaryMap.remove(id)
 					reloadSingleEntry(
 						root,
 						type,
 						id,
 						binaryMap,
-						createSingleClaimedSource(id, current.json, CacheSection.JSON),
+						createSingleClaimedSource(id, current.jsonDefinitions, CacheSection.JSON),
 						::readBinaryStructureDefinition,
 					)
 					check(id in binaryMap) {
 						"Reloaded structure id '$id' was not produced from ${type.directoryName} definition"
 					}
-					publishCaches(freezeCaches(binaryMap, current.json))
+					val binaryPatterns = ConcurrentHashMap(current.binaryPatterns)
+					binaryPatterns.remove(id)
+					publishCaches(freezeCaches(binaryMap, current.jsonDefinitions, binaryPatterns, current.jsonPatterns))
 				}
 
 				StructureDefinitionType.STRING_ARRAY_JSON -> {
-					check(id !in current.binary) {
+					check(id !in current.binaryDefinitions) {
 						"Duplicate structure id '$id' found while loading existing binary cache entry for $id"
 					}
-					val jsonMap = HashMap(current.json)
+					val jsonMap = HashMap(current.jsonDefinitions)
 					jsonMap.remove(id)
 					reloadSingleEntry(
 						root,
 						type,
 						id,
 						jsonMap,
-						createSingleClaimedSource(id, current.binary, CacheSection.BINARY),
+						createSingleClaimedSource(id, current.binaryDefinitions, CacheSection.BINARY),
 						::readJsonStructureDefinition,
 					)
 					check(id in jsonMap) {
 						"Reloaded structure id '$id' was not produced from ${type.directoryName} definition"
 					}
-					publishCaches(freezeCaches(current.binary, jsonMap))
+					val jsonPatterns = ConcurrentHashMap(current.jsonPatterns)
+					jsonPatterns.remove(id)
+					publishCaches(freezeCaches(current.binaryDefinitions, jsonMap, current.binaryPatterns, jsonPatterns))
 				}
 			}
 			true
@@ -196,22 +209,51 @@ object StructureCache {
 	}
 
 	@JvmStatic
-	fun getSerializedBlockPattern(id: ResourceLocation): MultiBlockPattern? {
-		val f: CompletableFuture<StructureCaches>? = futureCache
-		return f!!.join().binary[id]
+	fun resolvePattern(id: ResourceLocation, definition: MultiblockMachineDefinition, javaPattern: BlockPattern): BlockPattern {
+		val caches = requireCaches()
+		caches.binaryDefinitions[id]?.let { binaryDefinition ->
+			return caches.binaryPatterns.computeIfAbsent(id) {
+				binaryDefinition
+			}.also { pattern ->
+				pattern.condition = javaPattern.condition
+			}
+		}
+
+		caches.jsonDefinitions[id]?.let { jsonDefinition ->
+			return caches.jsonPatterns.computeIfAbsent(id) {
+				StructurePatternResolver.rebuildStringArrayPattern(
+					definition,
+					id,
+					javaPattern,
+					jsonDefinition,
+				)
+			}.also { pattern ->
+				pattern.condition = javaPattern.condition
+			}
+		}
+
+		return javaPattern
 	}
 
 	@JvmStatic
-	fun getBinaryCacheSize(): Int = requireCaches().binary.size
-
-	@JvmStatic
-	fun getStringArrayPattern(id: ResourceLocation): JsonNode? {
-		val f: CompletableFuture<StructureCaches>? = futureCache
-		return f!!.join().json[id]
+	fun getActiveSource(id: ResourceLocation): StructureDefinitionSource {
+		val caches = requireCaches()
+		if (id in caches.binaryDefinitions) return StructureDefinitionSource.BINARY_JSON
+		if (id in caches.jsonDefinitions) return StructureDefinitionSource.JSON
+		return StructureDefinitionSource.JAVA
 	}
 
 	@JvmStatic
-	fun getJsonCacheSize(): Int = requireCaches().json.size
+	fun getBinaryCacheSize(): Int = requireCaches().binaryDefinitions.size
+
+	@JvmStatic
+	fun getStringArrayPattern(id: ResourceLocation): StructurePatternResolver.StringArrayDefinition? {
+		val f: CompletableFuture<StructureCaches>? = futureCache
+		return f!!.join().jsonDefinitions[id]
+	}
+
+	@JvmStatic
+	fun getJsonCacheSize(): Int = requireCaches().jsonDefinitions.size
 
 	private fun patternRoot(): Path = GTCEu.GTCEU_FOLDER.resolve("pattern")
 
@@ -229,8 +271,8 @@ object StructureCache {
 	private fun loadCaches(): StructureCaches {
 		val root = patternRoot()
 		publishPatternResourceIndex(syncPatternResourcesToDisk(root))
-		val binaryMap = HashMap<ResourceLocation, MultiBlockPattern>()
-		val jsonMap = HashMap<ResourceLocation, JsonNode>()
+		val binaryMap = HashMap<ResourceLocation, BlockPattern>()
+		val jsonMap = HashMap<ResourceLocation, StructurePatternResolver.StringArrayDefinition>()
 		loadFromFileSystem(root, binaryMap, jsonMap)
 		return freezeCaches(binaryMap, jsonMap)
 	}
@@ -264,9 +306,16 @@ object StructureCache {
 		}
 	}
 
-	private fun freezeCaches(binaryMap: Map<ResourceLocation, MultiBlockPattern>, jsonMap: Map<ResourceLocation, JsonNode>): StructureCaches = StructureCaches(
+	private fun freezeCaches(
+		binaryMap: Map<ResourceLocation, BlockPattern>,
+		jsonMap: Map<ResourceLocation, StructurePatternResolver.StringArrayDefinition>,
+		binaryPatterns: ConcurrentHashMap<ResourceLocation, BlockPattern> = ConcurrentHashMap(),
+		jsonPatterns: ConcurrentHashMap<ResourceLocation, BlockPattern> = ConcurrentHashMap(),
+	): StructureCaches = StructureCaches(
 		freezeMap(binaryMap),
 		freezeMap(jsonMap),
+		binaryPatterns.also { it.keys.retainAll(binaryMap.keys) },
+		jsonPatterns.also { it.keys.retainAll(jsonMap.keys) },
 	)
 
 	@Suppress("UNCHECKED_CAST")
@@ -497,7 +546,7 @@ object StructureCache {
 	}
 
 	@Throws(IOException::class)
-	private fun loadFromFileSystem(dataDir: Path, binaryMap: MutableMap<ResourceLocation, MultiBlockPattern>, jsonMap: MutableMap<ResourceLocation, JsonNode>) {
+	private fun loadFromFileSystem(dataDir: Path, binaryMap: MutableMap<ResourceLocation, BlockPattern>, jsonMap: MutableMap<ResourceLocation, StructurePatternResolver.StringArrayDefinition>) {
 		if (!Files.isDirectory(dataDir)) return
 
 		val claimedSources = HashMap<ResourceLocation, String>()
@@ -631,10 +680,10 @@ object StructureCache {
 	}
 
 	@Throws(IOException::class)
-	private fun readBinaryStructureDefinition(file: Path): MultiBlockPattern {
+	private fun readBinaryStructureDefinition(file: Path): BlockPattern {
 		val compressed = Files.readAllBytes(file)
 		val raw = decompressZstd(compressed)
-		return CBOR_MAPPER.readValue(raw, MultiBlockPattern::class.java)
+		return CBOR_MAPPER.readValue(raw, BlockPattern::class.java)
 	}
 
 	@Throws(IOException::class)
@@ -648,12 +697,12 @@ object StructureCache {
 	}
 
 	@Throws(IOException::class)
-	private fun readJsonStructureDefinition(file: Path): JsonNode {
+	private fun readJsonStructureDefinition(file: Path): StructurePatternResolver.StringArrayDefinition {
 		val raw = Files.readAllBytes(file)
 		if (raw.isEmpty() || raw.all(::isJsonWhitespace)) {
 			throw IOException("Empty JSON structure definition")
 		}
-		return JSON_MAPPER.readTree(raw)
+		return StructurePatternResolver.decodeStringArrayDefinition(file.toString(), JSON_MAPPER.readTree(raw))
 	}
 
 	private fun isJsonWhitespace(byte: Byte): Boolean = when (byte.toInt()) {

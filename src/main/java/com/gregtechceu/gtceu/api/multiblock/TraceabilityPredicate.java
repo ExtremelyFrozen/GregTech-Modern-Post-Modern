@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.multiblock;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
@@ -25,6 +26,7 @@ public class TraceabilityPredicate {
 
     public List<SimplePredicate> common = new ArrayList<>();
     public List<SimplePredicate> limited = new ArrayList<>();
+    public List<StructurePredicate> structurePredicates = new ArrayList<>();
     public Function<MultiblockState, Direction> direction = o -> null;
     public Direction fixedDirection;
     public RelativeDirection relativeDirection;
@@ -56,9 +58,15 @@ public class TraceabilityPredicate {
         }
     }
 
+    public TraceabilityPredicate(StructurePredicate structurePredicate) {
+        this();
+        structurePredicates.add(structurePredicate);
+    }
+
     protected TraceabilityPredicate(TraceabilityPredicate predicate) {
         common.addAll(predicate.common);
         limited.addAll(predicate.limited);
+        structurePredicates.addAll(predicate.structurePredicates);
         this.direction = predicate.direction;
         this.fixedDirection = predicate.fixedDirection;
         this.relativeDirection = predicate.relativeDirection;
@@ -245,6 +253,7 @@ public class TraceabilityPredicate {
             }
         }
         flag = flag || common.stream().anyMatch(predicate -> predicate.test(blockWorldState));
+        flag = flag || structurePredicates.stream().anyMatch(predicate -> predicate.test(blockWorldState, true));
         if (flag) {
             blockWorldState.setError(null);
         }
@@ -256,13 +265,17 @@ public class TraceabilityPredicate {
             TraceabilityPredicate newPredicate = new TraceabilityPredicate(this);
             newPredicate.common.addAll(other.common);
             newPredicate.limited.addAll(other.limited);
+            newPredicate.structurePredicates.addAll(other.structurePredicates);
             return newPredicate;
         }
         return this;
     }
 
     public boolean isAny() {
-        return this.common.size() == 1 && this.limited.isEmpty() && this.common.getFirst() == SimplePredicate.ANY;
+        return this.common.size() == 1 && this.limited.isEmpty() && this.structurePredicates.isEmpty() &&
+                this.common.getFirst() == SimplePredicate.ANY ||
+                this.common.isEmpty() && this.limited.isEmpty() && this.structurePredicates.size() == 1 &&
+                        this.structurePredicates.getFirst().isAny();
     }
 
     public boolean addCache() {
@@ -270,14 +283,18 @@ public class TraceabilityPredicate {
     }
 
     public boolean isAir() {
-        return this.common.size() == 1 && this.limited.isEmpty() && this.common.getFirst() == SimplePredicate.AIR;
+        return this.common.size() == 1 && this.limited.isEmpty() && this.structurePredicates.isEmpty() &&
+                this.common.getFirst() == SimplePredicate.AIR ||
+                this.common.isEmpty() && this.limited.isEmpty() && this.structurePredicates.size() == 1 &&
+                        this.structurePredicates.getFirst().isAir();
     }
 
     public boolean isSingle() {
-        return !isAny() && !isAir() && this.common.size() + this.limited.size() == 1;
+        return !isAny() && !isAir() && this.common.size() + this.limited.size() + this.structurePredicates.size() == 1;
     }
 
     public boolean hasAir() {
-        return this.common.contains(SimplePredicate.AIR);
+        return this.common.contains(SimplePredicate.AIR) ||
+                this.structurePredicates.stream().anyMatch(StructurePredicate::hasAir);
     }
 }

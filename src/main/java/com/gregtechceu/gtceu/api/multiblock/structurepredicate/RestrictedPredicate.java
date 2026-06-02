@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
+import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
@@ -48,13 +49,17 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
     @Override
     @Deprecated
     public SimplePredicate asLegacy() {
-        SimplePredicate legacy = predicate.asLegacy();
+        SimplePredicate legacy = new SimplePredicate(this::testLegacy, () -> candidates().toArray(BlockInfo[]::new));
         this.minCount.ifPresent(value -> legacy.minCount = value);
         this.maxCount.ifPresent(value -> legacy.maxCount = value);
         this.minCountByLayer.ifPresent(value -> legacy.minLayerCount = value);
         this.maxCountByLayer.ifPresent(value -> legacy.maxLayerCount = value);
         this.previewCount.ifPresent(value -> legacy.previewCount = value);
         return legacy;
+    }
+
+    private boolean testLegacy(MultiblockState multiblockState) {
+        return predicate.test(multiblockState, true);
     }
 
     @Override
@@ -69,31 +74,26 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
 
     @Override
     public boolean test(MultiblockState multiblockState, boolean mutateCount) {
-        return predicate.test(multiblockState, mutateCount) &&
-                testGlobal(multiblockState, mutateCount) &&
-                testLayer(multiblockState, mutateCount);
+        boolean base = predicate.test(multiblockState, mutateCount);
+        return base && testGlobal(multiblockState, mutateCount) && testLayer(multiblockState, mutateCount);
     }
 
     private boolean testGlobal(MultiblockState multiblockState, boolean mutateCount) {
-        // if (minCount.isEmpty() && maxCount.isEmpty()) return true;
-        // boolean base = predicate.test(multiblockState, mutateCount);
-        // Object2IntOpenHashMap<SimplePredicate> globalCount = multiblockState.getGlobalCount();
-        // int count = mutateCount ? globalCount.mergeInt(this, base ? 1 : 0, Integer::sum) : globalCount.getInt(this);
-        // if (maxCount.isEmpty() || count <= maxCount.get()) return base;
-        // multiblockState.setError(new SinglePredicateError(this, 0));
-        // return false;
-        return true; // FIXME
+        if (minCount.isEmpty() && maxCount.isEmpty()) return true;
+        int count = mutateCount ? multiblockState.getStructureGlobalCount().mergeInt(this, 1, Integer::sum) :
+                multiblockState.getStructureGlobalCount().getInt(this);
+        if (maxCount.isEmpty() || count <= maxCount.get()) return true;
+        multiblockState.setError(new PatternStringError("gtpm.multiblock.pattern.error.limited"));
+        return false;
     }
 
     private boolean testLayer(MultiblockState multiblockState, boolean mutateCount) {
-        // if (minCountByLayer.isEmpty() && maxCountByLayer.isEmpty()) return true;
-        // boolean base = predicate.test(multiblockState, mutateCount);
-        // Object2IntOpenHashMap<SimplePredicate> layerCount = multiblockState.getLayerCount();
-        // int count = mutateCount ? layerCount.mergeInt(this, base ? 1 : 0, Integer::sum) : layerCount.getInt(this);
-        // if (maxCountByLayer.isEmpty() || count <= maxCountByLayer.get()) return base;
-        // multiblockState.setError(new SinglePredicateError(this, 2));
-        // return false;
-        return true; // FIXME
+        if (minCountByLayer.isEmpty() && maxCountByLayer.isEmpty()) return true;
+        int count = mutateCount ? multiblockState.getStructureLayerCount().mergeInt(this, 1, Integer::sum) :
+                multiblockState.getStructureLayerCount().getInt(this);
+        if (maxCountByLayer.isEmpty() || count <= maxCountByLayer.get()) return true;
+        multiblockState.setError(new PatternStringError("gtpm.multiblock.pattern.error.limited"));
+        return false;
     }
 
     @Override
