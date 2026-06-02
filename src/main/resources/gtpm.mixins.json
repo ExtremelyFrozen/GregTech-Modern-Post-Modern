@@ -24,7 +24,6 @@
 		"client.TextureAtlasMixin",
 		"client.VariantDeserializerMixin",
 		"client.VertexConsumerMixin",
-		"client.bloom.GameRendererAccessor",
 		"client.bloom.LevelRendererAccessor",
 		"client.bloom.LevelRendererMixin",
 		"client.bloom.ModelBlockRendererMixin",
