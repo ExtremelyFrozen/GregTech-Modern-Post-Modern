@@ -107,6 +107,13 @@ public class BloomRenderer {
         processPostEffectInternal(partialTicks, profilerFiller);
     }
 
+    @ApiStatus.Internal
+    public static void processPostEffect(float partialTicks) {
+        if (!BloomShaderManager.isBloomActive()) return;
+
+        processPostEffectInternal(partialTicks, null);
+    }
+
     static void renderSpecialBloom(Camera camera, PoseStack poseStack, Frustum frustum, float partialTicks,
                                    ProfilerFiller profilerFiller) {
         profilerFiller.push("special");
@@ -144,11 +151,13 @@ public class BloomRenderer {
         profilerFiller.pop();
     }
 
-    static void processPostEffectInternal(float partialTicks, ProfilerFiller profilerFiller) {
+    static void processPostEffectInternal(float partialTicks, @Nullable ProfilerFiller profilerFiller) {
         Minecraft minecraft = Minecraft.getInstance();
         RenderTarget mainTarget = minecraft.getMainRenderTarget();
 
-        profilerFiller.push("processPostEffect");
+        if (profilerFiller != null) {
+            profilerFiller.push("processPostEffect");
+        }
 
         BloomShaderManager.BLOOM_CHAIN.process(partialTicks);
 
@@ -165,7 +174,9 @@ public class BloomRenderer {
         RenderSystem.disableBlend();
         RenderSystem.defaultBlendFunc();
 
-        profilerFiller.pop();
+        if (profilerFiller != null) {
+            profilerFiller.pop();
+        }
     }
 
     @ApiStatus.Internal
