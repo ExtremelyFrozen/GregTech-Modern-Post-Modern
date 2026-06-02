@@ -43,7 +43,7 @@ public class GTRenderTypes extends RenderType {
                     .setShaderState(POSITION_COLOR_SHADER)
                     .createCompositeState(false));
 
-    private static final RenderType BLOOM = RenderType.create("gtceu:bloom", DefaultVertexFormat.BLOCK,
+    private static final RenderType BLOOM = RenderType.create("gtpm:bloom", DefaultVertexFormat.BLOCK,
             VertexFormat.Mode.QUADS, RenderType.BIG_BUFFER_SIZE, true, false,
             RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_BLOOM_SHADER)
@@ -52,7 +52,7 @@ public class GTRenderTypes extends RenderType {
                     .setTextureState(BLOCK_SHEET_MIPPED)
                     .createCompositeState(true));
     private static final Function<ResourceLocation, RenderType> ENTITY_BLOOM = Util.memoize((texture) -> {
-        return create("gtceu:entity_bloom", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS,
+        return create("gtpm:entity_bloom", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS,
                 RenderType.TRANSIENT_BUFFER_SIZE, true, false,
                 RenderType.CompositeState.builder()
                         .setShaderState(RENDERTYPE_ENTITY_BLOOM_SHADER)

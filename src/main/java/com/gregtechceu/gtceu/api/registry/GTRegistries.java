@@ -72,7 +72,7 @@ public final class GTRegistries {
 
     // GT Registries
     public static final Registry<Element> ELEMENTS = makeRegistry(ELEMENT_REGISTRY);
-    public static final Registry<Material> MATERIALS = makeMaterialRegistry();
+    public static final MaterialRegistry MATERIALS = makeMaterialRegistry();
     public static final Registry<TagPrefix> TAG_PREFIXES = makeRegistry(TAG_PREFIX_REGISTRY);
 
     public static final Registry<SoundEntry> SOUNDS = makeRegistry(SOUND_REGISTRY, false);

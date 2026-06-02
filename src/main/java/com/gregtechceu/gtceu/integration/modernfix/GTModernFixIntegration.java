@@ -1,8 +1,8 @@
 package com.gregtechceu.gtceu.integration.modernfix;
 
+import com.gregtechceu.gtceu.client.model.machine.MachineModel;
 import com.gregtechceu.gtceu.client.util.AssetEventListener;
 import com.gregtechceu.gtceu.client.util.ModelEventHelper;
-import com.gregtechceu.gtceu.client.model.machine.MachineModel;
 import com.gregtechceu.gtceu.core.mixins.neoforge.BakedModelWrapperAccessor;
 
 import com.lowdragmc.lowdraglib.client.model.custommodel.CustomBakedModel;

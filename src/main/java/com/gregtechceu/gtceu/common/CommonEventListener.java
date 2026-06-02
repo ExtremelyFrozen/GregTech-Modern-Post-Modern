@@ -477,5 +477,4 @@ public class CommonEventListener {
                             speedBoost, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
         }
     }
-
 }

@@ -27,7 +27,6 @@ import net.neoforged.api.distmarker.OnlyIn;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.MapCodec;
-import lombok.experimental.ExtensionMethod;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 

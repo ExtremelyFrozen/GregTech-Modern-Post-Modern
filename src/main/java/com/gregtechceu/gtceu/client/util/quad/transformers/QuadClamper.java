@@ -45,7 +45,11 @@ public class QuadClamper implements QuadTransform {
 
     @Override
     public boolean transform(MutableQuadView quad) {
-        Direction.Axis axis = quad.nominalFace().getAxis();
+        Direction face = quad.nominalFace();
+        if (face == null) {
+            face = quad.lightFace();
+        }
+        Direction.Axis axis = face.getAxis();
 
         clamp(quad, this.clampBounds);
 

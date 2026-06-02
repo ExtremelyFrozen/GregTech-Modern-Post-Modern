@@ -1406,7 +1406,6 @@ public class GTBlocks {
 
         // GCYM
         GCYMBlocks.init();
-
     }
 
     private static void initializeCobbleReplacements() {

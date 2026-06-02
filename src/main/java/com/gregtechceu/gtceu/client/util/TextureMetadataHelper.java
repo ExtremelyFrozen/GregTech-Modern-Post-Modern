@@ -79,9 +79,33 @@ public class TextureMetadataHelper {
         return false;
     }
 
-    public static boolean isEmissive(BakedQuad quad, int[] ambientPackedLights) {
-        int[] quadPackedLights = GTQuadTransformers.getPackedLights(quad);
+    public static boolean hasBloom(TextureAtlasSprite sprite, int[] quadPackedLights, int[] ambientPackedLights) {
+        var metadata = getMetadata(sprite);
+        if (metadata.isPresent()) {
+            TriState bloomValue = metadata.get().bloom();
+            if (bloomValue == TriState.TRUE) return true;
+            else if (bloomValue == TriState.FALSE) return false;
+        }
 
+        if (ConfigHolder.INSTANCE.client.bloom.emissiveTexturesHaveBloom) {
+            return isEmissive(quadPackedLights, ambientPackedLights);
+        }
+
+        return false;
+    }
+
+    public static boolean hasBloom(TextureAtlasSprite sprite) {
+        return getMetadata(sprite)
+                .map(GTTextureMetadata::bloom)
+                .map(bloom -> bloom == TriState.TRUE)
+                .orElse(false);
+    }
+
+    public static boolean isEmissive(BakedQuad quad, int[] ambientPackedLights) {
+        return isEmissive(GTQuadTransformers.getPackedLights(quad), ambientPackedLights);
+    }
+
+    private static boolean isEmissive(int[] quadPackedLights, int[] ambientPackedLights) {
         for (int i = 0; i < 4; i++) {
             int quadLight = quadPackedLights[i];
             int qBlock = LightTexture.block(quadLight), qSky = LightTexture.sky(quadLight);

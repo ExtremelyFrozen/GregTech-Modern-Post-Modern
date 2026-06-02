@@ -58,8 +58,9 @@ public class BloomRenderer {
             .withInitial(ScopedValue.Object::new);
 
     @ApiStatus.Internal
-    static void renderBloom(Camera camera, PoseStack poseStack, Frustum frustum, Matrix4f projectionMatrix,
-                            float partialTicks, LevelRenderer levelRenderer, ProfilerFiller profilerFiller) {
+    static void renderBloom(Camera camera, PoseStack poseStack, Frustum frustum, Matrix4f modelViewMatrix,
+                            Matrix4f projectionMatrix, float partialTicks, LevelRenderer levelRenderer,
+                            ProfilerFiller profilerFiller) {
         if (!BloomShaderManager.isBloomActive()) return;
 
         Vec3 camPos = camera.getPosition();
@@ -73,8 +74,8 @@ public class BloomRenderer {
 
         // safe mode disabled -> use deeper, faster hackery
         if (!BloomRenderer.SafeMode.enabled()) {
-            ((LevelRendererAccessor) levelRenderer).invokeRenderChunkLayer(GTRenderTypes.bloom(), poseStack,
-                    camPos.x, camPos.y, camPos.z, projectionMatrix);
+            ((LevelRendererAccessor) levelRenderer).invokeRenderSectionLayer(GTRenderTypes.bloom(),
+                    camPos.x, camPos.y, camPos.z, modelViewMatrix, projectionMatrix);
 
             // have to re-setup here. so sad. very aw.
             GTRenderTypes.bloom().setupRenderState();

@@ -265,7 +265,7 @@ public class CommonProxy {
     public static void initMaterials() {
         GTCEu.LOGGER.info("Registering GTCEu Materials");
         GTMaterials.init();
-        ((IMaterialRegistry) GTRegistries.MATERIALS).setFallbackMaterial(GTCEu.MOD_ID, GTMaterials.Aluminium);
+        GTRegistries.MATERIALS.setFallbackMaterial(GTCEu.MOD_ID, GTMaterials.Aluminium);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)

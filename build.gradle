@@ -81,6 +81,11 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:-removal"
 }
 
+tasks.named('compileJava', JavaCompile) {
+    dependsOn tasks.named('compileKotlin')
+    classpath += files(layout.buildDirectory.dir('classes/kotlin/main'))
+}
+
 kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xjvm-default=all")

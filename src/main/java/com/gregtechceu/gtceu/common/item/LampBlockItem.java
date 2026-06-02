@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.common.block.LampBlock;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -84,20 +83,21 @@ public class LampBlockItem extends BlockItem {
     private static class ClientCallWrapper {
 
         private static void registerEventListener(LampBlockItem item) {
-            ModelEventHelper.registerBakeEventListener(false, (resourceLocation, bakedModel, rootModel, modelBakery) -> {
-                ResourceLocation model = BuiltInRegistries.ITEM.getKey(item).withPrefix("item/");
-                ModelResourceLocation modelLoc = ModelResourceLocation.inventory(model);
-                if (!resourceLocation.equals(model) && !resourceLocation.equals(modelLoc)) {
-                    return bakedModel;
-                }
-                return new BakedModelWrapper<>(bakedModel) {
+            ModelEventHelper.registerBakeEventListener(false,
+                    (resourceLocation, bakedModel, rootModel, modelBakery) -> {
+                        ResourceLocation model = BuiltInRegistries.ITEM.getKey(item).withPrefix("item/");
+                        ModelResourceLocation modelLoc = ModelResourceLocation.inventory(model);
+                        if (!resourceLocation.equals(model) && !resourceLocation.equals(modelLoc)) {
+                            return bakedModel;
+                        }
+                        return new BakedModelWrapper<>(bakedModel) {
 
-                    @Override
-                    public boolean isCustomRenderer() {
-                        return true;
-                    }
-                };
-            });
+                            @Override
+                            public boolean isCustomRenderer() {
+                                return true;
+                            }
+                        };
+                    });
         }
     }
 

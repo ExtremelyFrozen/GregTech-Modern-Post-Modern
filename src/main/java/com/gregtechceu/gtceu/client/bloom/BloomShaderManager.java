@@ -4,10 +4,12 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.core.config.GTEarlyConfig;
 
-import net.irisshaders.iris.api.v0.IrisApi;
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +19,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 
 import com.google.gson.JsonSyntaxException;
@@ -54,6 +57,22 @@ public class BloomShaderManager {
                 .ifPresentOrElse(option -> option.addValidator(new BloomTypeConfigValidator()),
                         () -> GTCEu.LOGGER.warn(
                                 "Could not initialize bloom type config update listener! The shaders will not update automatically when the config option is changed."));
+    }
+
+    @SubscribeEvent
+    public static void registerReloadListeners(RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener(new SimplePreparableReloadListener<>() {
+
+            @Override
+            protected Object prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+                return new Object();
+            }
+
+            @Override
+            protected void apply(Object object, ResourceManager resourceManager, ProfilerFiller profiler) {
+                Minecraft.getInstance().execute(BloomShaderManager::initPostShaders);
+            }
+        });
     }
 
     @SubscribeEvent
@@ -136,15 +155,7 @@ public class BloomShaderManager {
     }
 
     private static boolean updateBloomShaderAvailability() {
-        return !GTEarlyConfig.OPTIFINE_PRESENT &&
-                !(GTCEu.Mods.isIrisLoaded() && IrisCallWrapper.isShaderActive());
-    }
-
-    private static class IrisCallWrapper {
-
-        private static boolean isShaderActive() {
-            return IrisApi.getInstance().isShaderPackInUse();
-        }
+        return !GTEarlyConfig.OPTIFINE_PRESENT;
     }
 
     private static final class BloomTypeConfigValidator implements IConfigValueValidator<BloomType> {
