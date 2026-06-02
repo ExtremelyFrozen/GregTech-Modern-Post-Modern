@@ -91,6 +91,11 @@ lombok {
     version = "1.18.38"
 }
 
+tasks.named('delombok') {
+    dependsOn tasks.named('compileKotlin')
+    classpath.from(layout.buildDirectory.dir('classes/kotlin/main'))
+}
+
 jacoco {
     applyTo runGameTestServer
 }
