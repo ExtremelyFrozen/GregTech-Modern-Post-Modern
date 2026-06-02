@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.client.bloom.BloomShaderManager;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -35,7 +34,6 @@ public abstract class LevelRendererMixin {
     private void gtpm$processBloomAfterLevel(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera,
                                              GameRenderer gameRenderer, LightTexture lightTexture,
                                              Matrix4f modelViewMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
-        BloomRenderer.processPostEffect(deltaTracker.getGameTimeDeltaPartialTick(false),
-                Minecraft.getInstance().getProfiler());
+        BloomRenderer.processPostEffectAfterLevel(deltaTracker.getGameTimeDeltaPartialTick(false));
     }
 }

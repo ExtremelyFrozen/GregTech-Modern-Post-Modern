@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.SectionPos;
+import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.phys.Vec3;
 
@@ -74,98 +75,109 @@ public class BloomRenderer {
 
         Vec3 camPos = camera.getPosition();
 
-        profilerFiller.popPush("gtceu:bloom");
-        setupBloomShaderUniforms();
+        profilerFiller.push("gtceu:bloom");
+        try {
+            setupBloomShaderUniforms();
 
-        GTRenderTypes.bloom().setupRenderState();
-
-        renderSpecialBloom(camera, poseStack, frustum, partialTicks, profilerFiller);
-
-        // safe mode disabled -> use deeper, faster hackery
-        if (!BloomRenderer.SafeMode.enabled()) {
-            ((LevelRendererAccessor) levelRenderer).invokeRenderSectionLayer(GTRenderTypes.bloom(),
-                    camPos.x, camPos.y, camPos.z, modelViewMatrix, projectionMatrix);
-
-            // have to re-setup here. so sad. very aw.
             GTRenderTypes.bloom().setupRenderState();
-        }
-        // safe mode enabled -> don't draw block bloom the 'normal' way; use BloomSafeMode.drawBlockBloom instead
-        else {
-            SafeMode.drawBlockBloom(camera, poseStack, frustum, projectionMatrix, levelRenderer, profilerFiller);
-        }
+            try {
+                renderSpecialBloom(camera, poseStack, frustum, partialTicks, profilerFiller);
 
-        // clear state. again.
-        GTRenderTypes.bloom().clearRenderState();
+                // safe mode disabled -> use deeper, faster hackery
+                if (!BloomRenderer.SafeMode.enabled()) {
+                    ((LevelRendererAccessor) levelRenderer).invokeRenderSectionLayer(GTRenderTypes.bloom(),
+                            camPos.x, camPos.y, camPos.z, modelViewMatrix, projectionMatrix);
 
-        // profiler section is popped by popPush() in the calling function; don't pop it here
+                    // have to re-setup here. so sad. very aw.
+                    GTRenderTypes.bloom().setupRenderState();
+                }
+                // safe mode enabled -> don't draw block bloom the 'normal' way; use BloomSafeMode.drawBlockBloom
+                // instead
+                else {
+                    SafeMode.drawBlockBloom(camera, poseStack, frustum, projectionMatrix, levelRenderer,
+                            profilerFiller);
+                }
+            } finally {
+                // clear state. again.
+                GTRenderTypes.bloom().clearRenderState();
+            }
+        } finally {
+            profilerFiller.pop();
+        }
     }
 
     @ApiStatus.Internal
     public static void processPostEffect(float partialTicks, ProfilerFiller profilerFiller) {
         if (!BloomShaderManager.isBloomActive()) return;
 
-        processPostEffectInternal(partialTicks, profilerFiller);
+        Minecraft minecraft = Minecraft.getInstance();
+        RenderTarget mainTarget = minecraft.getMainRenderTarget();
+
+        profilerFiller.push("processPostEffect");
+        try {
+            BloomShaderManager.BLOOM_CHAIN.process(partialTicks);
+
+            mainTarget.bindWrite(false);
+
+            RenderSystem.enableBlend();
+            try {
+                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                        GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                        GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+
+                BLOOM_TARGET.blitToScreen(mainTarget.viewWidth, mainTarget.viewHeight, false);
+            } finally {
+                BLOOM_TARGET.unbindRead();
+                RenderSystem.disableBlend();
+                RenderSystem.defaultBlendFunc();
+            }
+        } finally {
+            profilerFiller.pop();
+        }
+    }
+
+    @ApiStatus.Internal
+    public static void processPostEffectAfterLevel(float partialTicks) {
+        processPostEffect(partialTicks, InactiveProfiler.INSTANCE);
     }
 
     static void renderSpecialBloom(Camera camera, PoseStack poseStack, Frustum frustum, float partialTicks,
                                    ProfilerFiller profilerFiller) {
         profilerFiller.push("special");
-
-        // render state is set up & cleared in calling function
-
-        BLOOM_RENDER_LOCK.writeLock().lock();
         try {
-            BloomHandler.initializeScheduledRenders();
-        } finally {
-            BLOOM_RENDER_LOCK.writeLock().unlock();
-        }
-        if (!BloomHandler.BLOOM_RENDERS.isEmpty()) {
-            EffectRenderContext context = EffectRenderContext.getInstance().update(camera, frustum, partialTicks);
-
-            BLOOM_RENDER_LOCK.readLock().lock();
-            try {
-                BloomHandler.BLOOM_RENDERS.forEach((renderSetup, list) -> {
-                    BufferBuilder buffer = new BufferBuilder(new ByteBufferBuilder(GTRenderTypes.bloom().bufferSize()),
-                            GTRenderTypes.bloom().mode(), GTRenderTypes.bloom().format());
-                    list.draw(poseStack, buffer, context);
-                });
-            } finally {
-                BLOOM_RENDER_LOCK.readLock().unlock();
-            }
+            // render state is set up & cleared in calling function
 
             BLOOM_RENDER_LOCK.writeLock().lock();
             try {
-                BloomHandler.removeInvalidatedRenders();
+                BloomHandler.initializeScheduledRenders();
             } finally {
                 BLOOM_RENDER_LOCK.writeLock().unlock();
             }
+            if (!BloomHandler.BLOOM_RENDERS.isEmpty()) {
+                EffectRenderContext context = EffectRenderContext.getInstance().update(camera, frustum, partialTicks);
+
+                BLOOM_RENDER_LOCK.readLock().lock();
+                try {
+                    BloomHandler.BLOOM_RENDERS.forEach((renderSetup, list) -> {
+                        BufferBuilder buffer = new BufferBuilder(
+                                new ByteBufferBuilder(GTRenderTypes.bloom().bufferSize()),
+                                GTRenderTypes.bloom().mode(), GTRenderTypes.bloom().format());
+                        list.draw(poseStack, buffer, context);
+                    });
+                } finally {
+                    BLOOM_RENDER_LOCK.readLock().unlock();
+                }
+
+                BLOOM_RENDER_LOCK.writeLock().lock();
+                try {
+                    BloomHandler.removeInvalidatedRenders();
+                } finally {
+                    BLOOM_RENDER_LOCK.writeLock().unlock();
+                }
+            }
+        } finally {
+            profilerFiller.pop();
         }
-
-        profilerFiller.pop();
-    }
-
-    static void processPostEffectInternal(float partialTicks, ProfilerFiller profilerFiller) {
-        Minecraft minecraft = Minecraft.getInstance();
-        RenderTarget mainTarget = minecraft.getMainRenderTarget();
-
-        profilerFiller.push("processPostEffect");
-
-        BloomShaderManager.BLOOM_CHAIN.process(partialTicks);
-
-        mainTarget.bindWrite(false);
-
-        RenderSystem.enableBlend();
-        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-
-        BLOOM_TARGET.blitToScreen(mainTarget.viewWidth, mainTarget.viewHeight, false);
-        BLOOM_TARGET.unbindRead();
-
-        RenderSystem.disableBlend();
-        RenderSystem.defaultBlendFunc();
-
-        profilerFiller.pop();
     }
 
     @ApiStatus.Internal
@@ -240,44 +252,45 @@ public class BloomRenderer {
                                            LevelRenderer levelRenderer, ProfilerFiller profilerFiller) {
             Vec3 camPos = camera.getPosition();
             profilerFiller.push("safe_mode");
-
-            ShaderInstance shader = setupBlockShaderUniforms(poseStack, projectionMatrix);
-            Uniform chunkOffset = shader.CHUNK_OFFSET;
-
-            BLOOM_RENDER_LOCK.readLock().lock();
             try {
-                for (var entry : BLOOM_BUFFERS.entrySet()) {
-                    SectionPos sectionPos = entry.getKey();
-                    VertexBuffer buffer = entry.getValue();
+                ShaderInstance shader = setupBlockShaderUniforms(poseStack, projectionMatrix);
+                Uniform chunkOffset = shader.CHUNK_OFFSET;
+                try {
+                    BLOOM_RENDER_LOCK.readLock().lock();
+                    try {
+                        for (var entry : BLOOM_BUFFERS.entrySet()) {
+                            SectionPos sectionPos = entry.getKey();
+                            VertexBuffer buffer = entry.getValue();
 
-                    // noinspection ConstantValue it just isn't annotated :))
-                    if (buffer.isInvalid() || buffer.getFormat() == null) {
-                        // return early if buffer is invalid or has no vertex data bound
-                        continue;
+                            // noinspection ConstantValue it just isn't annotated :))
+                            if (buffer.isInvalid() || buffer.getFormat() == null) {
+                                // return early if buffer is invalid or has no vertex data bound
+                                continue;
+                            }
+
+                            if (chunkOffset != null) {
+                                chunkOffset.set(sectionPos.minBlockX() - (float) camPos.x(),
+                                        sectionPos.minBlockY() - (float) camPos.y(),
+                                        sectionPos.minBlockZ() - (float) camPos.z());
+                                chunkOffset.upload();
+                            }
+
+                            buffer.bind();
+                            buffer.draw();
+                        }
+                    } finally {
+                        BLOOM_RENDER_LOCK.readLock().unlock();
                     }
-
+                } finally {
                     if (chunkOffset != null) {
-                        chunkOffset.set(sectionPos.minBlockX() - (float) camPos.x(),
-                                sectionPos.minBlockY() - (float) camPos.y(),
-                                sectionPos.minBlockZ() - (float) camPos.z());
-                        chunkOffset.upload();
+                        chunkOffset.set(0.0f, 0.0f, 0.0f);
                     }
-
-                    buffer.bind();
-                    buffer.draw();
+                    shader.clear();
+                    VertexBuffer.unbind();
                 }
             } finally {
-                BLOOM_RENDER_LOCK.readLock().unlock();
+                profilerFiller.pop();
             }
-
-            if (chunkOffset != null) {
-                chunkOffset.set(0.0f, 0.0f, 0.0f);
-            }
-            shader.clear();
-            VertexBuffer.unbind();
-
-            // pop the "safe_mode" profiler section before returning to the render stage caller
-            profilerFiller.pop();
         }
 
         public static void finishBloomBuffer(SectionPos sectionPos, BufferBuilder builder) {
