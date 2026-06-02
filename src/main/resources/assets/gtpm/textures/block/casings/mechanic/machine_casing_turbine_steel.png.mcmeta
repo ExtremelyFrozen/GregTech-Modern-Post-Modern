@@ -1,5 +1,5 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/casings/mechanic/machine_casing_turbine_steel_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/casings/mechanic/machine_casing_turbine_steel_ctm"
 	}
 }

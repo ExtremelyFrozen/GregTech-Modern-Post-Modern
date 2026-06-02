@@ -1,5 +1,5 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/casings/fusion/superconducting_coil_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/casings/fusion/superconducting_coil_ctm"
 	}
 }

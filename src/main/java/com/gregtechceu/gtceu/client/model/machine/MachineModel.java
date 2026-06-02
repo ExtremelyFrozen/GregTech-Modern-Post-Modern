@@ -9,14 +9,17 @@ import com.gregtechceu.gtceu.client.model.BaseBakedModel;
 import com.gregtechceu.gtceu.client.model.GTModelProperties;
 import com.gregtechceu.gtceu.client.model.IBlockEntityRendererBakedModel;
 import com.gregtechceu.gtceu.client.model.TextureOverrideModel;
+import com.gregtechceu.gtceu.client.model.ctm.CTMMeshBuilder;
 import com.gregtechceu.gtceu.client.model.machine.multipart.MultiPartBakedModel;
+import com.gregtechceu.gtceu.client.model.quad.StaticFaceBakery;
 import com.gregtechceu.gtceu.client.renderer.cover.ICoverableRenderer;
 import com.gregtechceu.gtceu.client.renderer.machine.DynamicRender;
 import com.gregtechceu.gtceu.client.util.FacadeBlockAndTintGetter;
-import com.gregtechceu.gtceu.client.util.StaticFaceBakery;
+import com.gregtechceu.gtceu.client.util.RenderUtil;
 import com.gregtechceu.gtceu.common.data.models.GTModels;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.core.mixins.neoforge.BakedModelWrapperAccessor;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib.client.bakedpipeline.FaceQuad;
 import com.lowdragmc.lowdraglib.client.model.custommodel.CustomBakedModel;
@@ -44,6 +47,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.QuadTransformers;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.client.model.data.ModelProperty;
@@ -188,7 +192,46 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
                 builder.with(key, data.get(key));
             }
         }
+
+        if (machine != null) {
+            Map<Direction, ModelData> coverModelData = new EnumMap<>(Direction.class);
+            for (Direction side : GTUtil.DIRECTIONS) {
+                var coverBehavior = machine.getCoverContainer().getCoverAtSide(side);
+                if (coverBehavior == null) continue;
+
+                ModelData data = coverBehavior.getCoverRenderer().get()
+                        .getModelData(coverBehavior, pos, level, modelData);
+                coverModelData.put(side, data);
+            }
+            builder.with(GTModelProperties.COVER_MODEL_DATA, coverModelData);
+        }
         return builder.build();
+    }
+
+    @Override
+    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData modelData) {
+        BlockAndTintGetter level = modelData.get(GTModelProperties.LEVEL);
+        BlockPos pos = modelData.get(GTModelProperties.POS);
+
+        MetaMachine machine = (level == null || pos == null) ? null : MetaMachine.getMachine(level, pos);
+        MachineRenderState renderState = machine != null ? machine.getRenderState() : definition.defaultRenderState();
+
+        Set<ChunkRenderTypeSet> renderTypeSets = new HashSet<>();
+        renderTypeSets.add(super.getRenderTypes(state, rand, modelData));
+
+        if (multiPart != null) {
+            renderTypeSets.add(multiPart.getRenderTypes(state, rand, modelData));
+        }
+        if (modelsByState.containsKey(renderState)) {
+            renderTypeSets.add(modelsByState.get(renderState).getRenderTypes(state, rand, modelData));
+        }
+
+        if (machine != null) {
+            renderTypeSets.add(ICoverableRenderer.super.getCoverRenderTypes(machine.getCoverContainer(),
+                    pos, level, rand, modelData));
+        }
+
+        return ChunkRenderTypeSet.union(renderTypeSets);
     }
 
     @Override
@@ -277,8 +320,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
         }
 
         // we have to recalculate CTM ourselves.
-        // this is the slowest part by a long shot because the LDLib quad logic isn't very optimized.
-        if (level != null && pos != null && blockState != null) {
+        if (level != null && pos != null && blockState != null && side != null) {
             BlockState ctmState = blockState;
             BlockAndTintGetter ctmLevel = level;
             if (machine instanceof IMultiPart part && part.isFormed()) {
@@ -288,7 +330,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
                     ctmLevel = new FacadeBlockAndTintGetter(level, pos, appearance, level.getBlockEntity(pos));
                 }
             }
-            return CustomBakedModel.reBakeCustomQuads(quads, ctmLevel, pos, ctmState, side, 0.0f);
+            return CTMMeshBuilder.buildCTMQuads(ctmLevel, pos, ctmState, quads, side);
         }
         return quads;
     }
@@ -313,7 +355,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
         var controllers = part.getControllers();
         for (MultiblockControllerMachine controller : controllers) {
             var state = controller.getBlockState();
-            BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
+            BakedModel model = RenderUtil.getModelForState(state);
             List<BakedQuad> newQuads = null;
 
             // spotless:off

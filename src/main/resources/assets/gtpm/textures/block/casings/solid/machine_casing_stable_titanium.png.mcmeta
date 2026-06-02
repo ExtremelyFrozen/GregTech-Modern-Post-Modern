@@ -1,5 +1,5 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/casings/solid/machine_casing_stable_titanium_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/casings/solid/machine_casing_stable_titanium_ctm"
 	}
 }

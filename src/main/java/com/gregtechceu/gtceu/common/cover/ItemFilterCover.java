@@ -136,11 +136,11 @@ public class ItemFilterCover extends CoverBehavior implements IUICover {
     }
 
     @Override
-    public CompoundTag copyConfig(CompoundTag tag) {
+    public void copyConfig(CompoundTag tag) {
+        super.copyConfig(tag);
         tag.putInt("manualIO", getAllowFlow().ordinal());
         tag.putInt("filterMode", getFilterMode().ordinal());
         tag.put("filter", attachItem.save(coverHolder.getLevel().registryAccess()));
-        return super.copyConfig(tag);
     }
 
     @Override

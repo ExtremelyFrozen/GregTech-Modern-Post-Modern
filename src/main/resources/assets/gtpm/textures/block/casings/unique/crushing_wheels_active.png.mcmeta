@@ -1,6 +1,6 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/casings/unique/crushing_wheels_active_ctm"
+	"gtpm": {
+		"connection_texture": "gtpm:block/casings/unique/crushing_wheels_active_ctm"
 	},
 	"animation": {
 		"interpolate": false,

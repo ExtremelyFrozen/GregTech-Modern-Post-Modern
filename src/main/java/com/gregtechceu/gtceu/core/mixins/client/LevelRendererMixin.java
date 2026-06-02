@@ -33,8 +33,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -57,7 +55,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.*;
 
 @Mixin(value = LevelRenderer.class, priority = 500)
-@OnlyIn(Dist.CLIENT)
 public abstract class LevelRendererMixin {
 
     @Shadow

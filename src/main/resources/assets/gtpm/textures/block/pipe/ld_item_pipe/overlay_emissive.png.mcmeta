@@ -1,8 +1,6 @@
 {
 	"ldlib": {
-		"emissive": true
-	},
-	"shimmer": {
+		"emissive": true,
 		"bloom": true
 	}
 }

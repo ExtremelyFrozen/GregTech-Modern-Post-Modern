@@ -83,6 +83,7 @@ import com.gregtechceu.gtceu.common.data.GTToolTiers;
 import com.gregtechceu.gtceu.common.data.GTValueProviderTypes;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
+import com.gregtechceu.gtceu.common.data.materials.AlloyBlastPropertyAddition;
 import com.gregtechceu.gtceu.common.data.materials.GTFoods;
 import com.gregtechceu.gtceu.common.fluid.potion.BottleItemFluidHandler;
 import com.gregtechceu.gtceu.common.fluid.potion.PotionItemFluidHandler;
@@ -176,6 +177,7 @@ public class CommonProxy {
         CommonProxy.modBus = modBus;
         modBus.register(CommonProxy.class);
         NeoForge.EVENT_BUS.addListener(CommonProxy::onServerStarted);
+        modBus.addListener(AlloyBlastPropertyAddition::addAlloyBlastProperties);
 
         UIFactory.register(MachineUIFactory.INSTANCE);
         UIFactory.register(CoverUIFactory.INSTANCE);
@@ -264,7 +266,7 @@ public class CommonProxy {
     public static void initMaterials() {
         GTCEu.LOGGER.info("Registering GTCEu Materials");
         GTMaterials.init();
-        ((IMaterialRegistry) GTRegistries.MATERIALS).setFallbackMaterial(GTCEu.MOD_ID, GTMaterials.Aluminium);
+        GTRegistries.MATERIALS.setFallbackMaterial(GTCEu.MOD_ID, GTMaterials.Aluminium);
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)

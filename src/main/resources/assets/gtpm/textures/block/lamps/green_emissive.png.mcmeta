@@ -1,8 +1,6 @@
 {
-	"ldlib": {
-		"connection": "gtpm:block/lamps/green_ctm_emissive"
-	},
-	"shimmer": {
+	"gtpm": {
+		"connection_texture": "gtpm:block/lamps/green_ctm_emissive",
 		"bloom": true
 	}
 }

@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.api.item.datacomponents.LargeItemContent;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.client.renderer.machine.DynamicRender;
 import com.gregtechceu.gtceu.client.renderer.machine.DynamicRenderType;
-import com.gregtechceu.gtceu.client.util.PoseStackExtensions;
 import com.gregtechceu.gtceu.client.util.RenderUtil;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
@@ -28,13 +27,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.MapCodec;
-import lombok.experimental.ExtensionMethod;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 
 import static com.gregtechceu.gtceu.utils.GTMatrixUtils.*;
 
-@ExtensionMethod(PoseStackExtensions.class)
 public class QuantumChestItemRender extends DynamicRender<QuantumChestMachine, QuantumChestItemRender> {
 
     // spotless:off

@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.misc;
 
 import com.gregtechceu.gtceu.api.data.chemical.ChemicalHelper;
-import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.stack.MaterialEntry;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
@@ -338,7 +337,7 @@ public abstract class ProspectorMode<T> {
         public OreInfo deserialize(FriendlyByteBuf buf) {
             ResourceLocation materialId = buf.readResourceLocation();
             return new OreInfo(
-                    ((IMaterialRegistry) GTRegistries.MATERIALS).getMaterial(materialId),
+                    GTRegistries.MATERIALS.getMaterial(materialId),
                     buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
         }
 
