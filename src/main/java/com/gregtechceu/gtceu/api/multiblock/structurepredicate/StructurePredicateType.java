@@ -46,7 +46,7 @@ public record StructurePredicateType<T extends StructurePredicate>(MapCodec<T> c
     }
 
     public static <T extends StructurePredicate> StructurePredicateType<T> register(ResourceLocation id,
-                                                                                   MapCodec<T> codec) {
+                                                                                    MapCodec<T> codec) {
         StructurePredicateType<T> type = new StructurePredicateType<>(codec);
         StructurePredicateType<?> previous = EARLY_TYPES.putIfAbsent(id, type);
         if (previous != null) {
