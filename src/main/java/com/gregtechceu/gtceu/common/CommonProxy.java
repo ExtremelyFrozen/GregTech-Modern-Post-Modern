@@ -9,12 +9,10 @@ import com.gregtechceu.gtceu.api.capability.GTCapability;
 import com.gregtechceu.gtceu.api.capability.compat.EUToFEProvider;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
-import com.gregtechceu.gtceu.api.data.chemical.material.IMaterialRegistry;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.PostMaterialEvent;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconSet;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialIconType;
-import com.gregtechceu.gtceu.api.data.chemical.material.registry.MaterialRegistry;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.data.worldgen.GTOreDefinition;
 import com.gregtechceu.gtceu.api.data.worldgen.WorldGenLayers;
@@ -274,7 +272,7 @@ public class CommonProxy {
         if (event.getRegistryKey() == GTRegistries.MATERIAL_REGISTRY) {
             // Fire Post-Material event, intended for when Materials need to be iterated over in-full before freezing
             // Block entirely new Materials from being added in the Post event
-            ((MaterialRegistry) GTRegistries.MATERIALS).close();
+            GTRegistries.MATERIALS.close();
             ModLoader.postEventWrapContainerInModOrder(new PostMaterialEvent());
             // --spacer--
         } else if (event.getRegistryKey() == Registries.FLUID) {
@@ -308,7 +306,7 @@ public class CommonProxy {
 
     private static void postInitMaterials(Registry<Material> registry) {
         // Register all material manager registries, for materials with mod ids.
-         GTRegistries.MATERIALS.getUsedNamespaces().forEach(namespace -> {
+        GTRegistries.MATERIALS.getUsedNamespaces().forEach(namespace -> {
             // Force the material lang generator to be at index 0, so that addons' lang generators can override it.
             GTRegistrate registrate = GTRegistrate.createIgnoringListenerErrors(namespace);
             AbstractRegistrateAccessor accessor = (AbstractRegistrateAccessor) registrate;
