@@ -309,7 +309,7 @@ public class CommonProxy {
 
     private static void postInitMaterials(Registry<Material> registry) {
         // Register all material manager registries, for materials with mod ids.
-        ((IMaterialRegistry) GTRegistries.MATERIALS).getUsedNamespaces().forEach(namespace -> {
+         GTRegistries.MATERIALS.getUsedNamespaces().forEach(namespace -> {
             // Force the material lang generator to be at index 0, so that addons' lang generators can override it.
             GTRegistrate registrate = GTRegistrate.createIgnoringListenerErrors(namespace);
             AbstractRegistrateAccessor accessor = (AbstractRegistrateAccessor) registrate;
