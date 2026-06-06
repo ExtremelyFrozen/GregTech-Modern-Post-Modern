@@ -120,7 +120,7 @@ abstract class ManagedSyncBlockEntity :
 		}
 	}
 
-	fun clientTick() {}
+	open fun clientTick() {}
 
 	open fun sendServerSyncChanges() {
 		if (level == null || !level!!.isClientSide) {

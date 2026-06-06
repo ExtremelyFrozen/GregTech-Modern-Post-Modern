@@ -14,6 +14,7 @@ abstract class ManagedSavedData :
 	SavedData,
 	ISyncManaged {
 
+	@JvmField
 	protected val syncDataHolder: SyncDataHolder = SyncDataHolder(this)
 
 	constructor()
