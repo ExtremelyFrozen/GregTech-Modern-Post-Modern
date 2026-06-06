@@ -191,10 +191,8 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
             if (definition instanceof MultiblockMachineDefinition multiblockDefinition) {
                 var pattern = multiblockDefinition.getPatternFactory().get();
                 if (pattern != null) {
-                    var aisleDims = pattern.getDimensions();
-                    assert aisleDims.length == 3;
-                    tooltip.add(Component.translatable("gtpm.multiblock.dimension", aisleDims[0], aisleDims[1],
-                            aisleDims[2]));
+                    tooltip.add(Component.translatable("gtpm.multiblock.dimension", pattern.getFingerLength(),
+                            pattern.getThumbLength(), pattern.getPalmLength()));
                 }
             }
         }
