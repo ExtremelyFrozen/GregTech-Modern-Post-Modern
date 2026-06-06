@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.sync_system
 
 import com.gregtechceu.gtceu.GTCEu
+import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged
 
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.RegistryAccess
@@ -21,7 +22,7 @@ import java.lang.invoke.WrongMethodTypeException
 import java.util.Objects
 
 /**
- * Class that holds all sync info for an [ISyncManaged] object.
+ * Class that holds all sync info for an [com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged] object.
  */
 class SyncDataHolder(private val holder: ISyncManaged) {
 	private val syncData: ClassSyncData = ClassSyncData.getClassData(holder.javaClass)

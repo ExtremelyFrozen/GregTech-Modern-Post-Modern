@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.sync_system.codecs.GTRecipeFieldCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MachineTraitHolderCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MonitorGroupCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.NBTSerializableCodec
+import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState
 
 import net.minecraft.core.BlockPos
