@@ -156,6 +156,12 @@ public class ClientProxy {
 
     @SubscribeEvent
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        for (Item item : BuiltInRegistries.ITEM) {
+            if (item instanceof LampBlockItem) {
+                event.registerItem(LampBlockItem.CLIENT_EXTENSIONS, item);
+            }
+        }
+
         event.registerFluidType(new IClientFluidTypeExtensions() {
 
             private static final ResourceLocation TEXTURE = GTCEu.id("block/fluids/fluid.potion");

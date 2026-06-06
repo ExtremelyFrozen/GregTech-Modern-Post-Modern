@@ -37,7 +37,7 @@ import org.jetbrains.annotations.UnknownNullability;
 import java.io.IOException;
 import java.nio.file.Path;
 
-@EventBusSubscriber(modid = GTCEu.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = GTCEu.MOD_ID, value = Dist.CLIENT)
 @UtilityClass
 public class BloomShaderManager {
 

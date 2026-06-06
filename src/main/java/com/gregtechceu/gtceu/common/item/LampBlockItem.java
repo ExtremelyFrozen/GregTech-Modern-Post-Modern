@@ -6,7 +6,6 @@ import com.gregtechceu.gtceu.client.util.ModelEventHelper;
 import com.gregtechceu.gtceu.common.block.LampBlock;
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -26,8 +25,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Consumer;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -69,16 +66,13 @@ public class LampBlockItem extends BlockItem {
         }
     }
 
-    @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(new IClientItemExtensions() {
+    public static final IClientItemExtensions CLIENT_EXTENSIONS = new IClientItemExtensions() {
 
-            @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                return LampItemRenderer.getInstance();
-            }
-        });
-    }
+        @Override
+        public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
+            return LampItemRenderer.getInstance();
+        }
+    };
 
     private static class ClientCallWrapper {
 
