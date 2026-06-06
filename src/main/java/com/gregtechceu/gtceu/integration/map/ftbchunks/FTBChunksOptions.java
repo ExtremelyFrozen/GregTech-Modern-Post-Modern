@@ -5,6 +5,7 @@ import dev.ftb.mods.ftblibrary.snbt.config.BooleanValue;
 import dev.ftb.mods.ftblibrary.snbt.config.ConfigUtil;
 import dev.ftb.mods.ftblibrary.snbt.config.SNBTConfig;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +27,8 @@ public class FTBChunksOptions {
         loadConfig();
     }
 
-    private FTBChunksOptions() {}
+    private FTBChunksOptions() {
+    }
 
     public static boolean showLayer(String name) {
         return layerOptions.get(name).get();
@@ -48,7 +50,13 @@ public class FTBChunksOptions {
     }
 
     public static void loadConfig() {
-        ConfigUtil.loadDefaulted(CONFIG, ConfigUtil.LOCAL_DIR.resolve("gtceu"), "gtceu", "client-config.snbt");
+        Path configPath = ConfigUtil.LOCAL_DIR.resolve("gtceu").resolve("client-config.snbt").toAbsolutePath();
+        Path defaultConfigPath = ConfigUtil.DEFAULT_CONFIG_DIR.resolve("gtceu").resolve("client-config.snbt");
+        CONFIG.load(configPath, defaultConfigPath, () -> new String[]{
+                "Default config file that will be copied to " + ConfigUtil.ROOT_DIR.relativize(configPath) +
+                        " if it doesn't exist!",
+                "Just copy any values you wish to override in here!"
+        });
     }
 
     public static void saveConfig() {
