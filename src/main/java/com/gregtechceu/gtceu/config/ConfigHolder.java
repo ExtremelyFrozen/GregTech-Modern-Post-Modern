@@ -12,7 +12,7 @@ import dev.toma.configuration.config.Configurable;
 import dev.toma.configuration.config.format.ConfigFormats;
 import org.jetbrains.annotations.ApiStatus;
 
-@Config(id = GTCEu.MOD_ID)
+@Config(id = GTCEu.MOD_ID, filename = GTCEu.MOD_ID + "/" + GTCEu.MOD_ID)
 public class ConfigHolder {
 
     public static ConfigHolder INSTANCE;
