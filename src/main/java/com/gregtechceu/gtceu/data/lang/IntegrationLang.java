@@ -84,6 +84,7 @@ public class IntegrationLang {
         provider.add("gtpm.top.allow_output_input", "Allow Input");
         provider.add("gtpm.top.cable_voltage", "Voltage: ");
         provider.add("gtpm.top.cable_amperage", "Amperage: ");
+        provider.add("gtpm.top.cable_overloaded", "§4OVERHEATING: %s%%§r");
         provider.add("gtpm.top.exhaust_vent_direction", "Exhaust Vent: %s");
         provider.add("gtpm.top.exhaust_vent_blocked", "Blocked");
         provider.add("gtpm.top.machine_mode", "Machine Mode: ");
