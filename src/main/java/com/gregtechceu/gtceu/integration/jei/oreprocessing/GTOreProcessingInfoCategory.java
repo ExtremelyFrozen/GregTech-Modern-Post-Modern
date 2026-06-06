@@ -12,8 +12,6 @@ import com.lowdragmc.lowdraglib.jei.ModularUIRecipeCategory;
 
 import net.minecraft.network.chat.Component;
 
-import lombok.Getter;
-import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
@@ -29,15 +27,15 @@ public class GTOreProcessingInfoCategory extends ModularUIRecipeCategory<Materia
 
     public final static RecipeType<Material> RECIPE_TYPE = new RecipeType<>(GTCEu.id("ore_processing_diagram"),
             Material.class);
-    @Getter
-    private final IDrawable background;
-    @Getter
-    private final IDrawable icon;
+    private final int width;
+    private final int height;
+    private final mezz.jei.api.gui.drawable.IDrawable icon;
 
     public GTOreProcessingInfoCategory(IJeiHelpers helpers) {
         super(GTOreProcessingInfoWrapper::new);
         IGuiHelper guiHelper = helpers.getGuiHelper();
-        this.background = guiHelper.createBlankDrawable(186, 174);
+        this.width = 186;
+        this.height = 174;
         this.icon = helpers.getGuiHelper().createDrawableItemStack(ChemicalHelper.get(rawOre, Iron));
     }
 
@@ -65,6 +63,21 @@ public class GTOreProcessingInfoCategory extends ModularUIRecipeCategory<Materia
     }
 
     @NotNull
+    @Override
+    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+        return icon;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
     @Override
     public Component getTitle() {
         return Component.translatable("gtpm.jei.ore_processing_diagram");

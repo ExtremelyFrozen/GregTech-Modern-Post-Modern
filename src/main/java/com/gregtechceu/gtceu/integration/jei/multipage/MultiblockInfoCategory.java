@@ -13,8 +13,6 @@ import net.minecraft.client.gui.navigation.ScreenPosition;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import lombok.Getter;
-import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
 import mezz.jei.api.gui.inputs.RecipeSlotUnderMouse;
 import mezz.jei.api.gui.widgets.IRecipeExtrasBuilder;
@@ -40,15 +38,15 @@ public class MultiblockInfoCategory extends ModularUIRecipeCategory<MultiblockIn
     public final static RecipeType<MultiblockInfoWrapper> RECIPE_TYPE = new RecipeType<>(
             GTCEu.id("multiblock_info"),
             MultiblockInfoWrapper.class);
-    @Getter
-    private final IDrawable background;
-    @Getter
-    private final IDrawable icon;
+    private final int width;
+    private final int height;
+    private final mezz.jei.api.gui.drawable.IDrawable icon;
 
     public MultiblockInfoCategory(IJeiHelpers helpers) {
         super((def) -> new MultiblockInfoWrapper(def.definition));
         IGuiHelper guiHelper = helpers.getGuiHelper();
-        this.background = guiHelper.createBlankDrawable(160, 160);
+        this.width = 160;
+        this.height = 160;
         this.icon = helpers.getGuiHelper().createDrawableItemStack(GTMultiMachines.ELECTRIC_BLAST_FURNACE.asStack());
     }
 
@@ -113,6 +111,21 @@ public class MultiblockInfoCategory extends ModularUIRecipeCategory<MultiblockIn
     }
 
     @NotNull
+    @Override
+    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+        return icon;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
     @Override
     public Component getTitle() {
         return Component.translatable("gtpm.jei.multiblock_info");
