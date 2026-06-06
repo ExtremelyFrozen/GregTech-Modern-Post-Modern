@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.FusionReactorMac
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -125,26 +124,26 @@ public class FusionRingRender extends DynamicRender<FusionReactorMachine, Fusion
 
         private final FusionReactorMachine machine;
 
-        private static BufferBuilder lightRingBuffer;
-
         private static final IRenderSetup SETUP = new IRenderSetup() {
 
             @Override
             @OnlyIn(Dist.CLIENT)
-            public void preDraw(BufferBuilder buffer) {
-                lightRingBuffer = new BufferBuilder(new ByteBufferBuilder(GTRenderTypes.lightRing().bufferSize()),
+            public BufferBuilder createBuffer() {
+                return new BufferBuilder(
+                        new ByteBufferBuilder(GTRenderTypes.lightRing().bufferSize()),
                         GTRenderTypes.lightRing().mode(), GTRenderTypes.lightRing().format());
             }
 
             @Override
             @OnlyIn(Dist.CLIENT)
-            public void postDraw(BufferBuilder buffer) {
-                ShaderInstance lastShader = RenderSystem.getShader();
+            public void preDraw(BufferBuilder buffer) {
                 RenderSystem.setShader(GameRenderer::getPositionColorShader);
+            }
 
-                BufferUploader.drawWithShader(lightRingBuffer.buildOrThrow());
-
-                RenderSystem.setShader(() -> lastShader);
+            @Override
+            @OnlyIn(Dist.CLIENT)
+            public void postDraw(BufferBuilder buffer) {
+                BufferUploader.drawWithShader(buffer.buildOrThrow());
             }
         };
 
@@ -155,7 +154,7 @@ public class FusionRingRender extends DynamicRender<FusionReactorMachine, Fusion
             poseStack.pushPose();
             poseStack.translate(pos.getX(), pos.getY(), pos.getZ());
 
-            FusionRingRender.this.renderLightRing(machine, context.partialTicks(), poseStack, lightRingBuffer);
+            FusionRingRender.this.renderLightRing(machine, context.partialTicks(), poseStack, buffer);
 
             poseStack.popPose();
         }
