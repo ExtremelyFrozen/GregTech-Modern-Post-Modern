@@ -24,17 +24,25 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
 
     @Override
     public Tag serializeNBT(@Nullable CoverBehavior value, Context<CoverBehavior> context) {
-        if (value != null) {
-            return serialize(value, context.isClientSync(), context.isClientFullSyncUpdate(), context.lookup());
+        if (value == null) {
+            var nullTag = new CompoundTag();
+            nullTag.putBoolean("null", true);
+            return nullTag;
         }
-        return new CompoundTag();
+
+        return serialize(value, context.isClientSync(), context.isClientFullSyncUpdate(), context.lookup());
     }
 
     @Override
     public @Nullable CoverBehavior deserializeNBT(Tag tag, Context<CoverBehavior> context) {
-        if (tag instanceof CompoundTag compoundTag && context.holder() instanceof ICoverable coverable) {
-            return deserialize(compoundTag, coverable, context.currentValue(), context.isClientSync(),
-                    context.lookup());
+        if (tag instanceof CompoundTag compoundTag) {
+            if (compoundTag.getBoolean("null")) {
+                return null;
+            }
+            if (context.holder() instanceof ICoverable coverable) {
+                return deserialize(compoundTag, coverable, context.currentValue(), context.isClientSync(),
+                        context.lookup());
+            }
         }
         GTCEu.LOGGER.error("Sync: Object attempting to sync cover does not implement ICoverable {}", context);
         return null;
