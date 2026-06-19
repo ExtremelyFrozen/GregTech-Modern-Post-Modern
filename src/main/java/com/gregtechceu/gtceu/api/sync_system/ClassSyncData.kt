@@ -7,6 +7,8 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToServer
+import com.gregtechceu.gtceu.api.sync_system.managed.ISyncAnnotated
+import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged
 
 import com.mojang.serialization.Codec
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
@@ -19,7 +21,7 @@ import java.util.Comparator
 import java.util.Objects
 
 /**
- * Static data for [ISyncManaged] classes.
+ * Static data for [com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged] classes.
  */
 class ClassSyncData private constructor(clazz: Class<*>) {
 	private val managedFields: MutableList<FieldSyncData> = ObjectArrayList()

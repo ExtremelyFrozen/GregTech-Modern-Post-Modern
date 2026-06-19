@@ -35,6 +35,9 @@ import java.util.concurrent.Executor;
 @Mixin(value = ReloadableServerResources.class, priority = 2000)
 public abstract class ReloadableServerResourcesMixin {
 
+    private static final AdvancementHolder GTCEU$ROOT_RECIPE_ADVANCEMENT = Advancement.Builder.recipeAdvancement()
+            .build(RecipeBuilder.ROOT_RECIPE_ADVANCEMENT);
+
     @Inject(method = "loadResources", at = @At("HEAD"))
     private static void gtceu$init(ResourceManager resourceManager, LayeredRegistryAccess<RegistryLayer> access,
                                    FeatureFlagSet featureFlags, Commands.CommandSelection commands,
@@ -54,8 +57,7 @@ public abstract class ReloadableServerResourcesMixin {
 
             @Override
             public Advancement.@NotNull Builder advancement() {
-                // noinspection removal
-                return Advancement.Builder.recipeAdvancement().parent(RecipeBuilder.ROOT_RECIPE_ADVANCEMENT);
+                return Advancement.Builder.recipeAdvancement().parent(GTCEU$ROOT_RECIPE_ADVANCEMENT);
             }
 
             @Override

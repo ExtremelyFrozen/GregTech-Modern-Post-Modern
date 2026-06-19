@@ -8,6 +8,8 @@ import net.neoforged.neoforge.registries.GameData;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.LinkedHashSet;
 
@@ -19,5 +21,10 @@ public class GameDataMixin {
     private static LinkedHashSet<ResourceLocation> gtceu$injectGTRegistriesFirst(LinkedHashSet<ResourceLocation> ordered) {
         ordered.addAll(GTRegistries.getRegistrationOrder());
         return ordered;
+    }
+
+    @Inject(method = "freezeData", at = @At("TAIL"))
+    private static void gtceu$freezeRegistrations(CallbackInfo ci) {
+        GTRegistries.freezeRegistrations();
     }
 }

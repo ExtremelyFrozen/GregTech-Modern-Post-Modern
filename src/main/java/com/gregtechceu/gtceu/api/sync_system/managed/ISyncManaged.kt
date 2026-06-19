@@ -1,4 +1,6 @@
-package com.gregtechceu.gtceu.api.sync_system
+package com.gregtechceu.gtceu.api.sync_system.managed
+
+import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 
 import net.neoforged.neoforge.common.util.INBTSerializable
 
@@ -16,12 +18,12 @@ import kotlin.jvm.JvmDefaultWithCompatibility
  * A field of type `T` can be marked with sync annotations if:
  * <ul>
  * <li>`T` is primitive</li>
- * <li>`T` has a [FieldCodecs] codec registered</li>
+ * <li>`T` has a [com.gregtechceu.gtceu.api.sync_system.FieldCodecs] codec registered</li>
  * <li>`T` implements [INBTSerializable]</li>
  * <li>`T` is an [ISyncManaged] or [ISyncAnnotated] class</li>
  * </ul>
  *
- * @see SyncDataHolder
+ * @see com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
  * @see ISyncAnnotated
  */
 @JvmDefaultWithCompatibility

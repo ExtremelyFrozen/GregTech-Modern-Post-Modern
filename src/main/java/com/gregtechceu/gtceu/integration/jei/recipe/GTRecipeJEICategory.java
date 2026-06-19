@@ -15,9 +15,7 @@ import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import lombok.Getter;
 import mezz.jei.api.constants.RecipeTypes;
-import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
@@ -36,10 +34,9 @@ public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
             .memoize(c -> new RecipeType<>(c.registryKey, GTRecipe.class));
 
     private final GTRecipeCategory category;
-    @Getter
-    private final IDrawable background;
-    @Getter
-    private final IDrawable icon;
+    private final int width;
+    private final int height;
+    private final mezz.jei.api.gui.drawable.IDrawable icon;
 
     public GTRecipeJEICategory(IJeiHelpers helpers,
                                @NotNull GTRecipeCategory category) {
@@ -48,7 +45,8 @@ public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
         var recipeType = category.getRecipeType();
         IGuiHelper guiHelper = helpers.getGuiHelper();
         var size = recipeType.getRecipeUI().getJEISize();
-        this.background = guiHelper.createBlankDrawable(size.width, size.height);
+        this.width = size.width;
+        this.height = size.height;
         this.icon = IGui2IDrawable.toDrawable(category.getIcon(), 16, 16);
     }
 
@@ -96,6 +94,21 @@ public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
     @NotNull
     public RecipeType<GTRecipe> getRecipeType() {
         return TYPES.apply(category);
+    }
+
+    @Override
+    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+        return icon;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
     }
 
     @Override

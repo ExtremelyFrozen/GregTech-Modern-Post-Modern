@@ -25,7 +25,7 @@ import static com.gregtechceu.gtceu.client.bloom.BloomRenderer.BLOOM_RENDER_LOCK
 @UtilityClass
 public class BloomHandler {
 
-    @EventBusSubscriber(modid = GTCEu.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(modid = GTCEu.MOD_ID)
     @UtilityClass
     public static class RenderStage {
 

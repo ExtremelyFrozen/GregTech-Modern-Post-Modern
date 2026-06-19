@@ -29,8 +29,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.registries.IdMappingEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
 
@@ -128,9 +126,7 @@ public final class GTRegistries {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static void actuallyRegister(RegisterEvent event) {
         for (Registry reg : TO_REGISTER.rowKeySet()) {
-            event.register(reg.key(), helper -> {
-                TO_REGISTER.row(reg).forEach(helper::register);
-            });
+            event.register(reg.key(), helper -> TO_REGISTER.row(reg).forEach(helper::register));
         }
         TO_REGISTER.clear();
     }
@@ -139,14 +135,14 @@ public final class GTRegistries {
         isFrozen = false;
     }
 
-    private static void onFreeze(IdMappingEvent event) {
-        isFrozen = event.isFrozen();
+    @ApiStatus.Internal
+    public static void freezeRegistrations() {
+        isFrozen = true;
     }
 
     public static void init(IEventBus eventBus) {
         eventBus.addListener(EventPriority.HIGHEST, GTRegistries::onUnfreeze);
         eventBus.addListener(EventPriority.LOW, GTRegistries::actuallyRegister);
-        NeoForge.EVENT_BUS.addListener(GTRegistries::onFreeze);
     }
 
     @UnmodifiableView

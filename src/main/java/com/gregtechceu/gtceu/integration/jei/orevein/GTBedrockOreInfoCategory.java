@@ -13,8 +13,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
 
-import lombok.Getter;
-import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
@@ -28,15 +26,15 @@ public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<Bed
 
     public final static RecipeType<Holder<BedrockOreDefinition>> RECIPE_TYPE = new RecipeType(
             GTCEu.id("bedrock_ore_diagram"), Holder.class);
-    @Getter
-    private final IDrawable background;
-    @Getter
-    private final IDrawable icon;
+    private final int width;
+    private final int height;
+    private final mezz.jei.api.gui.drawable.IDrawable icon;
 
     public GTBedrockOreInfoCategory(IJeiHelpers helpers) {
         super(GTBedrockOreInfoWrapper::new);
         IGuiHelper guiHelper = helpers.getGuiHelper();
-        this.background = guiHelper.createBlankDrawable(GTOreVeinWidget.width, 120);
+        this.width = GTOreVeinWidget.width;
+        this.height = 120;
         this.icon = helpers.getGuiHelper().createDrawableItemStack(Items.RAW_IRON.getDefaultInstance());
     }
 
@@ -61,6 +59,21 @@ public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<Bed
     }
 
     @NotNull
+    @Override
+    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+        return icon;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
     @Override
     public Component getTitle() {
         return Component.translatable("gtpm.jei.bedrock_ore_diagram");

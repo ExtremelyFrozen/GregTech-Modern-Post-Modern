@@ -9,8 +9,6 @@ import com.lowdragmc.lowdraglib.jei.ModularWrapper;
 
 import net.minecraft.network.chat.Component;
 
-import lombok.Getter;
-import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
 import org.jetbrains.annotations.NotNull;
@@ -19,20 +17,35 @@ public class GTProgrammedCircuitCategory extends ModularUIRecipeCategory<GTProgr
 
     public final static RecipeType<GTProgrammedCircuitWidget> RECIPE_TYPE = new RecipeType<>(
             GTCEu.id("programmed_circuit"), GTProgrammedCircuitWidget.class);
-    @Getter
-    private final IDrawable background;
-    @Getter
-    private final IDrawable icon;
+    private final int width;
+    private final int height;
+    private final mezz.jei.api.gui.drawable.IDrawable icon;
 
     public GTProgrammedCircuitCategory(IJeiHelpers helpers) {
         super(GTProgrammedCircuitWrapper::new);
-        background = helpers.getGuiHelper().createBlankDrawable(150, 80);
+        width = 150;
+        height = 80;
         icon = helpers.getGuiHelper().createDrawableItemStack(GTItems.PROGRAMMED_CIRCUIT.asStack());
     }
 
     @Override
     public @NotNull RecipeType<GTProgrammedCircuitWidget> getRecipeType() {
         return RECIPE_TYPE;
+    }
+
+    @Override
+    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+        return icon;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
     }
 
     @Override

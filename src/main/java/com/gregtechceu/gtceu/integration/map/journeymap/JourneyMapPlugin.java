@@ -9,7 +9,7 @@ import journeymap.api.v2.common.event.ClientEventRegistry;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-@journeymap.api.v2.client.JourneyMapPlugin(apiVersion = IClientAPI.API_VERSION)
+@journeymap.api.v2.common.JourneyMapPlugin(apiVersion = IClientAPI.API_VERSION)
 public class JourneyMapPlugin implements IClientPlugin {
 
     @Getter

@@ -1,6 +1,7 @@
-package com.gregtechceu.gtceu.api.sync_system
+package com.gregtechceu.gtceu.api.sync_system.managed
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo
+import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer
 
 import net.minecraft.core.BlockPos
@@ -19,7 +20,7 @@ import net.neoforged.neoforge.network.PacketDistributor
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.jetbrains.annotations.Nullable
 
-import java.util.Objects
+import java.util.*
 
 /**
  * A BlockEntity that manages sync and save data via the `ISyncManaged` syncdata system.
@@ -118,6 +119,8 @@ abstract class ManagedSyncBlockEntity :
 			dirty = false
 		}
 	}
+
+	open fun clientTick() {}
 
 	open fun sendServerSyncChanges() {
 		if (level == null || !level!!.isClientSide) {
