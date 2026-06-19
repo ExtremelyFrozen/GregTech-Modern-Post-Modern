@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.client.model.pipe.PipeModelLoader;
 import com.gregtechceu.gtceu.client.particle.GTParticleManager;
 import com.gregtechceu.gtceu.client.particle.HazardParticle;
 import com.gregtechceu.gtceu.client.particle.MufflerParticle;
+import com.gregtechceu.gtceu.client.renderer.block.LampItemRendererHelper;
 import com.gregtechceu.gtceu.client.renderer.block.MaterialBlockRenderer;
 import com.gregtechceu.gtceu.client.renderer.block.OreBlockRenderer;
 import com.gregtechceu.gtceu.client.renderer.block.SurfaceRockRenderer;
@@ -157,8 +158,9 @@ public class ClientProxy {
     @SubscribeEvent
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
         for (Item item : BuiltInRegistries.ITEM) {
-            if (item instanceof LampBlockItem) {
-                event.registerItem(LampBlockItem.CLIENT_EXTENSIONS, item);
+            if (item instanceof LampBlockItem lampItem) {
+                event.registerItem(LampItemRendererHelper.CLIENT_EXTENSIONS, lampItem);
+                LampItemRendererHelper.registerModelBakeListener(lampItem);
             }
         }
 
