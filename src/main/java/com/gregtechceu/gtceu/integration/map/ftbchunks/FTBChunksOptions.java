@@ -27,8 +27,7 @@ public class FTBChunksOptions {
         loadConfig();
     }
 
-    private FTBChunksOptions() {
-    }
+    private FTBChunksOptions() {}
 
     public static boolean showLayer(String name) {
         return layerOptions.get(name).get();
@@ -52,7 +51,7 @@ public class FTBChunksOptions {
     public static void loadConfig() {
         Path configPath = ConfigUtil.LOCAL_DIR.resolve("gtceu").resolve("client-config.snbt").toAbsolutePath();
         Path defaultConfigPath = ConfigUtil.DEFAULT_CONFIG_DIR.resolve("gtceu").resolve("client-config.snbt");
-        CONFIG.load(configPath, defaultConfigPath, () -> new String[]{
+        CONFIG.load(configPath, defaultConfigPath, () -> new String[] {
                 "Default config file that will be copied to " + ConfigUtil.ROOT_DIR.relativize(configPath) +
                         " if it doesn't exist!",
                 "Just copy any values you wish to override in here!"

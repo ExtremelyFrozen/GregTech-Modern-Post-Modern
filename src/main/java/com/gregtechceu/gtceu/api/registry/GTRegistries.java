@@ -123,7 +123,7 @@ public final class GTRegistries {
     }
 
     // ignore the generics and hope the registered objects are still correctly typed :3
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static void actuallyRegister(RegisterEvent event) {
         for (Registry reg : TO_REGISTER.rowKeySet()) {
             event.register(reg.key(), helper -> TO_REGISTER.row(reg).forEach(helper::register));

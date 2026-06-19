@@ -95,6 +95,7 @@ public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
     public RecipeType<GTRecipe> getRecipeType() {
         return TYPES.apply(category);
     }
+
     @Override
     public mezz.jei.api.gui.drawable.IDrawable getIcon() {
         return icon;
@@ -109,7 +110,6 @@ public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
     public int getHeight() {
         return height;
     }
-
 
     @Override
     @NotNull

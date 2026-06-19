@@ -40,7 +40,7 @@ public abstract class ReloadableServerResourcesMixin {
 
     @Inject(method = "loadResources", at = @At("HEAD"))
     private static void gtceu$init(ResourceManager resourceManager, LayeredRegistryAccess<RegistryLayer> access,
-                                    FeatureFlagSet featureFlags, Commands.CommandSelection commands,
+                                   FeatureFlagSet featureFlags, Commands.CommandSelection commands,
                                    int functionCompilationLevel, Executor backgroundExecutor, Executor gameExecutor,
                                    CallbackInfoReturnable<CompletableFuture<ReloadableServerResources>> cir) {
         // load and loot tables recipes *before* other data so that we have the registries loaded

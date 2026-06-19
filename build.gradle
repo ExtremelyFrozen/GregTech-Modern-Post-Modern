@@ -75,15 +75,19 @@ apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/spotless.gradle"
 apply from: "$rootDir/gradle/scripts/docs.gradle"
 
+tasks.named('compileJava', JavaCompile) {
+    dependsOn tasks.named('compileKotlin')
+    classpath += files(layout.buildDirectory.dir('classes/kotlin/main'))
+}
+
+tasks.named('delombok') {
+    dependsOn tasks.named('compileJava')
+    classpath.from(layout.buildDirectory.dir('classes/kotlin/main'))
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
     options.compilerArgs << "-Xlint:-removal"
-}
-
-tasks.named('compileJava', JavaCompile) {
-    dependsOn tasks.named('compileKotlin')
-    classpath += files(layout.buildDirectory.dir('classes/kotlin/main'))
 }
 
 kotlin {
@@ -94,11 +98,6 @@ kotlin {
 
 lombok {
     version = "1.18.38"
-}
-
-tasks.named('delombok') {
-    dependsOn tasks.named('compileKotlin')
-    classpath.from(layout.buildDirectory.dir('classes/kotlin/main'))
 }
 
 jacoco {
