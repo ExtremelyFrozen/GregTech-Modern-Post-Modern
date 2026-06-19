@@ -52,7 +52,7 @@ public class GTMixinPlugin implements IMixinConfigPlugin {
         }
 
         try {
-            CONFIG = GTEarlyConfig.load(new File("./config/gtpm-early.properties"));
+            CONFIG = GTEarlyConfig.load(new File("./config/gtpm/gtpm-early.properties"));
         } catch (Exception e) {
             throw new RuntimeException("Could not load mixin configuration file for GTPM", e);
         }

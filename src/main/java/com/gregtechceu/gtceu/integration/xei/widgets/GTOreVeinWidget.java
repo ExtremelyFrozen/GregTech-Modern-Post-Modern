@@ -26,6 +26,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -46,6 +47,8 @@ public class GTOreVeinWidget extends WidgetGroup {
     private final String translationKey;
     private final int weight;
     private final String range;
+    private final String veinYield;
+    private final String depleted;
     private final Set<ResourceKey<Level>> dimensionFilter;
     public final static int width = 120;
 
@@ -55,6 +58,8 @@ public class GTOreVeinWidget extends WidgetGroup {
         this.weight = ore.value().weight();
         this.dimensionFilter = ore.value().dimensionFilter();
         this.range = range(ore.value());
+        this.veinYield = "NULL";
+        this.depleted = "NULL";
         setClientSideWidget();
         setupBaseGui(ore.value());
         setupText(ore.value());
@@ -66,6 +71,8 @@ public class GTOreVeinWidget extends WidgetGroup {
         this.weight = fluid.value().getWeight();
         this.dimensionFilter = fluid.value().getDimensionFilter();
         this.range = "NULL";
+        this.veinYield = veinYield(fluid.value());
+        this.depleted = depletion(fluid.value());
         setClientSideWidget();
         setupBaseGui(fluid.value());
         setupText(fluid.value());
@@ -77,6 +84,8 @@ public class GTOreVeinWidget extends WidgetGroup {
         this.weight = bedrockOre.value().weight();
         this.dimensionFilter = bedrockOre.value().dimensionFilter();
         this.range = "NULL";
+        this.veinYield = veinYield(bedrockOre.value());
+        this.depleted = depletion(bedrockOre.value());
         setClientSideWidget();
         setupBaseGui(bedrockOre.value());
         setupText(bedrockOre.value());
@@ -91,6 +100,33 @@ public class GTOreVeinWidget extends WidgetGroup {
             maxHeight = uniform.maxInclusive.resolveY(null);
         }
         return String.format("%d - %d", minHeight, maxHeight);
+    }
+
+    @SuppressWarnings("all")
+    private String veinYield(BedrockFluidDefinition fluidDefinition) {
+        int minYield = fluidDefinition.getMinimumYield();
+        int maxYield = fluidDefinition.getMaximumYield();
+        return String.format("%d - %dmB/s", minYield, maxYield);
+    }
+
+    @SuppressWarnings("all")
+    private String depletion(BedrockFluidDefinition fluidDefinition) {
+        int depletion = fluidDefinition.getDepletedYield();
+        return String.format("%dmB/s", depletion);
+    }
+
+    @SuppressWarnings("all")
+    private String veinYield(BedrockOreDefinition oreDefinition) {
+        IntProvider yieldProvider = oreDefinition.yield();
+        int minYield = yieldProvider.getMinValue();
+        int maxYield = yieldProvider.getMaxValue();
+        return String.format("%d - %d", minYield, maxYield);
+    }
+
+    @SuppressWarnings("all")
+    private String depletion(BedrockOreDefinition oreDefinition) {
+        int depletion = oreDefinition.depletedYield();
+        return String.format("%d", depletion);
     }
 
     private void setupBaseGui(GTOreDefinition oreDefinition) {
@@ -157,10 +193,14 @@ public class GTOreVeinWidget extends WidgetGroup {
                 new TextTexture(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
                         .setWidth(width - 10)));
         addWidget(new LabelWidget(5, 40,
-                LocalizationUtils.format("gtpm.jei.ore_vein_diagram.weight", weight)));
+                LocalizationUtils.format("gtpm.jei.bedrock_vein_diagram.yield", veinYield)));
         addWidget(new LabelWidget(5, 50,
+                LocalizationUtils.format("gtpm.jei.bedrock_vein_diagram.depleted", depleted)));
+        addWidget(new LabelWidget(5, 60,
+                LocalizationUtils.format("gtpm.jei.ore_vein_diagram.weight", weight)));
+        addWidget(new LabelWidget(5, 70,
                 LocalizationUtils.format("gtpm.jei.ore_vein_diagram.dimensions")));
-        setupDimensionMarker(60);
+        setupDimensionMarker(80);
     }
 
     private void setupText(BedrockOreDefinition ignored) {
@@ -168,10 +208,14 @@ public class GTOreVeinWidget extends WidgetGroup {
                 new TextTexture(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
                         .setWidth(width - 10)));
         addWidget(new LabelWidget(5, 40,
-                LocalizationUtils.format("gtpm.jei.ore_vein_diagram.weight", weight)));
+                LocalizationUtils.format("gtpm.jei.bedrock_vein_diagram.yield", veinYield)));
         addWidget(new LabelWidget(5, 50,
+                LocalizationUtils.format("gtpm.jei.bedrock_vein_diagram.depleted", depleted)));
+        addWidget(new LabelWidget(5, 60,
+                LocalizationUtils.format("gtpm.jei.ore_vein_diagram.weight", weight)));
+        addWidget(new LabelWidget(5, 70,
                 LocalizationUtils.format("gtpm.jei.ore_vein_diagram.dimensions")));
-        setupDimensionMarker(60);
+        setupDimensionMarker(80);
     }
 
     private void setupDimensionMarker(int yPosition) {

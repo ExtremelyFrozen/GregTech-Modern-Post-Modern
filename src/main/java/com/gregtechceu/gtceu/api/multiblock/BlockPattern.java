@@ -73,8 +73,11 @@ public class BlockPattern {
     public final StructureDir structureDir;
     public final String[][] structureSlices;
     protected final TraceabilityPredicate[][][] blockMatches; // [z][y][x]
+    @Getter
     protected final int fingerLength; // z size
+    @Getter
     protected final int thumbLength; // y size
+    @Getter
     protected final int palmLength; // x size
     protected final CenterOffset centerOffset; // x, y, z, minZ, maxZ
     @Getter

@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.common.network.packets;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.sync_system.ManagedSyncBlockEntity;
+import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncBlockEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;

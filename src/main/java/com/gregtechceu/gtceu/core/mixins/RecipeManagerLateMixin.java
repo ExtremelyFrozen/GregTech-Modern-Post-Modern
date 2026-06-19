@@ -39,6 +39,9 @@ import java.util.stream.Stream;
 @Mixin(value = RecipeManager.class, priority = 1500)
 public abstract class RecipeManagerLateMixin {
 
+    private static final AdvancementHolder GTCEU$ROOT_RECIPE_ADVANCEMENT = Advancement.Builder.recipeAdvancement()
+            .build(RecipeBuilder.ROOT_RECIPE_ADVANCEMENT);
+
     @Shadow
     private Multimap<RecipeType<?>, RecipeHolder<?>> byType;
 
@@ -57,11 +60,9 @@ public abstract class RecipeManagerLateMixin {
                         .onSave(gtRecipe.recipeType.getRecipeBuilder().onSave)
                         .save(new RecipeOutput() {
 
-                            @SuppressWarnings("removal")
                             @Override
                             public Advancement.@NotNull Builder advancement() {
-                                return Advancement.Builder.recipeAdvancement()
-                                        .parent(RecipeBuilder.ROOT_RECIPE_ADVANCEMENT);
+                                return Advancement.Builder.recipeAdvancement().parent(GTCEU$ROOT_RECIPE_ADVANCEMENT);
                             }
 
                             @Override

@@ -77,7 +77,7 @@ public class BloomEventListeners {
     }
 
     // Merge into parent class in 1.21, event listener discovery is smarter there
-    @EventBusSubscriber(modid = GTCEu.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(modid = GTCEu.MOD_ID, value = Dist.CLIENT)
     @UtilityClass
     public static class ModBus {
 

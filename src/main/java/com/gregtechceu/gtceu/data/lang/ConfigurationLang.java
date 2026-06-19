@@ -15,7 +15,7 @@ public class ConfigurationLang {
 
     public static void init(RegistrateLangProvider provider) {
         dfs(provider, new HashSet<>(), ConfigHolder.INTERNAL_INSTANCE.getValueMap());
-        provider.add("config.gtceu.option.bloomType.load_error",
+        provider.add("config.gtpm.option.bloomType.load_error",
                 "Could not load shaders for the bloom effect, see %s for details");
     }
 

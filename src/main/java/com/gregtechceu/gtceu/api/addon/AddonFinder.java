@@ -15,7 +15,7 @@ import java.util.*;
 
 public final class AddonFinder {
 
-    private static final Logger LOGGER = LogManager.getLogger("GTCEu Addon Finder");
+    private static final Logger LOGGER = LogManager.getLogger("GTPM Addon Finder");
     private static final List<IGTAddon> cache = new ArrayList<>();
     private static Map<String, IGTAddon> modIdMap = null;
 

@@ -76,8 +76,10 @@ public class HullMachine extends TieredPartMachine implements IMonitorComponent 
     }
 
     static {
-        ClassSyncData.getClassData(HullMachine.class).setCustomContextualCodecForField("gridNodeHost",
-                GridNodeHostCodec.INSTANCE);
+        if (GTCEu.Mods.isAE2Loaded()) {
+            ClassSyncData.getClassData(HullMachine.class).setCustomContextualCodecForField("gridNodeHost",
+                    GridNodeHostCodec.INSTANCE);
+        }
     }
 
     @Override

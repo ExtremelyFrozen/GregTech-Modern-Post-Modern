@@ -1,5 +1,6 @@
-package com.gregtechceu.gtceu.api.sync_system
+package com.gregtechceu.gtceu.api.sync_system.managed
 
+import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 import com.gregtechceu.gtceu.common.data.item.GTDataComponents
 
 import net.minecraft.core.HolderLookup

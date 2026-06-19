@@ -121,9 +121,7 @@ public class BloomRenderer {
 
             RenderSystem.enableBlend();
             try {
-                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                        GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                        GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+                RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 
                 BLOOM_TARGET.blitToScreen(mainTarget.viewWidth, mainTarget.viewHeight, false);
             } finally {
@@ -159,9 +157,10 @@ public class BloomRenderer {
                 BLOOM_RENDER_LOCK.readLock().lock();
                 try {
                     BloomHandler.BLOOM_RENDERS.forEach((renderSetup, list) -> {
-                        BufferBuilder buffer = new BufferBuilder(
+                        BufferBuilder buffer = renderSetup == null ? new BufferBuilder(
                                 new ByteBufferBuilder(GTRenderTypes.bloom().bufferSize()),
-                                GTRenderTypes.bloom().mode(), GTRenderTypes.bloom().format());
+                                GTRenderTypes.bloom().mode(), GTRenderTypes.bloom().format()) :
+                                renderSetup.createBuffer();
                         list.draw(poseStack, buffer, context);
                     });
                 } finally {
@@ -250,6 +249,9 @@ public class BloomRenderer {
         private static void drawBlockBloom(Camera camera, PoseStack poseStack, Frustum frustum,
                                            Matrix4f projectionMatrix,
                                            LevelRenderer levelRenderer, ProfilerFiller profilerFiller) {
+            // re-setup in case someone touched-a my spaghetti
+            GTRenderTypes.bloom().setupRenderState();
+
             Vec3 camPos = camera.getPosition();
             profilerFiller.push("safe_mode");
             try {

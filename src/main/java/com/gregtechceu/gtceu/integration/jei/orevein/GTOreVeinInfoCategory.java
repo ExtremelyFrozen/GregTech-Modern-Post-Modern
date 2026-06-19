@@ -15,9 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 
-import lombok.Getter;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
-import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.IFocusGroup;
@@ -33,15 +31,15 @@ public class GTOreVeinInfoCategory extends ModularUIRecipeCategory<Holder<GTOreD
 
     public final static RecipeType<Holder<GTOreDefinition>> RECIPE_TYPE = new RecipeType(GTCEu.id("ore_vein_diagram"),
             Holder.class);
-    @Getter
-    private final IDrawable background;
-    @Getter
-    private final IDrawable icon;
+    private final int width;
+    private final int height;
+    private final mezz.jei.api.gui.drawable.IDrawable icon;
 
     public GTOreVeinInfoCategory(IJeiHelpers helpers) {
         super(GTOreVeinInfoWrapper::new);
         IGuiHelper guiHelper = helpers.getGuiHelper();
-        this.background = guiHelper.createBlankDrawable(GTOreVeinWidget.width, 120);
+        this.width = GTOreVeinWidget.width;
+        this.height = 120;
         this.icon = helpers.getGuiHelper()
                 .createDrawableItemStack(ChemicalHelper.get(TagPrefix.rawOre, GTMaterials.Iron));
     }
@@ -68,13 +66,27 @@ public class GTOreVeinInfoCategory extends ModularUIRecipeCategory<Holder<GTOreD
         registration.addRecipeCatalyst(GTItems.PROSPECTOR_LuV.asStack(), RECIPE_TYPE);
     }
 
-    @NotNull
     @Override
     public RecipeType<Holder<GTOreDefinition>> getRecipeType() {
         return RECIPE_TYPE;
     }
 
     @NotNull
+    @Override
+    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+        return icon;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
     @Override
     public Component getTitle() {
         return Component.translatable("gtpm.jei.ore_vein_diagram");
