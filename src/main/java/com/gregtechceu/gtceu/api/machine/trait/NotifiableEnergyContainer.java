@@ -310,8 +310,8 @@ public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<Ener
     }
 
     @Override
-    public @Nullable List<EnergyStack> handleRecipeInner(IO io, GTRecipe recipe, List<EnergyStack> left,
-                                                         boolean simulate) {
+    public List<EnergyStack> handleRecipeInner(IO io, GTRecipe recipe, List<EnergyStack> left,
+                                               boolean simulate) {
         for (var it = left.listIterator(); it.hasNext();) {
             EnergyStack stack = it.next();
             if (stack.isEmpty()) {
@@ -336,7 +336,7 @@ public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<Ener
 
         }
 
-        return left.isEmpty() ? null : left;
+        return left;
     }
 
     @Override

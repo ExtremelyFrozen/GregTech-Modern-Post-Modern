@@ -99,7 +99,7 @@ public class NotifiableItemStackHandler extends NotifiableRecipeHandlerTrait<Siz
                                                      boolean simulate,
                                                      IO handlerIO, CustomItemStackHandler storage) {
         if (io != handlerIO) return left;
-        if (io != IO.IN && io != IO.OUT) return left.isEmpty() ? null : left;
+        if (io != IO.IN && io != IO.OUT) return left;
 
         // Temporarily remove listener so that we can broadcast the entire set of transactions once
         Runnable listener = storage.getOnContentsChanged();
@@ -190,7 +190,7 @@ public class NotifiableItemStackHandler extends NotifiableRecipeHandlerTrait<Siz
         storage.setOnContentsChanged(listener);
         if (changed && !simulate) listener.run();
 
-        return left.isEmpty() ? null : left;
+        return left;
     }
 
     private static @Nullable ItemStack getActioned(CustomItemStackHandler storage, int index, List<?> actions) {

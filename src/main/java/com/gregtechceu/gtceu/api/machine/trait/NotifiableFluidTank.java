@@ -97,7 +97,7 @@ public class NotifiableFluidTank extends NotifiableRecipeHandlerTrait<SizedFluid
     public List<SizedFluidIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<SizedFluidIngredient> left,
                                                         boolean simulate) {
         if (io != handlerIO) return left;
-        if (io != IO.IN && io != IO.OUT) return left.isEmpty() ? null : left;
+        if (io != IO.IN && io != IO.OUT) return left;
 
         // Temporarily remove listeners so that we can broadcast the entire set of transactions once
         Runnable[] listeners = new Runnable[storages.length];
@@ -218,7 +218,7 @@ public class NotifiableFluidTank extends NotifiableRecipeHandlerTrait<SizedFluid
             if (changed && action.execute()) listeners[i].run();
         }
 
-        return left.isEmpty() ? null : left;
+        return left;
     }
 
     @Override
