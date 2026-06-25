@@ -86,7 +86,7 @@ public class ObjectHolderMachine extends MultiblockPartMachine {
         var controllers = getControllers();
         for (var controller : controllers) {
             if (controller != null && controller.isFormed()) {
-                controller.checkPatternWithLock();
+                controller.checkPatternWithLock(getSubstructureName(controller));
             }
         }
     }

@@ -109,8 +109,8 @@ public class MufflerPartMachine extends TieredPartMachine implements IUIMachine 
     }
 
     @Override
-    public void addedToController(MultiblockControllerMachine controller) {
-        super.addedToController(controller);
+    public void addedToController(MultiblockControllerMachine controller, String structureName) {
+        super.addedToController(controller, structureName);
         if (snowSubscription == null) {
             this.snowSubscription = subscribeServerTick(null, this::tryBreakSnow);
         }
@@ -118,8 +118,8 @@ public class MufflerPartMachine extends TieredPartMachine implements IUIMachine 
 
     @MustBeInvokedByOverriders
     @Override
-    public void removedFromController(MultiblockControllerMachine controller) {
-        super.removedFromController(controller);
+    public void removedFromController(MultiblockControllerMachine controller, String structureName) {
+        super.removedFromController(controller, structureName);
         if (controllers.isEmpty()) {
             unsubscribe(snowSubscription);
             snowSubscription = null;

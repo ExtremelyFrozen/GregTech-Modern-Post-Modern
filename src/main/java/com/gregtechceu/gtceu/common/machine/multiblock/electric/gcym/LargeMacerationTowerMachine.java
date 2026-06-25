@@ -32,8 +32,9 @@ public class LargeMacerationTowerMachine extends WorkableElectricMultiblockMachi
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         updateBounds();
         for (var holder : getCapabilitiesFlat(IO.IN, ItemRecipeCapability.CAP)) {
             if (holder instanceof IItemHandler ih) {
@@ -44,8 +45,9 @@ public class LargeMacerationTowerMachine extends WorkableElectricMultiblockMachi
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         unsubscribe(hurtSub);
         hurtSub = null;
         handlers.clear();

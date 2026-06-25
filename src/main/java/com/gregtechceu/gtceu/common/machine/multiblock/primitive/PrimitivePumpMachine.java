@@ -28,8 +28,9 @@ public class PrimitivePumpMachine extends MultiblockControllerMachine {
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         initializeTank();
         produceWaterSubscription = subscribeServerTick(this::produceWater);
     }
@@ -57,8 +58,9 @@ public class PrimitivePumpMachine extends MultiblockControllerMachine {
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         resetState();
     }
 
@@ -81,7 +83,7 @@ public class PrimitivePumpMachine extends MultiblockControllerMachine {
     }
 
     private void produceWater() {
-        if (getOffsetTimer() % 20 == 0 && isFormed() && !getMultiblockState().hasError()) {
+        if (getOffsetTimer() % 20 == 0 && isFormed() && !getMultiblockState(DEFAULT_STRUCTURE).hasError()) {
             if (biomeModifier == 0) {
                 biomeModifier = GTUtil.getPumpBiomeModifier(getLevel().getBiome(getBlockPos()));
             } else if (biomeModifier > 0) {

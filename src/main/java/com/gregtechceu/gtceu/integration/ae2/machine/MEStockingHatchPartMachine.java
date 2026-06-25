@@ -73,15 +73,15 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     /////////////////////////////////
 
     @Override
-    public void addedToController(MultiblockControllerMachine controller) {
-        super.addedToController(controller);
-        IMEStockingPart.super.addedToController(controller);
+    public void addedToController(MultiblockControllerMachine controller, String structureName) {
+        super.addedToController(controller, structureName);
+        IMEStockingPart.super.addedToController(controller, structureName);
     }
 
     @Override
-    public void removedFromController(MultiblockControllerMachine controller) {
-        IMEStockingPart.super.removedFromController(controller);
-        super.removedFromController(controller);
+    public void removedFromController(MultiblockControllerMachine controller, String structureName) {
+        IMEStockingPart.super.removedFromController(controller, structureName);
+        super.removedFromController(controller, structureName);
     }
 
     @Override
