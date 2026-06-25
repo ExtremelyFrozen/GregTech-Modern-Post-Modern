@@ -18,19 +18,29 @@ import java.util.concurrent.Executors;
 
 public final class StructurePatternRegistry {
 
-    private static final Map<ResourceLocation, JavaDefinition> JAVA_DEFINITIONS = new ConcurrentHashMap<>();
+    private static final Map<StructurePatternKey, JavaDefinition> JAVA_DEFINITIONS = new ConcurrentHashMap<>();
     private static final Set<Runnable> RELOAD_LISTENERS = ConcurrentHashMap.newKeySet();
     private static final ExecutorService RELOAD_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
     private StructurePatternRegistry() {}
 
-    public static void registerJavaDefinition(MultiblockMachineDefinition definition) {
-        JAVA_DEFINITIONS.put(definition.getId(), new JavaDefinition(definition.getId(), definition));
+    public static void registerJavaDefinition(MultiblockMachineDefinition definition, String structureName) {
+        StructurePatternKey key = new StructurePatternKey(definition.getId(), structureName);
+        JAVA_DEFINITIONS.put(key, new JavaDefinition(key, definition, structureName));
     }
 
-    public static BlockPattern resolvePattern(MultiblockMachineDefinition definition) {
-        BlockPattern javaPattern = definition.createJavaPattern();
-        return StructureCache.resolvePattern(definition.getId(), definition, javaPattern);
+    public static BlockPattern resolvePattern(MultiblockMachineDefinition definition, String structureName) {
+        StructurePatternKey key = new StructurePatternKey(definition.getId(), structureName);
+        BlockPattern javaPattern = definition.createJavaPattern(structureName);
+        return resolvePattern(key, definition, javaPattern);
+    }
+
+    public static BlockPattern resolvePattern(StructurePatternKey key, MultiblockMachineDefinition definition,
+                                              BlockPattern javaPattern) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(definition);
+        Objects.requireNonNull(javaPattern);
+        return StructureCache.resolvePattern(key, definition, javaPattern);
     }
 
     @ApiStatus.Internal
@@ -40,67 +50,71 @@ public final class StructurePatternRegistry {
 
     @ApiStatus.Internal
     public static CompletableFuture<Integer> reloadAllPatternsAsync() {
-        return runReloadTasksAsync((StructureDefinitionSource) null, null);
+        return runReloadTasksAsync((StructureDefinitionSource) null, (ResourceLocation) null);
     }
 
     @ApiStatus.Internal
     public static CompletableFuture<Integer> reloadTypePatternsAsync(StructureDefinitionType type) {
         Objects.requireNonNull(type);
-        return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), null);
+        return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), (ResourceLocation) null);
     }
 
     @ApiStatus.Internal
-    public static CompletableFuture<Integer> reloadPatternAsync(ResourceLocation id) {
-        return runReloadTasksAsync(id);
+    public static CompletableFuture<Integer> reloadPatternAsync(ResourceLocation machineId) {
+        return runReloadTasksAsync(machineId);
     }
 
     @ApiStatus.Internal
-    public static CompletableFuture<Integer> reloadPatternAsync(StructureDefinitionType type, ResourceLocation id) {
+    public static CompletableFuture<Integer> reloadPatternAsync(StructurePatternKey key) {
+        Objects.requireNonNull(key);
+        return runReloadTasksAsync(null, key);
+    }
+
+    @ApiStatus.Internal
+    public static CompletableFuture<Integer> reloadPatternAsync(StructureDefinitionType type,
+                                                                ResourceLocation machineId) {
         Objects.requireNonNull(type);
-        return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), id);
+        return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), machineId);
+    }
+
+    @ApiStatus.Internal
+    public static CompletableFuture<Integer> reloadPatternAsync(StructureDefinitionType type, StructurePatternKey key) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(key);
+        return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), key);
     }
 
     private static CompletableFuture<Integer> runReloadTasksAsync(StructureDefinitionSource source,
-                                                                  ResourceLocation id) {
-        if (id != null) {
-            JavaDefinition definition = JAVA_DEFINITIONS.get(id);
-            if (definition == null || !matchesSource(definition, source)) {
-                return CompletableFuture.completedFuture(0);
-            }
-            return CompletableFuture.supplyAsync(() -> runTask(definition) ? 1 : 0, RELOAD_EXECUTOR)
-                    .thenApply(StructurePatternRegistry::notifyReloadListeners);
-        }
-
+                                                                  ResourceLocation machineId) {
         CompletableFuture<?>[] tasks = JAVA_DEFINITIONS.values().stream()
+                .filter(definition -> machineId == null || definition.key().machineId().equals(machineId))
                 .filter(definition -> matchesSource(definition, source))
                 .map(definition -> CompletableFuture.supplyAsync(() -> runTask(definition) ? 1 : 0, RELOAD_EXECUTOR))
                 .toArray(CompletableFuture[]::new);
-        return CompletableFuture.allOf(tasks)
-                .thenApply(unused -> {
-                    int refreshed = 0;
-                    for (CompletableFuture<?> task : tasks) {
-                        refreshed += (Integer) task.join();
-                    }
-                    return refreshed;
-                })
+        return joinReloadTasks(tasks)
                 .thenApply(StructurePatternRegistry::notifyReloadListeners);
     }
 
-    private static CompletableFuture<Integer> runReloadTasksAsync(ResourceLocation id) {
-        if (id != null) {
-            JavaDefinition definition = JAVA_DEFINITIONS.get(id);
-            if (definition == null ||
-                    StructureCache.getActiveSource(definition.id()) == StructureDefinitionSource.JAVA) {
-                return CompletableFuture.completedFuture(0);
-            }
-            return CompletableFuture.supplyAsync(() -> runTask(definition) ? 1 : 0, RELOAD_EXECUTOR)
-                    .thenApply(StructurePatternRegistry::notifyReloadListeners);
+    private static CompletableFuture<Integer> runReloadTasksAsync(StructureDefinitionSource source,
+                                                                  StructurePatternKey key) {
+        JavaDefinition definition = JAVA_DEFINITIONS.get(key);
+        if (definition == null || !matchesSource(definition, source)) {
+            return CompletableFuture.completedFuture(0);
         }
+        return CompletableFuture.supplyAsync(() -> runTask(definition) ? 1 : 0, RELOAD_EXECUTOR)
+                .thenApply(StructurePatternRegistry::notifyReloadListeners);
+    }
 
+    private static CompletableFuture<Integer> runReloadTasksAsync(ResourceLocation machineId) {
         CompletableFuture<?>[] tasks = JAVA_DEFINITIONS.values().stream()
-                .filter(definition -> StructureCache.getActiveSource(definition.id()) != StructureDefinitionSource.JAVA)
+                .filter(definition -> machineId == null || definition.key().machineId().equals(machineId))
                 .map(definition -> CompletableFuture.supplyAsync(() -> runTask(definition) ? 1 : 0, RELOAD_EXECUTOR))
                 .toArray(CompletableFuture[]::new);
+        return joinReloadTasks(tasks)
+                .thenApply(StructurePatternRegistry::notifyReloadListeners);
+    }
+
+    private static CompletableFuture<Integer> joinReloadTasks(CompletableFuture<?>[] tasks) {
         return CompletableFuture.allOf(tasks)
                 .thenApply(unused -> {
                     int refreshed = 0;
@@ -108,8 +122,7 @@ public final class StructurePatternRegistry {
                         refreshed += (Integer) task.join();
                     }
                     return refreshed;
-                })
-                .thenApply(StructurePatternRegistry::notifyReloadListeners);
+                });
     }
 
     private static int notifyReloadListeners(int refreshed) {
@@ -120,18 +133,19 @@ public final class StructurePatternRegistry {
     }
 
     private static boolean matchesSource(JavaDefinition definition, StructureDefinitionSource source) {
-        return source == null || StructureCache.getActiveSource(definition.id()) == source;
+        return source == null || StructureCache.getActiveSource(definition.key()) == source;
     }
 
     private static boolean runTask(JavaDefinition definition) {
         try {
-            definition.definition().reloadPattern();
+            definition.definition().reloadPattern(definition.structureName());
             return true;
         } catch (Exception e) {
-            GTCEu.LOGGER.error("Failed to reload structure pattern for {}", definition.id(), e);
+            GTCEu.LOGGER.error("Failed to reload structure pattern for {}", definition.key(), e);
             return false;
         }
     }
 
-    private record JavaDefinition(ResourceLocation id, MultiblockMachineDefinition definition) {}
+    private record JavaDefinition(StructurePatternKey key, MultiblockMachineDefinition definition,
+                                  String structureName) {}
 }

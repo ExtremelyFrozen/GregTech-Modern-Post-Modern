@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.data.pattern;
 
 public enum StructureDefinitionSource {
 
-    JAVA("java"),
     JSON("json"),
     BINARY_JSON("binary");
 
