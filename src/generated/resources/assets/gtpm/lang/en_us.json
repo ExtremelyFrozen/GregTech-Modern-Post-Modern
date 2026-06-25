@@ -2508,6 +2508,8 @@
     "gtpm.jade.years": "%s years",
     "gtpm.jei.bedrock_fluid_diagram": "Bedrock Fluid Diagram",
     "gtpm.jei.bedrock_ore_diagram": "Bedrock Ore Diagram",
+    "gtpm.jei.bedrock_vein_diagram.depleted": "Depleted: %s",
+    "gtpm.jei.bedrock_vein_diagram.yield": "Yield: %s",
     "gtpm.jei.fluid.dep_amount_hover": "The amount the vein will be depleted by",
     "gtpm.jei.fluid.dep_chance_hover": "The percentage chance for the vein to be depleted upon harvest",
     "gtpm.jei.fluid.dep_yield_hover": "The maximum yield of the vein when it is fully depleted",

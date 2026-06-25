@@ -2508,6 +2508,8 @@
     "gtpm.jade.years": "sɹɐǝʎ %s",
     "gtpm.jei.bedrock_fluid_diagram": "ɯɐɹbɐıᗡ pınןℲ ʞɔoɹpǝᗺ",
     "gtpm.jei.bedrock_ore_diagram": "ɯɐɹbɐıᗡ ǝɹO ʞɔoɹpǝᗺ",
+    "gtpm.jei.bedrock_vein_diagram.depleted": "%s :pǝʇǝןdǝᗡ",
+    "gtpm.jei.bedrock_vein_diagram.yield": "%s :pןǝıʎ",
     "gtpm.jei.fluid.dep_amount_hover": "ʎq pǝʇǝןdǝp ǝq ןןıʍ uıǝʌ ǝɥʇ ʇunoɯɐ ǝɥ⟘",
     "gtpm.jei.fluid.dep_chance_hover": "ʇsǝʌɹɐɥ uodn pǝʇǝןdǝp ǝq oʇ uıǝʌ ǝɥʇ ɹoɟ ǝɔuɐɥɔ ǝbɐʇuǝɔɹǝd ǝɥ⟘",
     "gtpm.jei.fluid.dep_yield_hover": "pǝʇǝןdǝp ʎןןnɟ sı ʇı uǝɥʍ uıǝʌ ǝɥʇ ɟo pןǝıʎ ɯnɯıxɐɯ ǝɥ⟘",
