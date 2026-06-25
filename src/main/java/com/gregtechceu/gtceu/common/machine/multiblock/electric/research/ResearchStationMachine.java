@@ -45,12 +45,13 @@ public class ResearchStationMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         for (IMultiPart part : getParts()) {
             if (part instanceof ObjectHolderMachine holder) {
                 if (holder.getFrontFacing() != getFrontFacing().getOpposite()) {
-                    onStructureInvalid();
+                    invalidateStructure(structureName);
                     return;
                 }
                 this.objectHolder = holder;
@@ -66,32 +67,34 @@ public class ResearchStationMachine extends WorkableElectricMultiblockMachine
 
         // should never happen, but would rather do this than have an obscure NPE
         if (computationProvider == null || objectHolder == null) {
-            onStructureInvalid();
+            invalidateStructure(structureName);
         }
     }
 
     @Override
-    public boolean checkPattern() {
-        boolean isFormed = super.checkPattern();
+    public boolean checkPattern(String structureName) {
+        boolean isFormed = super.checkPattern(structureName);
         if (isFormed && objectHolder != null && objectHolder.getFrontFacing() != getFrontFacing().getOpposite()) {
-            onStructureInvalid();
+            invalidateStructure(structureName);
         }
         return isFormed;
     }
 
     @Override
-    public void onStructureInvalid() {
-        computationProvider = null;
-        // recheck the ability to make sure it wasn't the one broken
-        for (IMultiPart part : getParts()) {
-            if (part instanceof ObjectHolderMachine holder) {
-                if (holder == objectHolder) {
-                    objectHolder.setLocked(false);
+    public void invalidateStructure(String structureName) {
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            computationProvider = null;
+            // recheck the ability to make sure it wasn't the one broken
+            for (IMultiPart part : getParts()) {
+                if (part instanceof ObjectHolderMachine holder) {
+                    if (holder == objectHolder) {
+                        objectHolder.setLocked(false);
+                    }
                 }
             }
+            objectHolder = null;
         }
-        objectHolder = null;
-        super.onStructureInvalid();
+        super.invalidateStructure(structureName);
     }
 
     @Override

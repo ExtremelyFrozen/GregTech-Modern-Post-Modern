@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.Block;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import lombok.Getter;
@@ -108,18 +109,19 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     // *** Multiblock LifeCycle ***//
     //////////////////////////////////////
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
-        // attach parts' traits
-        activeBlocks = getMultiblockState().getMatchContext().getOrDefault("vaBlocks", LongSets.emptySet());
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        rebuildRecipeHandlers();
+    }
+
+    private void rebuildRecipeHandlers() {
+        activeBlocks = collectActiveBlocks();
         capabilitiesProxy.clear();
         capabilitiesFlat.clear();
         traitSubscriptions.forEach(ISubscription::unsubscribe);
         traitSubscriptions.clear();
-        Long2ObjectMap<IO> ioMap = getMultiblockState().getMatchContext().getOrCreate("ioMap",
-                Long2ObjectMaps::emptyMap);
         for (IMultiPart part : getParts()) {
-            IO io = ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
+            IO io = getPartIO(part);
             if (io == IO.NONE) continue;
 
             var handlerLists = part.getRecipeHandlers();
@@ -147,17 +149,39 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         recipeLogic.updateTickSubscription();
     }
 
+    private LongSet collectActiveBlocks() {
+        LongOpenHashSet blocks = new LongOpenHashSet();
+        for (String structureName : getDefinition().getStructureNames()) {
+            if (!isStructureFormed(structureName)) continue;
+            LongSet structureActiveBlocks = getMultiblockState(structureName).getMatchContext()
+                    .getOrDefault("vaBlocks", LongSets.emptySet());
+            blocks.addAll(structureActiveBlocks);
+        }
+        return blocks.isEmpty() ? LongSets.emptySet() : blocks;
+    }
+
+    private IO getPartIO(IMultiPart part) {
+        String structureName = part.getSubstructureName(this);
+        if (structureName == null) return IO.BOTH;
+        Long2ObjectMap<IO> ioMap = getMultiblockState(structureName).getMatchContext()
+                .getOrCreate("ioMap", Long2ObjectMaps::emptyMap);
+        return ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
+    }
+
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
         updateActiveBlocks(false);
         activeBlocks = null;
         capabilitiesProxy.clear();
         capabilitiesFlat.clear();
         traitSubscriptions.forEach(ISubscription::unsubscribe);
         traitSubscriptions.clear();
-        // reset recipe Logic
-        recipeLogic.resetRecipeLogic();
+        if (DEFAULT_STRUCTURE.equals(structureName) || !isFormed()) {
+            recipeLogic.resetRecipeLogic();
+        } else {
+            rebuildRecipeHandlers();
+        }
     }
 
     @Override
@@ -240,7 +264,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
 
     @Override
     public boolean isRecipeLogicAvailable() {
-        return isFormed && !getMultiblockState().hasError();
+        return isFormed && !getMultiblockState(DEFAULT_STRUCTURE).hasError();
     }
 
     @Override

@@ -119,7 +119,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
     }
 
     @Override
-    public void addedToController(MultiblockControllerMachine controller) {
+    public void addedToController(MultiblockControllerMachine controller, String structureName) {
         if (!controller.allowCircuitSlots()) {
             if (!ConfigHolder.INSTANCE.machines.ghostCircuit) {
                 circuitInventory.dropInventoryInWorld();
@@ -128,12 +128,12 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
             }
             setCircuitSlotEnabled(false);
         }
-        super.addedToController(controller);
+        super.addedToController(controller, structureName);
     }
 
     @Override
-    public void removedFromController(MultiblockControllerMachine controller) {
-        super.removedFromController(controller);
+    public void removedFromController(MultiblockControllerMachine controller, String structureName) {
+        super.removedFromController(controller, structureName);
         for (var c : controllers) {
             if (!c.allowCircuitSlots()) {
                 return;

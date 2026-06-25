@@ -1,0 +1,65 @@
+{
+	"aisles": [
+		{
+			"slices": [["FFF", "XXX", " X "]]
+		},
+		{
+			"slices": [["FFF", "X#X", " X "]]
+		},
+		{
+			"slices": [["FFF", "X~X", " X "]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:steam_machine_casing"
+					},
+					"minCount": 6
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "steam_import_items"
+					},
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "steam_export_items"
+					},
+					"previewCount": 1
+				}
+			]
+		},
+		"F": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:bronze_firebox_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "steam"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				}
+			]
+		},
+		"#": {
+			"type": "gtpm:air"
+		}
+	}
+}

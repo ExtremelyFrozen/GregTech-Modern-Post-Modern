@@ -156,14 +156,14 @@ public class DataAccessHatchMachine extends TieredPartMachine
     }
 
     @Override
-    public boolean canShared() {
+    public boolean canShared(MultiblockControllerMachine controller, String structureName) {
         return isCreative;
     }
 
     @Override
-    public void addedToController(MultiblockControllerMachine controller) {
+    public void addedToController(MultiblockControllerMachine controller, String structureName) {
         rebuildData(controller instanceof DataBankMachine);
-        super.addedToController(controller);
+        super.addedToController(controller, structureName);
     }
 
     @Override

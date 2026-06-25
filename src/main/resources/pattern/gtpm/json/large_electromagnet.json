@@ -1,0 +1,44 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXXXX", "XXXXX", "XXXXX"]]
+		},
+		{
+			"slices": [["XCXCX", "XCXCX", "XCXCX"]]
+		},
+		{
+			"slices": [["XCXCX", "XCXCX", "XCXCX"]]
+		},
+		{
+			"slices": [["XXXXX", "XX~XX", "XXXXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:nonconducting_casing"
+					},
+					"minCount": 35
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:electrolytic_cell"
+		}
+	}
+}

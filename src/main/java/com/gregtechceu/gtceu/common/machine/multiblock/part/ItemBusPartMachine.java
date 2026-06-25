@@ -141,7 +141,7 @@ public class ItemBusPartMachine extends TieredIOPartMachine
     }
 
     @Override
-    public void addedToController(MultiblockControllerMachine controller) {
+    public void addedToController(MultiblockControllerMachine controller, String structureName) {
         if (hasCircuitSlot && !controller.allowCircuitSlots()) {
             if (!ConfigHolder.INSTANCE.machines.ghostCircuit) {
                 circuitInventory.dropInventoryInWorld();
@@ -150,12 +150,12 @@ public class ItemBusPartMachine extends TieredIOPartMachine
             }
             setCircuitSlotEnabled(false);
         }
-        super.addedToController(controller);
+        super.addedToController(controller, structureName);
     }
 
     @Override
-    public void removedFromController(MultiblockControllerMachine controller) {
-        super.removedFromController(controller);
+    public void removedFromController(MultiblockControllerMachine controller, String structureName) {
+        super.removedFromController(controller, structureName);
         if (!hasCircuitSlot) return;
         for (var c : controllers) {
             if (!c.allowCircuitSlots()) {

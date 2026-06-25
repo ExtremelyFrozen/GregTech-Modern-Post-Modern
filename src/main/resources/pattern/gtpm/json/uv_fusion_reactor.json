@@ -1,0 +1,127 @@
+{
+	"aisles": [
+		{
+			"slices": [["###############", "######OGO######", "###############"]]
+		},
+		{
+			"slices": [["######ICI######", "####GGAAAGG####", "######ICI######"]]
+		},
+		{
+			"slices": [["####CC###CC####", "###EAAOGOAAE###", "####CC###CC####"]]
+		},
+		{
+			"slices": [["###C#######C###", "##EKEG###GEKE##", "###C#######C###"]]
+		},
+		{
+			"slices": [["##C#########C##", "#GAE#######EAG#", "##C#########C##"]]
+		},
+		{
+			"slices": [["##C#########C##", "#GAG#######GAG#", "##C#########C##"]]
+		},
+		{
+			"slices": [["#I###########I#", "OAO#########OAO", "#I###########I#"]]
+		},
+		{
+			"slices": [["#C###########C#", "GAG#########GAG", "#C###########C#"]]
+		},
+		{
+			"slices": [["#I###########I#", "OAO#########OAO", "#I###########I#"]]
+		},
+		{
+			"slices": [["##C#########C##", "#GAG#######GAG#", "##C#########C##"]]
+		},
+		{
+			"slices": [["##C#########C##", "#GAE#######EAG#", "##C#########C##"]]
+		},
+		{
+			"slices": [["###C#######C###", "##EKEG###GEKE##", "###C#######C###"]]
+		},
+		{
+			"slices": [["####CC###CC####", "###EAAOGOAAE###", "####CC###CC####"]]
+		},
+		{
+			"slices": [["######ICI######", "####GGAAAGG####", "######ICI######"]]
+		},
+		{
+			"slices": [["###############", "######O~O######", "###############"]]
+		}
+	],
+	"predicates": {
+		"G": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:fusion_glass"
+				},
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:fusion_casing_mk3"
+				}
+			]
+		},
+		"E": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:fusion_casing_mk3"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:tiered_ability",
+						"ability": "input_energy",
+						"tiers": [8]
+					},
+					"minCount": 1,
+					"previewCount": 16
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:fusion_casing_mk3"
+		},
+		"K": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:fusion_coil"
+		},
+		"O": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:fusion_casing_mk3"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_fluids"
+				}
+			]
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"I": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:fusion_casing_mk3"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "import_fluids"
+					},
+					"minCount": 2
+				}
+			]
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

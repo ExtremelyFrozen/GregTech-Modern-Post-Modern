@@ -62,8 +62,9 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine im
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         for (var part : getParts()) {
             if (!PartAbility.STEAM.isApplicable(part.self().getDefinition().getBlock())) continue;
             var handlers = part.getRecipeHandlers();
@@ -80,7 +81,7 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine im
             }
         }
         if (steamEnergy == null) { // No steam hatch found
-            onStructureInvalid();
+            invalidateStructure(structureName);
         }
     }
 

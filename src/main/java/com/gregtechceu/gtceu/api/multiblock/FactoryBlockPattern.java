@@ -3,9 +3,8 @@ package com.gregtechceu.gtceu.api.multiblock;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternKey;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
-
-import net.minecraft.resources.ResourceLocation;
 
 import com.google.common.base.Joiner;
 import it.unimi.dsi.fastutil.chars.Char2ObjectArrayMap;
@@ -23,6 +22,7 @@ public class FactoryBlockPattern {
 
     private static final Joiner COMMA_JOIN = Joiner.on(",");
     private final MultiblockMachineDefinition definition;
+    private final StructurePatternKey definitionKey;
     private final List<AisleUnit> units;
     private final Char2ObjectMap<TraceabilityPredicate> symbolMap;
     private final StructureDir structureDir;
@@ -35,8 +35,9 @@ public class FactoryBlockPattern {
     private record AisleUnit(List<String[]> slices, int minRepeat, int maxRepeat) {}
 
     private FactoryBlockPattern(RelativeDirection charDir, RelativeDirection stringDir, RelativeDirection aisleDir,
-                                MultiblockMachineDefinition definition) {
+                                MultiblockMachineDefinition definition, String structureName) {
         this.definition = definition;
+        this.definitionKey = definition == null ? null : new StructurePatternKey(definition.getId(), structureName);
         units = new ArrayList<>();
         symbolMap = new Char2ObjectArrayMap<>();
         structureDir = new StructureDir(charDir, stringDir, aisleDir);
@@ -68,28 +69,29 @@ public class FactoryBlockPattern {
         if (definition == null) {
             throw new IllegalStateException("No multiblock definition was bound to this pattern builder");
         }
-        return aisleFromDefinition(definition.getId(), definitionAisleIndex++);
+        return aisleFromDefinition(definitionKey, definitionAisleIndex++);
     }
 
     public FactoryBlockPattern aisleFromDefinition(int index) {
         if (definition == null) {
             throw new IllegalStateException("No multiblock definition was bound to this pattern builder");
         }
-        return aisleFromDefinition(definition.getId(), index);
+        return aisleFromDefinition(definitionKey, index);
     }
 
-    public FactoryBlockPattern aisleFromDefinition(MultiblockMachineDefinition definition) {
-        return aisleFromDefinition(definition.getId(), definitionAisleIndex++);
+    public FactoryBlockPattern aisleFromDefinition(MultiblockMachineDefinition definition, String structureName) {
+        return aisleFromDefinition(new StructurePatternKey(definition.getId(), structureName), definitionAisleIndex++);
     }
 
-    public FactoryBlockPattern aisleFromDefinition(MultiblockMachineDefinition definition, int index) {
-        return aisleFromDefinition(definition.getId(), index);
+    public FactoryBlockPattern aisleFromDefinition(MultiblockMachineDefinition definition, String structureName,
+                                                   int index) {
+        return aisleFromDefinition(new StructurePatternKey(definition.getId(), structureName), index);
     }
 
-    public FactoryBlockPattern aisleFromDefinition(ResourceLocation id, int index) {
-        List<String[]> aisles = StructurePatternResolver.loadStringArrayDefinition(id).aisles();
+    public FactoryBlockPattern aisleFromDefinition(StructurePatternKey key, int index) {
+        List<String[]> aisles = StructurePatternResolver.loadStringArrayDefinition(key).aisles();
         if (index < 0 || index >= aisles.size()) {
-            throw new IllegalArgumentException("Json structure definition for " + id + " does not contain aisle " +
+            throw new IllegalArgumentException("Json structure definition for " + key + " does not contain aisle " +
                     index + "; found " + aisles.size() + " aisles");
         }
         return aisle(aisles.get(index));
@@ -99,15 +101,15 @@ public class FactoryBlockPattern {
         if (definition == null) {
             throw new IllegalStateException("No multiblock definition was bound to this pattern builder");
         }
-        return aislesFromDefinition(definition.getId());
+        return aislesFromDefinition(definitionKey);
     }
 
-    public FactoryBlockPattern aislesFromDefinition(MultiblockMachineDefinition definition) {
-        return aislesFromDefinition(definition.getId());
+    public FactoryBlockPattern aislesFromDefinition(MultiblockMachineDefinition definition, String structureName) {
+        return aislesFromDefinition(new StructurePatternKey(definition.getId(), structureName));
     }
 
-    public FactoryBlockPattern aislesFromDefinition(ResourceLocation id) {
-        return StructurePatternResolver.applyStringArrayDefinition(this, id);
+    public FactoryBlockPattern aislesFromDefinition(StructurePatternKey key) {
+        return StructurePatternResolver.applyStringArrayDefinition(this, key);
     }
 
     public FactoryBlockPattern beginRepeatable() {
@@ -172,23 +174,37 @@ public class FactoryBlockPattern {
     }
 
     public static FactoryBlockPattern start() {
-        return new FactoryBlockPattern(RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT, null);
+        return new FactoryBlockPattern(RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT, null,
+                StructurePatternKey.DEFAULT_STRUCTURE_NAME);
     }
 
     public static FactoryBlockPattern start(MultiblockMachineDefinition definition) {
         return new FactoryBlockPattern(RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT,
-                definition);
+                definition, StructurePatternKey.DEFAULT_STRUCTURE_NAME);
+    }
+
+    public static FactoryBlockPattern start(MultiblockMachineDefinition definition, String structureName) {
+        return new FactoryBlockPattern(RelativeDirection.LEFT, RelativeDirection.UP, RelativeDirection.FRONT,
+                definition, structureName);
     }
 
     public static FactoryBlockPattern start(RelativeDirection charDir, RelativeDirection stringDir,
                                             RelativeDirection aisleDir) {
-        return new FactoryBlockPattern(charDir, stringDir, aisleDir, null);
+        return new FactoryBlockPattern(charDir, stringDir, aisleDir, null,
+                StructurePatternKey.DEFAULT_STRUCTURE_NAME);
     }
 
     public static FactoryBlockPattern start(MultiblockMachineDefinition definition, RelativeDirection charDir,
                                             RelativeDirection stringDir,
                                             RelativeDirection aisleDir) {
-        return new FactoryBlockPattern(charDir, stringDir, aisleDir, definition);
+        return new FactoryBlockPattern(charDir, stringDir, aisleDir, definition,
+                StructurePatternKey.DEFAULT_STRUCTURE_NAME);
+    }
+
+    public static FactoryBlockPattern start(MultiblockMachineDefinition definition, String structureName,
+                                            RelativeDirection charDir, RelativeDirection stringDir,
+                                            RelativeDirection aisleDir) {
+        return new FactoryBlockPattern(charDir, stringDir, aisleDir, definition, structureName);
     }
 
     public FactoryBlockPattern where(String symbol, TraceabilityPredicate blockMatcher) {

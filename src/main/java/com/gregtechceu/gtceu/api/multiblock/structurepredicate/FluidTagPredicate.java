@@ -1,8 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateFluidTag;
-import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -40,18 +38,6 @@ public final class FluidTagPredicate implements StructurePredicate {
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.FLUID_TAGS;
-    }
-
-    @Override
-    public SimplePredicate asLegacy() {
-        if (fluidTagKeys.size() == 1) {
-            return new PredicateFluidTag(fluidTagKeys.getFirst());
-        }
-        return new SimplePredicate(this::testLegacy, () -> candidates().toArray(BlockInfo[]::new));
-    }
-
-    private boolean testLegacy(MultiblockState multiblockState) {
-        return test(multiblockState, true);
     }
 
     @Override

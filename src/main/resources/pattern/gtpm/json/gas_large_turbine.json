@@ -1,0 +1,63 @@
+{
+	"aisles": [
+		{
+			"slices": [["CCCC", "CHHC", "CCCC"]]
+		},
+		{
+			"slices": [["CHHC", "RGGR", "CHHC"]]
+		},
+		{
+			"slices": [["CCCC", "C~HC", "CCCC"]]
+		}
+	],
+	"predicates": {
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:stainless_steel_turbine_casing"
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:stainless_steel_gearbox"
+		},
+		"R": {
+			"type": "gtpm:restricted",
+			"predicate": {
+				"type": "gtpm:abilities",
+				"abilities": ["rotor_holder", "output_energy"]
+			},
+			"minCount": 1,
+			"maxCount": 1
+		},
+		"H": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:stainless_steel_turbine_casing"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_fluids"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_fluids"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": true,
+					"checkParallel": false
+				}
+			]
+		}
+	}
+}

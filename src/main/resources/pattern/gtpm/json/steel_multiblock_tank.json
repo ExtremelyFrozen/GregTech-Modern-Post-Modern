@@ -1,0 +1,36 @@
+{
+	"aisles": [
+		{
+			"slices": [["CCC", "CCC", "CCC"]]
+		},
+		{
+			"slices": [["CCC", "C#C", "CCC"]]
+		},
+		{
+			"slices": [["CCC", "C~C", "CCC"]]
+		}
+	],
+	"predicates": {
+		"C": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:solid_machine_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:steel_tank_valve"
+					},
+					"maxCount": 2,
+					"previewCount": 0
+				}
+			]
+		},
+		"#": {
+			"type": "gtpm:air"
+		}
+	}
+}

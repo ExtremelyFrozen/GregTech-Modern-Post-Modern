@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
-import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -45,23 +44,6 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
         return StructurePredicateType.RESTRICTED;
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    @Deprecated
-    public SimplePredicate asLegacy() {
-        SimplePredicate legacy = new SimplePredicate(this::testLegacy, () -> candidates().toArray(BlockInfo[]::new));
-        this.minCount.ifPresent(value -> legacy.minCount = value);
-        this.maxCount.ifPresent(value -> legacy.maxCount = value);
-        this.minCountByLayer.ifPresent(value -> legacy.minLayerCount = value);
-        this.maxCountByLayer.ifPresent(value -> legacy.maxLayerCount = value);
-        this.previewCount.ifPresent(value -> legacy.previewCount = value);
-        return legacy;
-    }
-
-    private boolean testLegacy(MultiblockState multiblockState) {
-        return predicate.test(multiblockState, true);
-    }
-
     @Override
     public List<BlockInfo> candidates() {
         return predicate.candidates();
@@ -75,7 +57,23 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
     @Override
     public boolean test(MultiblockState multiblockState, boolean mutateCount) {
         boolean base = predicate.test(multiblockState, mutateCount);
-        return base && testGlobal(multiblockState, mutateCount) && testLayer(multiblockState, mutateCount);
+        if (!base) {
+            if (mutateCount) {
+                reserveMinimumCounters(multiblockState);
+            }
+            return false;
+        }
+        return testGlobal(multiblockState, mutateCount) && testLayer(multiblockState, mutateCount);
+    }
+
+    boolean reserveMinimumCounters(MultiblockState multiblockState) {
+        if (minCount.isPresent()) {
+            multiblockState.getStructureGlobalCount().putIfAbsent(this, 0);
+        }
+        if (minCountByLayer.isPresent()) {
+            multiblockState.getStructureLayerCount().putIfAbsent(this, 0);
+        }
+        return false;
     }
 
     private boolean testGlobal(MultiblockState multiblockState, boolean mutateCount) {

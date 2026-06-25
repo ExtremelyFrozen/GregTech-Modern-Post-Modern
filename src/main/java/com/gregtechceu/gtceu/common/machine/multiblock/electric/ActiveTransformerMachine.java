@@ -83,12 +83,13 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         // capture all energy containers
         List<IEnergyContainer> powerInput = new ArrayList<>();
         List<IEnergyContainer> powerOutput = new ArrayList<>();
-        Long2ObjectMap<IO> ioMap = getMultiblockState().getMatchContext().getOrCreate("ioMap",
+        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrCreate("ioMap",
                 Long2ObjectMaps::emptyMap);
 
         for (IMultiPart part : getPrioritySortedParts()) {
@@ -116,7 +117,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
 
         // Invalidate the structure if there is not at least one output and one input
         if (powerInput.isEmpty() || powerOutput.isEmpty()) {
-            this.onStructureInvalid();
+            this.invalidateStructure(DEFAULT_STRUCTURE);
         }
 
         this.powerOutput = new EnergyContainerList(powerOutput);
@@ -146,12 +147,16 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureInvalid() {
-        if ((isWorkingEnabled() && recipeLogic.getStatus() == RecipeLogic.Status.WORKING) &&
-                !ConfigHolder.INSTANCE.machines.harmlessActiveTransformers) {
-            GTUtil.doExplosion(getLevel(), getBlockPos(), 6f + getTier());
+    public void invalidateStructure(String structureName) {
+        boolean shouldExplode = DEFAULT_STRUCTURE.equals(structureName) &&
+                (isWorkingEnabled() && recipeLogic.getStatus() == RecipeLogic.Status.WORKING) &&
+                !ConfigHolder.INSTANCE.machines.harmlessActiveTransformers;
+        float explosionStrength = 6f + getTier();
+        super.invalidateStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
+        if (shouldExplode) {
+            GTUtil.doExplosion(getLevel(), getBlockPos(), explosionStrength);
         }
-        super.onStructureInvalid();
         this.powerOutput = new EnergyContainerList(new ArrayList<>());
         this.powerInput = new EnergyContainerList(new ArrayList<>());
         getRecipeLogic().setStatus(RecipeLogic.Status.SUSPEND);

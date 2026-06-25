@@ -27,11 +27,49 @@ public record StructurePredicateType<T extends StructurePredicate>(MapCodec<T> c
             .codec(FluidTagPredicate.CODEC);
     public static final StructurePredicateType<AbilityPredicate> ABILITIES = registerBuiltin("abilities")
             .codec(AbilityPredicate.CODEC);
+    public static final StructurePredicateType<TieredAbilityPredicate> TIERED_ABILITY = registerBuiltin(
+            "tiered_ability")
+            .codec(TieredAbilityPredicate.CODEC);
+    public static final StructurePredicateType<AutoRecipeAbilityPredicate> AUTO_RECIPE_ABILITIES = registerBuiltin(
+            "auto_recipe_abilities")
+            .codec(AutoRecipeAbilityPredicate.CODEC);
+    public static final StructurePredicateType<AutoMaintenancePredicate> AUTO_MAINTENANCE = registerBuiltin(
+            "auto_maintenance")
+            .codec(AutoMaintenancePredicate.CODEC);
+    public static final StructurePredicateType<ActiveTransformerHatchPredicate> ACTIVE_TRANSFORMER_HATCHES = registerBuiltin(
+            "active_transformer_hatches")
+            .codec(ActiveTransformerHatchPredicate.CODEC);
+    public static final StructurePredicateType<CentralMonitorComponentPredicate> CENTRAL_MONITOR_COMPONENTS = registerBuiltin(
+            "central_monitor_components")
+            .codec(CentralMonitorComponentPredicate.CODEC);
+    public static final StructurePredicateType<CharcoalLogOrAirPredicate> CHARCOAL_LOG_OR_AIR = registerBuiltin(
+            "charcoal_log_or_air")
+            .codec(CharcoalLogOrAirPredicate.CODEC);
+    public static final StructurePredicateType<CleanroomDoorPredicate> CLEANROOM_DOORS = registerBuiltin(
+            "cleanroom_doors")
+            .codec(CleanroomDoorPredicate.CODEC);
+    public static final StructurePredicateType<CleanroomInnerPredicate> CLEANROOM_INNER = registerBuiltin(
+            "cleanroom_inner")
+            .codec(CleanroomInnerPredicate.CODEC);
+    public static final StructurePredicateType<CleanroomBasePredicate> CLEANROOM_BASE = registerBuiltin(
+            "cleanroom_base")
+            .codec(CleanroomBasePredicate.CODEC);
     public static final StructurePredicateType<HeatingCoilPredicate> HEATING_COILS = registerBuiltin("heating_coils")
             .codec(HeatingCoilPredicate.CODEC);
     public static final StructurePredicateType<CleanroomFilterPredicate> CLEANROOM_FILTERS = registerBuiltin(
             "cleanroom_filters")
             .codec(CleanroomFilterPredicate.CODEC);
+    public static final StructurePredicateType<FramePredicate> FRAMES = registerBuiltin("frames")
+            .codec(FramePredicate.CODEC);
+    public static final StructurePredicateType<PowerSubstationBatteryPredicate> POWER_SUBSTATION_BATTERIES = registerBuiltin(
+            "power_substation_batteries")
+            .codec(PowerSubstationBatteryPredicate.CODEC);
+    public static final StructurePredicateType<SnowPredicate> SNOW = registerBuiltin("snow")
+            .codec(SnowPredicate.CODEC);
+    public static final StructurePredicateType<DataHatchOrPredicate> DATA_HATCH_OR = registerBuiltin("data_hatch_or")
+            .codec(DataHatchOrPredicate.CODEC);
+    public static final StructurePredicateType<RotorHolderPredicate> ROTOR_HOLDER = registerBuiltin("rotor_holder")
+            .codec(RotorHolderPredicate.CODEC);
 
     public static final StructurePredicateType<RestrictedPredicate> RESTRICTED = registerBuiltin("restricted")
             .codec(RestrictedPredicate.CODEC);

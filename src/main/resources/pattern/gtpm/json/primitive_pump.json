@@ -1,0 +1,39 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXXX", "##F#", "##F#"]]
+		},
+		{
+			"slices": [["XXHX", "F##F", "FFFF"]]
+		},
+		{
+			"slices": [["~XXX", "##F#", "##F#"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:pump_deck"
+		},
+		"F": {
+			"type": "gtpm:frames",
+			"materials": "gtpm:treated_wood"
+		},
+		"H": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:abilities",
+					"abilities": "pump_fluid_hatch"
+				},
+				{
+					"type": "gtpm:blocks",
+					"blocks": ["gtpm:ulv_output_hatch", "gtpm:lv_output_hatch"]
+				}
+			]
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

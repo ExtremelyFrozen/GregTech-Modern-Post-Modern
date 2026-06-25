@@ -26,6 +26,7 @@ import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class MultiblockState {
@@ -55,14 +56,17 @@ public class MultiblockState {
     private boolean neededFlip = false;
     public final Level world;
     public final BlockPos controllerPos;
+    @Getter
+    public final String structureName;
     public MultiblockControllerMachine lastController;
 
     // persist
     public LongOpenHashSet cache;
 
-    public MultiblockState(Level world, BlockPos controllerPos) {
+    public MultiblockState(Level world, BlockPos controllerPos, String structureName) {
         this.world = world;
         this.controllerPos = controllerPos;
+        this.structureName = Objects.requireNonNull(structureName);
         this.error = UNINIT_ERROR;
         this.matchContext = new PatternMatchContext();
     }
@@ -170,7 +174,7 @@ public class MultiblockState {
             if (pos.equals(controllerPos)) {
                 if (lastController != null) {
                     if (!state.is(lastController.self().getBlockState().getBlock())) {
-                        lastController.onStructureInvalid();
+                        lastController.invalidateStructure(structureName);
                         var mwsd = MultiblockWorldSavedData.getOrCreate(serverLevel);
                         mwsd.removeMapping(this);
                     }
@@ -183,7 +187,7 @@ public class MultiblockState {
                     }
                 }
                 if (controller != null) {
-                    if (controller.isFormed() && state.getBlock() instanceof ActiveBlock) {
+                    if (controller.isStructureFormed(structureName) && state.getBlock() instanceof ActiveBlock) {
                         LongSet activeBlocks = getMatchContext().getOrDefault("vaBlocks", LongSets.emptySet());
                         if (activeBlocks.contains(pos.asLong())) {
                             // fine! it's caused by active blocks.
@@ -191,14 +195,18 @@ public class MultiblockState {
                             return;
                         }
                     }
-                    if (controller.checkPatternWithLock()) {
+                    if (controller.checkPatternWithLock(structureName)) {
                         // refresh structure
-                        controller.setFlipped(this.neededFlip);
-                        controller.onStructureFormed();
+                        if (MultiblockControllerMachine.DEFAULT_STRUCTURE.equals(structureName)) {
+                            controller.setFlipped(this.neededFlip);
+                        }
+                        controller.formStructure(structureName);
                     } else {
                         // invalid structure
-                        controller.setFlipped(false);
-                        controller.onStructureInvalid();
+                        if (MultiblockControllerMachine.DEFAULT_STRUCTURE.equals(structureName)) {
+                            controller.setFlipped(false);
+                        }
+                        controller.invalidateStructure(structureName);
                         var mwsd = MultiblockWorldSavedData.getOrCreate(serverLevel);
                         mwsd.removeMapping(this);
                         mwsd.addAsyncLogic(controller);

@@ -1,0 +1,54 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXXXXXX", "XXXXXXX", "XXXXXXX", "##XXXXX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "XAXCCCX", "XXXAAAX", "##XXXXX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "XAXCCCX", "XXXAAAX", "##XXXXX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "X~XGGGX", "XXXGGGX", "##XXXXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:shock_proof_cutting_casing"
+					},
+					"minCount": 65
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tempered_glass"
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:slicing_blades"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateStates;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -26,11 +25,6 @@ public record BlockStatePredicate(List<BlockState> blockStates) implements Struc
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.BLOCK_STATES;
-    }
-
-    @Override
-    public PredicateStates asLegacy() {
-        return new PredicateStates(blockStates.toArray(BlockState[]::new));
     }
 
     @Override

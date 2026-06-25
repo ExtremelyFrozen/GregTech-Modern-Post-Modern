@@ -99,7 +99,7 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
      * Whether this machine can be rotated or face upwards.
      */
     private boolean allowExtendedFacing = false;
-    private boolean hasBER = ConfigHolder.INSTANCE.client.machinesHaveBERsByDefault;
+    private boolean hasBER = ConfigHolder.getInstance().client.machinesHaveBERsByDefault;
     private boolean renderMultiblockWorldPreview = true;
     private boolean renderMultiblockXEIPreview = true;
     private NonNullUnaryOperator<BlockBehaviour.Properties> blockProp = p -> p;
@@ -108,7 +108,7 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
     private @Nullable Consumer<ItemBuilder<? extends MetaMachineItem, ?>> itemBuilder;
     private NonNullConsumer<BlockEntityType<MetaMachine>> onBlockEntityRegister = NonNullConsumer.noop();
     @Getter // getter for KJS
-    private @NotNull GTRecipeType @NotNull [] recipeTypes = new GTRecipeType[0];
+    private GTRecipeType @NotNull [] recipeTypes = new GTRecipeType[0];
     @Getter // getter for KJS
     private int tier;
     private Reference2IntMap<RecipeCapability<?>> recipeOutputLimits = new Reference2IntOpenHashMap<>();

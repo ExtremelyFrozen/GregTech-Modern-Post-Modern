@@ -4,12 +4,10 @@ import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.block.ICoilType;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
-import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 import com.gregtechceu.gtceu.common.block.CoilBlock;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 
 import com.mojang.serialization.MapCodec;
@@ -29,17 +27,6 @@ public enum HeatingCoilPredicate implements StructurePredicate {
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.HEATING_COILS;
-    }
-
-    @Override
-    public SimplePredicate asLegacy() {
-        SimplePredicate predicate = new SimplePredicate(this::testLegacy, () -> candidates().toArray(BlockInfo[]::new));
-        predicate.toolTips = List.of(Component.translatable("gtpm.multiblock.pattern.error.coils"));
-        return predicate;
-    }
-
-    private boolean testLegacy(MultiblockState multiblockState) {
-        return test(multiblockState, true);
     }
 
     @Override

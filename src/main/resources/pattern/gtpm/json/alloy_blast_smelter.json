@@ -1,0 +1,73 @@
+{
+	"aisles": [
+		{
+			"slices": [["#XXX#", "#CCC#", "#GGG#", "#CCC#", "#XXX#"]]
+		},
+		{
+			"slices": [["XXXXX", "CAAAC", "GAAAG", "CAAAC", "XXXXX"]]
+		},
+		{
+			"slices": [["XXXXX", "CAAAC", "GAAAG", "CAAAC", "XXMXX"]]
+		},
+		{
+			"slices": [["XXXXX", "CAAAC", "GAAAG", "CAAAC", "XXXXX"]]
+		},
+		{
+			"slices": [["#X~X#", "#CCC#", "#GGG#", "#CCC#", "#XXX#"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:high_temperature_smelting_casing"
+					},
+					"minCount": 30
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_fluids"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_fluids"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": false
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:heating_coils"
+		},
+		"M": {
+			"type": "gtpm:abilities",
+			"abilities": "muffler"
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:heat_vent"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

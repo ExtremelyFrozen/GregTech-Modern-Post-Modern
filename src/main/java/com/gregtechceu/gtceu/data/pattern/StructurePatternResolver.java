@@ -9,8 +9,6 @@ import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateController;
 import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
 
-import net.minecraft.resources.ResourceLocation;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -33,17 +31,30 @@ public final class StructurePatternResolver {
 
     private StructurePatternResolver() {}
 
-    public static FactoryBlockPattern applyStringArrayDefinition(FactoryBlockPattern builder, ResourceLocation id) {
-        return loadStringArrayDefinition(id).applyTo(builder);
+    public static FactoryBlockPattern applyStringArrayDefinition(FactoryBlockPattern builder, StructurePatternKey key) {
+        return loadStringArrayDefinition(key).applyTo(builder);
     }
 
-    public static StringArrayDefinition loadStringArrayDefinition(ResourceLocation id) {
-        StringArrayDefinition definition = StructureCache.getStringArrayPattern(id);
+    public static StringArrayDefinition loadStringArrayDefinition(StructurePatternKey key) {
+        StringArrayDefinition definition = StructureCache.getStringArrayPattern(key);
         if (definition == null) {
-            throw new IllegalStateException("Json structure definition for " + id +
+            throw new IllegalStateException("Json structure definition for " + key +
                     " was not found in structure cache");
         }
         return definition;
+    }
+
+    public static BlockPattern rebuildRuntimeStringArrayPattern(MultiblockMachineDefinition owner,
+                                                                StructurePatternKey key,
+                                                                BlockPattern baselinePattern,
+                                                                List<Unit> runtimeUnits) {
+        StringArrayDefinition definition = loadStringArrayDefinition(key);
+        if (definition.predicates().isEmpty()) {
+            throw new IllegalStateException("Json structure definition for " + key +
+                    " must define predicates for runtime pattern rebuild");
+        }
+        return rebuildStringArrayPattern(owner, key, baselinePattern,
+                new StringArrayDefinition(runtimeUnits, definition.predicates()));
     }
 
     public static StringArrayDefinition decodeStringArrayDefinition(String id, JsonNode jsonPattern) {
@@ -53,8 +64,8 @@ public final class StructurePatternResolver {
                         id + ": " + error));
     }
 
-    public static StringArrayDefinition parseStringArrayDefinition(ResourceLocation id, JsonNode jsonPattern) {
-        return decodeStringArrayDefinition(id.toString(), jsonPattern);
+    public static StringArrayDefinition parseStringArrayDefinition(StructurePatternKey key, JsonNode jsonPattern) {
+        return decodeStringArrayDefinition(key.toString(), jsonPattern);
     }
 
     private static DataResult<StringArrayDefinition> parseStringArrayDefinition(JsonElement jsonPattern) {
@@ -162,11 +173,11 @@ public final class StructurePatternResolver {
         }
     }
 
-    static BlockPattern rebuildStringArrayPattern(MultiblockMachineDefinition owner, ResourceLocation id,
+    static BlockPattern rebuildStringArrayPattern(MultiblockMachineDefinition owner, StructurePatternKey key,
                                                   BlockPattern baselinePattern,
                                                   StringArrayDefinition definition) {
         List<String[]> aisles = definition.aisles();
-        Map<Character, TraceabilityPredicate> predicates = collectPredicates(owner, id, aisles,
+        Map<Character, TraceabilityPredicate> predicates = collectPredicates(owner, key, aisles,
                 definition.predicates());
 
         int aisleHeight = aisles.getFirst().length;
@@ -198,7 +209,7 @@ public final class StructurePatternResolver {
                         TraceabilityPredicate predicate = predicates.get(symbol);
                         if (predicate == null) {
                             throw new IllegalArgumentException("Unknown structure symbol '" + symbol +
-                                    "' in json structure definition for " + id);
+                                    "' in json structure definition for " + key);
                         }
                         blockMatches[aisleIndex][row][column] = predicate;
                         if (predicate instanceof PredicateController) {
@@ -213,7 +224,7 @@ public final class StructurePatternResolver {
         }
 
         if (centerOffset == null) {
-            throw new IllegalArgumentException("Json structure definition for " + id +
+            throw new IllegalArgumentException("Json structure definition for " + key +
                     " does not contain a controller predicate symbol");
         }
 
@@ -225,7 +236,8 @@ public final class StructurePatternResolver {
     }
 
     private static Map<Character, TraceabilityPredicate> collectPredicates(MultiblockMachineDefinition owner,
-                                                                           ResourceLocation id, List<String[]> aisles,
+                                                                           StructurePatternKey key,
+                                                                           List<String[]> aisles,
                                                                            Map<Character, StructurePredicate> jsonPredicates) {
         Map<Character, TraceabilityPredicate> predicates = new LinkedHashMap<>();
         predicates.put(' ', Predicates.any());
@@ -245,7 +257,7 @@ public final class StructurePatternResolver {
                         predicates.put(symbol, new TraceabilityPredicate(jsonPredicate));
                         continue;
                     }
-                    throw new IllegalArgumentException("Json structure definition for " + id +
+                    throw new IllegalArgumentException("Json structure definition for " + key +
                             " uses symbol '" + symbol + "' without a serialized predicate");
                 }
             }

@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateBlocks;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.gregtechceu.gtceu.api.multiblock.structurepredicate.Util.oneOrMore;
 
@@ -26,24 +26,24 @@ public final class BlockPredicate implements StructurePredicate {
             .group(oneOrMore(ResourceLocation.CODEC).fieldOf("blocks").forGetter(BlockPredicate::blockIds))
             .apply(instance, BlockPredicate::new));
 
-    private final List<ResourceLocation> blockIds;
+    private final Lazy<List<ResourceLocation>> blockIds;
     private final Lazy<List<Block>> blocks;
 
     public BlockPredicate(List<ResourceLocation> blockIds) {
-        this.blockIds = List.copyOf(blockIds);
-        this.blocks = Lazy.of(() -> this.blockIds.stream()
-                .map(BuiltInRegistries.BLOCK::get)
+        this(constantBlockIds(blockIds));
+    }
+
+    public BlockPredicate(Supplier<List<ResourceLocation>> blockIds) {
+        this.blockIds = Lazy.of(() -> List.copyOf(Objects.requireNonNull(blockIds.get(),
+                "Structure block predicate id supplier returned null")));
+        this.blocks = Lazy.of(() -> blockIds().stream()
+                .map(BlockPredicate::resolveBlock)
                 .toList());
     }
 
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.BLOCKS;
-    }
-
-    @Override
-    public PredicateBlocks asLegacy() {
-        return new PredicateBlocks(blocks().toArray(Block[]::new));
     }
 
     @Override
@@ -61,13 +61,27 @@ public final class BlockPredicate implements StructurePredicate {
         return blocks().contains(multiblockState.getBlockState().getBlock());
     }
 
+    private static Block resolveBlock(ResourceLocation id) {
+        Block block = BuiltInRegistries.BLOCK.get(id);
+        if (block == null || !id.equals(BuiltInRegistries.BLOCK.getKey(block))) {
+            throw new IllegalStateException("Unknown block id in structure block predicate: " + id);
+        }
+        return block;
+    }
+
+    private static Supplier<List<ResourceLocation>> constantBlockIds(List<ResourceLocation> blockIds) {
+        List<ResourceLocation> copy = List.copyOf(Objects.requireNonNull(blockIds,
+                "Structure block predicate id list cannot be null"));
+        return () -> copy;
+    }
+
     @Override
     public boolean hasAir() {
         return blocks().contains(Blocks.AIR);
     }
 
     public List<ResourceLocation> blockIds() {
-        return blockIds;
+        return blockIds.get();
     }
 
     public List<Block> blocks() {

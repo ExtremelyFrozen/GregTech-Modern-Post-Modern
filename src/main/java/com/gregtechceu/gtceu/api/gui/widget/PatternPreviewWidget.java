@@ -215,9 +215,10 @@ public class PatternPreviewWidget extends WidgetGroup {
         Stream<BlockPos> stream = pattern.blockMap.keySet().stream()
                 .filter(pos -> layer == -1 || layer + pattern.minY == pos.getY());
         if (pattern.controllerBase.isFormed()) {
-            LongSet modelDisabled = pattern.controllerBase.getMultiblockState().getMatchContext().getOrDefault(
-                    "renderMask",
-                    LongSets.EMPTY_SET);
+            LongSet modelDisabled = pattern.controllerBase
+                    .getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                    .getMatchContext()
+                    .getOrDefault("renderMask", LongSets.EMPTY_SET);
             if (!modelDisabled.isEmpty()) {
                 stream = stream.filter(pos -> !modelDisabled.contains(pos.asLong()));
             }
@@ -282,7 +283,7 @@ public class PatternPreviewWidget extends WidgetGroup {
             loadControllerFormed(pattern.blockMap.keySet(), controllerBase);
         } else {
             sceneWidget.setRenderedCore(pattern.blockMap.keySet(), null);
-            controllerBase.onStructureInvalid();
+            controllerBase.invalidateStructure(MultiblockControllerMachine.DEFAULT_STRUCTURE);
         }
     }
 
@@ -414,7 +415,9 @@ public class PatternPreviewWidget extends WidgetGroup {
         Map<BlockPos, TraceabilityPredicate> predicateMap = new HashMap<>();
         if (controllerBase != null) {
             loadControllerFormed(predicateMap.keySet(), controllerBase);
-            predicateMap = controllerBase.getMultiblockState().getMatchContext().get("predicates");
+            predicateMap = controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                    .getMatchContext()
+                    .get("predicates");
         }
         return controllerBase == null ? null : new MBPattern(blockMap, parts.values().stream().sorted((one, two) -> {
             if (one.isController) return -1;
@@ -428,13 +431,16 @@ public class PatternPreviewWidget extends WidgetGroup {
     }
 
     private void loadControllerFormed(Collection<BlockPos> positions, MultiblockControllerMachine controllerBase) {
-        BlockPattern pattern = controllerBase.getPattern();
-        if (pattern != null && pattern.checkPatternAt(controllerBase.getMultiblockState(), true)) {
-            controllerBase.onStructureFormed();
+        BlockPattern pattern = controllerBase.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
+        if (pattern != null &&
+                pattern.checkPatternAt(controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE),
+                        true)) {
+            controllerBase.formStructure(MultiblockControllerMachine.DEFAULT_STRUCTURE);
         }
         if (controllerBase.isFormed()) {
-            LongSet modelDisabled = controllerBase.getMultiblockState().getMatchContext().getOrDefault("renderMask",
-                    LongSets.EMPTY_SET);
+            LongSet modelDisabled = controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                    .getMatchContext()
+                    .getOrDefault("renderMask", LongSets.EMPTY_SET);
             if (!modelDisabled.isEmpty()) {
                 positions = new HashSet<>(positions);
                 positions.removeIf(pos -> modelDisabled.contains(pos.asLong()));

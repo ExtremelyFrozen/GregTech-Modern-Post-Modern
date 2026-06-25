@@ -1,0 +1,76 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXXXXXX", "XXXXXXX", "XXXXXXX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "XPPPPPX", "XGGGGGX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "XAAAAPX", "XGGGGGX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "XTTTTXX", "XXXXXXX"]]
+		},
+		{
+			"slices": [["#####XX", "#####~X", "#####XX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:large_scale_assembler_casing"
+					},
+					"minCount": 55
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities",
+					"checkEnergyIn": false,
+					"checkEnergyOut": false,
+					"checkItemIn": true,
+					"checkItemOut": true,
+					"checkFluidIn": true,
+					"checkFluidOut": true
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"T": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tempered_glass"
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:assembly_line_grating"
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tungstensteel_pipe_casing"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

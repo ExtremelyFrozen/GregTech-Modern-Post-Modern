@@ -179,6 +179,10 @@ public class SimplePredicate {
                 .map(SimplePredicate::toItem).filter(i -> i != Items.AIR).map(Item::getDefaultInstance).toList();
     }
 
+    public boolean addCache() {
+        return this != ANY;
+    }
+
     public static Item toItem(Block block) {
         if (block instanceof LiquidBlock liquidBlock) {
             return liquidBlock.fluid.getBucket();

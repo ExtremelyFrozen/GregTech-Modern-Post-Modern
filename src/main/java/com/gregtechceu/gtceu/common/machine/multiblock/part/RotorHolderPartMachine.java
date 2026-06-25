@@ -103,7 +103,7 @@ public class RotorHolderPartMachine extends TieredPartMachine {
     }
 
     @Override
-    public boolean canShared() {
+    public boolean canShared(MultiblockControllerMachine controller, String structureName) {
         return false;
     }
 

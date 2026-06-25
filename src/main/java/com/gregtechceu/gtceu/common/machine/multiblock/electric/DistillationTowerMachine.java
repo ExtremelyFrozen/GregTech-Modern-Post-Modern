@@ -60,8 +60,9 @@ public class DistillationTowerMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         final int startY = getBlockPos().getY() + yOffset;
         List<IMultiPart> parts = getParts().stream()
                 .filter(part -> PartAbility.EXPORT_FLUIDS.isApplicable(part.self().getBlockState().getBlock()))
@@ -95,11 +96,11 @@ public class DistillationTowerMachine extends WorkableElectricMultiblockMachine
                     GTCEu.LOGGER.error(
                             "The Distillation Tower at {} has a fluid export hatch with an unexpected Y position",
                             getBlockPos());
-                    onStructureInvalid();
+                    invalidateStructure(structureName);
                     return;
                 }
             }
-        } else onStructureInvalid();
+        } else invalidateStructure(structureName);
     }
 
     private void addOutput(IFluidHandler handler) {
@@ -108,10 +109,12 @@ public class DistillationTowerMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureInvalid() {
-        fluidOutputs = null;
-        firstValid = null;
-        super.onStructureInvalid();
+    public void invalidateStructure(String structureName) {
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            fluidOutputs = null;
+            firstValid = null;
+        }
+        super.invalidateStructure(structureName);
     }
 
     @Override

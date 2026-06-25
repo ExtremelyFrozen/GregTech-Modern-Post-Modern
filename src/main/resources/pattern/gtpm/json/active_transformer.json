@@ -1,0 +1,35 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "XXX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "XCX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "X~X", "XXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:high_power_casing"
+					},
+					"minCount": 12
+				},
+				{
+					"type": "gtpm:active_transformer_hatches"
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:superconducting_coil"
+		}
+	}
+}

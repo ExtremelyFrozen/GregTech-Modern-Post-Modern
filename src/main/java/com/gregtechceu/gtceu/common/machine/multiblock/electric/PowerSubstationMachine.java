@@ -92,11 +92,12 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         List<IEnergyContainer> inputs = new ArrayList<>();
         List<IEnergyContainer> outputs = new ArrayList<>();
-        Long2ObjectMap<IO> ioMap = getMultiblockState().getMatchContext().getOrCreate("ioMap",
+        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrCreate("ioMap",
                 Long2ObjectMaps::emptyMap);
         for (IMultiPart part : getParts()) {
             IO io = ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
@@ -127,7 +128,7 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         this.outputHatches = new EnergyContainerList(outputs);
 
         List<IBatteryData> batteries = new ArrayList<>();
-        for (Map.Entry<String, Object> battery : getMultiblockState().getMatchContext().entrySet()) {
+        for (Map.Entry<String, Object> battery : getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().entrySet()) {
             if (battery.getKey().startsWith(PMC_BATTERY_HEADER) &&
                     battery.getValue() instanceof BatteryMatchWrapper wrapper) {
                 for (int i = 0; i < wrapper.amount; i++) {
@@ -137,7 +138,7 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         }
         if (batteries.isEmpty()) {
             // only empty batteries found in the structure
-            onStructureInvalid();
+            invalidateStructure(structureName);
             return;
         }
         energyBank.rebuild(batteries);
@@ -145,18 +146,20 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
     }
 
     @Override
-    public void onStructureInvalid() {
+    public void invalidateStructure(String structureName) {
         // don't null out energyBank since it holds the stored energy, which
         // we need to hold on to across rebuilds to not void all energy if a
         // multiblock part or block other than the controller is broken.
-        inputHatches = null;
-        outputHatches = null;
-        passiveDrain = 0;
-        netInLastSec = 0;
-        inputPerSec = 0;
-        netOutLastSec = 0;
-        outputPerSec = 0;
-        super.onStructureInvalid();
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            inputHatches = null;
+            outputHatches = null;
+            passiveDrain = 0;
+            netInLastSec = 0;
+            inputPerSec = 0;
+            netOutLastSec = 0;
+            outputPerSec = 0;
+        }
+        super.invalidateStructure(structureName);
     }
 
     protected void transferEnergyTick() {

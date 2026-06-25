@@ -4,11 +4,9 @@ import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.block.IFilterType;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
-import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 
 import com.mojang.serialization.MapCodec;
@@ -28,17 +26,6 @@ public enum CleanroomFilterPredicate implements StructurePredicate {
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.CLEANROOM_FILTERS;
-    }
-
-    @Override
-    public SimplePredicate asLegacy() {
-        SimplePredicate predicate = new SimplePredicate(this::testLegacy, () -> candidates().toArray(BlockInfo[]::new));
-        predicate.toolTips = List.of(Component.translatable("gtpm.multiblock.pattern.error.filters"));
-        return predicate;
-    }
-
-    private boolean testLegacy(MultiblockState multiblockState) {
-        return test(multiblockState, true);
     }
 
     @Override

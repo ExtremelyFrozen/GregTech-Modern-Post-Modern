@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateFluids;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -27,11 +26,6 @@ public record FluidPredicate(List<Fluid> fluids) implements StructurePredicate {
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.FLUIDS;
-    }
-
-    @Override
-    public PredicateFluids asLegacy() {
-        return new PredicateFluids(fluids.toArray(Fluid[]::new));
     }
 
     @Override

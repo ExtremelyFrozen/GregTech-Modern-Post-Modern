@@ -1,0 +1,76 @@
+{
+	"aisles": [
+		{
+			"slices": [["#XXX#", "XXXXX", "#XXX#"]]
+		},
+		{
+			"slices": [["XXXXX", "XAPAX", "XXXXX"]]
+		},
+		{
+			"slices": [["XXXXX", "XPAPX", "XXXXX"]]
+		},
+		{
+			"slices": [["XXXXX", "XAPAX", "XXXXX"]]
+		},
+		{
+			"slices": [["#XXX#", "XX~XX", "#XXX#"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:vibration_safe_casing"
+					},
+					"minCount": 40
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2,
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_fluids"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_fluids"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:steel_pipe_casing"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

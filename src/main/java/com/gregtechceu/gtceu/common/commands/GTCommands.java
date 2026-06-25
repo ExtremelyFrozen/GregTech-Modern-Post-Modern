@@ -366,11 +366,12 @@ public class GTCommands {
     private static int reloadStructureCacheEntry(CommandSourceStack source, StructureDefinitionType type,
                                                  ResourceLocation id) {
         try {
-            StructureCache.reload(type, id);
+            int count = StructureCache.reloadMachine(type, id);
             schedulePatternReload(source, StructurePatternRegistry.reloadPatternAsync(type, id));
             source.sendSuccess(() -> Component.literal("Reloaded " + type.getDirectoryName() +
-                    " structure cache entry " + id + ", refreshing pattern asynchronously"), true);
-            return 1;
+                    " structure cache entries for " + id + ": " + count +
+                    " entries, refreshing patterns asynchronously"), true);
+            return count;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to reload " + type.getDirectoryName() +
                     " structure cache entry " + id + ": " + e.getMessage()));
