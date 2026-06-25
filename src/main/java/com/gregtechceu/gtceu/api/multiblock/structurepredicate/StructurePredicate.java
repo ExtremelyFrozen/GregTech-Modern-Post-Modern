@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -11,7 +10,6 @@ import net.minecraft.world.level.block.Block;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
@@ -37,12 +35,6 @@ public interface StructurePredicate {
 
     private static MapCodec<? extends StructurePredicate> dispatchCodec(StructurePredicateType<?> type) {
         return type.codec();
-    }
-
-    @Contract(" -> new")
-    @Deprecated // TODO: remove when this new design fully replaces the old one
-    default SimplePredicate asLegacy() {
-        throw new UnsupportedOperationException();
     }
 
     @Unmodifiable
@@ -71,5 +63,9 @@ public interface StructurePredicate {
 
     default boolean hasAir() {
         return false;
+    }
+
+    default boolean addCache() {
+        return !isAny();
     }
 }

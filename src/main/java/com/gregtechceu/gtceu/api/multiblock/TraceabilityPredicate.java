@@ -279,7 +279,9 @@ public class TraceabilityPredicate {
     }
 
     public boolean addCache() {
-        return !isAny();
+        return common.stream().anyMatch(SimplePredicate::addCache) ||
+                limited.stream().anyMatch(SimplePredicate::addCache) ||
+                structurePredicates.stream().anyMatch(StructurePredicate::addCache);
     }
 
     public boolean isAir() {

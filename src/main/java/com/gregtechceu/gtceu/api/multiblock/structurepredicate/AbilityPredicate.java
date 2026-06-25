@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-import com.gregtechceu.gtceu.api.multiblock.predicates.PredicateBlocks;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
@@ -38,11 +37,6 @@ public record AbilityPredicate(List<PartAbility> abilities) implements Structure
     @Override
     public StructurePredicateType<?> type() {
         return StructurePredicateType.ABILITIES;
-    }
-
-    @Override
-    public PredicateBlocks asLegacy() {
-        return new PredicateBlocks(blockCandidates().toArray(Block[]::new));
     }
 
     @Override
