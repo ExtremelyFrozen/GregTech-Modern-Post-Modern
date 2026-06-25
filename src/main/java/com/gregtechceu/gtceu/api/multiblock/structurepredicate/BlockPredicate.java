@@ -14,6 +14,7 @@ import net.neoforged.neoforge.common.util.Lazy;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -71,5 +72,24 @@ public final class BlockPredicate implements StructurePredicate {
 
     public List<Block> blocks() {
         return blocks.get();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (BlockPredicate) obj;
+        return Objects.equals(this.blockIds(), that.blockIds());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(blockIds());
+    }
+
+    @Override
+    public String toString() {
+        return "BlockPredicate[" +
+                "blockIds=" + blockIds() + ']';
     }
 }
