@@ -1,0 +1,76 @@
+{
+	"aisles": [
+		{
+			"slices": [["XX~XX", "XXXXX", "XXXXX", "XXXXX", "XXXXX"]]
+		},
+		{
+			"slices": [["XXXXX", "XCCCX", "XCCCX", "XCCCX", "XXXXX"]]
+		},
+		{
+			"repeat": {
+				"min": 1,
+				"max": 18
+			},
+			"slices": [["GGGGG", "GBBBG", "GBBBG", "GBBBG", "GGGGG"]]
+		},
+		{
+			"slices": [["GGGGG", "GGGGG", "GGGGG", "GGGGG", "GGGGG"]]
+		}
+	],
+	"predicates": {
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:palladium_substation_casing"
+		},
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:palladium_substation_casing"
+					},
+					"minCount": 14
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": false
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": [
+							"input_energy",
+							"substation_input_energy",
+							"input_laser"
+						]
+					},
+					"minCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": [
+							"output_energy",
+							"substation_output_energy",
+							"output_laser"
+						]
+					},
+					"minCount": 1
+				}
+			]
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:laminated_glass"
+		},
+		"B": {
+			"type": "gtpm:power_substation_batteries"
+		}
+	}
+}

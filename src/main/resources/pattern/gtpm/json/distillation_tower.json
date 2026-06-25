@@ -1,0 +1,110 @@
+{
+	"aisles": [
+		{
+			"slices": [["Y~Y", "YYY", "YYY"]]
+		},
+		{
+			"slices": [["ZZZ", "Z#Z", "ZZZ"]]
+		},
+		{
+			"repeat": {
+				"min": 0,
+				"max": 10
+			},
+			"slices": [["XXX", "X#X", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "XXX", "XXX"]]
+		}
+	],
+	"predicates": {
+		"Y": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:clean_machine_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "export_items"
+					},
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "import_fluids"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "maintenance"
+					},
+					"maxCount": 1
+				}
+			]
+		},
+		"Z": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:clean_machine_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "export_fluids_1x"
+					},
+					"maxCountByLayer": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "maintenance"
+					},
+					"maxCount": 1
+				}
+			]
+		},
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:clean_machine_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "export_fluids_1x"
+					},
+					"maxCountByLayer": 1
+				}
+			]
+		},
+		"#": {
+			"type": "gtpm:air"
+		}
+	}
+}

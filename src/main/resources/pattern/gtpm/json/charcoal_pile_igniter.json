@@ -1,37 +1,33 @@
 {
 	"aisles": [
 		{
-			"slices": [["     ", " XXX ", " XXX ", " XXX ", "     "]]
+			"slices": [["AAAAA", "ABBAA", "ABBAA", "AAAAA", "AAAAA"]]
 		},
 		{
-			"slices": [[" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD "]]
+			"repeat": {
+				"min": 1,
+				"max": 4
+			},
+			"slices": [["AWWWA", "WLLLW", "WLLLW", "WLLLW", "AWWWA"]]
 		},
 		{
-			"slices": [[" BBB ", "XCCCX", "XCCCX", "XCCCX", " D~D "]]
-		},
-		{
-			"slices": [[" BBB ", "XCCCX", "XCCCX", "XCCCX", " DDD "]]
-		},
-		{
-			"slices": [["     ", " XXX ", " XXX ", " XXX ", "     "]]
+			"slices": [["AAAAA", "AWWWA", "AW~WA", "AWWWA", "AAAAA"]]
 		}
 	],
 	"predicates": {
+		"A": {
+			"type": "gtpm:any"
+		},
 		"B": {
 			"type": "gtpm:blocks",
 			"blocks": "minecraft:bricks"
 		},
-		"C": {
-			"type": "gtpm:blocks",
-			"blocks": "minecraft:oak_log"
+		"W": {
+			"type": "gtpm:block_tags",
+			"blockTagKeys": "gtpm:charcoal_pile_igniter_walls"
 		},
-		"D": {
-			"type": "gtpm:blocks",
-			"blocks": "minecraft:dirt"
-		},
-		"X": {
-			"type": "gtpm:blocks",
-			"blocks": "minecraft:dirt"
+		"L": {
+			"type": "gtpm:charcoal_log_or_air"
 		}
 	}
 }

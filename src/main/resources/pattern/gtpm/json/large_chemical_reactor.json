@@ -1,0 +1,71 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "XCX", "XXX"]]
+		},
+		{
+			"slices": [["XCX", "CPC", "XCX"]]
+		},
+		{
+			"slices": [["XXX", "X~X", "XXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:inert_machine_casing"
+					},
+					"minCount": 10
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": false
+				}
+			]
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:ptfe_pipe_casing"
+		},
+		"C": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:heating_coils"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": false
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:inert_machine_casing"
+					},
+					"minCount": 10
+				}
+			]
+		}
+	}
+}

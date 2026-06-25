@@ -1,0 +1,35 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "XXX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "X#X", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "X~X", "XXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:coke_oven_bricks"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:coke_oven_hatch"
+					},
+					"maxCount": 5
+				}
+			]
+		},
+		"#": {
+			"type": "gtpm:air"
+		}
+	}
+}

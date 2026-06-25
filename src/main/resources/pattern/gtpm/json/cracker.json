@@ -1,0 +1,91 @@
+{
+	"aisles": [
+		{
+			"slices": [["HCHCH", "HCHCH", "HCHCH"]]
+		},
+		{
+			"slices": [["HCHCH", "H###H", "HCHCH"]]
+		},
+		{
+			"slices": [["HCHCH", "HC~CH", "HCHCH"]]
+		}
+	],
+	"predicates": {
+		"O": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:clean_machine_casing"
+					},
+					"minCount": 12
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_fluids"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_fluids"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": true,
+					"checkParallel": false
+				}
+			]
+		},
+		"H": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:clean_machine_casing"
+					},
+					"minCount": 12
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_fluids"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_fluids"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": true,
+					"checkParallel": false
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:heating_coils"
+		},
+		"#": {
+			"type": "gtpm:air"
+		}
+	}
+}

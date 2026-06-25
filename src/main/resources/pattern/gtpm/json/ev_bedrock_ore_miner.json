@@ -1,0 +1,58 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "#F#", "#F#", "#F#", "###", "###", "###"]]
+		},
+		{
+			"slices": [["XXX", "FCF", "FCF", "FCF", "#F#", "#F#", "#F#"]]
+		},
+		{
+			"slices": [["X~X", "#F#", "#F#", "#F#", "###", "###", "###"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:robust_machine_casing"
+					},
+					"minCount": 3
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2,
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "export_items"
+					},
+					"maxCount": 1,
+					"previewCount": 1
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:robust_machine_casing"
+		},
+		"F": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tungstensteel_frame"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

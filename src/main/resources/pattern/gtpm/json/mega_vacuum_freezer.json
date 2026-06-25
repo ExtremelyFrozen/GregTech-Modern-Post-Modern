@@ -1,0 +1,128 @@
+{
+	"aisles": [
+		{
+			"slices": [
+				[
+					"XXXXXXX#KKK",
+					"XXXXXXX#KVK",
+					"XXXXXXX#KVK",
+					"XXXXXXX#KVK",
+					"XXXXXXX#KKK",
+					"XXXXXXX####",
+					"XXXXXXX####"
+				]
+			]
+		},
+		{
+			"slices": [
+				[
+					"XXXXXXX#KVK",
+					"XPPPPPPPPPV",
+					"XPAPAPX#VPV",
+					"XPPPPPPPPPV",
+					"XPAPAPX#KVK",
+					"XPPPPPX####",
+					"XXXXXXX####"
+				]
+			]
+		},
+		{
+			"slices": [
+				[
+					"XXXXXXX#KVK",
+					"XPAPAPX#VPV",
+					"XAAAAAX#VPV",
+					"XPAAAPX#VPV",
+					"XAAAAAX#KVK",
+					"XPAPAPX####",
+					"XXXXXXX####"
+				]
+			]
+		},
+		{
+			"slices": [
+				[
+					"XXXXXXX#KVK",
+					"XPAPAPPPPPV",
+					"XAAAAAX#VPV",
+					"XPAAAPPPPPV",
+					"XAAAAAX#KVK",
+					"XPAPAPX####",
+					"XXXXXXX####"
+				]
+			]
+		},
+		{
+			"slices": [
+				[
+					"XXXXXXX#KKK",
+					"XPPPPPX#KVK",
+					"XPA#APX#KVK",
+					"XPAAAPX#KVK",
+					"XPAAAPX#KKK",
+					"XPPPPPX####",
+					"XXXXXXX####"
+				]
+			]
+		},
+		{
+			"slices": [
+				[
+					"#XXXXX#####",
+					"#XX~XX#####",
+					"#XGGGX#####",
+					"#XGGGX#####",
+					"#XGGGX#####",
+					"#XXXXX#####",
+					"###########"
+				]
+			]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:frostproof_machine_casing"
+					},
+					"minCount": 140
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tempered_glass"
+		},
+		"K": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:clean_machine_casing"
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tungstensteel_pipe_casing"
+		},
+		"V": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:heat_vent"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

@@ -1,0 +1,48 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXXXXXX", "XXXXXXX", "XXXXXXX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "XAXGGGX", "XXXXXXX"]]
+		},
+		{
+			"slices": [["XXXXXXX", "X~XCCCX", "XXXXXXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:stress_proof_casing"
+					},
+					"minCount": 40
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:steel_gearbox"
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tempered_glass"
+		},
+		"A": {
+			"type": "gtpm:air"
+		}
+	}
+}

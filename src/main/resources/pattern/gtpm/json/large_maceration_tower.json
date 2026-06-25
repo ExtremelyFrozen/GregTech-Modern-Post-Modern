@@ -1,0 +1,50 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXXXX", "XXXXX", "XXXXX", "XXXXX"]]
+		},
+		{
+			"slices": [["XXXXX", "XGGGX", "XGGGX", "XAAAX"]]
+		},
+		{
+			"slices": [["XXXXX", "XGGGX", "XGGGX", "XAAAX"]]
+		},
+		{
+			"slices": [["XXXXX", "XGGGX", "XGGGX", "XAAAX"]]
+		},
+		{
+			"slices": [["XXXXX", "XXXXX", "XX~XX", "XXXXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:secure_maceration_casing"
+					},
+					"minCount": 55
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:crushing_wheels"
+		},
+		"A": {
+			"type": "gtpm:air"
+		}
+	}
+}
