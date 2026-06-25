@@ -45,7 +45,7 @@ public class SteamEnergyRecipeHandler implements IRecipeHandler<EnergyStack> {
                 List<SizedFluidIngredient> list = new ArrayList<>();
                 list.add(steam);
                 List<SizedFluidIngredient> leftSteam = steamTank.handleRecipeInner(io, recipe, list, simulate);
-                if (leftSteam == null || leftSteam.isEmpty()) {
+                if (leftSteam.isEmpty()) {
                     it.remove();
                 } else {
                     totalEU = (long) (leftSteam.get(0).amount() / conversionRate);
@@ -53,7 +53,7 @@ public class SteamEnergyRecipeHandler implements IRecipeHandler<EnergyStack> {
                 }
             }
         }
-        return left.isEmpty() ? null : left;
+        return left;
     }
 
     @Override
