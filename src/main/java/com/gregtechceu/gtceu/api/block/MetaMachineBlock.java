@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.feature.*;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
@@ -189,7 +190,7 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
                 definition.getId().getPath());
         if (GTUtil.isShiftDown()) {
             if (definition instanceof MultiblockMachineDefinition multiblockDefinition) {
-                var pattern = multiblockDefinition.getPattern();
+                var pattern = multiblockDefinition.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
                 if (pattern != null) {
                     tooltip.add(Component.translatable("gtpm.multiblock.dimension", pattern.getFingerLength(),
                             pattern.getThumbLength(), pattern.getPalmLength()));

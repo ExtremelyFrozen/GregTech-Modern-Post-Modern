@@ -27,17 +27,18 @@ public class TerminalBehavior implements IInteractionItem {
                     MetaMachine.getMachine(level, blockPos) instanceof MultiblockControllerMachine controller) {
                 if (!controller.isFormed()) {
                     if (!level.isClientSide) {
-                        BlockPattern pattern = controller.getPattern();
+                        BlockPattern pattern = controller.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
                         if (pattern == null) {
                             StructurePatternRegistry.reloadPatternAsync(controller.getDefinition().getId()).join();
-                            pattern = controller.getPattern();
+                            pattern = controller.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
                         }
                         if (pattern == null) {
                             GTCEu.LOGGER.warn("Cannot auto-build {}, structure pattern is not initialized",
                                     controller.getDefinition().getId());
                             return InteractionResult.PASS;
                         }
-                        pattern.autoBuild(context.getPlayer(), controller.getMultiblockState());
+                        pattern.autoBuild(context.getPlayer(),
+                                controller.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE));
                     }
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }

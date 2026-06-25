@@ -29,11 +29,8 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     @Getter
     @Setter
     private boolean generator;
-    @NotNull
-    private Function<MultiblockMachineDefinition, BlockPattern> patternFactory;
-    @Getter
-    @Nullable
-    private volatile BlockPattern pattern;
+    private final Map<String, Function<MultiblockMachineDefinition, BlockPattern>> patternFactories = new LinkedHashMap<>();
+    private final Map<String, BlockPattern> patterns = new LinkedHashMap<>();
     @Setter
     @Getter
     private Supplier<List<MultiblockShapeInfo>> shapes;
@@ -67,26 +64,58 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     public List<MultiblockShapeInfo> getMatchingShapes() {
         var designs = shapes.get();
         if (!designs.isEmpty()) return designs;
-        var structurePattern = getPattern();
+        var structurePattern = Objects.requireNonNull(getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE),
+                () -> "Missing main structure pattern for " + getId());
         int[][] aisleRepetitions = structurePattern.aisleRepetitions;
         return repetitionDFS(structurePattern, new ArrayList<>(), aisleRepetitions, new IntArrayList());
     }
 
-    public void setPatternFactory(@NotNull Function<MultiblockMachineDefinition, BlockPattern> patternFactory) {
-        this.patternFactory = Objects.requireNonNull(patternFactory);
-        StructurePatternRegistry.registerJavaDefinition(this);
+    public void setPatternFactory(@NotNull String structureName,
+                                  @NotNull Function<MultiblockMachineDefinition, BlockPattern> patternFactory) {
+        structureName = validateStructureName(structureName);
+        this.patternFactories.put(structureName, Objects.requireNonNull(patternFactory));
+        StructurePatternRegistry.registerJavaDefinition(this, structureName);
     }
 
-    public void reloadPattern() {
-        if (patternFactory != null) {
-            synchronized (this) {
-                pattern = StructurePatternRegistry.resolvePattern(this);
-            }
+    public @Nullable BlockPattern getPattern(@NotNull String structureName) {
+        structureName = validateStructureName(structureName);
+        requirePatternFactory(structureName);
+        synchronized (this.patterns) {
+            return this.patterns.get(structureName);
         }
     }
 
-    public BlockPattern createJavaPattern() {
-        return patternFactory.apply(this);
+    public void reloadPattern(@NotNull String structureName) {
+        structureName = validateStructureName(structureName);
+        requirePatternFactory(structureName);
+        synchronized (this.patterns) {
+            patterns.put(structureName, StructurePatternRegistry.resolvePattern(this, structureName));
+        }
+    }
+
+    public BlockPattern createJavaPattern(@NotNull String structureName) {
+        structureName = validateStructureName(structureName);
+        return requirePatternFactory(structureName).apply(this);
+    }
+
+    public Set<String> getStructureNames() {
+        return Collections.unmodifiableSet(this.patternFactories.keySet());
+    }
+
+    private Function<MultiblockMachineDefinition, BlockPattern> requirePatternFactory(String structureName) {
+        Function<MultiblockMachineDefinition, BlockPattern> factory = this.patternFactories.get(structureName);
+        if (factory == null) {
+            throw new IllegalArgumentException("Unknown multiblock structure '" + structureName + "' for " + getId());
+        }
+        return factory;
+    }
+
+    private static String validateStructureName(String structureName) {
+        Objects.requireNonNull(structureName, "structureName");
+        if (structureName.isBlank()) {
+            throw new IllegalArgumentException("structureName must not be blank");
+        }
+        return structureName;
     }
 
     private List<MultiblockShapeInfo> repetitionDFS(BlockPattern pattern, List<MultiblockShapeInfo> pages,

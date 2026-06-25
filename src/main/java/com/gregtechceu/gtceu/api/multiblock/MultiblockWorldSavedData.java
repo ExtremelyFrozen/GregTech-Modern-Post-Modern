@@ -37,7 +37,7 @@ public class MultiblockWorldSavedData extends SavedData {
     /**
      * Store all formed multiblocks' structure info
      */
-    public final Map<BlockPos, MultiblockState> mapping;
+    public final Map<StructureMappingKey, MultiblockState> mapping;
     /**
      * Chunk pos mapping.
      */
@@ -57,14 +57,14 @@ public class MultiblockWorldSavedData extends SavedData {
     }
 
     public void addMapping(MultiblockState state) {
-        this.mapping.put(state.controllerPos, state);
+        this.mapping.put(StructureMappingKey.from(state), state);
         for (BlockPos blockPos : state.getCache()) {
             chunkPosMapping.computeIfAbsent(new ChunkPos(blockPos), c -> new HashSet<>()).add(state);
         }
     }
 
     public void removeMapping(MultiblockState state) {
-        this.mapping.remove(state.controllerPos);
+        this.mapping.remove(StructureMappingKey.from(state));
         for (Set<MultiblockState> set : chunkPosMapping.values()) {
             set.remove(state);
         }
@@ -145,5 +145,12 @@ public class MultiblockWorldSavedData extends SavedData {
             executorService.shutdownNow();
         }
         executorService = null;
+    }
+
+    public record StructureMappingKey(BlockPos controllerPos, String structureName) {
+
+        public static StructureMappingKey from(MultiblockState state) {
+            return new StructureMappingKey(state.controllerPos, state.getStructureName());
+        }
     }
 }

@@ -65,17 +65,21 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
     // *** Multiblock Lifecycle ***//
     //////////////////////////////////////
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
-        this.energyContainer = null;
-        this.tier = 0;
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            this.energyContainer = null;
+            this.tier = 0;
+        }
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
-        this.energyContainer = getEnergyContainer();
-        this.tier = GTUtil.getFloorTierByVoltage(getMaxVoltage());
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            this.energyContainer = getEnergyContainer();
+            this.tier = GTUtil.getFloorTierByVoltage(getMaxVoltage());
+        }
     }
 
     @Override

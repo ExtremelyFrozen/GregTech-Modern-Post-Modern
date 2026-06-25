@@ -169,8 +169,9 @@ public class TestUtils {
      * Ideally this doesn't need to happen, but it seems not doing this makes the multiblock tests flakey
      */
     public static void formMultiblock(MultiblockControllerMachine controller) {
-        controller.getPattern().checkPatternAt(controller.getMultiblockState(), false);
-        controller.onStructureFormed();
+        controller.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                .checkPatternAt(controller.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE), false);
+        controller.formStructure(MultiblockControllerMachine.DEFAULT_STRUCTURE);
     }
 
     /**
