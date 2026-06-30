@@ -24,7 +24,7 @@ public class SteamBoilerBlockProvider extends MachineInfoProvider<SteamBoilerMac
     @Override
     protected CompoundTag write(SteamBoilerMachine machine) {
         CompoundTag data = new CompoundTag();
-        data.putBoolean("isBurning", machine.getRecipeLogic().isWorking());
+        data.putBoolean("isBurning", machine.getWorkLogic().isWorking());
         data.putBoolean("hasWater", !machine.isHasNoWater());
         data.putLong("steamProduction", machine.getTotalSteamOutput());
         data.putInt("currentTemperature", machine.getCurrentTemperature());

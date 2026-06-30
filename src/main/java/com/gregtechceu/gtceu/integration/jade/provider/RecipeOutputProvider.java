@@ -52,7 +52,7 @@ public class RecipeOutputProvider extends MachineTraitProvider<RecipeLogic, Comp
     @Override
     protected CompoundTag write(RecipeLogic recipeLogic) {
         CompoundTag data = new CompoundTag();
-        if (!recipeLogic.isWorking()) {
+        if (!recipeLogic.getWorkMachine().getWorkLogic().isWorking()) {
             return data;
         }
         data.putBoolean("Working", true);

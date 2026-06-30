@@ -45,13 +45,13 @@ public class FusionRingRender extends DynamicRender<FusionReactorMachine, Fusion
 
     @Override
     public boolean shouldRender(FusionReactorMachine machine, Vec3 cameraPos) {
-        return (machine.recipeLogic.isWorking() || machine.delta > 0) && super.shouldRender(machine, cameraPos);
+        return (machine.getWorkLogic().isWorking() || machine.delta > 0) && super.shouldRender(machine, cameraPos);
     }
 
     @Override
     public void render(FusionReactorMachine machine, float partialTick, PoseStack poseStack, MultiBufferSource buffer,
                        int packedLight, int packedOverlay) {
-        if (!machine.recipeLogic.isWorking() && machine.delta <= 0) {
+        if (!machine.getWorkLogic().isWorking() && machine.delta <= 0) {
             return;
         }
 
@@ -76,7 +76,7 @@ public class FusionRingRender extends DynamicRender<FusionReactorMachine, Fusion
         RenderSystem.depthFunc(GL11.GL_ALWAYS);
 
         float alpha = 1f;
-        if (machine.recipeLogic.isWorking()) {
+        if (machine.getWorkLogic().isWorking()) {
             machine.lastColor = machine.getColor();
             machine.delta = FADEOUT;
         } else {
@@ -111,7 +111,7 @@ public class FusionRingRender extends DynamicRender<FusionReactorMachine, Fusion
 
     @Override
     public boolean shouldRenderOffScreen(FusionReactorMachine machine) {
-        return machine.recipeLogic.isWorking() || machine.delta > 0;
+        return machine.getWorkLogic().isWorking() || machine.delta > 0;
     }
 
     @Override

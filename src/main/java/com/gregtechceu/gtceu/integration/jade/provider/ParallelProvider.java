@@ -30,7 +30,7 @@ public class ParallelProvider extends MachineInfoProvider<MetaMachine, CompoundT
             data.putInt("parallel", parallelHatch.getCurrentParallel());
         } else if (machine instanceof MultiblockControllerMachine controller) {
             if (controller instanceof IRecipeLogicMachine rlm &&
-                    rlm.getRecipeLogic().isActive() &&
+                    rlm.getWorkLogic().isActive() &&
                     rlm.getRecipeLogic().getLastRecipe() != null) {
                 data.putInt("parallel", rlm.getRecipeLogic().getLastRecipe().parallels);
                 data.putInt("batch", rlm.getRecipeLogic().getLastRecipe().batchParallels);
