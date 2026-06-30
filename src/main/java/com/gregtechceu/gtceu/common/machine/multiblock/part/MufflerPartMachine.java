@@ -8,8 +8,8 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.IWorkLogicMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IWorkableMultiController;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
@@ -85,8 +85,8 @@ public class MufflerPartMachine extends TieredPartMachine implements IUIMachine 
     public void clientTick() {
         super.clientTick();
         for (MultiblockControllerMachine controller : getControllers()) {
-            if (controller instanceof IRecipeLogicMachine recipeLogicMachine &&
-                    recipeLogicMachine.getRecipeLogic().isWorking()) {
+            if (controller instanceof IWorkLogicMachine workLogicMachine && workLogicMachine.getWorkLogic()
+                    .isWorking()) {
                 emitPollutionParticles();
                 break;
             }
@@ -129,8 +129,8 @@ public class MufflerPartMachine extends TieredPartMachine implements IUIMachine 
     private void tryBreakSnow() {
         if (getOffsetTimer() % 10 == 0) {
             for (MultiblockControllerMachine controller : getControllers()) {
-                if (controller instanceof IRecipeLogicMachine recipeLogicMachine &&
-                        recipeLogicMachine.getRecipeLogic().isWorking()) {
+                if (controller instanceof IWorkLogicMachine workLogicMachine && workLogicMachine.getWorkLogic()
+                        .isWorking()) {
                     BlockPos mufflerPos = getBlockPos().relative(getFrontFacing());
                     GTUtil.tryBreakSnow(getLevel(), mufflerPos, getLevel().getBlockState(mufflerPos), true);
                 }

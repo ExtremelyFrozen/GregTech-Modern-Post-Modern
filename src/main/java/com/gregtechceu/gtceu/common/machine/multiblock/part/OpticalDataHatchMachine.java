@@ -40,13 +40,13 @@ public class OpticalDataHatchMachine extends MultiblockPartMachine implements IO
 
         if (isTransmitter()) {
             MultiblockControllerMachine controller = getControllers().first();
-            if (!(controller instanceof IWorkableMultiController workable) || !workable.getRecipeLogic().isWorking())
+            if (!(controller instanceof IWorkableMultiController workable) || !workable.getWorkLogic().isWorking())
                 return false;
 
             List<IDataAccessHatch> dataAccesses = new ArrayList<>();
             List<IDataAccessHatch> transmitters = new ArrayList<>();
             for (var part : controller.getParts()) {
-                net.minecraft.world.level.block.Block block = part.self().getBlockState().getBlock();
+                var block = part.self().getBlockState().getBlock();
                 if (part instanceof IDataAccessHatch hatch && PartAbility.DATA_ACCESS.isApplicable(block)) {
                     dataAccesses.add(hatch);
                 }

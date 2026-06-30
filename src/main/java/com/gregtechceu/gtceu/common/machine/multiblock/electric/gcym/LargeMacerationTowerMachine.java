@@ -78,7 +78,7 @@ public class LargeMacerationTowerMachine extends WorkableElectricMultiblockMachi
             if (entity instanceof ItemEntity ie) {
                 itemEntities.add(ie);
             } else {
-                if (recipeLogic.isWorking()) {
+                if (getWorkLogic().isWorking()) {
                     entity.hurt(entity.damageSources().cramming(), 2.0f);
                 }
             }
