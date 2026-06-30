@@ -241,8 +241,9 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         // Don't drain heat when there is not enough energy and there is still some recipe progress, as that makes it
         // doubly hard to complete the recipe
         // (Will have to recover heat and recipe progress)
-        if ((getRecipeLogic().isIdle() || !isWorkingEnabled() ||
-                (getRecipeLogic().isWaiting() && getRecipeLogic().getProgress() == 0)) && heat > 0) {
+        var workLogic = getWorkLogic();
+        if ((workLogic.isIdle() || !workLogic.isWorkingEnabled() ||
+                (workLogic.isWaiting() && getRecipeLogic().getProgress() == 0)) && heat > 0) {
             heat = heat <= 10000 ? 0 : (heat - 10000);
         }
         // charge the internal energy storage

@@ -370,6 +370,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     @Override
     public void addDisplayText(List<Component> textList) {
         if (isFormed()) {
+            var workLogic = getWorkLogic();
             var maxVoltage = getMaxVoltage();
             if (maxVoltage > 0) {
                 String voltageName = GTValues.VNF[GTUtil.getFloorTierByVoltage(maxVoltage)];
@@ -380,10 +381,10 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
                 textList.add(Component.translatable(cleanroomType.translationKey()));
             }
 
-            if (!isWorkingEnabled()) {
+            if (!workLogic.isWorkingEnabled()) {
                 textList.add(Component.translatable("gtpm.multiblock.work_paused"));
 
-            } else if (isActive()) {
+            } else if (workLogic.isActive()) {
                 textList.add(Component.translatable("gtpm.multiblock.running"));
                 int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
                 double maxInSec = (float) recipeLogic.getDuration() / 20.0f;
@@ -395,7 +396,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
                 textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
-            if (recipeLogic.isWaiting()) {
+            if (workLogic.isWaiting()) {
                 textList.add(Component.translatable("gtpm.multiblock.waiting")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }

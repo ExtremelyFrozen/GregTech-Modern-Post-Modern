@@ -323,11 +323,6 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
                         list.addAll(workLogic.getFancyTooltip());
                         waitingDisplayed = true;
                     }
-                } else if (recipeLogic != null && recipeLogic.isWaiting()) {
-                    list.add(Component.translatable("behavior.portable_scanner.divider"));
-                    list.add(Component.translatable("gtpm.multiblock.waiting"));
-                    list.addAll(recipeLogic.getFancyTooltip());
-                    waitingDisplayed = true;
                 }
                 if (recipeLogic != null) {
                     GTRecipe recipe = recipeLogic.getLastRecipe();

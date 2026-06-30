@@ -128,16 +128,17 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine im
     public void addDisplayText(List<Component> textList) {
         IDisplayUIMachine.super.addDisplayText(textList);
         if (isFormed()) {
+            var workLogic = getWorkLogic();
             if (steamEnergy != null && steamEnergy.getCapacity() > 0) {
                 long steamStored = steamEnergy.getStored();
                 textList.add(Component.translatable("gtpm.multiblock.steam.steam_stored", steamStored,
                         steamEnergy.getCapacity()));
             }
 
-            if (!isWorkingEnabled()) {
+            if (!workLogic.isWorkingEnabled()) {
                 textList.add(Component.translatable("gtpm.multiblock.work_paused"));
 
-            } else if (isActive()) {
+            } else if (workLogic.isActive()) {
                 textList.add(Component.translatable("gtpm.multiblock.running"));
                 if (maxParallels > 1) textList.add(Component.translatable("gtpm.multiblock.parallel", maxParallels));
                 int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
@@ -150,7 +151,7 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine im
                 textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
-            if (recipeLogic.isWaiting()) {
+            if (workLogic.isWaiting()) {
                 textList.add(Component.translatable("gtpm.multiblock.steam.low_steam")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }

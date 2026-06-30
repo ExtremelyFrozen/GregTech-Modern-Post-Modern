@@ -29,8 +29,8 @@ public class RecipeAmperageEnergyContainer extends NotifiableEnergyContainer {
 
     @Override
     public long getInputAmperage() {
-        var recipeLogic = getMachine().getTrait(RecipeLogic.TYPE);
-        if (recipeLogic == null) return 0;
+        var recipeMachine = (IRecipeLogicMachine) getMachine();
+        var recipeLogic = recipeMachine.getRecipeLogic();
         var lastRecipe = recipeLogic.getLastRecipe();
         long amperage;
         if (lastRecipe != null) {
@@ -38,7 +38,7 @@ public class RecipeAmperageEnergyContainer extends NotifiableEnergyContainer {
         } else {
             amperage = super.getInputAmperage();
         }
-        if (getEnergyCapacity() / 2 > getEnergyStored() && recipeLogic.isActive()) {
+        if (getEnergyCapacity() / 2 > getEnergyStored() && recipeMachine.getWorkLogic().isActive()) {
             return amperage + 1;
         } else {
             return amperage;
@@ -47,8 +47,7 @@ public class RecipeAmperageEnergyContainer extends NotifiableEnergyContainer {
 
     @Override
     public long getOutputAmperage() {
-        var recipeLogic = getMachine().getTrait(RecipeLogic.TYPE);
-        if (recipeLogic == null) return 0;
+        var recipeLogic = ((IRecipeLogicMachine) getMachine()).getRecipeLogic();
         var lastRecipe = recipeLogic.getLastRecipe();
         if (lastRecipe != null) {
             return lastRecipe.getOutputEUt().amperage();
