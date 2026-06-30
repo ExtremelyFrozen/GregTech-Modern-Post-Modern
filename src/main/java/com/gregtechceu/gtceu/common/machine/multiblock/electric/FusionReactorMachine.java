@@ -15,6 +15,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMa
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
 import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
@@ -290,6 +291,17 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         long euToStart = RecipeData.getLong(recipe.data, "eu_to_start");
         if (euToStart <= 0) return;
         int recipeTier = RecipeHelper.getPreOCRecipeEuTier(recipe);
+        addEUToStartLabel(group, euToStart, recipeTier);
+    }
+
+    public static void addEUToStartLabel(GTRecipeDefinition recipe, WidgetGroup group) {
+        long euToStart = RecipeData.getLong(recipe.data, "eu_to_start");
+        if (euToStart <= 0) return;
+        int recipeTier = RecipeHelper.getPreOCRecipeEuTier(recipe);
+        addEUToStartLabel(group, euToStart, recipeTier);
+    }
+
+    private static void addEUToStartLabel(WidgetGroup group, long euToStart, int recipeTier) {
         int fusionTier = findCeilingTier(euToStart);
         int tier = Math.max(MINIMUM_TIER, Math.max(recipeTier, fusionTier));
         group.addWidget(new LabelWidget(-8, group.getSizeHeight() - 10,

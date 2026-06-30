@@ -1,10 +1,13 @@
 package com.gregtechceu.gtceu.api.recipe;
 
+import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
+import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentListMap;
+import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.AbstractMapIngredient;
 
 import net.minecraft.core.HolderLookup;
@@ -126,6 +129,48 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
 
     public List<Content> getTickOutputContents(RecipeCapability<?> capability) {
         return tickOutputs.getOrDefault(capability, List.of());
+    }
+
+    public boolean hasTick() {
+        return !tickInputs.isEmpty() || !tickOutputs.isEmpty();
+    }
+
+    public EnergyStack getInputEUt() {
+        return calculateEUt(tickInputs);
+    }
+
+    public EnergyStack getOutputEUt() {
+        return calculateEUt(tickOutputs);
+    }
+
+    public ChanceLogic getChanceLogicForCapability(RecipeCapability<?> cap, IO io, boolean isTick) {
+        if (io == IO.OUT) {
+            if (isTick) {
+                return tickOutputChanceLogics.getOrDefault(cap, ChanceLogic.OR);
+            } else {
+                return outputChanceLogics.getOrDefault(cap, ChanceLogic.OR);
+            }
+        } else if (io == IO.IN) {
+            if (isTick) {
+                return tickInputChanceLogics.getOrDefault(cap, ChanceLogic.OR);
+            } else {
+                return inputChanceLogics.getOrDefault(cap, ChanceLogic.OR);
+            }
+        }
+        return ChanceLogic.OR;
+    }
+
+    private EnergyStack calculateEUt(ContentListMap contents) {
+        var outputs = contents.get(EURecipeCapability.CAP);
+        if (outputs == null) return EnergyStack.EMPTY;
+        long v = 0;
+        long a = 0;
+        for (var content : outputs) {
+            EnergyStack stack = EURecipeCapability.CAP.of(content.content);
+            v += stack.voltage();
+            a += stack.amperage();
+        }
+        return new EnergyStack(v, a);
     }
 
     public List<List<AbstractMapIngredient>> getInputMapIngredients() {

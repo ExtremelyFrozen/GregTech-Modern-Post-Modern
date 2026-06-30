@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.WidgetUtils;
 import com.gregtechceu.gtceu.api.gui.widget.PredicatedButtonWidget;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
@@ -58,7 +57,7 @@ public class GTRecipeWidget extends WidgetGroup {
     public static final int LINE_HEIGHT = 10;
 
     private final int xOffset;
-    private final GTRecipe recipe;
+    private final GTRecipeDefinition recipe;
     private final List<LabelWidget> recipeParaTexts = new ArrayList<>();
     private LabelWidget recipeVoltageText = null;
     private final int minTier;
@@ -66,7 +65,7 @@ public class GTRecipeWidget extends WidgetGroup {
     private int yOffset;
     private LabelWidget voltageTextWidget;
 
-    public GTRecipeWidget(GTRecipe recipe) {
+    public GTRecipeWidget(GTRecipeDefinition recipe) {
         super(getXOffset(recipe), 0, recipe.recipeType.getRecipeUI().getJEISize().width,
                 recipe.recipeType.getRecipeUI().getJEISize().height);
         this.recipe = recipe;
@@ -78,11 +77,7 @@ public class GTRecipeWidget extends WidgetGroup {
         addButtons();
     }
 
-    public GTRecipeWidget(GTRecipeDefinition recipe) {
-        this(recipe.toRuntime());
-    }
-
-    private static int getXOffset(GTRecipe recipe) {
+    private static int getXOffset(GTRecipeDefinition recipe) {
         if (recipe.recipeType.getRecipeUI().getOriginalWidth() != recipe.recipeType.getRecipeUI().getJEISize().width) {
             return (recipe.recipeType.getRecipeUI().getJEISize().width -
                     recipe.recipeType.getRecipeUI().getOriginalWidth()) / 2;
@@ -199,7 +194,7 @@ public class GTRecipeWidget extends WidgetGroup {
     }
 
     @NotNull
-    private static List<Component> getRecipeParaText(GTRecipe recipe, int duration,
+    private static List<Component> getRecipeParaText(GTRecipeDefinition recipe, int duration,
                                                      EnergyStack.WithIO eu) {
         List<Component> texts = new ArrayList<>();
         if (!RecipeData.getBoolean(recipe.data, "hide_duration")) {
@@ -359,7 +354,8 @@ public class GTRecipeWidget extends WidgetGroup {
     }
 
     public void collectStorage(Table<IO, RecipeCapability<?>, Object> extraTable,
-                               Table<IO, RecipeCapability<?>, List<Content>> extraContents, GTRecipe recipe) {
+                               Table<IO, RecipeCapability<?>, List<Content>> extraContents,
+                               GTRecipeDefinition recipe) {
         for (var entry : recipe.inputs.entrySet()) {
             RecipeCapability<?> cap = entry.getKey();
             List<Content> contents = entry.getValue();
@@ -431,7 +427,7 @@ public class GTRecipeWidget extends WidgetGroup {
     }
 
     public void addSlots(Table<IO, RecipeCapability<?>, List<Content>> contentTable, WidgetGroup group,
-                         GTRecipe recipe) {
+                         GTRecipeDefinition recipe) {
         for (var capabilityEntry : contentTable.rowMap().entrySet()) {
             IO io = capabilityEntry.getKey();
             for (var contentsEntry : capabilityEntry.getValue().entrySet()) {

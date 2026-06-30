@@ -420,7 +420,7 @@ public class GTRecipeTypes {
                 List<HolderSet<Fluid>> fluids = new ArrayList<>();
                 for (RecipeCondition condition : recipe.conditions) {
                     if (condition instanceof AdjacentFluidCondition adjacentFluid) {
-                        fluids.addAll(adjacentFluid.getOrInitFluids(recipe));
+                        fluids.addAll(adjacentFluid.getOrInitFluids(recipe.data));
                     }
                 }
                 if (fluids.isEmpty()) {

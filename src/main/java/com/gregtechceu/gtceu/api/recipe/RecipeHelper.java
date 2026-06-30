@@ -46,6 +46,12 @@ public class RecipeHelper {
         return recipe.getOutputEUt();
     }
 
+    public static EnergyStack getRealEUt(@NotNull GTRecipeDefinition recipe) {
+        EnergyStack stack = recipe.getInputEUt();
+        if (!stack.isEmpty()) return stack;
+        return recipe.getOutputEUt();
+    }
+
     /**
      * Get a pair of the absolute EU/t value this recipe inputs or outputs and if it's input or output
      *
@@ -58,11 +64,22 @@ public class RecipeHelper {
         return new EnergyStack.WithIO(recipe.getOutputEUt(), IO.OUT);
     }
 
+    public static EnergyStack.WithIO getRealEUtWithIO(@NotNull GTRecipeDefinition recipe) {
+        EnergyStack stack = recipe.getInputEUt();
+        if (!stack.isEmpty()) return new EnergyStack.WithIO(stack, IO.IN);
+        return new EnergyStack.WithIO(recipe.getOutputEUt(), IO.OUT);
+    }
+
     public static int getRecipeEUtTier(GTRecipe recipe) {
         EnergyStack stack = getRealEUt(recipe);
         long EUt = stack.voltage();
         if (recipe.parallels > 1) EUt /= recipe.parallels;
         return GTUtil.getTierByVoltage(EUt);
+    }
+
+    public static int getRecipeEUtTier(GTRecipeDefinition recipe) {
+        EnergyStack stack = getRealEUt(recipe);
+        return GTUtil.getTierByVoltage(stack.voltage());
     }
 
     public static int getPreOCRecipeEuTier(GTRecipe recipe) {
@@ -71,6 +88,11 @@ public class RecipeHelper {
         if (recipe.parallels > 1) EUt /= recipe.parallels;
         EUt >>= (recipe.ocLevel * 2);
         return GTUtil.getTierByVoltage(EUt);
+    }
+
+    public static int getPreOCRecipeEuTier(GTRecipeDefinition recipe) {
+        EnergyStack stack = getRealEUt(recipe);
+        return GTUtil.getTierByVoltage(stack.getTotalEU());
     }
 
     public static <T> List<T> getInputContents(GTRecipeBuilder builder, RecipeCapability<T> capability) {

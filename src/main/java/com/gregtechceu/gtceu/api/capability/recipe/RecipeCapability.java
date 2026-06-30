@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.capability.recipe;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
@@ -185,11 +186,11 @@ public abstract class RecipeCapability<T> {
         return isRecipeSearchFilter();
     }
 
-    public void addXEIInfo(WidgetGroup group, int xOffset, GTRecipe recipe, List<Content> contents, boolean perTick,
-                           boolean isInput, MutableInt yOffset) {}
+    public void addXEIInfo(WidgetGroup group, int xOffset, GTRecipeDefinition recipe, List<Content> contents,
+                           boolean perTick, boolean isInput, MutableInt yOffset) {}
 
     @NotNull
-    public List<Object> createXEIContainerContents(List<Content> contents, GTRecipe recipe, IO io) {
+    public List<Object> createXEIContainerContents(List<Content> contents, GTRecipeDefinition recipe, IO io) {
         return new ArrayList<>();
     }
 
@@ -217,7 +218,7 @@ public abstract class RecipeCapability<T> {
                                 IO io,
                                 @Nullable("null when storage == null") GTRecipeTypeUI.RecipeHolder recipeHolder,
                                 @NotNull GTRecipeType recipeType,
-                                @Nullable("null when content == null") GTRecipe recipe,
+                                @Nullable("null when content == null") GTRecipeDefinition recipe,
                                 @Nullable Content content,
                                 @Nullable Object storage, int recipeTier, int chanceTier) {}
 
@@ -230,7 +231,7 @@ public abstract class RecipeCapability<T> {
         return new Object2IntOpenHashMap<>();
     }
 
-    public boolean isTickSlot(int index, IO io, GTRecipe recipe) {
+    public boolean isTickSlot(int index, IO io, GTRecipeDefinition recipe) {
         return index >= (io == IO.IN ? recipe.getInputContents(this) : recipe.getOutputContents(this)).size();
     }
 
