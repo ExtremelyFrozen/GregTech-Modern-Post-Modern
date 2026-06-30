@@ -9,8 +9,10 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.WidgetUtils;
 import com.gregtechceu.gtceu.api.gui.widget.PredicatedButtonWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.chance.boost.ChanceBoostFunction;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
@@ -30,7 +32,7 @@ import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.neoforged.fml.loading.FMLLoader;
@@ -76,6 +78,10 @@ public class GTRecipeWidget extends WidgetGroup {
         addButtons();
     }
 
+    public GTRecipeWidget(GTRecipeDefinition recipe) {
+        this(recipe.toRuntime());
+    }
+
     private static int getXOffset(GTRecipe recipe) {
         if (recipe.recipeType.getRecipeUI().getOriginalWidth() != recipe.recipeType.getRecipeUI().getJEISize().width) {
             return (recipe.recipeType.getRecipeUI().getJEISize().width -
@@ -93,7 +99,7 @@ public class GTRecipeWidget extends WidgetGroup {
         collectStorage(storages, contents, recipe);
 
         WidgetGroup group = recipe.recipeType.getRecipeUI().createUITemplate(ProgressWidget.JEIProgress, storages,
-                recipe.data.copy(), recipe.conditions);
+                DataComponentMap.EMPTY, recipe.conditions);
         addSlots(contents, group, recipe);
 
         var size = group.getSize();
@@ -109,7 +115,7 @@ public class GTRecipeWidget extends WidgetGroup {
         int yOffset = 5 + size.height;
         this.yOffset = yOffset;
         yOffset += !EUt.isEmpty() ? 21 : 0;
-        if (recipe.data.getBoolean("duration_is_total_cwu")) {
+        if (RecipeData.getBoolean(recipe.data, "duration_is_total_cwu")) {
             yOffset -= 10;
         }
 
@@ -137,7 +143,7 @@ public class GTRecipeWidget extends WidgetGroup {
                         .setBackgroundTexture(IGuiTexture.EMPTY));
             } else addWidget(new LabelWidget(3 - xOffset, yOffset += LINE_HEIGHT, condition.getTooltips().getString()));
         }
-        for (Function<CompoundTag, String> dataInfo : recipe.recipeType.getDataInfos()) {
+        for (Function<DataComponentMap, String> dataInfo : recipe.recipeType.getDataInfos()) {
             addWidget(new LabelWidget(3 - xOffset, yOffset += LINE_HEIGHT, dataInfo.apply(recipe.data)));
         }
         recipe.recipeType.getRecipeUI().appendJEIUI(recipe, this);
@@ -196,13 +202,13 @@ public class GTRecipeWidget extends WidgetGroup {
     private static List<Component> getRecipeParaText(GTRecipe recipe, int duration,
                                                      EnergyStack.WithIO eu) {
         List<Component> texts = new ArrayList<>();
-        if (!recipe.data.getBoolean("hide_duration")) {
+        if (!RecipeData.getBoolean(recipe.data, "hide_duration")) {
             texts.add(Component.translatable("gtpm.recipe.duration", FormattingUtil.formatNumbers(duration / 20f)));
         }
         if (eu.voltage() > 0) {
             long euTotal = eu.getTotalEU() * duration;
             // sadly we still need a custom override here, since computation uses duration and EU/t very differently
-            if (recipe.data.getBoolean("duration_is_total_cwu") &&
+            if (RecipeData.getBoolean(recipe.data, "duration_is_total_cwu") &&
                     recipe.tickInputs.containsKey(CWURecipeCapability.CAP)) {
                 int minimumCWUt = Math.max(recipe.tickInputs.get(CWURecipeCapability.CAP).stream()
                         .map(Content::getContent).mapToInt(CWURecipeCapability.CAP::of).sum(), 1);

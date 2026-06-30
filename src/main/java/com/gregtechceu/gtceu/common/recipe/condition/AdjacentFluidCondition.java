@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.recipe.condition;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.condition.RecipeConditionType;
 import com.gregtechceu.gtceu.common.data.GTRecipeConditions;
 import com.gregtechceu.gtceu.utils.GTUtil;
@@ -137,14 +138,17 @@ public class AdjacentFluidCondition extends RecipeCondition<AdjacentFluidConditi
             return resolvedFluids;
         }
 
-        if (recipe != null && recipe.data.contains("fluidA") && recipe.data.contains("fluidB")) {
+        if (recipe != null && RecipeData.contains(recipe.data, "fluidA") &&
+                RecipeData.contains(recipe.data, "fluidB")) {
             this.resolvedFluids.clear();
 
-            Fluid fluidA = BuiltInRegistries.FLUID.get(ResourceLocation.parse(recipe.data.getString("fluidA")));
+            Fluid fluidA = BuiltInRegistries.FLUID
+                    .get(ResourceLocation.parse(RecipeData.getString(recipe.data, "fluidA")));
             if (!fluidA.defaultFluidState().isEmpty()) {
                 this.resolvedFluids.add(HolderSet.direct(fluidA.builtInRegistryHolder()));
             }
-            Fluid fluidB = BuiltInRegistries.FLUID.get(ResourceLocation.parse(recipe.data.getString("fluidB")));
+            Fluid fluidB = BuiltInRegistries.FLUID
+                    .get(ResourceLocation.parse(RecipeData.getString(recipe.data, "fluidB")));
             if (!fluidB.defaultFluidState().isEmpty()) {
                 this.resolvedFluids.add(HolderSet.direct(fluidB.builtInRegistryHolder()));
             }

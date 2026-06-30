@@ -34,6 +34,11 @@ public class VentCondition extends RecipeCondition<VentCondition> {
     }
 
     @Override
+    public boolean perTick() {
+        return true;
+    }
+
+    @Override
     public boolean testCondition(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
         var ventTrait = recipeLogic.getMachine().getTrait(ExhaustVentMachineTrait.TYPE);
         if (recipeLogic.getProgress() % 10 == 0 && ventTrait != null) {

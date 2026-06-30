@@ -47,7 +47,7 @@ public class GregTechKubeJSPlugin implements KubeJSPlugin {
 
     @Override
     public void registerRecipeComponents(RecipeComponentTypeRegistry registry) {
-        registry.register(NbtTagComponent.NBT_TAG);
+        registry.register(RecipeDataComponent.RECIPE_DATA);
         registry.register(RecipeConditionComponent.RECIPE_CONDITION);
         registry.register(ResourceLocationComponent.RESOURCE_LOCATION);
         registry.register(RecipeCapabilityComponent.RECIPE_CAPABILITY);

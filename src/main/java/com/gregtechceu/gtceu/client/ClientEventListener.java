@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.cosmetics.CapeRegistry;
 import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.client.renderer.BlockHighlightRenderer;
@@ -248,7 +248,7 @@ public class ClientEventListener {
         RecipeManager manager = event.getRecipeManager();
         for (var category : GTRegistries.RECIPE_CATEGORIES) {
             GTRecipeType type = category.getRecipeType();
-            for (GTRecipe recipe : type.getRecipesInCategory(category)) {
+            for (GTRecipeDefinition recipe : type.getRecipesInCategory(category)) {
                 manager.byKey(recipe.id).ifPresent(holder -> recipe.setId(holder.id()));
             }
         }

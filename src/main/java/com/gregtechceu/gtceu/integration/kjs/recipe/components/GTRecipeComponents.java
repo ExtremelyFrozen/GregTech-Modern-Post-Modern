@@ -8,7 +8,7 @@ import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.common.data.GTRecipeCapabilities;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
@@ -20,7 +20,7 @@ import java.util.*;
 public class GTRecipeComponents {
 
     // spotless:off
-    public static final RecipeComponent<CompoundTag> NBT_TAG = NbtTagComponent.NBT_TAG.instance();
+    public static final RecipeComponent<DataComponentMap> RECIPE_DATA = RecipeDataComponent.RECIPE_DATA.instance();
     public static final RecipeComponent<ResourceLocation> RESOURCE_LOCATION = ResourceLocationComponent.RESOURCE_LOCATION.instance();
     public static final RecipeComponent<RecipeCapability<?>> RECIPE_CAPABILITY = RecipeCapabilityComponent.RECIPE_CAPABILITY.instance();
     public static final RecipeComponent<ChanceLogic> CHANCE_LOGIC = ChanceLogicComponent.CHANCE_LOGIC.instance();

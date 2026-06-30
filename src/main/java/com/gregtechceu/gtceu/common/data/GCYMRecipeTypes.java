@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
@@ -37,11 +38,11 @@ public class GCYMRecipeTypes {
             .setSlotOverlay(true, true, false, GuiTextures.FURNACE_OVERLAY_2)
             .setSlotOverlay(true, true, true, GuiTextures.FURNACE_OVERLAY_2)
             .addDataInfo(data -> {
-                int temp = data.getInt("ebf_temp");
+                int temp = RecipeData.getInt(data, "ebf_temp");
                 return LocalizationUtils.format("gtpm.recipe.temperature", FormattingUtil.formatTemperature(temp));
             })
             .addDataInfo(data -> {
-                int temp = data.getInt("ebf_temp");
+                int temp = RecipeData.getInt(data, "ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
                 if (requiredCoil != null && !requiredCoil.getMaterial().isNull()) {
@@ -51,7 +52,7 @@ public class GCYMRecipeTypes {
                 return "";
             })
             .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = recipe.data.getInt("ebf_temp");
+                int temp = RecipeData.getInt(recipe.data, "ebf_temp");
                 List<List<ItemStack>> items = new ArrayList<>();
                 items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
                         .filter(coil -> coil.getKey().getCoilTemperature() >= temp)

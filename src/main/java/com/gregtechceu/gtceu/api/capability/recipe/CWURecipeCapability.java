@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.capability.recipe;
 
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
 import com.gregtechceu.gtceu.api.recipe.content.SerializerInteger;
@@ -41,7 +42,7 @@ public class CWURecipeCapability extends RecipeCapability<Integer> {
             group.addWidget(new LabelWidget(3 - xOffset, yOffset.addAndGet(10),
                     LocalizationUtils.format("gtpm.recipe.computation_per_tick", FormattingUtil.formatNumbers(cwu))));
         }
-        if (recipe.data.getBoolean("duration_is_total_cwu")) {
+        if (RecipeData.getBoolean(recipe.data, "duration_is_total_cwu")) {
             group.addWidget(new LabelWidget(3 - xOffset, yOffset.addAndGet(10),
                     LocalizationUtils.format("gtpm.recipe.total_computation",
                             FormattingUtil.formatNumbers(recipe.duration))));

@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.IRecipeCapabilityHolder;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.AbstractMapIngredient;
@@ -179,7 +180,7 @@ public final class RecipeDB {
             PowerlessJetpack.FUELS.putIfAbsent(fluid, recipe.duration);
         }
         if (addRecursive(recipe, ingredients, rootBranch, 0)) {
-            recipe.recipeCategory.addRecipe(recipe);
+            recipe.recipeCategory.addRecipe(GTRecipeDefinition.fromRuntime(recipe));
             return true;
         }
         return false;

@@ -35,6 +35,7 @@ import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
@@ -151,7 +152,7 @@ public class GTRecipeTypeUI {
 
     public record RecipeHolder(DoubleSupplier progressSupplier,
                                Table<IO, RecipeCapability<?>, Object> storages,
-                               CompoundTag data,
+                               DataComponentMap data,
                                List<RecipeCondition<?>> conditions,
                                boolean isSteam,
                                boolean isHighPressure) {}
@@ -163,7 +164,7 @@ public class GTRecipeTypeUI {
      */
     public WidgetGroup createUITemplate(DoubleSupplier progressSupplier,
                                         Table<IO, RecipeCapability<?>, Object> storages,
-                                        CompoundTag data,
+                                        DataComponentMap data,
                                         List<RecipeCondition<?>> conditions,
                                         boolean isSteam,
                                         boolean isHighPressure) {
@@ -176,7 +177,7 @@ public class GTRecipeTypeUI {
 
     public WidgetGroup createUITemplate(DoubleSupplier progressSupplier,
                                         Table<IO, RecipeCapability<?>, Object> storages,
-                                        CompoundTag data,
+                                        DataComponentMap data,
                                         List<RecipeCondition<?>> conditions) {
         return createUITemplate(progressSupplier, storages, data, conditions, false, false);
     }

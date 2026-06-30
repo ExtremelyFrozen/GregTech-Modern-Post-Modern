@@ -15,6 +15,7 @@ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.ResearchData;
 import com.gregtechceu.gtceu.api.recipe.ResearchRecipeBuilder;
@@ -22,7 +23,7 @@ import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.ingredient.*;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.common.recipe.condition.*;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -32,8 +33,7 @@ import com.gregtechceu.gtceu.integration.kjs.recipe.components.CapabilityMapComp
 import com.gregtechceu.gtceu.integration.kjs.recipe.components.GTRecipeComponents;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -831,54 +831,41 @@ public interface GTRecipeSchema {
         //////////////////////////////////////
         // ********** DATA ***********//
         //////////////////////////////////////
-        public GTKubeRecipe addData(String key, Tag data) {
-            if (getValue(DATA) == null) setValue(DATA, new CompoundTag());
-            getValue(DATA).put(key, data);
-            save();
-            return this;
-        }
-
         @HideFromJS
         public GTKubeRecipe addData(String key, int data) {
-            if (getValue(DATA) == null) setValue(DATA, new CompoundTag());
-            getValue(DATA).putInt(key, data);
+            setValue(DATA, RecipeData.putInt(getValue(DATA), key, data));
             save();
             return this;
         }
 
         @HideFromJS
         public GTKubeRecipe addData(String key, long data) {
-            if (getValue(DATA) == null) setValue(DATA, new CompoundTag());
-            getValue(DATA).putLong(key, data);
+            setValue(DATA, RecipeData.putLong(getValue(DATA), key, data));
             save();
             return this;
         }
 
         public GTKubeRecipe addDataString(String key, String data) {
-            if (getValue(DATA) == null) setValue(DATA, new CompoundTag());
-            getValue(DATA).putString(key, data);
+            setValue(DATA, RecipeData.putString(getValue(DATA), key, data));
             save();
             return this;
         }
 
         @HideFromJS
         public GTKubeRecipe addData(String key, float data) {
-            if (getValue(DATA) == null) setValue(DATA, new CompoundTag());
-            getValue(DATA).putFloat(key, data);
+            setValue(DATA, RecipeData.putFloat(getValue(DATA), key, data));
             save();
             return this;
         }
 
         public GTKubeRecipe addDataNumber(String key, double data) {
-            if (getValue(DATA) == null) setValue(DATA, new CompoundTag());
-            getValue(DATA).putDouble(key, data);
+            setValue(DATA, RecipeData.putDouble(getValue(DATA), key, data));
             save();
             return this;
         }
 
         public GTKubeRecipe addDataBool(String key, boolean data) {
-            if (getValue(DATA) == null) setValue(DATA, new CompoundTag());
-            getValue(DATA).putBoolean(key, data);
+            setValue(DATA, RecipeData.putBoolean(getValue(DATA), key, data));
             save();
             return this;
         }
@@ -1217,7 +1204,8 @@ public interface GTRecipeSchema {
 
     RecipeKey<ResourceLocation> ID = GTRecipeComponents.RESOURCE_LOCATION.key("id", ComponentRole.OTHER);
     RecipeKey<TickDuration> DURATION = TimeComponent.TICKS.key("duration", ComponentRole.OTHER).optional(new TickDuration(100));
-    RecipeKey<CompoundTag> DATA = GTRecipeComponents.NBT_TAG.key("data", ComponentRole.OTHER).optional(r -> new CompoundTag());
+    RecipeKey<DataComponentMap> DATA = GTRecipeComponents.RECIPE_DATA.key("data", ComponentRole.OTHER)
+            .optional(r -> DataComponentMap.EMPTY);
     RecipeKey<List<RecipeCondition<?>>> CONDITIONS = GTRecipeComponents.RECIPE_CONDITION.asList().key("recipeConditions", ComponentRole.OTHER).defaultOptional();
     RecipeKey<ResourceLocation> CATEGORY = GTRecipeComponents.RESOURCE_LOCATION.key("category", ComponentRole.OTHER).defaultOptional();
 

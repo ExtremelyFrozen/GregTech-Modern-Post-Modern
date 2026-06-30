@@ -4,12 +4,13 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.IRecipeCapabilityHolder;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeSerializer;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.datacomponents.DataItem;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
@@ -133,7 +134,7 @@ public final class ResearchManager {
         @Override
         public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder,
                                  TooltipFlag tooltipFlag) {
-            Collection<GTRecipe> recipes = recipeType().getDataStickEntry(researchId());
+            Collection<GTRecipeDefinition> recipes = recipeType().getDataStickEntry(researchId());
             if (recipes == null || recipes.isEmpty()) {
                 return;
             }
@@ -141,7 +142,7 @@ public final class ResearchManager {
 
             Collection<ItemStack> added = new ObjectOpenHashSet<>();
             outer:
-            for (GTRecipe recipe : recipes) {
+            for (GTRecipeDefinition recipe : recipes) {
                 ItemStack output = ItemRecipeCapability.CAP
                         .of(recipe.getOutputContents(ItemRecipeCapability.CAP).getFirst().content)
                         .getItems()[0];
@@ -204,13 +205,13 @@ public final class ResearchManager {
             ItemStack resultStick = GTItems.TOOL_DATA_STICK.asStack();
             resultStick.set(DataComponents.CUSTOM_NAME, Component.translatable("gtpm.scanner.copy_stick_to"));
 
-            GTRecipe recipe = GTRecipeTypes.SCANNER_RECIPES
+            GTRecipeDefinition recipe = GTRecipeTypes.SCANNER_RECIPES
                     .recipeBuilder("copy_" + GTStringUtils.itemStackToString(copiedStick))
                     .inputItems(emptyStick)
                     .notConsumable(copiedStick)
                     .outputItems(resultStick)
                     .duration(DURATION).EUt(EUT)
-                    .build();
+                    .buildDefinition();
             // for EMI to detect it's a synthetic recipe (not ever in JSON)
             recipe.setId(recipe.getId().withPrefix("/"));
             GTRecipeTypes.SCANNER_RECIPES.addToMainCategory(recipe);

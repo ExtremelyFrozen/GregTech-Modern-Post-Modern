@@ -8,7 +8,7 @@ import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
 import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
@@ -44,7 +44,7 @@ public class GTRecipe implements Recipe<RecipeInput> {
     // Must be List<?> to not cause crashes without KubeJS.
     public final List<?> ingredientActions;
     @NotNull
-    public CompoundTag data;
+    public DataComponentMap data;
     public int duration;
     public int parallels = 1;
     public int subtickParallels = 1;
@@ -69,7 +69,7 @@ public class GTRecipe implements Recipe<RecipeInput> {
                     Map<RecipeCapability<?>, ChanceLogic> tickOutputChanceLogics,
                     List<RecipeCondition<?>> conditions,
                     List<?> ingredientActions,
-                    @NotNull CompoundTag data,
+                    @NotNull DataComponentMap data,
                     int duration,
                     @NotNull GTRecipeCategory recipeCategory,
                     int groupColor) {
@@ -88,7 +88,7 @@ public class GTRecipe implements Recipe<RecipeInput> {
                     Map<RecipeCapability<?>, ChanceLogic> tickInputChanceLogics,
                     Map<RecipeCapability<?>, ChanceLogic> tickOutputChanceLogics,
                     List<RecipeCondition<?>> conditions,
-                    @NotNull CompoundTag data,
+                    @NotNull DataComponentMap data,
                     int duration,
                     @NotNull GTRecipeCategory recipeCategory,
                     int groupColor) {
@@ -109,7 +109,7 @@ public class GTRecipe implements Recipe<RecipeInput> {
                     Map<RecipeCapability<?>, ChanceLogic> tickOutputChanceLogics,
                     List<RecipeCondition<?>> conditions,
                     List<?> ingredientActions,
-                    @NotNull CompoundTag data,
+                    @NotNull DataComponentMap data,
                     int duration,
                     @NotNull GTRecipeCategory recipeCategory, int groupColor) {
         this.recipeType = recipeType;
@@ -148,7 +148,7 @@ public class GTRecipe implements Recipe<RecipeInput> {
                 new HashMap<>(inputChanceLogics), new HashMap<>(outputChanceLogics),
                 new HashMap<>(tickInputChanceLogics), new HashMap<>(tickOutputChanceLogics),
                 new ArrayList<>(conditions),
-                new ArrayList<>(ingredientActions), data, duration, recipeCategory, groupColor);
+                new ArrayList<>(ingredientActions), RecipeData.copy(data), duration, recipeCategory, groupColor);
         if (modifyDuration) {
             copied.duration = modifier.apply(this.duration);
         }

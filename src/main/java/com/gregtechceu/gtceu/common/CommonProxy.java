@@ -73,13 +73,14 @@ import com.gregtechceu.gtceu.common.data.GTParticleTypes;
 import com.gregtechceu.gtceu.common.data.GTRecipeCapabilities;
 import com.gregtechceu.gtceu.common.data.GTRecipeCategories;
 import com.gregtechceu.gtceu.common.data.GTRecipeConditions;
+import com.gregtechceu.gtceu.common.data.GTRecipeDataComponents;
 import com.gregtechceu.gtceu.common.data.GTRecipeSerializers;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.common.data.GTSoundEntries;
 import com.gregtechceu.gtceu.common.data.GTToolBehaviors;
 import com.gregtechceu.gtceu.common.data.GTToolTiers;
 import com.gregtechceu.gtceu.common.data.GTValueProviderTypes;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import com.gregtechceu.gtceu.common.data.materials.AlloyBlastPropertyAddition;
 import com.gregtechceu.gtceu.common.data.materials.GTFoods;
@@ -230,6 +231,7 @@ public class CommonProxy {
         GTToolTiers.init();
         GTToolBehaviors.init();
         GTDataComponents.DATA_COMPONENTS.register(modBus);
+        GTRecipeDataComponents.DATA_COMPONENTS.register(modBus);
         GTArmorMaterials.ARMOR_MATERIALS.register(modBus);
         GTItems.init();
 
