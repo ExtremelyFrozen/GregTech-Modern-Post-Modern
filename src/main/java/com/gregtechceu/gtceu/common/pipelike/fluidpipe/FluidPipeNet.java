@@ -3,8 +3,10 @@ package com.gregtechceu.gtceu.common.pipelike.fluidpipe;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.FluidPipeProperties;
 import com.gregtechceu.gtceu.api.pipenet.LevelPipeNet;
 import com.gregtechceu.gtceu.api.pipenet.PipeNet;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.PipeNetData;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 
 public class FluidPipeNet extends PipeNet<FluidPipeProperties> {
 
@@ -13,30 +15,26 @@ public class FluidPipeNet extends PipeNet<FluidPipeProperties> {
     }
 
     /////////////////////////////////////
-    // *********** NBT ***********//
+    // *********** Persistent data ***********//
     /////////////////////////////////////
 
     @Override
-    protected void writeNodeData(FluidPipeProperties nodeData, CompoundTag tagCompound) {
-        tagCompound.putInt("max_temperature", nodeData.getMaxFluidTemperature());
-        tagCompound.putInt("throughput", nodeData.getThroughput());
-        tagCompound.putBoolean("gas_proof", nodeData.isGasProof());
-        tagCompound.putBoolean("acid_proof", nodeData.isAcidProof());
-        tagCompound.putBoolean("cryo_proof", nodeData.isCryoProof());
-        tagCompound.putBoolean("plasma_proof", nodeData.isPlasmaProof());
-        tagCompound.putInt("channels", nodeData.getChannels());
+    protected DataComponentMap writeNodeData(FluidPipeProperties nodeData) {
+        return DataComponentMap.builder()
+                .set(GTDataComponents.PIPE_NET_FLUID_PIPE.get(), new PipeNetData.FluidPipe(
+                        nodeData.getMaxFluidTemperature(), nodeData.getThroughput(), nodeData.isGasProof(),
+                        nodeData.isAcidProof(), nodeData.isCryoProof(), nodeData.isPlasmaProof(),
+                        nodeData.getChannels()))
+                .build();
     }
 
     @Override
-    protected FluidPipeProperties readNodeData(CompoundTag tagCompound) {
-        int maxTemperature = tagCompound.getInt("max_temperature");
-        int throughput = tagCompound.getInt("throughput");
-        boolean gasProof = tagCompound.getBoolean("gas_proof");
-        boolean acidProof = tagCompound.getBoolean("acid_proof");
-        boolean cryoProof = tagCompound.getBoolean("cryo_proof");
-        boolean plasmaProof = tagCompound.getBoolean("plasma_proof");
-        int channels = tagCompound.getInt("channels");
-        return new FluidPipeProperties(maxTemperature, throughput, gasProof, acidProof, cryoProof, plasmaProof,
-                channels);
+    protected FluidPipeProperties readNodeData(DataComponentMap components) {
+        PipeNetData.FluidPipe data = components.get(GTDataComponents.PIPE_NET_FLUID_PIPE.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Missing fluid pipe node data component");
+        }
+        return new FluidPipeProperties(data.maxTemperature(), data.throughput(), data.gasProof(), data.acidProof(),
+                data.cryoProof(), data.plasmaProof(), data.channels());
     }
 }

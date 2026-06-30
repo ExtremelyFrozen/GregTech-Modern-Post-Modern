@@ -4,9 +4,11 @@ import com.gregtechceu.gtceu.api.data.chemical.material.properties.WirePropertie
 import com.gregtechceu.gtceu.api.pipenet.LevelPipeNet;
 import com.gregtechceu.gtceu.api.pipenet.Node;
 import com.gregtechceu.gtceu.api.pipenet.PipeNet;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.PipeNetData;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.level.Level;
 
 import java.util.*;
@@ -56,18 +58,20 @@ public class EnergyNet extends PipeNet<WireProperties> {
     }
 
     @Override
-    protected void writeNodeData(WireProperties nodeData, CompoundTag tagCompound) {
-        tagCompound.putLong("voltage", nodeData.getVoltage());
-        tagCompound.putInt("amperage", nodeData.getAmperage());
-        tagCompound.putInt("loss", nodeData.getLossPerBlock());
+    protected DataComponentMap writeNodeData(WireProperties nodeData) {
+        return DataComponentMap.builder()
+                .set(GTDataComponents.PIPE_NET_WIRE.get(), new PipeNetData.Wire(nodeData.getVoltage(),
+                        nodeData.getAmperage(), nodeData.getLossPerBlock()))
+                .build();
     }
 
     @Override
-    protected WireProperties readNodeData(CompoundTag tagCompound) {
-        long voltage = tagCompound.getLong("voltage");
-        int amperage = tagCompound.getInt("amperage");
-        int lossPerBlock = tagCompound.getInt("loss");
-        return new WireProperties(voltage, amperage, lossPerBlock);
+    protected WireProperties readNodeData(DataComponentMap components) {
+        PipeNetData.Wire data = components.get(GTDataComponents.PIPE_NET_WIRE.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Missing wire pipe node data component");
+        }
+        return new WireProperties(data.voltage(), data.amperage(), data.lossPerBlock());
     }
 
     //////////////////////////////////////

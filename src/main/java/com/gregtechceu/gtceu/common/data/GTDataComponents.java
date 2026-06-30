@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.common.data.datacomponents.CoverConfigCopyData;
 import com.gregtechceu.gtceu.common.data.datacomponents.FluidProspectionCache;
 import com.gregtechceu.gtceu.common.data.datacomponents.MedicalConditionTrackerData;
 import com.gregtechceu.gtceu.common.data.datacomponents.OreProspectionCache;
+import com.gregtechceu.gtceu.common.data.datacomponents.PipeNetData;
 import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 import com.gregtechceu.gtceu.common.item.LampBlockItem;
 import com.gregtechceu.gtceu.common.item.behavior.ItemMagnetBehavior;
@@ -236,6 +237,26 @@ public class GTDataComponents {
             .registerComponentType("medical_condition_tracker", builder -> builder
                     .persistent(MedicalConditionTrackerData.CODEC)
                     .networkSynchronized(MedicalConditionTrackerData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PipeNetData.Nodes>> PIPE_NET_NODES = DATA_COMPONENTS
+            .registerComponentType("pipe_net_nodes", builder -> builder
+                    .persistent(PipeNetData.Nodes.CODEC)
+                    .networkSynchronized(PipeNetData.Nodes.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PipeNetData.Wire>> PIPE_NET_WIRE = DATA_COMPONENTS
+            .registerComponentType("pipe_net_wire", builder -> builder
+                    .persistent(PipeNetData.Wire.CODEC)
+                    .networkSynchronized(PipeNetData.Wire.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PipeNetData.FluidPipe>> PIPE_NET_FLUID_PIPE = DATA_COMPONENTS
+            .registerComponentType("pipe_net_fluid_pipe", builder -> builder
+                    .persistent(PipeNetData.FluidPipe.CODEC)
+                    .networkSynchronized(PipeNetData.FluidPipe.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PipeNetData.ItemPipe>> PIPE_NET_ITEM_PIPE = DATA_COMPONENTS
+            .registerComponentType("pipe_net_item_pipe", builder -> builder
+                    .persistent(PipeNetData.ItemPipe.CODEC)
+                    .networkSynchronized(PipeNetData.ItemPipe.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PipeNetData.DuctPipe>> PIPE_NET_DUCT_PIPE = DATA_COMPONENTS
+            .registerComponentType("pipe_net_duct_pipe", builder -> builder
+                    .persistent(PipeNetData.DuctPipe.CODEC)
+                    .networkSynchronized(PipeNetData.DuctPipe.STREAM_CODEC));
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.Base>> VIRTUAL_ENTRY_BASE = DATA_COMPONENTS
             .registerComponentType("virtual_entry_base", builder -> builder
                     .persistent(VirtualEntryData.Base.CODEC)

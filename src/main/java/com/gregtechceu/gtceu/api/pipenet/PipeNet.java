@@ -1,16 +1,15 @@
 package com.gregtechceu.gtceu.api.pipenet;
 
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.PipeNetData;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
-import net.neoforged.neoforge.common.util.INBTSerializable;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -20,7 +19,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.*;
 import java.util.Map.Entry;
 
-public abstract class PipeNet<NodeDataType> implements INBTSerializable<CompoundTag> {
+public abstract class PipeNet<NodeDataType> {
 
     protected final LevelPipeNet<NodeDataType, PipeNet<NodeDataType>> worldData;
     private final Map<BlockPos, Node<NodeDataType>> nodeByBlockPos = new HashMap<>();
@@ -395,101 +394,79 @@ public abstract class PipeNet<NodeDataType> implements INBTSerializable<Compound
     }
 
     /**
-     * Serializes node data into specified tag compound
-     * Used for writing persistent node data
+     * Serializes node data into a typed component map.
+     * Used for writing persistent node data before the saved-data boundary encodes it.
      */
-    protected abstract void writeNodeData(NodeDataType nodeData, CompoundTag tagCompound);
+    protected abstract DataComponentMap writeNodeData(NodeDataType nodeData);
 
     /**
-     * Deserializes node data from specified tag compound
-     * Used for reading persistent node data
+     * Deserializes node data from a typed component map.
+     * Used for reading persistent node data after the saved-data boundary decodes it.
      */
-    protected abstract NodeDataType readNodeData(CompoundTag tagCompound);
+    protected abstract NodeDataType readNodeData(DataComponentMap components);
 
-    @Override
-    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-        CompoundTag compound = new CompoundTag();
-        compound.put("Nodes", serializeAllNodeList(nodeByBlockPos));
-        return compound;
+    public DataComponentMap exportComponents(HolderLookup.Provider provider) {
+        PipeNetData.Nodes nodes = serializeAllNodeList(nodeByBlockPos);
+        return DataComponentMap.builder()
+                .set(GTDataComponents.PIPE_NET_NODES.get(), nodes)
+                .build();
     }
 
-    @Override
-    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
+    public void importComponents(HolderLookup.Provider provider, DataComponentMap components) {
         this.nodeByBlockPos.clear();
         this.ownedChunks.clear();
-        deserializeAllNodeList(nbt.getCompound("Nodes"));
+        PipeNetData.Nodes nodes = components.get(GTDataComponents.PIPE_NET_NODES.get());
+        if (nodes == null) {
+            throw new IllegalArgumentException("Missing pipe network node data component");
+        }
+        deserializeAllNodeList(nodes);
     }
 
-    protected void deserializeAllNodeList(CompoundTag compound) {
-        ListTag allNodesList = compound.getList("NodeIndexes", Tag.TAG_COMPOUND);
-        ListTag wirePropertiesList = compound.getList("WireProperties", Tag.TAG_COMPOUND);
+    protected void deserializeAllNodeList(PipeNetData.Nodes data) {
         Int2ObjectMap<NodeDataType> readProperties = new Int2ObjectOpenHashMap<>();
 
-        for (int i = 0; i < wirePropertiesList.size(); i++) {
-            CompoundTag propertiesTag = wirePropertiesList.getCompound(i);
-            int wirePropertiesIndex = propertiesTag.getInt("index");
-            NodeDataType nodeData = readNodeData(propertiesTag);
-            readProperties.put(wirePropertiesIndex, nodeData);
+        for (int i = 0; i < data.properties().size(); i++) {
+            DataComponentMap properties = data.properties().get(i);
+            NodeDataType nodeData = readNodeData(properties);
+            readProperties.put(i, nodeData);
         }
 
-        for (int i = 0; i < allNodesList.size(); i++) {
-            CompoundTag nodeTag = allNodesList.getCompound(i);
-            int x = nodeTag.getInt("x");
-            int y = nodeTag.getInt("y");
-            int z = nodeTag.getInt("z");
-            int wirePropertiesIndex = nodeTag.getInt("index");
-            BlockPos blockPos = new BlockPos(x, y, z);
-            NodeDataType nodeData = readProperties.get(wirePropertiesIndex);
-            int openConnections = nodeTag.getInt("open");
-            int mark = nodeTag.getInt("mark");
-            boolean isNodeActive = nodeTag.getBoolean("active");
-            addNodeSilently(blockPos, new Node<>(nodeData, openConnections, mark, isNodeActive));
+        for (PipeNetData.NodeEntry node : data.nodes()) {
+            NodeDataType nodeData = readProperties.get(node.propertyIndex());
+            if (nodeData == null) {
+                throw new IllegalArgumentException("Missing pipe node data at index " + node.propertyIndex());
+            }
+            addNodeSilently(node.pos(), new Node<>(nodeData, node.openConnections(), node.mark(), node.active()));
         }
     }
 
-    protected CompoundTag serializeAllNodeList(Map<BlockPos, Node<NodeDataType>> allNodes) {
-        CompoundTag compound = new CompoundTag();
-        ListTag allNodesList = new ListTag();
-        ListTag wirePropertiesList = new ListTag();
+    protected PipeNetData.Nodes serializeAllNodeList(Map<BlockPos, Node<NodeDataType>> allNodes) {
+        List<PipeNetData.NodeEntry> allNodesList = new ArrayList<>();
+        List<DataComponentMap> nodePropertiesList = new ArrayList<>();
         Object2IntMap<NodeDataType> alreadyWritten = new Object2IntOpenHashMap<>();
         int currentIndex = 0;
 
         for (Entry<BlockPos, Node<NodeDataType>> entry : allNodes.entrySet()) {
             BlockPos nodePos = entry.getKey();
             Node<NodeDataType> node = entry.getValue();
-            CompoundTag nodeTag = new CompoundTag();
-            nodeTag.putInt("x", nodePos.getX());
-            nodeTag.putInt("y", nodePos.getY());
-            nodeTag.putInt("z", nodePos.getZ());
             int wirePropertiesIndex = alreadyWritten.getOrDefault(node.data, -1);
             if (wirePropertiesIndex == -1) {
                 wirePropertiesIndex = currentIndex;
                 alreadyWritten.put(node.data, wirePropertiesIndex);
                 currentIndex++;
             }
-            nodeTag.putInt("index", wirePropertiesIndex);
-            if (node.mark != Node.DEFAULT_MARK) {
-                nodeTag.putInt("mark", node.mark);
-            }
-            if (node.openConnections > 0) {
-                nodeTag.putInt("open", node.openConnections);
-            }
-            if (node.isActive) {
-                nodeTag.putBoolean("active", true);
-            }
-            allNodesList.add(nodeTag);
+            allNodesList.add(new PipeNetData.NodeEntry(nodePos, wirePropertiesIndex, node.openConnections, node.mark,
+                    node.isActive));
         }
 
+        for (int i = 0; i < currentIndex; i++) {
+            nodePropertiesList.add(DataComponentMap.EMPTY);
+        }
         for (NodeDataType nodeData : alreadyWritten.keySet()) {
             int wirePropertiesIndex = alreadyWritten.getInt(nodeData);
-            CompoundTag propertiesTag = new CompoundTag();
-            propertiesTag.putInt("index", wirePropertiesIndex);
-            writeNodeData(nodeData, propertiesTag);
-            wirePropertiesList.add(propertiesTag);
+            nodePropertiesList.set(wirePropertiesIndex, writeNodeData(nodeData));
         }
 
-        compound.put("NodeIndexes", allNodesList);
-        compound.put("WireProperties", wirePropertiesList);
-        return compound;
+        return new PipeNetData.Nodes(allNodesList, nodePropertiesList);
     }
 }
