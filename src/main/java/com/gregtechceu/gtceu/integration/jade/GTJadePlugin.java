@@ -25,7 +25,7 @@ public class GTJadePlugin implements IWailaPlugin {
     @Override
     public void register(IWailaCommonRegistration registration) {
         register(registration, new ElectricContainerBlockProvider(),
-                new WorkableBlockProvider(),
+                new WorkLogicMachineProvider(),
                 new ControllableBlockProvider(),
                 new RecipeLogicProvider(),
                 new ParallelProvider(),
@@ -59,7 +59,7 @@ public class GTJadePlugin implements IWailaPlugin {
     public void registerClient(IWailaClientRegistration registration) {
         register(registration,
                 new ElectricContainerBlockProvider(),
-                new WorkableBlockProvider(),
+                new WorkLogicMachineProvider(),
                 new ControllableBlockProvider(),
                 new RecipeLogicProvider(),
                 new ParallelProvider(),
