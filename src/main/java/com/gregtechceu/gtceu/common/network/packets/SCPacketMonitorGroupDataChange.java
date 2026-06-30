@@ -22,24 +22,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public class SCPacketMonitorGroupNBTChange implements CustomPacketPayload {
+public class SCPacketMonitorGroupDataChange implements CustomPacketPayload {
 
-    public static final ResourceLocation ID = GTCEu.id("spacket_monitor_group_nbt_change");
-    public static final Type<SCPacketMonitorGroupNBTChange> TYPE = new Type<>(ID);
-    public static final StreamCodec<RegistryFriendlyByteBuf, SCPacketMonitorGroupNBTChange> CODEC = StreamCodec
-            .ofMember(SCPacketMonitorGroupNBTChange::encode, SCPacketMonitorGroupNBTChange::new);
+    public static final ResourceLocation ID = GTCEu.id("spacket_monitor_group_data_change");
+    public static final Type<SCPacketMonitorGroupDataChange> TYPE = new Type<>(ID);
+    public static final StreamCodec<RegistryFriendlyByteBuf, SCPacketMonitorGroupDataChange> CODEC = StreamCodec
+            .ofMember(SCPacketMonitorGroupDataChange::encode, SCPacketMonitorGroupDataChange::new);
 
     private final ItemStack stack;
     private final int monitorGroupId;
     private final BlockPos pos;
 
-    public SCPacketMonitorGroupNBTChange(ItemStack stack, MonitorGroup group, CentralMonitorMachine machine) {
+    public SCPacketMonitorGroupDataChange(ItemStack stack, MonitorGroup group, CentralMonitorMachine machine) {
         this.stack = stack;
         this.monitorGroupId = machine.getMonitorGroups().indexOf(group);
         this.pos = machine.getBlockPos();
     }
 
-    public SCPacketMonitorGroupNBTChange(RegistryFriendlyByteBuf buf) {
+    public SCPacketMonitorGroupDataChange(RegistryFriendlyByteBuf buf) {
         this.stack = ItemStack.STREAM_CODEC.decode(buf);
         this.monitorGroupId = buf.readVarInt();
         this.pos = buf.readBlockPos();
@@ -81,7 +81,7 @@ public class SCPacketMonitorGroupNBTChange implements CustomPacketPayload {
     }
 
     @Override
-    public @NotNull Type<SCPacketMonitorGroupNBTChange> type() {
+    public @NotNull Type<SCPacketMonitorGroupDataChange> type() {
         return TYPE;
     }
 }

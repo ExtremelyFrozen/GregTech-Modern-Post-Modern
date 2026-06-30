@@ -12,7 +12,7 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.datacomponents.TextLineList;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
-import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupNBTChange;
+import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupDataChange;
 
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
@@ -87,7 +87,7 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
                 scale = Float.parseFloat(scaleInput.getCurrentString());
             } catch (NumberFormatException ignored) {}
             stack.set(GTDataComponents.FORMAT_STRING_LIST, new TextLineList(lines, scale));
-            PacketDistributor.sendToServer(new SCPacketMonitorGroupNBTChange(stack, group, machine));
+            PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
         });
         saveButton.setButtonTexture(GuiTextures.BUTTON_CHECK);
         List<Boolean> tmp = new ArrayList<>();
@@ -100,7 +100,7 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
             if (!stack.has(GTDataComponents.FORMAT_STRING_LIST)) {
                 stack.update(GTDataComponents.FORMAT_STRING_LIST, TextLineList.EMPTY,
                         lines -> lines.withScale(1.0f));
-                PacketDistributor.sendToServer(new SCPacketMonitorGroupNBTChange(stack, group, machine));
+                PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
                 return "1";
             }
             // noinspection DataFlowIssue
