@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.placeholder;
 import com.gregtechceu.gtceu.api.placeholder.exceptions.PlaceholderException;
 import com.gregtechceu.gtceu.common.capability.PlaceholderSavedData;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 
 import lombok.Getter;
@@ -29,11 +28,8 @@ public abstract class Placeholder {
         this.priority = priority;
     }
 
-    protected CompoundTag getData(PlaceholderContext ctx) {
-        CompoundTag placeholderData = PlaceholderSavedData.getOrCreate((ServerLevel) ctx.level())
-                .getPlaceholderData(this);
-        if (!placeholderData.contains(ctx.uuid().toString()))
-            placeholderData.put(ctx.uuid().toString(), new CompoundTag());
-        return placeholderData.getCompound(ctx.uuid().toString());
+    protected PlaceholderData getData(PlaceholderContext ctx) {
+        return PlaceholderSavedData.getOrCreate((ServerLevel) ctx.level())
+                .getPlaceholderData(this, ctx.uuid());
     }
 }

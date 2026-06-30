@@ -15,6 +15,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.fml.loading.FMLPaths;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import lombok.Getter;
@@ -164,31 +166,40 @@ public class ClientCacheManager {
                 for (ResourceKey<Level> dim : cache.getExistingDimensions(dimPrefix)) {
                     CompoundTag data = cache.saveDimFile(dimPrefix, dim, registries);
                     if (data == null) continue;
-                    result.add(new ProspectionInfo(cacheInfo.key, dimPrefix, true, dim, data));
+                    result.add(new ProspectionInfo(cacheInfo.key, dimPrefix, true, dim, toJson(data)));
                 }
             }
             for (String singleFileName : cacheInfo.singleFiles) {
                 CompoundTag data = cache.saveSingleFile(singleFileName, registries);
                 if (data == null) continue;
-                result.add(new ProspectionInfo(cacheInfo.key, singleFileName, false, Level.OVERWORLD, data));
+                result.add(new ProspectionInfo(cacheInfo.key, singleFileName, false, Level.OVERWORLD, toJson(data)));
             }
         }
         return result;
     }
 
     public static void processProspectionShare(String cacheName, String key, boolean isDimCache, ResourceKey<Level> dim,
-                                               CompoundTag data, HolderLookup.Provider provider) {
+                                               JsonElement data, HolderLookup.Provider provider) {
         for (IClientCache cache : caches.keySet()) {
             ClientCacheInfo cacheInfo = caches.get(cache);
             if (cacheInfo.key.equals(cacheName)) {
+                CompoundTag cacheData = fromJson(data);
                 if (isDimCache) {
-                    cache.readDimFile(key, dim, data, provider);
+                    cache.readDimFile(key, dim, cacheData, provider);
                 } else {
-                    cache.readSingleFile(key, data, provider);
+                    cache.readSingleFile(key, cacheData, provider);
                 }
                 break;
             }
         }
+    }
+
+    private static JsonElement toJson(CompoundTag data) {
+        return CompoundTag.CODEC.encodeStart(JsonOps.INSTANCE, data).getOrThrow();
+    }
+
+    private static CompoundTag fromJson(JsonElement data) {
+        return CompoundTag.CODEC.parse(JsonOps.INSTANCE, data).getOrThrow();
     }
 
     public static void allowReinit() {
@@ -225,10 +236,10 @@ public class ClientCacheManager {
         public String key;
         public boolean isDimCache;
         public ResourceKey<Level> dim;
-        public CompoundTag data;
+        public JsonElement data;
 
         public ProspectionInfo(String cacheName, String key, boolean isDimCache, ResourceKey<Level> dim,
-                               CompoundTag data) {
+                               JsonElement data) {
             this.cacheName = cacheName;
             this.key = key;
             this.isDimCache = isDimCache;

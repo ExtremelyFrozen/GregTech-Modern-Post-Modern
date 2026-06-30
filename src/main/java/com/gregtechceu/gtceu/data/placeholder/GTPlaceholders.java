@@ -20,7 +20,7 @@ import com.gregtechceu.gtceu.client.renderer.placeholder.ModulePlaceholderRender
 import com.gregtechceu.gtceu.client.renderer.placeholder.QuadPlaceholderRenderer;
 import com.gregtechceu.gtceu.client.renderer.placeholder.RectPlaceholderRenderer;
 import com.gregtechceu.gtceu.common.blockentity.CableBlockEntity;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.datacomponents.BindingData;
 import com.gregtechceu.gtceu.common.item.datacomponents.DataItem;
 import com.gregtechceu.gtceu.common.item.datacomponents.FormatStringList;
@@ -38,8 +38,7 @@ import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
@@ -895,7 +894,7 @@ public class GTPlaceholders {
                 return MultiLineComponent.empty().addGraphics(new GraphicsComponent(
                         x, y, x, y,
                         "module",
-                        (CompoundTag) stack.save(ctx.level().registryAccess())));
+                        PlaceholderRenderData.itemStack(stack)));
             }
         });
         PlaceholderHandler.addPlaceholder(new Placeholder("setImage") {
@@ -931,16 +930,11 @@ public class GTPlaceholders {
                 double height = PlaceholderUtils.toDouble(args.get(3));
                 if (x < 0) x = 0;
                 if (y < 0) y = 0;
-                CompoundTag renderData = new CompoundTag();
-                renderData.putDouble("x", x);
-                renderData.putDouble("y", y);
-                renderData.putDouble("width", width);
-                renderData.putDouble("height", height);
-                renderData.putInt("color", 0xFF000000 | PlaceholderUtils.toInt(args.get(4)));
                 return MultiLineComponent.empty().addGraphics(new GraphicsComponent(
                         x, y, x + width, y + height,
                         "rect",
-                        renderData));
+                        PlaceholderRenderData.rect((float) width, (float) height,
+                                0xFF000000 | PlaceholderUtils.toInt(args.get(4)))));
             }
         });
         PlaceholderHandler.addPlaceholder(new Placeholder("quad") {
@@ -949,7 +943,6 @@ public class GTPlaceholders {
             public MultiLineComponent apply(PlaceholderContext ctx,
                                             List<MultiLineComponent> args) throws PlaceholderException {
                 PlaceholderUtils.checkArgs(args, 12);
-                CompoundTag renderData = new CompoundTag();
                 float x1 = PlaceholderUtils.toFloat(args.get(0));
                 float y1 = PlaceholderUtils.toFloat(args.get(1));
                 float x2 = PlaceholderUtils.toFloat(args.get(2));
@@ -958,23 +951,19 @@ public class GTPlaceholders {
                 float y3 = PlaceholderUtils.toFloat(args.get(5));
                 float x4 = PlaceholderUtils.toFloat(args.get(6));
                 float y4 = PlaceholderUtils.toFloat(args.get(7));
-                renderData.putFloat("x1", 0);
-                renderData.putFloat("y1", 0);
-                renderData.putFloat("x2", x2 - x1);
-                renderData.putFloat("y2", y2 - y1);
-                renderData.putFloat("x3", x3 - x1);
-                renderData.putFloat("y3", y3 - y1);
-                renderData.putFloat("x4", x4 - x1);
-                renderData.putFloat("y4", y4 - y1);
-                renderData.putInt("color1", 0xFF000000 + PlaceholderUtils.toInt(args.get(8)));
-                renderData.putInt("color2", 0xFF000000 + PlaceholderUtils.toInt(args.get(9)));
-                renderData.putInt("color3", 0xFF000000 + PlaceholderUtils.toInt(args.get(10)));
-                renderData.putInt("color4", 0xFF000000 + PlaceholderUtils.toInt(args.get(11)));
                 return MultiLineComponent.empty().addGraphics(new GraphicsComponent(
                         GTMath.min(x1, x2, x3, x4), GTMath.min(y1, y2, y3, y4), GTMath.max(x1, x2, x3, x4),
                         GTMath.max(y1, y2, y3, y4),
                         "quad",
-                        renderData));
+                        PlaceholderRenderData.quad(
+                                0, 0,
+                                x2 - x1, y2 - y1,
+                                x3 - x1, y3 - y1,
+                                x4 - x1, y4 - y1,
+                                0xFF000000 + PlaceholderUtils.toInt(args.get(8)),
+                                0xFF000000 + PlaceholderUtils.toInt(args.get(9)),
+                                0xFF000000 + PlaceholderUtils.toInt(args.get(10)),
+                                0xFF000000 + PlaceholderUtils.toInt(args.get(11)))));
             }
         });
         PlaceholderHandler.addPlaceholder(new Placeholder("item") {
@@ -999,23 +988,24 @@ public class GTPlaceholders {
         PlaceholderHandler.addPlaceholder(new Placeholder("blockNbt") {
 
             @Override
-            public MultiLineComponent apply(PlaceholderContext ctx, List<MultiLineComponent> args) {
+            public MultiLineComponent apply(PlaceholderContext ctx, List<MultiLineComponent> args)
+                                             throws PlaceholderException {
                 BlockEntity blockEntity = ctx.level().getBlockEntity(ctx.pos());
                 if (blockEntity == null) return MultiLineComponent.empty();
-                Tag tag = blockEntity.saveWithFullMetadata(ctx.level().registryAccess());
-                if (tag instanceof CompoundTag compoundTag && compoundTag.contains("cover")) {
-                    CompoundTag coverTag = compoundTag.getCompound("cover");
-                    if (coverTag.contains(ctx.side().getName())) {
-                        CompoundTag cover = coverTag.getCompound(ctx.side().getName()).getCompound("payload")
-                                .getCompound("d");
-                        cover.putString("text", "[REMOVED]");
-                    }
+                var components = blockEntity.components();
+                if (args.isEmpty()) {
+                    return MultiLineComponent.literal(components.toString());
                 }
-                for (MultiLineComponent arg : args) {
-                    if (!(tag instanceof CompoundTag compoundTag)) return MultiLineComponent.empty();
-                    tag = compoundTag.get(arg.toString());
+
+                ResourceLocation componentId = ResourceLocation.tryParse(args.getFirst().toString());
+                if (componentId == null) {
+                    throw new InvalidArgsException();
                 }
-                return tag == null ? MultiLineComponent.empty() : MultiLineComponent.literal(tag.toString());
+                var componentType = BuiltInRegistries.DATA_COMPONENT_TYPE.get(componentId);
+                if (componentType == null || !components.has(componentType)) {
+                    return MultiLineComponent.empty();
+                }
+                return MultiLineComponent.literal(String.valueOf(components.get(componentType)));
             }
         });
     }
