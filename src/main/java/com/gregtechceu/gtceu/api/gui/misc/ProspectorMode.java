@@ -23,10 +23,12 @@ import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -38,6 +40,8 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -160,6 +164,17 @@ public abstract class ProspectorMode<T> {
     @AllArgsConstructor
     public static final class FluidInfo {
 
+        public static final Codec<FluidInfo> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                BuiltInRegistries.FLUID.byNameCodec().fieldOf("fluid").forGetter(FluidInfo::fluid),
+                Codec.INT.fieldOf("yield").forGetter(FluidInfo::yield),
+                Codec.INT.fieldOf("left").forGetter(FluidInfo::left))
+                .apply(instance, FluidInfo::new));
+        public static final StreamCodec<RegistryFriendlyByteBuf, FluidInfo> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.registry(BuiltInRegistries.FLUID.key()), FluidInfo::fluid,
+                ByteBufCodecs.VAR_INT, FluidInfo::yield,
+                ByteBufCodecs.VAR_INT, FluidInfo::left,
+                FluidInfo::new);
+
         @Getter
         private final Fluid fluid;
         @Getter
@@ -167,21 +182,6 @@ public abstract class ProspectorMode<T> {
         @Getter
         @Setter
         private int left;
-
-        public static FluidInfo fromNbt(CompoundTag tag) {
-            Fluid fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(tag.getString("fluid")));
-            int left = tag.getInt("left");
-            int yield = tag.getInt("yield");
-            return new FluidInfo(fluid, yield, left);
-        }
-
-        public CompoundTag toNbt() {
-            CompoundTag tag = new CompoundTag();
-            tag.putString("fluid", BuiltInRegistries.FLUID.getKey(fluid).toString());
-            tag.putInt("left", left);
-            tag.putInt("yield", yield);
-            return tag;
-        }
 
         public static FluidInfo fromVeinWorldEntry(@NotNull FluidVeinWorldEntry savedData) {
             if (savedData.getDefinition() == null) {
@@ -234,15 +234,12 @@ public abstract class ProspectorMode<T> {
 
         @Override
         public void serialize(FluidInfo item, FriendlyByteBuf buf) {
-            buf.writeUtf(BuiltInRegistries.FLUID.getKey(item.fluid).toString());
-            buf.writeVarInt(item.yield);
-            buf.writeVarInt(item.left);
+            FluidInfo.STREAM_CODEC.encode((RegistryFriendlyByteBuf) buf, item);
         }
 
         @Override
         public FluidInfo deserialize(FriendlyByteBuf buf) {
-            return new FluidInfo(BuiltInRegistries.FLUID.get(ResourceLocation.parse(buf.readUtf())), buf.readVarInt(),
-                    buf.readVarInt());
+            return FluidInfo.STREAM_CODEC.decode((RegistryFriendlyByteBuf) buf);
         }
 
         @Override

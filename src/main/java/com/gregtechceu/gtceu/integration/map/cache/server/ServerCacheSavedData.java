@@ -3,7 +3,9 @@ package com.gregtechceu.gtceu.integration.map.cache.server;
 import com.gregtechceu.gtceu.integration.map.cache.DimensionCache;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -14,7 +16,7 @@ public class ServerCacheSavedData extends SavedData {
     public static final String DATA_NAME = "gtceu_ore_vein_cache";
 
     private DimensionCache backingCache;
-    private CompoundTag toRead;
+    private DataComponentMap toRead;
     private HolderLookup.Provider toReadProvider;
 
     public static ServerCacheSavedData init(ServerLevel world, final DimensionCache backingCache) {
@@ -28,7 +30,7 @@ public class ServerCacheSavedData extends SavedData {
             instance.setDirty();
         }
         if (instance.toRead != null) {
-            backingCache.fromNBT(instance.toRead, instance.toReadProvider);
+            backingCache.readComponents(instance.toRead, instance.toReadProvider);
             instance.toRead = null;
             instance.toReadProvider = null;
         }
@@ -43,16 +45,29 @@ public class ServerCacheSavedData extends SavedData {
     public ServerCacheSavedData(DimensionCache backingCache,
                                 CompoundTag compoundTag, HolderLookup.Provider registries) {
         this.backingCache = backingCache;
+        DataComponentMap components = readComponents(compoundTag, registries);
         if (backingCache != null) {
-            backingCache.fromNBT(compoundTag, registries);
+            backingCache.readComponents(components, registries);
         } else {
-            toRead = compoundTag;
+            toRead = components;
             toReadProvider = registries;
         }
     }
 
     @Override
     public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider registries) {
-        return backingCache.toNBT(tag, registries);
+        return writeComponents(backingCache.saveComponents(registries), registries);
+    }
+
+    private static DataComponentMap readComponents(CompoundTag tag, HolderLookup.Provider registries) {
+        return DataComponentMap.CODEC
+                .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag)
+                .getOrThrow();
+    }
+
+    private static CompoundTag writeComponents(DataComponentMap components, HolderLookup.Provider registries) {
+        return (CompoundTag) DataComponentMap.CODEC
+                .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), components)
+                .getOrThrow();
     }
 }

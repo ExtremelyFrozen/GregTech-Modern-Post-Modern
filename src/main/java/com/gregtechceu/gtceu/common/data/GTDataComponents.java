@@ -11,6 +11,8 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
 import com.gregtechceu.gtceu.common.data.datacomponents.CoverConfigCopyData;
+import com.gregtechceu.gtceu.common.data.datacomponents.FluidProspectionCache;
+import com.gregtechceu.gtceu.common.data.datacomponents.OreProspectionCache;
 import com.gregtechceu.gtceu.common.item.LampBlockItem;
 import com.gregtechceu.gtceu.common.item.behavior.ItemMagnetBehavior;
 import com.gregtechceu.gtceu.common.item.datacomponents.*;
@@ -213,4 +215,12 @@ public class GTDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<DataComponentMap>> BLOCK_ITEM_DATA = DATA_COMPONENTS
             .registerComponentType("block_item_data", builder -> builder.persistent(DataComponentMap.CODEC)
                     .networkSynchronized(SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<FluidProspectionCache>> FLUID_PROSPECTION_CACHE = DATA_COMPONENTS
+            .registerComponentType("fluid_prospection_cache", builder -> builder
+                    .persistent(FluidProspectionCache.CODEC)
+                    .networkSynchronized(FluidProspectionCache.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<OreProspectionCache>> ORE_PROSPECTION_CACHE = DATA_COMPONENTS
+            .registerComponentType("ore_prospection_cache", builder -> builder
+                    .persistent(OreProspectionCache.CODEC)
+                    .networkSynchronized(OreProspectionCache.STREAM_CODEC));
 }

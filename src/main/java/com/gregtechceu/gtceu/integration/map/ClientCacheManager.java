@@ -5,10 +5,12 @@ import com.gregtechceu.gtceu.integration.map.cache.client.IClientCache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -78,9 +80,7 @@ public class ClientCacheManager {
                                             dimFile.getName().length() - fileEnding.length()),
                                     resourceLocationSeparator));
                     try {
-                        cache.readDimFile(dimFilePrefix, dimId,
-                                NbtIo.readCompressed(new FileInputStream(dimFile), NbtAccounter.unlimitedHeap()),
-                                provider);
+                        cache.readDimFile(dimFilePrefix, dimId, readComponents(dimFile, provider), provider);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -90,9 +90,7 @@ public class ClientCacheManager {
                 File singleFile = new File(cacheInfo.cacheFolder, singleFileName + fileEnding);
                 if (!singleFile.exists()) continue;
                 try {
-                    cache.readSingleFile(singleFileName,
-                            NbtIo.readCompressed(new FileInputStream(singleFile), NbtAccounter.unlimitedHeap()),
-                            provider);
+                    cache.readSingleFile(singleFileName, readComponents(singleFile, provider), provider);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -112,24 +110,24 @@ public class ClientCacheManager {
             ClientCacheInfo cacheInfo = caches.get(cache);
             for (String dimFilePrefix : cacheInfo.dimFilePrefixes) {
                 for (ResourceKey<Level> dim : cache.getExistingDimensions(dimFilePrefix)) {
-                    CompoundTag data = cache.saveDimFile(dimFilePrefix, dim, provider);
+                    DataComponentMap data = cache.saveDimFile(dimFilePrefix, dim, provider);
                     if (data == null) continue;
                     File dimFile = new File(cacheInfo.cacheFolder,
                             dimFilePrefix + filePrefix + dim.location().getNamespace() + "=" +
                                     dim.location().getPath() + fileEnding);
                     try {
-                        NbtIo.writeCompressed(data, new FileOutputStream(dimFile));
+                        writeComponents(data, dimFile, provider);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 }
             }
             for (String singleFileName : cacheInfo.singleFiles) {
-                CompoundTag data = cache.saveSingleFile(singleFileName, provider);
+                DataComponentMap data = cache.saveSingleFile(singleFileName, provider);
                 if (data == null) continue;
                 File singleFile = new File(cacheInfo.cacheFolder, singleFileName + fileEnding);
                 try {
-                    NbtIo.writeCompressed(data, new FileOutputStream(singleFile));
+                    writeComponents(data, singleFile, provider);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -164,15 +162,16 @@ public class ClientCacheManager {
             ClientCacheInfo cacheInfo = caches.get(cache);
             for (String dimPrefix : cacheInfo.dimFilePrefixes) {
                 for (ResourceKey<Level> dim : cache.getExistingDimensions(dimPrefix)) {
-                    CompoundTag data = cache.saveDimFile(dimPrefix, dim, registries);
+                    DataComponentMap data = cache.saveDimFile(dimPrefix, dim, registries);
                     if (data == null) continue;
-                    result.add(new ProspectionInfo(cacheInfo.key, dimPrefix, true, dim, toJson(data)));
+                    result.add(new ProspectionInfo(cacheInfo.key, dimPrefix, true, dim, toJson(data, registries)));
                 }
             }
             for (String singleFileName : cacheInfo.singleFiles) {
-                CompoundTag data = cache.saveSingleFile(singleFileName, registries);
+                DataComponentMap data = cache.saveSingleFile(singleFileName, registries);
                 if (data == null) continue;
-                result.add(new ProspectionInfo(cacheInfo.key, singleFileName, false, Level.OVERWORLD, toJson(data)));
+                result.add(new ProspectionInfo(cacheInfo.key, singleFileName, false, Level.OVERWORLD,
+                        toJson(data, registries)));
             }
         }
         return result;
@@ -183,7 +182,7 @@ public class ClientCacheManager {
         for (IClientCache cache : caches.keySet()) {
             ClientCacheInfo cacheInfo = caches.get(cache);
             if (cacheInfo.key.equals(cacheName)) {
-                CompoundTag cacheData = fromJson(data);
+                DataComponentMap cacheData = fromJson(data, provider);
                 if (isDimCache) {
                     cache.readDimFile(key, dim, cacheData, provider);
                 } else {
@@ -194,12 +193,32 @@ public class ClientCacheManager {
         }
     }
 
-    private static JsonElement toJson(CompoundTag data) {
-        return CompoundTag.CODEC.encodeStart(JsonOps.INSTANCE, data).getOrThrow();
+    private static JsonElement toJson(DataComponentMap data, HolderLookup.Provider provider) {
+        return DataComponentMap.CODEC.encodeStart(provider.createSerializationContext(JsonOps.INSTANCE), data)
+                .getOrThrow();
     }
 
-    private static CompoundTag fromJson(JsonElement data) {
-        return CompoundTag.CODEC.parse(JsonOps.INSTANCE, data).getOrThrow();
+    private static DataComponentMap fromJson(JsonElement data, HolderLookup.Provider provider) {
+        return DataComponentMap.CODEC.parse(provider.createSerializationContext(JsonOps.INSTANCE), data).getOrThrow();
+    }
+
+    private static DataComponentMap readComponents(File file, HolderLookup.Provider provider) throws IOException {
+        try (FileInputStream inputStream = new FileInputStream(file)) {
+            CompoundTag tag = NbtIo.readCompressed(inputStream, NbtAccounter.unlimitedHeap());
+            return DataComponentMap.CODEC
+                    .parse(provider.createSerializationContext(NbtOps.INSTANCE), tag)
+                    .getOrThrow();
+        }
+    }
+
+    private static void writeComponents(DataComponentMap data, File file,
+                                        HolderLookup.Provider provider) throws IOException {
+        CompoundTag tag = (CompoundTag) DataComponentMap.CODEC
+                .encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), data)
+                .getOrThrow();
+        try (FileOutputStream outputStream = new FileOutputStream(file)) {
+            NbtIo.writeCompressed(tag, outputStream);
+        }
     }
 
     public static void allowReinit() {

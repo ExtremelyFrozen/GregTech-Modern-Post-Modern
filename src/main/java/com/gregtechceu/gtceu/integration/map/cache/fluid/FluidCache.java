@@ -1,20 +1,21 @@
 package com.gregtechceu.gtceu.integration.map.cache.fluid;
 
 import com.gregtechceu.gtceu.api.gui.misc.ProspectorMode;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.FluidProspectionCache;
 import com.gregtechceu.gtceu.integration.map.GroupingMapRenderer;
 import com.gregtechceu.gtceu.integration.map.layer.builtin.FluidRenderLayer;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FluidCache {
 
@@ -29,35 +30,30 @@ public class FluidCache {
         }
     }
 
-    public void fromNbt(CompoundTag nbt) {
-        var fluidList = nbt.getList("fluids", Tag.TAG_COMPOUND);
-        for (var fluidTagRaw : fluidList) {
-            if (fluidTagRaw instanceof CompoundTag fluidTag) {
-                ResourceKey<Level> dim = ResourceKey.create(Registries.DIMENSION,
-                        ResourceLocation.parse(fluidTag.getString("dim")));
-                ChunkPos pos = new ChunkPos(fluidTag.getLong("pos"));
-                var fluid = ProspectorMode.FluidInfo.fromNbt(fluidTag);
-                fluidCache.put(dim, pos, fluid);
+    public void readComponents(DataComponentMap components) {
+        FluidProspectionCache cache = components.getOrDefault(GTDataComponents.FLUID_PROSPECTION_CACHE.get(),
+                FluidProspectionCache.EMPTY);
+        for (FluidProspectionCache.Entry entry : cache.entries()) {
+            fluidCache.put(entry.dimension(), entry.pos(), entry.fluid());
 
-                GroupingMapRenderer.getInstance().addMarker(FluidRenderLayer.getName(fluid).getString(),
-                        FluidRenderLayer.getId(fluid, pos), dim, pos, fluid);
-            }
+            GroupingMapRenderer.getInstance().addMarker(FluidRenderLayer.getName(entry.fluid()).getString(),
+                    FluidRenderLayer.getId(entry.fluid(), entry.pos()), entry.dimension(), entry.pos(), entry.fluid());
         }
     }
 
-    public CompoundTag toNbt() {
-        var result = new CompoundTag();
-        var fluidList = new ListTag();
+    public DataComponentMap saveComponents() {
+        List<FluidProspectionCache.Entry> entries = new ArrayList<>();
         for (var dimensions : fluidCache.rowMap().entrySet()) {
             for (var entry : dimensions.getValue().entrySet()) {
-                CompoundTag tag = entry.getValue().toNbt();
-                tag.putLong("pos", entry.getKey().toLong());
-                tag.putString("dim", dimensions.getKey().location().toString());
-                fluidList.add(tag);
+                entries.add(new FluidProspectionCache.Entry(dimensions.getKey(), entry.getKey(), entry.getValue()));
             }
         }
-        result.put("fluids", fluidList);
-        return result;
+        if (entries.isEmpty()) {
+            return DataComponentMap.EMPTY;
+        }
+        return DataComponentMap.builder()
+                .set(GTDataComponents.FLUID_PROSPECTION_CACHE.get(), new FluidProspectionCache(entries))
+                .build();
     }
 
     public void clear() {
