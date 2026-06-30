@@ -37,16 +37,11 @@ import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
-import net.neoforged.neoforge.common.util.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
@@ -441,7 +436,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
         return new BufferData(items, fluids);
     }
 
-    public class InternalSlot implements INBTSerializable<CompoundTag> {
+    public class InternalSlot {
 
         @Getter
         @Setter
@@ -658,52 +653,6 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
 
             if (changed) onContentsChanged();
             return left;
-        }
-
-        @Override
-        public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-            CompoundTag tag = new CompoundTag();
-
-            ListTag itemsTag = new ListTag();
-            for (var entry : itemInventory.object2LongEntrySet()) {
-                var ct = (CompoundTag) entry.getKey().save(provider);
-                ct.putLong("real", entry.getLongValue());
-                itemsTag.add(ct);
-            }
-            if (!itemsTag.isEmpty()) tag.put("inventory", itemsTag);
-
-            ListTag fluidsTag = new ListTag();
-            for (var entry : fluidInventory.object2LongEntrySet()) {
-                var ct = (CompoundTag) entry.getKey().save(provider);
-                ct.putLong("real", entry.getLongValue());
-                fluidsTag.add(ct);
-            }
-            if (!fluidsTag.isEmpty()) tag.put("fluidInventory", fluidsTag);
-
-            return tag;
-        }
-
-        @Override
-        public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
-            ListTag items = tag.getList("inventory", Tag.TAG_COMPOUND);
-            for (Tag t : items) {
-                if (!(t instanceof CompoundTag ct)) continue;
-                var stack = ItemStack.parse(provider, ct);
-                var count = ct.getLong("real");
-                if (stack.isPresent() && !stack.get().isEmpty() && count > 0) {
-                    itemInventory.put(stack.get(), count);
-                }
-            }
-
-            ListTag fluids = tag.getList("fluidInventory", Tag.TAG_COMPOUND);
-            for (Tag t : fluids) {
-                if (!(t instanceof CompoundTag ct)) continue;
-                var stack = FluidStack.parse(provider, ct);
-                var amount = ct.getLong("real");
-                if (stack.isPresent() && !stack.get().isEmpty() && amount > 0) {
-                    fluidInventory.put(stack.get(), amount);
-                }
-            }
         }
     }
 }
