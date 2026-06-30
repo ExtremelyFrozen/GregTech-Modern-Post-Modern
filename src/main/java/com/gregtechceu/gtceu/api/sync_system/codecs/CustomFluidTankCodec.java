@@ -2,11 +2,12 @@ package com.gregtechceu.gtceu.api.sync_system.codecs;
 
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.TransferData;
 
-import net.neoforged.neoforge.fluids.FluidStack;
+import net.minecraft.core.component.DataComponentMap;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 
 public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFluidTank> {
@@ -14,41 +15,31 @@ public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFl
     public static final Class<CustomFluidTank> TYPE = CustomFluidTank.class;
     public static final CustomFluidTankCodec INSTANCE = new CustomFluidTankCodec();
 
-    private static final String CAPACITY = "capacity";
-    private static final String FLUID = "fluid";
-
     private CustomFluidTankCodec() {}
 
     @Override
     public JsonElement serializeField(CustomFluidTank value, Context<CustomFluidTank> context) {
-        JsonObject json = new JsonObject();
-        json.addProperty(CAPACITY, value.getCapacity());
-        json.add(FLUID, FluidStack.OPTIONAL_CODEC
-                .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), value.getFluid())
-                .getOrThrow());
-        return json;
+        return DataComponentMap.CODEC
+                .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), value.exportComponents())
+                .getOrThrow();
     }
 
     @Override
     public CustomFluidTank deserializeField(JsonElement value, Context<CustomFluidTank> context) {
-        if (!value.isJsonObject()) {
-            throw new IllegalArgumentException("Sync: fluid tank field " + context.fieldName() +
-                    " must be encoded as an object");
-        }
-
-        JsonObject json = value.getAsJsonObject();
-        int capacity = json.get(CAPACITY).getAsInt();
+        DataComponentMap components = DataComponentMap.CODEC
+                .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), value)
+                .getOrThrow();
+        TransferData.FluidTank data = components.get(GTDataComponents.TRANSFER_FLUID_TANK.get());
         CustomFluidTank tank = context.currentValue();
-        if (tank == null) {
-            tank = new CustomFluidTank(capacity);
-        } else if (tank.getCapacity() != capacity) {
+        if (data == null && tank == null) {
             throw new IllegalArgumentException("Sync: fluid tank field " + context.fieldName() +
-                    " expected capacity " + tank.getCapacity() + " but received " + capacity);
+                    " is missing transfer_fluid_tank");
+        }
+        if (tank == null) {
+            tank = new CustomFluidTank(data.capacity());
         }
 
-        tank.setFluid(FluidStack.OPTIONAL_CODEC
-                .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get(FLUID))
-                .getOrThrow());
+        tank.importComponents(components);
         return tank;
     }
 }

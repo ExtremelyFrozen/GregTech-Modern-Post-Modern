@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorG
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponentMap;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -54,9 +54,9 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
         if (!value.isJsonObject()) return null;
 
         JsonObject json = value.getAsJsonObject();
-        CustomItemStackHandler handler = deserializeItems(json.getAsJsonArray("items"), context,
+        CustomItemStackHandler handler = deserializeItems(json.get("items"), context,
                 MonitorGroup.createModuleHandler());
-        CustomItemStackHandler placeholderSlotsHandler = deserializeItems(json.getAsJsonArray("placeholderSlots"),
+        CustomItemStackHandler placeholderSlotsHandler = deserializeItems(json.get("placeholderSlots"),
                 context, new CustomItemStackHandler(8));
         var group = new MonitorGroup(json.get("name").getAsString(), handler, placeholderSlotsHandler);
 
@@ -80,30 +80,22 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
         return group;
     }
 
-    private static JsonArray serializeItems(CustomItemStackHandler handler, Context<MonitorGroup> context) {
-        JsonArray json = new JsonArray();
-        for (ItemStack stack : handler.getStacks()) {
-            json.add(ItemStack.OPTIONAL_CODEC
-                    .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), stack)
-                    .getOrThrow());
-        }
-        return json;
+    private static JsonElement serializeItems(CustomItemStackHandler handler, Context<MonitorGroup> context) {
+        return DataComponentMap.CODEC
+                .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), handler.exportComponents())
+                .getOrThrow();
     }
 
-    private static CustomItemStackHandler deserializeItems(@Nullable JsonArray json,
+    private static CustomItemStackHandler deserializeItems(@Nullable JsonElement json,
                                                            Context<MonitorGroup> context,
                                                            CustomItemStackHandler handler) {
         if (json == null) {
-            return handler;
+            throw new IllegalArgumentException("Sync: monitor group is missing item handler data");
         }
-
-        int size = Math.min(json.size(), handler.getSlots());
-        for (int i = 0; i < size; i++) {
-            ItemStack stack = ItemStack.OPTIONAL_CODEC
-                    .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get(i))
-                    .getOrThrow();
-            handler.setStackInSlot(i, stack);
-        }
+        DataComponentMap components = DataComponentMap.CODEC
+                .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json)
+                .getOrThrow();
+        handler.importComponents(components);
         return handler;
     }
 }

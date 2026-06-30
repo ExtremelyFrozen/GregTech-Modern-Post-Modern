@@ -2,13 +2,12 @@ package com.gregtechceu.gtceu.api.sync_system.codecs;
 
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.TransferData;
 
-import net.minecraft.core.NonNullList;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponentMap;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 
 public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<CustomItemStackHandler> {
@@ -16,57 +15,31 @@ public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<C
     public static final Class<CustomItemStackHandler> TYPE = CustomItemStackHandler.class;
     public static final CustomItemStackHandlerCodec INSTANCE = new CustomItemStackHandlerCodec();
 
-    private static final String SLOTS = "slots";
-    private static final String STACKS = "stacks";
-
     private CustomItemStackHandlerCodec() {}
 
     @Override
     public JsonElement serializeField(CustomItemStackHandler value, Context<CustomItemStackHandler> context) {
-        NonNullList<ItemStack> stacks = value.getStacks();
-        JsonObject json = new JsonObject();
-        json.addProperty(SLOTS, stacks.size());
-
-        JsonArray encodedStacks = new JsonArray(stacks.size());
-        for (ItemStack stack : stacks) {
-            encodedStacks.add(ItemStack.OPTIONAL_CODEC
-                    .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), stack)
-                    .getOrThrow());
-        }
-        json.add(STACKS, encodedStacks);
-        return json;
+        return DataComponentMap.CODEC
+                .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), value.exportComponents())
+                .getOrThrow();
     }
 
     @Override
     public CustomItemStackHandler deserializeField(JsonElement value, Context<CustomItemStackHandler> context) {
-        if (!value.isJsonObject()) {
+        DataComponentMap components = DataComponentMap.CODEC
+                .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), value)
+                .getOrThrow();
+        TransferData.ItemHandler data = components.get(GTDataComponents.TRANSFER_ITEM_HANDLER.get());
+        if (data == null) {
             throw new IllegalArgumentException("Sync: item handler field " + context.fieldName() +
-                    " must be encoded as an object");
+                    " is missing transfer_item_handler");
         }
-
-        JsonObject json = value.getAsJsonObject();
-        int slots = json.get(SLOTS).getAsInt();
-        JsonArray encodedStacks = json.getAsJsonArray(STACKS);
-        if (encodedStacks.size() != slots) {
-            throw new IllegalArgumentException("Sync: item handler field " + context.fieldName() +
-                    " encoded " + encodedStacks.size() + " stacks for " + slots + " slots");
-        }
-
         CustomItemStackHandler handler = context.currentValue();
         if (handler == null) {
-            handler = new CustomItemStackHandler(slots);
-        } else if (handler.getStacks().size() != slots) {
-            throw new IllegalArgumentException("Sync: item handler field " + context.fieldName() +
-                    " expected " + handler.getStacks().size() + " slots but received " + slots);
+            handler = new CustomItemStackHandler(data.slots());
         }
 
-        NonNullList<ItemStack> stacks = handler.getStacks();
-        for (int i = 0; i < slots; i++) {
-            stacks.set(i, ItemStack.OPTIONAL_CODEC
-                    .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), encodedStacks.get(i))
-                    .getOrThrow());
-        }
-        handler.getOnContentsChanged().run();
+        handler.importComponents(components);
         return handler;
     }
 }

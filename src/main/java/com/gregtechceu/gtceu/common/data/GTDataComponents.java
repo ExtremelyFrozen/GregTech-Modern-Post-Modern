@@ -15,6 +15,7 @@ import com.gregtechceu.gtceu.common.data.datacomponents.FluidProspectionCache;
 import com.gregtechceu.gtceu.common.data.datacomponents.MedicalConditionTrackerData;
 import com.gregtechceu.gtceu.common.data.datacomponents.OreProspectionCache;
 import com.gregtechceu.gtceu.common.data.datacomponents.PipeNetData;
+import com.gregtechceu.gtceu.common.data.datacomponents.TransferData;
 import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 import com.gregtechceu.gtceu.common.item.LampBlockItem;
 import com.gregtechceu.gtceu.common.item.behavior.ItemMagnetBehavior;
@@ -257,6 +258,18 @@ public class GTDataComponents {
             .registerComponentType("pipe_net_duct_pipe", builder -> builder
                     .persistent(PipeNetData.DuctPipe.CODEC)
                     .networkSynchronized(PipeNetData.DuctPipe.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<TransferData.FluidTank>> TRANSFER_FLUID_TANK = DATA_COMPONENTS
+            .registerComponentType("transfer_fluid_tank", builder -> builder
+                    .persistent(TransferData.FluidTank.CODEC)
+                    .networkSynchronized(TransferData.FluidTank.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<TransferData.FluidHandlers>> TRANSFER_FLUID_HANDLERS = DATA_COMPONENTS
+            .registerComponentType("transfer_fluid_handlers", builder -> builder
+                    .persistent(TransferData.FluidHandlers.CODEC)
+                    .networkSynchronized(TransferData.FluidHandlers.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<TransferData.ItemHandler>> TRANSFER_ITEM_HANDLER = DATA_COMPONENTS
+            .registerComponentType("transfer_item_handler", builder -> builder
+                    .persistent(TransferData.ItemHandler.CODEC)
+                    .networkSynchronized(TransferData.ItemHandler.STREAM_CODEC));
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.Base>> VIRTUAL_ENTRY_BASE = DATA_COMPONENTS
             .registerComponentType("virtual_entry_base", builder -> builder
                     .persistent(VirtualEntryData.Base.CODEC)

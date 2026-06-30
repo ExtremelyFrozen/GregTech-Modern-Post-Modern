@@ -1,22 +1,23 @@
 package com.gregtechceu.gtceu.api.transfer.fluid;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.transfer.DataComponentTransfer;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.TransferData;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.minecraft.core.component.DataComponentMap;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class FluidHandlerList implements IFluidHandlerModifiable, INBTSerializable<CompoundTag> {
+public class FluidHandlerList implements IFluidHandlerModifiable, DataComponentTransfer {
 
     public final IFluidHandler[] handlers;
 
@@ -135,31 +136,41 @@ public class FluidHandlerList implements IFluidHandlerModifiable, INBTSerializab
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-        var tag = new CompoundTag();
-        var list = new ListTag();
+    public DataComponentMap exportComponents() {
+        var components = new ArrayList<DataComponentMap>();
         for (IFluidHandler handler : handlers) {
-            if (handler instanceof INBTSerializable<?> serializable) {
-                list.add(serializable.serializeNBT(provider));
-            } else {
-                GTCEu.LOGGER.warn("[FluidHandlerList] internal tank doesn't support serialization");
+            if (!(handler instanceof DataComponentTransfer transfer)) {
+                String message = "[FluidHandlerList] internal handler " + handler.getClass().getName() +
+                        " does not support component serialization";
+                GTCEu.LOGGER.error(message);
+                throw new IllegalArgumentException(message);
             }
+            components.add(transfer.exportComponents());
         }
-        tag.put("tanks", list);
-        tag.putByte("type", list.getElementType());
-        return tag;
+        return DataComponentMap.builder()
+                .set(GTDataComponents.TRANSFER_FLUID_HANDLERS.get(), new TransferData.FluidHandlers(components))
+                .build();
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
-    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        var list = nbt.getList("tanks", nbt.getByte("type"));
-        for (int i = 0; i < list.size(); i++) {
-            if (handlers[i] instanceof INBTSerializable serializable) {
-                serializable.deserializeNBT(provider, list.get(i));
-            } else {
-                GTCEu.LOGGER.warn("[FluidHandlerList] internal tank doesn't support serialization");
+    public void importComponents(DataComponentMap components) {
+        TransferData.FluidHandlers data = components.get(GTDataComponents.TRANSFER_FLUID_HANDLERS.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Fluid handler list component data is missing transfer_fluid_handlers");
+        }
+        if (data.handlers().size() != handlers.length) {
+            throw new IllegalArgumentException("[FluidHandlerList] expected " + handlers.length +
+                    " handlers but received " + data.handlers().size());
+        }
+        for (int i = 0; i < data.handlers().size(); i++) {
+            IFluidHandler handler = handlers[i];
+            if (!(handler instanceof DataComponentTransfer transfer)) {
+                String message = "[FluidHandlerList] internal handler " + handler.getClass().getName() +
+                        " does not support component deserialization";
+                GTCEu.LOGGER.error(message);
+                throw new IllegalArgumentException(message);
             }
+            transfer.importComponents(data.handlers().get(i));
         }
     }
 
