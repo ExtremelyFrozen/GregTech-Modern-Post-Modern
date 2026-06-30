@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
 import com.gregtechceu.gtceu.common.data.datacomponents.CoverConfigCopyData;
 import com.gregtechceu.gtceu.common.data.datacomponents.FluidProspectionCache;
+import com.gregtechceu.gtceu.common.data.datacomponents.MedicalConditionTrackerData;
 import com.gregtechceu.gtceu.common.data.datacomponents.OreProspectionCache;
 import com.gregtechceu.gtceu.common.item.LampBlockItem;
 import com.gregtechceu.gtceu.common.item.behavior.ItemMagnetBehavior;
@@ -223,4 +224,8 @@ public class GTDataComponents {
             .registerComponentType("ore_prospection_cache", builder -> builder
                     .persistent(OreProspectionCache.CODEC)
                     .networkSynchronized(OreProspectionCache.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<MedicalConditionTrackerData>> MEDICAL_CONDITION_TRACKER = DATA_COMPONENTS
+            .registerComponentType("medical_condition_tracker", builder -> builder
+                    .persistent(MedicalConditionTrackerData.CODEC)
+                    .networkSynchronized(MedicalConditionTrackerData.STREAM_CODEC));
 }

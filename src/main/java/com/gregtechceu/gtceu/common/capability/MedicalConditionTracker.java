@@ -3,17 +3,14 @@ package com.gregtechceu.gtceu.common.capability;
 import com.gregtechceu.gtceu.api.capability.IMedicalConditionTracker;
 import com.gregtechceu.gtceu.api.data.medicalcondition.MedicalCondition;
 import com.gregtechceu.gtceu.api.data.medicalcondition.Symptom;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.MedicalConditionTrackerData;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.common.util.INBTSerializable;
 
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
@@ -25,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class MedicalConditionTracker implements IMedicalConditionTracker, INBTSerializable<CompoundTag> {
+public class MedicalConditionTracker implements IMedicalConditionTracker {
 
     @Getter
     private final Object2FloatMap<MedicalCondition> medicalConditions = new Object2FloatOpenHashMap<>();
@@ -189,42 +186,35 @@ public class MedicalConditionTracker implements IMedicalConditionTracker, INBTSe
         }
     }
 
-    @Override
-    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-        CompoundTag tag = new CompoundTag();
-
-        ListTag effectsTag = new ListTag();
+    public DataComponentMap exportComponents() {
+        List<MedicalConditionTrackerData.Entry> conditions = new ArrayList<>(medicalConditions.size());
         for (var entry : medicalConditions.object2FloatEntrySet()) {
-            CompoundTag medicalConditionTag = new CompoundTag();
-            medicalConditionTag.putString("condition", entry.getKey().name);
-            medicalConditionTag.putFloat("progression", entry.getFloatValue());
-            effectsTag.add(medicalConditionTag);
+            conditions.add(new MedicalConditionTrackerData.Entry(entry.getKey(), entry.getFloatValue()));
         }
-        tag.put("medical_conditions", effectsTag);
 
-        ListTag permanentsTag = new ListTag();
-        for (MedicalCondition condition : permanentConditions) {
-            permanentsTag.add(StringTag.valueOf(condition.name));
+        MedicalConditionTrackerData data = new MedicalConditionTrackerData(conditions,
+                new ArrayList<>(permanentConditions));
+        if (data.isEmpty()) {
+            return DataComponentMap.EMPTY;
         }
-        tag.put("permanent_conditions", permanentsTag);
-
-        return tag;
+        return DataComponentMap.builder()
+                .set(GTDataComponents.MEDICAL_CONDITION_TRACKER.get(), data)
+                .build();
     }
 
-    @Override
-    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag arg) {
-        ListTag medicalConditionsTag = arg.getList("medical_conditions", Tag.TAG_COMPOUND);
-        for (int i = 0; i < medicalConditionsTag.size(); ++i) {
-            CompoundTag compoundTag = medicalConditionsTag.getCompound(i);
-            MedicalCondition condition = MedicalCondition.CONDITIONS.get(compoundTag.getString("condition"));
-            float progression = compoundTag.getFloat("progression");
+    public void importComponents(DataComponentMap components) {
+        medicalConditions.clear();
+        permanentConditions.clear();
+        flaggedForRemoval.clear();
+        activeSymptoms.clear();
+        activeMobEffects.clear();
+        maxAirSupply = -1;
 
-            medicalConditions.put(condition, progression);
+        MedicalConditionTrackerData data = components.getOrDefault(GTDataComponents.MEDICAL_CONDITION_TRACKER.get(),
+                MedicalConditionTrackerData.EMPTY);
+        for (MedicalConditionTrackerData.Entry entry : data.medicalConditions()) {
+            medicalConditions.put(entry.condition(), entry.progression());
         }
-
-        ListTag permanentConditionsTag = arg.getList("permanent_conditions", Tag.TAG_STRING);
-        for (int i = 0; i < permanentConditionsTag.size(); ++i) {
-            permanentConditions.add(MedicalCondition.CONDITIONS.get(permanentConditionsTag.getString(i)));
-        }
+        permanentConditions.addAll(data.permanentConditions());
     }
 }
