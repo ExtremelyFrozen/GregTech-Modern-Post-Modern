@@ -234,15 +234,17 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
             if (!hasNotEnoughEnergy) {
                 long consumed = this.energyContainer.removeEnergy(energyToConsume);
                 if (consumed == energyToConsume) {
-                    getRecipeLogic().setStatus(WorkLogic.Status.WORKING);
+                    getWorkLogic().setStatus(WorkLogic.Status.WORKING);
                 } else {
                     this.hasNotEnoughEnergy = true;
-                    getRecipeLogic().setStatus(WorkLogic.Status.WAITING);
+                    getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
+                            .append(": ").append(EURecipeCapability.CAP.getName()));
                 }
             }
         } else {
             this.hasNotEnoughEnergy = true;
-            getRecipeLogic().setStatus(WorkLogic.Status.WAITING);
+            getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
+                    .append(": ").append(EURecipeCapability.CAP.getName()));
         }
     }
 

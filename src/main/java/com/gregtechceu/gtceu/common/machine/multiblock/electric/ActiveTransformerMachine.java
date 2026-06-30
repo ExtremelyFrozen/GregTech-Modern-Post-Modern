@@ -60,7 +60,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
 
     public void convertEnergyTick() {
         if (isWorkingEnabled()) {
-            getRecipeLogic()
+            getWorkLogic()
                     .setStatus(isSubscriptionActive() ? WorkLogic.Status.WORKING : WorkLogic.Status.SUSPEND);
         }
         if (isWorkingEnabled()) {
@@ -130,7 +130,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
     private List<IMultiPart> getPrioritySortedParts() {
         return getParts().stream().sorted(Comparator.comparingInt(part -> {
             if (part instanceof MetaMachine partMachine) {
-                net.minecraft.world.level.block.Block partBlock = partMachine.getBlockState().getBlock();
+                var partBlock = partMachine.getBlockState().getBlock();
 
                 if (PartAbility.OUTPUT_ENERGY.isApplicable(partBlock))
                     return 1;
@@ -149,7 +149,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
     @Override
     public void invalidateStructure(String structureName) {
         boolean shouldExplode = DEFAULT_STRUCTURE.equals(structureName) &&
-                (isWorkingEnabled() && recipeLogic.getStatus() == WorkLogic.Status.WORKING) &&
+                (isWorkingEnabled() && getWorkLogic().getStatus() == WorkLogic.Status.WORKING) &&
                 !ConfigHolder.INSTANCE.machines.harmlessActiveTransformers;
         float explosionStrength = 6f + getTier();
         super.invalidateStructure(structureName);
@@ -159,7 +159,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
         }
         this.powerOutput = new EnergyContainerList(new ArrayList<>());
         this.powerInput = new EnergyContainerList(new ArrayList<>());
-        getRecipeLogic().setStatus(WorkLogic.Status.SUSPEND);
+        getWorkLogic().setStatus(WorkLogic.Status.SUSPEND);
         converterSubscription.unsubscribe();
     }
 

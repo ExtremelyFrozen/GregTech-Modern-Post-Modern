@@ -166,7 +166,7 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         if (!getLevel().isClientSide) {
             if (getOffsetTimer() % 20 == 0) {
                 // active here is just used for rendering
-                getRecipeLogic()
+                getWorkLogic()
                         .setStatus(energyBank.hasEnergy() ? WorkLogic.Status.WORKING : WorkLogic.Status.IDLE);
                 inputPerSec = netInLastSec;
                 outputPerSec = netOutLastSec;
@@ -202,17 +202,11 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
 
             } else if (isActive()) {
                 textList.add(Component.translatable("gtpm.multiblock.running"));
-                int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
-                double maxInSec = (float) recipeLogic.getDuration() / 20.0f;
-                double currentInSec = (float) recipeLogic.getProgress() / 20.0f;
-                textList.add(
-                        Component.translatable("gtpm.multiblock.progress", String.format("%.2f", (float) currentInSec),
-                                String.format("%.2f", (float) maxInSec), currentProgress));
             } else {
                 textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
-            if (recipeLogic.isWaiting()) {
+            if (getWorkLogic().isWaiting()) {
                 textList.add(Component.translatable("gtpm.multiblock.waiting")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }

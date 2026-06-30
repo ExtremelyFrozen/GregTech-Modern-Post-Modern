@@ -85,7 +85,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
         int transmitters = 0;
         int regulars = 0;
         for (var part : this.getParts()) {
-            net.minecraft.world.level.block.Block block = part.self().getBlockState().getBlock();
+            var block = part.self().getBlockState().getBlock();
             if (PartAbility.OPTICAL_DATA_RECEPTION.isApplicable(block)) {
                 ++receivers;
             }
@@ -143,22 +143,22 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
             energyToConsume += maintenance.getNumMaintenanceProblems() * energyToConsume / 10;
         }
 
-        if (getRecipeLogic().isWaiting() && energyContainer.getInputPerSec() > 19L * energyToConsume) {
-            getRecipeLogic().setStatus(WorkLogic.Status.IDLE);
+        if (getWorkLogic().isWaiting() && energyContainer.getInputPerSec() > 19L * energyToConsume) {
+            getWorkLogic().setStatus(WorkLogic.Status.IDLE);
         }
 
         if (this.energyContainer.getEnergyStored() >= energyToConsume) {
-            if (!getRecipeLogic().isWaiting()) {
+            if (!getWorkLogic().isWaiting()) {
                 long consumed = this.energyContainer.removeEnergy(energyToConsume);
                 if (consumed == energyToConsume) {
-                    getRecipeLogic().setStatus(WorkLogic.Status.WORKING);
+                    getWorkLogic().setStatus(WorkLogic.Status.WORKING);
                 } else {
-                    getRecipeLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
+                    getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
                             .append(": ").append(EURecipeCapability.CAP.getName()));
                 }
             }
         } else {
-            getRecipeLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in").append(": ")
+            getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in").append(": ")
                     .append(EURecipeCapability.CAP.getName()));
         }
         updateTickSubscription();
