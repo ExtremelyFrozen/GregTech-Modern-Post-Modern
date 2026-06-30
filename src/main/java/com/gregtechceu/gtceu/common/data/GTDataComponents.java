@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.common.data.datacomponents.CoverConfigCopyData;
 import com.gregtechceu.gtceu.common.data.datacomponents.FluidProspectionCache;
 import com.gregtechceu.gtceu.common.data.datacomponents.MedicalConditionTrackerData;
 import com.gregtechceu.gtceu.common.data.datacomponents.OreProspectionCache;
+import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 import com.gregtechceu.gtceu.common.item.LampBlockItem;
 import com.gregtechceu.gtceu.common.item.behavior.ItemMagnetBehavior;
 import com.gregtechceu.gtceu.common.item.datacomponents.*;
@@ -26,6 +27,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.Unit;
@@ -38,11 +40,17 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class GTDataComponents {
 
     private static final StreamCodec<ByteBuf, Unit> UNIT_STREAM_CODEC = StreamCodec.unit(Unit.INSTANCE);
+    private static final Codec<Map<String, DataComponentMap>> VIRTUAL_ENTRY_MAP_CODEC = Codec.unboundedMap(Codec.STRING,
+            DataComponentMap.CODEC);
+    private static final StreamCodec<RegistryFriendlyByteBuf, Map<String, DataComponentMap>> VIRTUAL_ENTRY_MAP_STREAM_CODEC = ByteBufCodecs
+            .map(HashMap::new, ByteBufCodecs.STRING_UTF8, SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC);
     public static final DeferredRegister.DataComponents DATA_COMPONENTS = DeferredRegister
             .createDataComponents(Registries.DATA_COMPONENT_TYPE, GTCEu.MOD_ID);
 
@@ -228,4 +236,32 @@ public class GTDataComponents {
             .registerComponentType("medical_condition_tracker", builder -> builder
                     .persistent(MedicalConditionTrackerData.CODEC)
                     .networkSynchronized(MedicalConditionTrackerData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.Base>> VIRTUAL_ENTRY_BASE = DATA_COMPONENTS
+            .registerComponentType("virtual_entry_base", builder -> builder
+                    .persistent(VirtualEntryData.Base.CODEC)
+                    .networkSynchronized(VirtualEntryData.Base.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.Tank>> VIRTUAL_TANK = DATA_COMPONENTS
+            .registerComponentType("virtual_tank", builder -> builder
+                    .persistent(VirtualEntryData.Tank.CODEC)
+                    .networkSynchronized(VirtualEntryData.Tank.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.Items>> VIRTUAL_ITEM_STORAGE = DATA_COMPONENTS
+            .registerComponentType("virtual_item_storage", builder -> builder
+                    .persistent(VirtualEntryData.Items.CODEC)
+                    .networkSynchronized(VirtualEntryData.Items.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.Redstone>> VIRTUAL_REDSTONE = DATA_COMPONENTS
+            .registerComponentType("virtual_redstone", builder -> builder
+                    .persistent(VirtualEntryData.Redstone.CODEC)
+                    .networkSynchronized(VirtualEntryData.Redstone.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Map<String, DataComponentMap>>> VIRTUAL_FLUID_ENTRIES = DATA_COMPONENTS
+            .registerComponentType("virtual_fluid_entries", builder -> builder
+                    .persistent(VIRTUAL_ENTRY_MAP_CODEC)
+                    .networkSynchronized(VIRTUAL_ENTRY_MAP_STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Map<String, DataComponentMap>>> VIRTUAL_ITEM_ENTRIES = DATA_COMPONENTS
+            .registerComponentType("virtual_item_entries", builder -> builder
+                    .persistent(VIRTUAL_ENTRY_MAP_CODEC)
+                    .networkSynchronized(VIRTUAL_ENTRY_MAP_STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Map<String, DataComponentMap>>> VIRTUAL_REDSTONE_ENTRIES = DATA_COMPONENTS
+            .registerComponentType("virtual_redstone_entries", builder -> builder
+                    .persistent(VIRTUAL_ENTRY_MAP_CODEC)
+                    .networkSynchronized(VIRTUAL_ENTRY_MAP_STREAM_CODEC));
 }

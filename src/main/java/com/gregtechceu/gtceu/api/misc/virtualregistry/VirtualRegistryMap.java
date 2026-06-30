@@ -1,8 +1,8 @@
 package com.gregtechceu.gtceu.api.misc.virtualregistry;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponentType;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,14 +13,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class VirtualRegistryMap implements INBTSerializable<CompoundTag> {
+public class VirtualRegistryMap {
 
     private final Map<EntryTypes<?>, Map<String, VirtualEntry>> registryMap = new ConcurrentHashMap<>();
 
     public VirtualRegistryMap() {}
 
-    public VirtualRegistryMap(HolderLookup.@NotNull Provider registries, CompoundTag tag) {
-        deserializeNBT(registries, tag);
+    public VirtualRegistryMap(HolderLookup.@NotNull Provider registries, DataComponentMap components) {
+        importComponents(registries, components);
     }
 
     @SuppressWarnings("unchecked")
@@ -54,31 +54,43 @@ public class VirtualRegistryMap implements INBTSerializable<CompoundTag> {
         return new HashSet<>(registryMap.getOrDefault(type, Collections.emptyMap()).keySet());
     }
 
-    @Override
-    public @NotNull CompoundTag serializeNBT(HolderLookup.@NotNull Provider registries) {
-        CompoundTag tag = new CompoundTag();
+    public DataComponentMap exportComponents(HolderLookup.@NotNull Provider registries) {
+        DataComponentMap.Builder builder = DataComponentMap.builder();
         for (Map.Entry<EntryTypes<?>, Map<String, VirtualEntry>> entry : registryMap.entrySet()) {
-            CompoundTag entriesTag = new CompoundTag();
-            for (Map.Entry<String, VirtualEntry> subEntry : entry.getValue().entrySet()) {
-                entriesTag.put(subEntry.getKey(), subEntry.getValue().serializeNBT(registries));
-            }
-            tag.put(entry.getKey().getId().toString(), entriesTag);
+            builder.set(dataType(entry.getKey()), exportEntries(registries, entry.getValue()));
         }
-        return tag;
+        return builder.build();
     }
 
-    @Override
-    public void deserializeNBT(HolderLookup.@NotNull Provider registries, CompoundTag nbt) {
-        for (String entryTypeString : nbt.getAllKeys()) {
-            EntryTypes<?> type = EntryTypes.fromString(entryTypeString);
-
-            if (type == null) continue;
-
-            CompoundTag virtualEntries = nbt.getCompound(entryTypeString);
-            for (String name : virtualEntries.getAllKeys()) {
-                CompoundTag entryTag = virtualEntries.getCompound(name);
-                addEntry(name, type.createInstance(registries, entryTag));
+    public void importComponents(HolderLookup.@NotNull Provider registries, DataComponentMap components) {
+        registryMap.clear();
+        for (EntryTypes<?> type : EntryTypes.values()) {
+            Map<String, DataComponentMap> entries = components.get(dataType(type));
+            if (entries == null) {
+                continue;
             }
+            importEntries(registries, type, entries);
         }
+    }
+
+    private static Map<String, DataComponentMap> exportEntries(HolderLookup.Provider registries,
+                                                               Map<String, VirtualEntry> entries) {
+        Map<String, DataComponentMap> data = new ConcurrentHashMap<>();
+        for (Map.Entry<String, VirtualEntry> entry : entries.entrySet()) {
+            data.put(entry.getKey(), entry.getValue().exportComponents(registries));
+        }
+        return data;
+    }
+
+    private void importEntries(HolderLookup.Provider registries, EntryTypes<?> type,
+                               Map<String, DataComponentMap> entries) {
+        for (Map.Entry<String, DataComponentMap> entry : entries.entrySet()) {
+            addEntry(entry.getKey(), type.createInstance(registries, entry.getValue()));
+        }
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static DataComponentType<Map<String, DataComponentMap>> dataType(EntryTypes<?> type) {
+        return (DataComponentType) type.getDataComponentType();
     }
 }

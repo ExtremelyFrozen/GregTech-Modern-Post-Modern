@@ -1,11 +1,12 @@
 package com.gregtechceu.gtceu.api.misc.virtualregistry;
 
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
+
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.minecraft.core.component.DataComponentMap;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import lombok.Getter;
@@ -17,11 +18,9 @@ import java.util.Locale;
 
 @Getter
 @Accessors(chain = true)
-public abstract class VirtualEntry implements INBTSerializable<CompoundTag> {
+public abstract class VirtualEntry {
 
     public static final String DEFAULT_COLOR = "FFFFFFFF";
-    protected static final String COLOR_KEY = "color";
-    protected static final String DESC_KEY = "description";
 
     @Setter
     @NotNull
@@ -61,40 +60,31 @@ public abstract class VirtualEntry implements INBTSerializable<CompoundTag> {
                 this.description.equals(other.description);
     }
 
-    @Override
-    public CompoundTag serializeNBT(HolderLookup.@NotNull Provider registries) {
-        var tag = new CompoundTag();
-        tag.putString(COLOR_KEY, this.colorStr);
-
-        if (!description.isEmpty())
-            tag.putString(DESC_KEY, this.description);
-
-        return tag;
+    public DataComponentMap exportComponents(HolderLookup.@NotNull Provider registries) {
+        return putBaseComponent(DataComponentMap.builder()).build();
     }
 
     public JsonElement serializeJson(HolderLookup.@NotNull Provider registries) {
-        JsonObject json = new JsonObject();
-        json.addProperty(COLOR_KEY, this.colorStr);
-        if (!description.isEmpty()) {
-            json.addProperty(DESC_KEY, this.description);
-        }
-        return json;
+        return encodeJson(registries, DataComponentMap.CODEC, exportComponents(registries));
     }
 
-    @Override
-    public void deserializeNBT(HolderLookup.@NotNull Provider registries, CompoundTag nbt) {
-        setColor(nbt.getString(COLOR_KEY));
-
-        if (nbt.contains(DESC_KEY))
-            this.description = nbt.getString(DESC_KEY);
+    public void importComponents(HolderLookup.@NotNull Provider registries, DataComponentMap components) {
+        VirtualEntryData.Base base = components.getOrDefault(GTDataComponents.VIRTUAL_ENTRY_BASE.get(),
+                VirtualEntryData.Base.EMPTY);
+        setColor(base.color());
+        this.description = base.description();
     }
 
     public void deserializeJson(HolderLookup.@NotNull Provider registries, JsonElement data) {
-        JsonObject json = data.getAsJsonObject();
-        setColor(json.get(COLOR_KEY).getAsString());
-        if (json.has(DESC_KEY)) {
-            this.description = json.get(DESC_KEY).getAsString();
+        importComponents(registries, decodeJson(registries, DataComponentMap.CODEC, data));
+    }
+
+    protected DataComponentMap.Builder putBaseComponent(DataComponentMap.Builder builder) {
+        VirtualEntryData.Base base = new VirtualEntryData.Base(this.colorStr, this.description);
+        if (!base.isEmpty()) {
+            builder.set(GTDataComponents.VIRTUAL_ENTRY_BASE.get(), base);
         }
+        return builder;
     }
 
     protected static <T> JsonElement encodeJson(HolderLookup.Provider registries, Codec<T> codec, T value) {

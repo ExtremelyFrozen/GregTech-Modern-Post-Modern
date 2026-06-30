@@ -3,15 +3,13 @@ package com.gregtechceu.gtceu.api.misc.virtualregistry.entries;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponentMap;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,8 +24,6 @@ public class VirtualItemStorage extends VirtualEntry {
     @NotNull
     @Getter
     private final CustomItemStackHandler handler;
-
-    protected static final String ITEM_KEY = "items";
 
     public VirtualItemStorage() {
         this(DEFAULT_SLOT_AMOUNT);
@@ -49,40 +45,22 @@ public class VirtualItemStorage extends VirtualEntry {
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-        CompoundTag tag = VirtualItemStorage.super.serializeNBT(provider);
-        tag.put(ITEM_KEY, handler.serializeNBT(provider));
-        return tag;
+    public DataComponentMap exportComponents(HolderLookup.Provider provider) {
+        return putBaseComponent(DataComponentMap.builder())
+                .set(GTDataComponents.VIRTUAL_ITEM_STORAGE.get(), new VirtualEntryData.Items(handler.getStacks()))
+                .build();
     }
 
     @Override
-    public JsonElement serializeJson(HolderLookup.Provider provider) {
-        JsonObject json = super.serializeJson(provider).getAsJsonObject();
-        JsonArray items = new JsonArray();
-        for (ItemStack stack : handler.getStacks()) {
-            items.add(encodeJson(provider, ItemStack.OPTIONAL_CODEC, stack));
+    public void importComponents(HolderLookup.Provider provider, DataComponentMap components) {
+        super.importComponents(provider, components);
+        VirtualEntryData.Items data = components.get(GTDataComponents.VIRTUAL_ITEM_STORAGE.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Virtual item storage entry is missing item data component");
         }
-        json.add(ITEM_KEY, items);
-        return json;
-    }
-
-    @Override
-    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        super.deserializeNBT(provider, nbt);
-        handler.deserializeNBT(provider, nbt.getCompound(ITEM_KEY));
-    }
-
-    @Override
-    public void deserializeJson(HolderLookup.Provider provider, JsonElement data) {
-        super.deserializeJson(provider, data);
-        JsonObject json = data.getAsJsonObject();
-        if (!json.has(ITEM_KEY)) {
-            return;
-        }
-        JsonArray items = json.getAsJsonArray(ITEM_KEY);
-        int size = Math.min(items.size(), handler.getSlots());
+        int size = Math.min(data.stacks().size(), handler.getSlots());
         for (int i = 0; i < size; i++) {
-            handler.setStackInSlot(i, decodeJson(provider, ItemStack.OPTIONAL_CODEC, items.get(i)));
+            handler.setStackInSlot(i, data.stacks().get(i));
         }
     }
 

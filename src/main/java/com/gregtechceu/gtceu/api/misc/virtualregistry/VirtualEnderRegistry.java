@@ -3,7 +3,9 @@ package com.gregtechceu.gtceu.api.misc.virtualregistry;
 import com.gregtechceu.gtceu.GTCEu;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import org.jetbrains.annotations.NotNull;
@@ -101,13 +103,15 @@ public class VirtualEnderRegistry extends SavedData {
 
     public final void readFromNBT(HolderLookup.@NotNull Provider registries, CompoundTag nbt) {
         if (nbt.contains(PUBLIC_KEY)) {
-            VIRTUAL_REGISTRIES.put(null, new VirtualRegistryMap(registries, nbt.getCompound(PUBLIC_KEY)));
+            VIRTUAL_REGISTRIES.put(null, new VirtualRegistryMap(registries,
+                    readComponents(registries, nbt.getCompound(PUBLIC_KEY))));
         }
         if (nbt.contains(PRIVATE_KEY)) {
             CompoundTag privateEntries = nbt.getCompound(PRIVATE_KEY);
             for (String owner : privateEntries.getAllKeys()) {
                 var privateMap = privateEntries.getCompound(owner);
-                VIRTUAL_REGISTRIES.put(UUID.fromString(owner), new VirtualRegistryMap(registries, privateMap));
+                VIRTUAL_REGISTRIES.put(UUID.fromString(owner), new VirtualRegistryMap(registries,
+                        readComponents(registries, privateMap)));
             }
         }
     }
@@ -117,7 +121,7 @@ public class VirtualEnderRegistry extends SavedData {
     public final CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider registries) {
         var privateTag = new CompoundTag();
         for (var owner : VIRTUAL_REGISTRIES.keySet()) {
-            var mapTag = VIRTUAL_REGISTRIES.get(owner).serializeNBT(registries);
+            var mapTag = writeComponents(registries, VIRTUAL_REGISTRIES.get(owner).exportComponents(registries));
             if (owner != null) {
                 privateTag.put(owner.toString(), mapTag);
             } else {
@@ -126,6 +130,18 @@ public class VirtualEnderRegistry extends SavedData {
         }
         tag.put(PRIVATE_KEY, privateTag);
         return tag;
+    }
+
+    private static DataComponentMap readComponents(HolderLookup.Provider registries, CompoundTag tag) {
+        return DataComponentMap.CODEC
+                .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag)
+                .getOrThrow();
+    }
+
+    private static CompoundTag writeComponents(HolderLookup.Provider registries, DataComponentMap components) {
+        return (CompoundTag) DataComponentMap.CODEC
+                .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), components)
+                .getOrThrow();
     }
 
     @Override
