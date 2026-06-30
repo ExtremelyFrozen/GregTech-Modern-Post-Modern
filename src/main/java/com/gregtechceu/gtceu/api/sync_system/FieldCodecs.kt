@@ -3,14 +3,20 @@
 package com.gregtechceu.gtceu.api.sync_system
 
 import com.gregtechceu.gtceu.api.data.chemical.material.Material
+import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType
 import com.gregtechceu.gtceu.api.registry.GTRegistries
 import com.gregtechceu.gtceu.api.sync_system.codecs.CoverBehaviorCodec
+import com.gregtechceu.gtceu.api.sync_system.codecs.CustomFluidTankCodec
+import com.gregtechceu.gtceu.api.sync_system.codecs.CustomItemStackHandlerCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.GTRecipeFieldCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MachineTraitHolderCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MonitorGroupCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.NBTSerializableCodec
+import com.gregtechceu.gtceu.api.sync_system.codecs.VirtualEntryCodec
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged
+import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState
 
 import net.minecraft.core.BlockPos
@@ -753,6 +759,9 @@ object FieldCodecs {
 			),
 		)
 		registerContextual(ISyncManaged::class.java, SyncDataHolder.SYNC_MANAGED_CODEC)
+		registerContextual(CustomItemStackHandler::class.java, CustomItemStackHandlerCodec.INSTANCE)
+		registerContextual(CustomFluidTank::class.java, CustomFluidTankCodec.INSTANCE)
+		registerContextual(VirtualEntry::class.java, VirtualEntryCodec.INSTANCE)
 		registerContextual(INBTSerializable::class.java, NBTSerializableCodec.INSTANCE)
 		registerContextual(GTRecipeFieldCodec.TYPE, GTRecipeFieldCodec.INSTANCE)
 		registerContextual(MachineTraitHolderCodec.TYPE, MachineTraitHolderCodec.INSTANCE)

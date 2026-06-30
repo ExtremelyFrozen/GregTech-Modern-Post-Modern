@@ -464,6 +464,14 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
             return fluidInventory.isEmpty();
         }
 
+        public Object2LongOpenCustomHashMap<ItemStack> getItemInventoryForSerialization() {
+            return itemInventory;
+        }
+
+        public Object2LongOpenCustomHashMap<FluidStack> getFluidInventoryForSerialization() {
+            return fluidInventory;
+        }
+
         public void onContentsChanged() {
             itemStacks = null;
             fluidStacks = null;
