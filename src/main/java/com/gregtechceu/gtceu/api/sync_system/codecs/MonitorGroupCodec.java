@@ -6,9 +6,7 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorG
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
@@ -26,22 +24,8 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
     private MonitorGroupCodec() {}
 
     @Override
-    public CompoundTag serializeNBT(MonitorGroup value, Context<MonitorGroup> context) {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("name", value.getName());
-        ListTag list = new ListTag();
-        value.getMonitorPositions().forEach(pos -> list.add(NbtUtils.writeBlockPos(pos)));
-        if (value.getTargetRaw() != null) {
-            tag.put("targetPos", NbtUtils.writeBlockPos(value.getTargetRaw()));
-            if (value.getTargetCoverSide() != null) {
-                tag.putString("targetSide", value.getTargetCoverSide().getSerializedName());
-            }
-        }
-        tag.put("positions", list);
-        tag.putInt("dataSlot", value.getDataSlot());
-        tag.put("items", value.getItemStackHandler().serializeNBT(context.lookup()));
-        tag.put("placeholderSlots", value.getPlaceholderSlotsHandler().serializeNBT(context.lookup()));
-        return tag;
+    public Tag serializeNBT(MonitorGroup value, Context<MonitorGroup> context) {
+        return JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, serializeField(value, context));
     }
 
     @Override
@@ -74,28 +58,7 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
 
     @Override
     public @Nullable MonitorGroup deserializeNBT(Tag tag, Context<MonitorGroup> context) {
-        if (!(tag instanceof CompoundTag compoundTag)) return null;
-        CustomItemStackHandler handler = new CustomItemStackHandler();
-        CustomItemStackHandler placeholderSlotsHandler = new CustomItemStackHandler();
-        handler.deserializeNBT(context.lookup(), compoundTag.getCompound("items"));
-        placeholderSlotsHandler.deserializeNBT(context.lookup(), compoundTag.getCompound("placeholderSlots"));
-        var group = new MonitorGroup(compoundTag.getString("name"), handler, placeholderSlotsHandler);
-        ListTag list = compoundTag.getList("positions", Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            int[] aint = list.getIntArray(i);
-            if (aint.length != 3) continue;
-            group.add(new BlockPos(aint[0], aint[1], aint[2]));
-        }
-        if (compoundTag.contains("targetPos", Tag.TAG_COMPOUND)) {
-            group.setTarget(NbtUtils.readBlockPos(compoundTag, "targetPos").orElse(BlockPos.ZERO));
-            if (compoundTag.contains("targetSide", Tag.TAG_STRING)) {
-                group.setTargetCoverSide(Direction.byName(compoundTag.getString("targetSide")));
-            }
-            if (compoundTag.contains("dataSlot", Tag.TAG_INT)) {
-                group.setDataSlot(compoundTag.getInt("dataSlot"));
-            }
-        }
-        return group;
+        return deserializeField(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), context);
     }
 
     @Override
