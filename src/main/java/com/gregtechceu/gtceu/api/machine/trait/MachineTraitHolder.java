@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 
 import com.google.gson.JsonElement;
@@ -129,17 +128,6 @@ public final class MachineTraitHolder {
         return Optional.ofNullable(getTrait(type));
     }
 
-    public CompoundTag serializeSyncData(HolderLookup.Provider lookup, boolean isClientSync, boolean fullSync) {
-        CompoundTag tag = new CompoundTag();
-        if (isClientSync) {
-            throw disabledClientSyncNbt();
-        } else {
-            traitsToSave.forEach((key, trait) -> tag.put(key,
-                    trait.getSyncDataHolder().serializeNBT(lookup, false, fullSync)));
-        }
-        return tag;
-    }
-
     public SyncFieldData serializeSyncFieldData(HolderLookup.Provider lookup, boolean isClientSync, boolean fullSync) {
         SyncFieldData.Builder builder = SyncFieldData.builder();
         if (isClientSync) {
@@ -186,22 +174,6 @@ public final class MachineTraitHolder {
             }
         }
         return changed;
-    }
-
-    public void deserializeSyncData(HolderLookup.Provider lookup, CompoundTag tag, boolean isClientSync) {
-        if (isClientSync) {
-            throw disabledClientSyncNbt();
-        }
-
-        for (var key : tag.getAllKeys()) {
-            var trait = getPersistentTrait(key);
-            if (trait == null) {
-                GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but no syncable trait has that ID",
-                        key);
-                continue;
-            }
-            trait.getSyncDataHolder().deserializeNBT(lookup, tag.getCompound(key), isClientSync);
-        }
     }
 
     public void deserializeSyncFieldData(HolderLookup.Provider lookup, SyncFieldData data, boolean isClientSync) {
