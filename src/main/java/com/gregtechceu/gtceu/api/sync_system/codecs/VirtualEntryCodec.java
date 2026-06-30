@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
 import com.google.gson.JsonElement;
@@ -23,21 +22,11 @@ public final class VirtualEntryCodec implements ContextualFieldCodec<VirtualEntr
     private VirtualEntryCodec() {}
 
     @Override
-    public Tag serializeNBT(VirtualEntry value, Context<VirtualEntry> context) {
-        throw unsupportedNbt(context.fieldName());
-    }
-
-    @Override
     public JsonElement serializeField(VirtualEntry value, Context<VirtualEntry> context) {
         JsonObject json = new JsonObject();
         json.addProperty(TYPE_KEY, value.getType().getId().toString());
         json.add(DATA_KEY, value.serializeJson(context.lookup()));
         return json;
-    }
-
-    @Override
-    public @Nullable VirtualEntry deserializeNBT(Tag tag, Context<VirtualEntry> context) {
-        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -61,12 +50,5 @@ public final class VirtualEntryCodec implements ContextualFieldCodec<VirtualEntr
         }
         entry.deserializeJson(context.lookup(), json.get(DATA_KEY));
         return entry;
-    }
-
-    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
-        String message = "Sync: field %s uses VirtualEntry and must be serialized as DataComponentMap"
-                .formatted(fieldName);
-        GTCEu.LOGGER.error(message);
-        return new UnsupportedOperationException(message);
     }
 }

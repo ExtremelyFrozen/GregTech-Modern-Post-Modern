@@ -1,16 +1,13 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 
-import net.minecraft.nbt.Tag;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
-import org.jetbrains.annotations.Nullable;
 
 public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFluidTank> {
 
@@ -23,11 +20,6 @@ public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFl
     private CustomFluidTankCodec() {}
 
     @Override
-    public Tag serializeNBT(CustomFluidTank value, Context<CustomFluidTank> context) {
-        throw unsupportedNbt(context.fieldName());
-    }
-
-    @Override
     public JsonElement serializeField(CustomFluidTank value, Context<CustomFluidTank> context) {
         JsonObject json = new JsonObject();
         json.addProperty(CAPACITY, value.getCapacity());
@@ -35,11 +27,6 @@ public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFl
                 .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), value.getFluid())
                 .getOrThrow());
         return json;
-    }
-
-    @Override
-    public @Nullable CustomFluidTank deserializeNBT(Tag tag, Context<CustomFluidTank> context) {
-        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -63,12 +50,5 @@ public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFl
                 .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get(FLUID))
                 .getOrThrow());
         return tank;
-    }
-
-    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
-        String message = "Sync: field %s uses CustomFluidTank and must be serialized as DataComponentMap"
-                .formatted(fieldName);
-        GTCEu.LOGGER.error(message);
-        return new UnsupportedOperationException(message);
     }
 }

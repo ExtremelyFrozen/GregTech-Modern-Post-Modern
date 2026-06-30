@@ -1,18 +1,15 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
-import org.jetbrains.annotations.Nullable;
 
 public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<CustomItemStackHandler> {
 
@@ -23,11 +20,6 @@ public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<C
     private static final String STACKS = "stacks";
 
     private CustomItemStackHandlerCodec() {}
-
-    @Override
-    public Tag serializeNBT(CustomItemStackHandler value, Context<CustomItemStackHandler> context) {
-        throw unsupportedNbt(context.fieldName());
-    }
 
     @Override
     public JsonElement serializeField(CustomItemStackHandler value, Context<CustomItemStackHandler> context) {
@@ -43,11 +35,6 @@ public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<C
         }
         json.add(STACKS, encodedStacks);
         return json;
-    }
-
-    @Override
-    public @Nullable CustomItemStackHandler deserializeNBT(Tag tag, Context<CustomItemStackHandler> context) {
-        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -81,12 +68,5 @@ public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<C
         }
         handler.getOnContentsChanged().run();
         return handler;
-    }
-
-    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
-        String message = "Sync: field %s uses CustomItemStackHandler and must be serialized as DataComponentMap"
-                .formatted(fieldName);
-        GTCEu.LOGGER.error(message);
-        return new UnsupportedOperationException(message);
     }
 }

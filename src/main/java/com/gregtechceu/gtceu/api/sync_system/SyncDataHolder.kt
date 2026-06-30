@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.RegistryAccess
 import net.minecraft.core.component.DataComponentMap
-import net.minecraft.nbt.Tag
 
 import com.google.gson.JsonElement
 import com.mojang.serialization.JsonOps
@@ -351,8 +350,6 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	companion object {
 		@JvmField
 		val SYNC_MANAGED_CODEC: ContextualFieldCodec<ISyncManaged> = object : ContextualFieldCodec<ISyncManaged> {
-			override fun serializeNBT(value: ISyncManaged, context: ContextualFieldCodec.Context<ISyncManaged>): Tag = throw unsupportedNbt(context.fieldName)
-
 			override fun serializeField(value: ISyncManaged, context: ContextualFieldCodec.Context<ISyncManaged>) = DataComponentMap.CODEC
 				.encodeStart(
 					context.lookup.createSerializationContext(JsonOps.INSTANCE),
@@ -378,9 +375,6 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 			}
 
 			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<ISyncManaged>): ISyncManaged? = throw unsupportedNbt(context.fieldName)
-
-			@Nullable
 			override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<ISyncManaged>): ISyncManaged? {
 				val syncManaged = context.currentValue
 				if (syncManaged == null) {
@@ -392,12 +386,6 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 					.getOrThrow()
 				syncManaged.getSyncDataHolder().deserializeComponents(context.lookup, components, context.isClientSync)
 				return syncManaged
-			}
-
-			private fun unsupportedNbt(fieldName: String): UnsupportedOperationException {
-				val message = "Sync: field $fieldName uses ISyncManaged and must be serialized as DataComponentMap"
-				GTCEu.LOGGER.error(message)
-				return UnsupportedOperationException(message)
 			}
 		}
 	}

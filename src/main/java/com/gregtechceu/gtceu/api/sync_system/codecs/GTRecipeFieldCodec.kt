@@ -1,12 +1,10 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs
 
-import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.recipe.GTRecipe
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition
 import com.gregtechceu.gtceu.api.recipe.GTRecipeSerializer
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec
 
-import net.minecraft.nbt.Tag
 import net.minecraft.resources.ResourceLocation
 
 import com.google.gson.JsonElement
@@ -15,8 +13,6 @@ import com.mojang.serialization.JsonOps
 import org.jetbrains.annotations.Nullable
 
 class GTRecipeFieldCodec private constructor() : ContextualFieldCodec<GTRecipe> {
-	override fun serializeNBT(value: GTRecipe, context: ContextualFieldCodec.Context<GTRecipe>): Tag = throw unsupportedNbt(context.fieldName)
-
 	override fun serializeField(value: GTRecipe, context: ContextualFieldCodec.Context<GTRecipe>): JsonElement {
 		val json = JsonObject()
 		json.addProperty("id", value.id.toString())
@@ -30,9 +26,6 @@ class GTRecipeFieldCodec private constructor() : ContextualFieldCodec<GTRecipe> 
 		json.addProperty("ocLevel", value.ocLevel)
 		return json
 	}
-
-	@Nullable
-	override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<GTRecipe>): GTRecipe? = throw unsupportedNbt(context.fieldName)
 
 	@Nullable
 	override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<GTRecipe>): GTRecipe? {
@@ -56,11 +49,5 @@ class GTRecipeFieldCodec private constructor() : ContextualFieldCodec<GTRecipe> 
 
 		@JvmField
 		val INSTANCE: GTRecipeFieldCodec = GTRecipeFieldCodec()
-
-		private fun unsupportedNbt(fieldName: String): UnsupportedOperationException {
-			val message = "Sync: field $fieldName uses GTRecipe and must be serialized as DataComponentMap"
-			GTCEu.LOGGER.error(message)
-			return UnsupportedOperationException(message)
-		}
 	}
 }

@@ -1,13 +1,11 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
 import com.google.gson.JsonArray;
@@ -22,11 +20,6 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
     public static final MonitorGroupCodec INSTANCE = new MonitorGroupCodec();
 
     private MonitorGroupCodec() {}
-
-    @Override
-    public Tag serializeNBT(MonitorGroup value, Context<MonitorGroup> context) {
-        throw unsupportedNbt(context.fieldName());
-    }
 
     @Override
     public JsonElement serializeField(MonitorGroup value, Context<MonitorGroup> context) {
@@ -54,11 +47,6 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
         json.add("items", serializeItems(value.getItemStackHandler(), context));
         json.add("placeholderSlots", serializeItems(value.getPlaceholderSlotsHandler(), context));
         return json;
-    }
-
-    @Override
-    public @Nullable MonitorGroup deserializeNBT(Tag tag, Context<MonitorGroup> context) {
-        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -117,12 +105,5 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
             handler.setStackInSlot(i, stack);
         }
         return handler;
-    }
-
-    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
-        String message = "Sync: field %s uses MonitorGroup and must be serialized as DataComponentMap"
-                .formatted(fieldName);
-        GTCEu.LOGGER.error(message);
-        return new UnsupportedOperationException(message);
     }
 }

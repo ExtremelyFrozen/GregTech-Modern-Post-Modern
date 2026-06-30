@@ -21,10 +21,6 @@ import com.gregtechceu.gtceu.client.model.machine.MachineRenderState
 import net.minecraft.core.BlockPos
 import net.minecraft.core.UUIDUtil
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.NbtOps
-import net.minecraft.nbt.Tag
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.ComponentSerialization
 import net.minecraft.resources.ResourceLocation
@@ -247,25 +243,6 @@ object FieldCodecs {
 	private fun makeContextualListCodec(type: ParameterizedType): ContextualFieldCodec<*>? {
 		val elementCodec = getContextual(type.actualTypeArguments[0]) ?: return null
 		return object : ContextualFieldCodec<List<*>> {
-			override fun serializeNBT(value: List<*>, context: ContextualFieldCodec.Context<List<*>>): Tag {
-				val list = ListTag()
-				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for (i in value.indices) {
-					val element = value[i]
-					if (element == null) {
-						list.add(nullTag())
-					} else {
-						list.add(
-							typedElementCodec.serializeNBT(
-								element,
-								nestedContext(context, type.actualTypeArguments[0], element, context.fieldName + "[" + i + "]"),
-							),
-						)
-					}
-				}
-				return list
-			}
-
 			override fun serializeField(value: List<*>, context: ContextualFieldCodec.Context<List<*>>): JsonElement {
 				val list = JsonArray()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
@@ -283,28 +260,6 @@ object FieldCodecs {
 					}
 				}
 				return list
-			}
-
-			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<List<*>>): List<*>? {
-				if (tag !is ListTag) return null
-				val current = context.currentValue
-				val result = ArrayList<Any?>(tag.size)
-				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for ((i, element1) in tag.withIndex()) {
-					val currentElement = if (current != null && i < current.size) current[i] else null
-					val elementTag = element1
-					val element = if (isNullTag(elementTag)) {
-						null
-					} else {
-						typedElementCodec.deserializeNBT(
-							elementTag,
-							nestedContext(context, type.actualTypeArguments[0], currentElement, context.fieldName + "[" + i + "]"),
-						)
-					}
-					result.add(element)
-				}
-				return result
 			}
 
 			@Nullable
@@ -335,24 +290,6 @@ object FieldCodecs {
 	private fun makeContextualSetCodec(type: ParameterizedType): ContextualFieldCodec<*>? {
 		val elementCodec = getContextual(type.actualTypeArguments[0]) ?: return null
 		return object : ContextualFieldCodec<Set<*>> {
-			override fun serializeNBT(value: Set<*>, context: ContextualFieldCodec.Context<Set<*>>): Tag {
-				val list = ListTag()
-				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for ((index, element) in value.withIndex()) {
-					if (element == null) {
-						list.add(nullTag())
-					} else {
-						list.add(
-							typedElementCodec.serializeNBT(
-								element,
-								nestedContext(context, type.actualTypeArguments[0], element, context.fieldName + "[" + index + "]"),
-							),
-						)
-					}
-				}
-				return list
-			}
-
 			override fun serializeField(value: Set<*>, context: ContextualFieldCodec.Context<Set<*>>): JsonElement {
 				val list = JsonArray()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
@@ -369,26 +306,6 @@ object FieldCodecs {
 					}
 				}
 				return list
-			}
-
-			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<Set<*>>): Set<*>? {
-				if (tag !is ListTag) return null
-				val result = LinkedHashSet<Any?>()
-				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for ((i, element1) in tag.withIndex()) {
-					val elementTag = element1
-					val element = if (isNullTag(elementTag)) {
-						null
-					} else {
-						typedElementCodec.deserializeNBT(
-							elementTag,
-							nestedContext(context, type.actualTypeArguments[0], null, context.fieldName + "[" + i + "]"),
-						)
-					}
-					result.add(element)
-				}
-				return result
 			}
 
 			@Nullable
@@ -429,26 +346,6 @@ object FieldCodecs {
 	private fun makeContextualArrayCodec(componentType: Class<*>): ContextualFieldCodec<*>? {
 		val elementCodec = getContextual(componentType) ?: return null
 		return object : ContextualFieldCodec<Any> {
-			override fun serializeNBT(value: Any, context: ContextualFieldCodec.Context<Any>): Tag {
-				val list = ListTag()
-				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				val length = Array.getLength(value)
-				for (i in 0 until length) {
-					val element = Array.get(value, i)
-					if (element == null) {
-						list.add(nullTag())
-					} else {
-						list.add(
-							typedElementCodec.serializeNBT(
-								element,
-								nestedContext(context, componentType, element, context.fieldName + "[" + i + "]"),
-							),
-						)
-					}
-				}
-				return list
-			}
-
 			override fun serializeField(value: Any, context: ContextualFieldCodec.Context<Any>): JsonElement {
 				val list = JsonArray()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
@@ -467,28 +364,6 @@ object FieldCodecs {
 					}
 				}
 				return list
-			}
-
-			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<Any>): Any? {
-				if (tag !is ListTag) return null
-				val current = context.currentValue
-				val result = if (current != null && Array.getLength(current) == tag.size) current else Array.newInstance(componentType, tag.size)
-				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for ((i, element1) in tag.withIndex()) {
-					val currentElement = if (current != null && i < Array.getLength(current)) Array.get(current, i) else null
-					val elementTag = element1
-					val element = if (isNullTag(elementTag)) {
-						null
-					} else {
-						typedElementCodec.deserializeNBT(
-							elementTag,
-							nestedContext(context, componentType, currentElement, context.fieldName + "[" + i + "]"),
-						)
-					}
-					Array.set(result, i, element)
-				}
-				return result
 			}
 
 			@Nullable
@@ -514,10 +389,6 @@ object FieldCodecs {
 		}
 	}
 
-	private fun nullTag(): CompoundTag = CompoundTag().apply { putBoolean("null", true) }
-
-	private fun isNullTag(tag: Tag): Boolean = tag is CompoundTag && tag.getBoolean("null")
-
 	private fun <T> nestedContext(parent: ContextualFieldCodec.Context<*>, type: Type, @Nullable currentValue: T?, fieldName: String): ContextualFieldCodec.Context<T> = ContextualFieldCodec.Context(
 		parent.holder,
 		TypeDeclaration(type),
@@ -537,25 +408,6 @@ object FieldCodecs {
 		@field:Nullable private val regularKeyCodec: Codec<*>?,
 		@field:Nullable private val regularValueCodec: Codec<*>?,
 	) : ContextualFieldCodec<Map<*, *>> {
-		override fun serializeNBT(value: Map<*, *>, context: ContextualFieldCodec.Context<Map<*, *>>): Tag {
-			val list = ListTag()
-			var index = 0
-			for ((key, entryValue) in value) {
-				val entryTag = CompoundTag()
-				entryTag.put(
-					"k",
-					serializeMapElement(key, keyCodec, regularKeyCodec, context, type.actualTypeArguments[0], context.fieldName + "[" + index + "].key"),
-				)
-				entryTag.put(
-					"v",
-					serializeMapElement(entryValue, valueCodec, regularValueCodec, context, type.actualTypeArguments[1], context.fieldName + "[" + index + "].value"),
-				)
-				list.add(entryTag)
-				index++
-			}
-			return list
-		}
-
 		override fun serializeField(value: Map<*, *>, context: ContextualFieldCodec.Context<Map<*, *>>): JsonElement {
 			val list = JsonArray()
 			var index = 0
@@ -576,19 +428,6 @@ object FieldCodecs {
 		}
 
 		@Nullable
-		override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<Map<*, *>>): Map<*, *>? {
-			if (tag !is ListTag) return null
-			val result: MutableMap<Any?, Any?> = LinkedHashMap()
-			for ((i, element) in tag.withIndex()) {
-				val entryTag = element as? CompoundTag ?: continue
-				val key = deserializeMapElement(entryTag.get("k"), keyCodec, regularKeyCodec, context, type.actualTypeArguments[0], context.fieldName + "[" + i + "].key")
-				val value = deserializeMapElement(entryTag.get("v"), valueCodec, regularValueCodec, context, type.actualTypeArguments[1], context.fieldName + "[" + i + "].value")
-				result[key] = value
-			}
-			return result
-		}
-
-		@Nullable
 		override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<Map<*, *>>): Map<*, *>? {
 			if (!value.isJsonArray) return null
 			val result: MutableMap<Any?, Any?> = LinkedHashMap()
@@ -603,23 +442,6 @@ object FieldCodecs {
 		}
 
 		companion object {
-			private fun serializeMapElement(
-				@Nullable value: Any?,
-				@Nullable contextualCodec: ContextualFieldCodec<*>?,
-				@Nullable regularCodec: Codec<*>?,
-				context: ContextualFieldCodec.Context<*>,
-				type: Type,
-				fieldName: String,
-			): Tag {
-				if (value == null) return nullTag()
-				if (contextualCodec != null) {
-					return (contextualCodec as ContextualFieldCodec<Any>).serializeNBT(value, nestedContext(context, type, value, fieldName))
-				}
-				return (regularCodec as Codec<Any>)
-					.encodeStart(context.lookup.createSerializationContext(NbtOps.INSTANCE), value)
-					.getOrThrow()
-			}
-
 			private fun serializeMapElementData(
 				@Nullable value: Any?,
 				@Nullable contextualCodec: ContextualFieldCodec<*>?,
@@ -634,24 +456,6 @@ object FieldCodecs {
 				}
 				return (regularCodec as Codec<Any>)
 					.encodeStart(context.lookup.createSerializationContext(JsonOps.INSTANCE), value)
-					.getOrThrow()
-			}
-
-			@Nullable
-			private fun deserializeMapElement(
-				@Nullable tag: Tag?,
-				@Nullable contextualCodec: ContextualFieldCodec<*>?,
-				@Nullable regularCodec: Codec<*>?,
-				context: ContextualFieldCodec.Context<*>,
-				type: Type,
-				fieldName: String,
-			): Any? {
-				if (tag == null || isNullTag(tag)) return null
-				if (contextualCodec != null) {
-					return (contextualCodec as ContextualFieldCodec<Any>).deserializeNBT(tag, nestedContext(context, type, null, fieldName))
-				}
-				return (regularCodec as Codec<Any>)
-					.parse(context.lookup.createSerializationContext(NbtOps.INSTANCE), tag)
 					.getOrThrow()
 			}
 

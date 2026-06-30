@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
 import com.google.gson.JsonElement;
@@ -25,11 +24,6 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
     private CoverBehaviorCodec() {}
 
     @Override
-    public Tag serializeNBT(@Nullable CoverBehavior value, Context<CoverBehavior> context) {
-        throw unsupportedNbt(context.fieldName());
-    }
-
-    @Override
     public JsonElement serializeField(@Nullable CoverBehavior value, Context<CoverBehavior> context) {
         if (value == null) {
             return JsonNull.INSTANCE;
@@ -44,11 +38,6 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
                                 context.isClientFullSyncUpdate()))
                 .getOrThrow());
         return json;
-    }
-
-    @Override
-    public @Nullable CoverBehavior deserializeNBT(Tag tag, Context<CoverBehavior> context) {
-        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -87,12 +76,5 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
                 .getOrThrow();
         newCover.getSyncDataHolder().deserializeComponents(context.lookup(), components, context.isClientSync());
         return newCover;
-    }
-
-    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
-        String message = "Sync: field %s uses CoverBehavior and must be serialized as DataComponentMap"
-                .formatted(fieldName);
-        GTCEu.LOGGER.error(message);
-        return new UnsupportedOperationException(message);
     }
 }

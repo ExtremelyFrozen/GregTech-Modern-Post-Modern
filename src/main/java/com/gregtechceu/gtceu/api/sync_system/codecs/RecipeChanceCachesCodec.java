@@ -1,11 +1,9 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
 import com.google.gson.JsonArray;
@@ -23,12 +21,6 @@ public final class RecipeChanceCachesCodec
     public static final RecipeChanceCachesCodec INSTANCE = new RecipeChanceCachesCodec();
 
     private RecipeChanceCachesCodec() {}
-
-    @Override
-    public Tag serializeNBT(IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> value,
-                            Context<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> context) {
-        throw unsupportedNbt(context.fieldName());
-    }
 
     @Override
     public JsonElement serializeField(IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> value,
@@ -51,13 +43,6 @@ public final class RecipeChanceCachesCodec
         }
 
         return chanceCache;
-    }
-
-    @Override
-    public @Nullable IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> deserializeNBT(
-                                                                                           Tag tag,
-                                                                                           Context<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> context) {
-        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -114,12 +99,5 @@ public final class RecipeChanceCachesCodec
     @SuppressWarnings("unchecked")
     private static Object readEntryJson(RecipeCapability<?> capability, JsonObject json, Context<?> context) {
         return ((RecipeCapability<Object>) capability).serializer.fromJson(json.get("entry"), context.lookup());
-    }
-
-    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
-        String message = "Sync: field %s uses recipe chance caches and must be serialized as DataComponentMap"
-                .formatted(fieldName);
-        GTCEu.LOGGER.error(message);
-        return new UnsupportedOperationException(message);
     }
 }
