@@ -404,7 +404,7 @@ public class GTRecipeWidget extends WidgetGroup {
             if (extraContents.get(IO.OUT, cap) == null) {
                 extraContents.put(IO.OUT, cap, contents);
             } else {
-                ArrayList<Content> fullContents = new ArrayList<>(extraContents.get(IO.IN, cap));
+                ArrayList<Content> fullContents = new ArrayList<>(extraContents.get(IO.OUT, cap));
                 fullContents.addAll(contents);
                 extraContents.put(IO.OUT, cap, fullContents);
             }
