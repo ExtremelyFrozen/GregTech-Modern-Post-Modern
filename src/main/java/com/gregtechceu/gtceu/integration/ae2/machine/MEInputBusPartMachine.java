@@ -18,9 +18,7 @@ import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -168,53 +166,13 @@ public class MEInputBusPartMachine extends MEBusPartMachine
     // ****** Configuration ******//
     ////////////////////////////////
 
-    protected CompoundTag writeConfigToTag(HolderLookup.Provider provider) {
-        CompoundTag tag = new CompoundTag();
-        CompoundTag configStacks = new CompoundTag();
-        tag.put("ConfigStacks", configStacks);
-        for (int i = 0; i < CONFIG_SIZE; i++) {
-            var slot = this.aeItemHandler.getInventory()[i];
-            GenericStack config = slot.getConfig();
-            if (config == null) {
-                continue;
-            }
-            CompoundTag stackTag = GenericStack.writeTag(provider, config);
-            configStacks.put(Integer.toString(i), stackTag);
-        }
-        tag.putByte("GhostCircuit",
-                (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0)));
-        tag.putBoolean("DistinctBuses", isDistinct());
-        return tag;
-    }
-
     protected AEInputConfigCopyData writeConfigData() {
         List<GenericStack> stacks = new ArrayList<>(CONFIG_SIZE);
         for (int i = 0; i < CONFIG_SIZE; i++) {
             stacks.add(this.aeItemHandler.getInventory()[i].getConfig());
         }
         byte ghostCircuit = (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0));
-        return new AEInputConfigCopyData(stacks, ghostCircuit, isDistinct());
-    }
-
-    protected void readConfigFromTag(HolderLookup.Provider provider, CompoundTag tag) {
-        if (tag.contains("ConfigStacks")) {
-            CompoundTag configStacks = tag.getCompound("ConfigStacks");
-            for (int i = 0; i < CONFIG_SIZE; i++) {
-                String key = Integer.toString(i);
-                if (configStacks.contains(key)) {
-                    CompoundTag configTag = configStacks.getCompound(key);
-                    this.aeItemHandler.getInventory()[i].setConfig(GenericStack.readTag(provider, configTag));
-                } else {
-                    this.aeItemHandler.getInventory()[i].setConfig(null);
-                }
-            }
-        }
-        if (tag.contains("GhostCircuit")) {
-            circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(tag.getByte("GhostCircuit")));
-        }
-        if (tag.contains("DistinctBuses")) {
-            setDistinct(tag.getBoolean("DistinctBuses"));
-        }
+        return new AEInputConfigCopyData(stacks, ghostCircuit, isDistinct(), false);
     }
 
     protected void readConfigData(AEInputConfigCopyData data) {
