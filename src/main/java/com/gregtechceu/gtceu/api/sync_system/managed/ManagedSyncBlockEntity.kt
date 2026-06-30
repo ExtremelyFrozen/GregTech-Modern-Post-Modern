@@ -2,12 +2,14 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer
 import com.gregtechceu.gtceu.common.network.packets.SPacketMachineSyncToClient
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtOps
 import net.minecraft.network.Connection
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
@@ -33,6 +35,8 @@ import java.util.*
 abstract class ManagedSyncBlockEntity :
 	BlockEntity,
 	ISyncManaged {
+	private val savedSyncDataKey = "gtceu_sync_data"
+
 	@JvmField
 	protected val syncDataHolder: SyncDataHolder = SyncDataHolder(this)
 	private var dirty = false
@@ -54,7 +58,15 @@ abstract class ManagedSyncBlockEntity :
 	 */
 	final override fun saveAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
 		super.saveAdditional(tag, registries)
-		tag.merge(getSyncDataHolder().serializeToSaveNBT(registries))
+		val savedData = getSyncDataHolder().serializeToSaveFieldData(registries)
+		if (!savedData.isEmpty) {
+			tag.put(
+				savedSyncDataKey,
+				SyncFieldData.CODEC
+					.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), savedData)
+					.getOrThrow(),
+			)
+		}
 	}
 
 	/**
@@ -66,7 +78,12 @@ abstract class ManagedSyncBlockEntity :
 	@MustBeInvokedByOverriders
 	override fun loadAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
 		super.loadAdditional(tag, registries)
-		getSyncDataHolder().deserializeNBT(registries, tag, false)
+		if (tag.contains(savedSyncDataKey)) {
+			val savedData = SyncFieldData.CODEC
+				.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get(savedSyncDataKey))
+				.getOrThrow()
+			getSyncDataHolder().deserializeFieldData(registries, savedData, false)
+		}
 	}
 
 	/**
