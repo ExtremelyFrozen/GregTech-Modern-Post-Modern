@@ -7,12 +7,9 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -29,13 +26,7 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
 
     @Override
     public Tag serializeNBT(@Nullable CoverBehavior value, Context<CoverBehavior> context) {
-        if (value == null) {
-            var nullTag = new CompoundTag();
-            nullTag.putBoolean("null", true);
-            return nullTag;
-        }
-
-        return serialize(value, context.isClientSync(), context.isClientFullSyncUpdate(), context.lookup());
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -57,17 +48,7 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
 
     @Override
     public @Nullable CoverBehavior deserializeNBT(Tag tag, Context<CoverBehavior> context) {
-        if (tag instanceof CompoundTag compoundTag) {
-            if (compoundTag.getBoolean("null")) {
-                return null;
-            }
-            if (context.holder() instanceof ICoverable coverable) {
-                return deserialize(compoundTag, coverable, context.currentValue(), context.isClientSync(),
-                        context.lookup());
-            }
-        }
-        GTCEu.LOGGER.error("Sync: Object attempting to sync cover does not implement ICoverable {}", context);
-        return null;
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -108,49 +89,10 @@ public final class CoverBehaviorCodec implements ContextualFieldCodec<CoverBehav
         return newCover;
     }
 
-    private static CompoundTag serialize(CoverBehavior cover, boolean isSync, boolean fullSync,
-                                         HolderLookup.Provider lookup) {
-        var compound = new CompoundTag();
-        compound.putInt("side", cover.attachedSide.ordinal());
-        compound.putString("coverType", cover.coverDefinition.getId().toString());
-        compound.put("data", cover.getSyncDataHolder().serializeNBT(lookup, isSync, fullSync));
-        return compound;
-    }
-
-    public static @Nullable CoverBehavior deserialize(CompoundTag tag, ICoverable holder, @Nullable CoverBehavior cover,
-                                                      boolean isSync, HolderLookup.Provider lookup) {
-        if (tag.contains("payload") && tag.contains("uid")) {
-            tag.putInt("side", tag.getCompound("uid").getInt("side"));
-            tag.putString("coverType", tag.getCompound("uid").getString("id"));
-            tag.put("data", tag.getCompound("payload").getCompound("d"));
-        }
-
-        Direction side = Direction.values()[tag.getInt("side")];
-
-        if (tag.isEmpty() || tag.getString("coverType").isEmpty()) {
-            holder.setCoverAtSide(null, side);
-            return null;
-        }
-        ResourceLocation coverType = ResourceLocation.tryParse(tag.getString("coverType"));
-        if (cover == null || !cover.coverDefinition.getId().equals(coverType)) {
-            var coverReg = GTRegistries.COVERS.get(coverType);
-            if (coverReg == null) {
-                GTCEu.LOGGER.error("Error during NBT load: unknown cover type {} ({})", coverType,
-                        tag.getString("coverType"));
-                return null;
-            }
-            holder.setCoverAtSide(coverReg.createCoverBehavior(holder, side), side);
-        }
-
-        CoverBehavior newCover = holder.getCoverAtSide(side);
-        if (newCover == null) return null;
-        newCover.getSyncDataHolder().deserializeNBT(lookup, tag.getCompound("data"), isSync);
-
-        if (!isSync && newCover.getAttachItem() == ItemStack.EMPTY) {
-            GTCEu.LOGGER.error("Invalid cover save state, this should never happen unless loading corrupted data.");
-            holder.setCoverAtSide(null, side);
-        }
-
-        return newCover;
+    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
+        String message = "Sync: field %s uses CoverBehavior and must be serialized as DataComponentMap"
+                .formatted(fieldName);
+        GTCEu.LOGGER.error(message);
+        return new UnsupportedOperationException(message);
     }
 }

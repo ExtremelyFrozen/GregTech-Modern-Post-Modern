@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.RegistryAccess
 import net.minecraft.core.component.DataComponentMap
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.Tag
 
 import com.google.gson.JsonElement
@@ -56,35 +55,6 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	fun resyncAllFields() {
 		resyncAll = true
 		holder.markAsChanged()
-	}
-
-	fun serializeNBT(registries: HolderLookup.Provider, writeClientFields: Boolean): CompoundTag {
-		if (writeClientFields) {
-			rejectClientSyncNBT()
-		}
-		return serializeToSaveNBT(registries)
-	}
-
-	fun serializeNBT(registries: HolderLookup.Provider, writeClientFields: Boolean, fullSync: Boolean): CompoundTag {
-		if (writeClientFields) {
-			rejectClientSyncNBT()
-		}
-		return serializeToSaveNBT(registries)
-	}
-
-	fun serializeToSaveNBT(registries: HolderLookup.Provider): CompoundTag {
-		val tag = CompoundTag()
-		for (field in syncData.getServerSaveFields()) {
-			val nbtValue = FieldSyncHandler.serializeField(
-				registries,
-				holder,
-				field,
-				writeClientFields = false,
-				fullSync = false,
-			)
-			tag.put(field.nbtSaveKey, nbtValue)
-		}
-		return tag
 	}
 
 	fun serializeToItemComponents(registries: HolderLookup.Provider): DataComponentMap = componentsOf(serializeToItemFieldData(registries))
@@ -290,28 +260,6 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		return SyncFieldData.toNetworkBytes(registries, componentsOf(changes.build()))
 	}
 
-	fun deserializeNBT(registries: HolderLookup.Provider, tag: CompoundTag, readingClientFields: Boolean) {
-		if (readingClientFields) {
-			rejectClientSyncNBT()
-		}
-
-		val fieldsToCheck = if (readingClientFields) syncData.getClientSyncFields() else syncData.getServerSaveFields()
-
-		for (field in fieldsToCheck) {
-			val savedValue = tag.get(field.nbtSaveKey)
-			if (savedValue != null) {
-				FieldSyncHandler.deserializeField(registries, holder, field, savedValue, readingClientFields)
-			}
-
-			if (readingClientFields) {
-				cachedClientValues[field] = field.handle.get(holder)
-				invokeClientChangeListeners(field)
-
-				if (field.triggerClientRerender) holder.scheduleRenderUpdate()
-			}
-		}
-	}
-
 	fun deserializeItemComponents(registries: HolderLookup.Provider, components: DataComponentMap) {
 		val fieldData = components.get(GTDataComponents.SYNC_FIELD_DATA.get())
 			?: return
@@ -400,17 +348,10 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 			.build()
 	}
 
-	private fun rejectClientSyncNBT(): Nothing {
-		val message = "Sync: client sync NBT is disabled for ${holder.javaClass.name}; use DataComponentMap serialization"
-		GTCEu.LOGGER.error(message)
-		throw IllegalStateException(message)
-	}
-
 	companion object {
 		@JvmField
 		val SYNC_MANAGED_CODEC: ContextualFieldCodec<ISyncManaged> = object : ContextualFieldCodec<ISyncManaged> {
-			override fun serializeNBT(value: ISyncManaged, context: ContextualFieldCodec.Context<ISyncManaged>): Tag =
-				value.getSyncDataHolder().serializeNBT(context.lookup, context.isClientSync, context.isClientFullSyncUpdate)
+			override fun serializeNBT(value: ISyncManaged, context: ContextualFieldCodec.Context<ISyncManaged>): Tag = throw unsupportedNbt(context.fieldName)
 
 			override fun serializeField(value: ISyncManaged, context: ContextualFieldCodec.Context<ISyncManaged>) = DataComponentMap.CODEC
 				.encodeStart(
@@ -437,15 +378,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 			}
 
 			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<ISyncManaged>): ISyncManaged? {
-				val syncManaged = context.currentValue
-				if (syncManaged == null) {
-					GTCEu.LOGGER.error("Sync: ISyncManaged field was null, cannot instantiate {}", context.fieldName)
-					return null
-				}
-				syncManaged.getSyncDataHolder().deserializeNBT(context.lookup, tag as CompoundTag, context.isClientSync)
-				return syncManaged
-			}
+			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<ISyncManaged>): ISyncManaged? = throw unsupportedNbt(context.fieldName)
 
 			@Nullable
 			override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<ISyncManaged>): ISyncManaged? {
@@ -459,6 +392,12 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 					.getOrThrow()
 				syncManaged.getSyncDataHolder().deserializeComponents(context.lookup, components, context.isClientSync)
 				return syncManaged
+			}
+
+			private fun unsupportedNbt(fieldName: String): UnsupportedOperationException {
+				val message = "Sync: field $fieldName uses ISyncManaged and must be serialized as DataComponentMap"
+				GTCEu.LOGGER.error(message)
+				return UnsupportedOperationException(message)
 			}
 		}
 	}

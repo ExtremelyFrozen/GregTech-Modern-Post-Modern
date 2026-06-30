@@ -2,12 +2,12 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer
 import com.gregtechceu.gtceu.common.network.packets.SPacketMachineSyncToClient
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup
+import net.minecraft.core.component.DataComponentMap
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
 import net.minecraft.network.Connection
@@ -58,11 +58,11 @@ abstract class ManagedSyncBlockEntity :
 	 */
 	final override fun saveAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
 		super.saveAdditional(tag, registries)
-		val savedData = getSyncDataHolder().serializeToSaveFieldData(registries)
+		val savedData = getSyncDataHolder().serializeToComponents(registries, writeClientFields = false, fullSync = false)
 		if (!savedData.isEmpty) {
 			tag.put(
 				savedSyncDataKey,
-				SyncFieldData.CODEC
+				DataComponentMap.CODEC
 					.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), savedData)
 					.getOrThrow(),
 			)
@@ -79,10 +79,10 @@ abstract class ManagedSyncBlockEntity :
 	override fun loadAdditional(tag: CompoundTag, registries: HolderLookup.Provider) {
 		super.loadAdditional(tag, registries)
 		if (tag.contains(savedSyncDataKey)) {
-			val savedData = SyncFieldData.CODEC
+			val savedData = DataComponentMap.CODEC
 				.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get(savedSyncDataKey))
 				.getOrThrow()
-			getSyncDataHolder().deserializeFieldData(registries, savedData, false)
+			getSyncDataHolder().deserializeComponents(registries, savedData, false)
 		}
 	}
 

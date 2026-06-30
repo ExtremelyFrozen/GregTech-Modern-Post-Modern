@@ -28,7 +28,6 @@ import com.gregtechceu.gtceu.utils.GTUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
@@ -468,8 +467,12 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
 
             list.add(Component.translatable("behavior.portable_scanner.divider"));
             list.add(Component.literal("Save data"));
-            list.add(NbtUtils.toPrettyComponent(
-                    syncBlockEntity.getSyncDataHolder().serializeNBT(level.registryAccess(), false)));
+            list.add(Component.literal(DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(JsonOps.INSTANCE),
+                            syncBlockEntity.getSyncDataHolder()
+                                    .serializeToComponents(level.registryAccess(), false, false))
+                    .getOrThrow()
+                    .toString()));
 
             list.add(Component.translatable("behavior.portable_scanner.divider"));
             list.add(Component.literal("Update packet"));

@@ -3,7 +3,9 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 
 import net.minecraft.core.HolderLookup
+import net.minecraft.core.component.DataComponentMap
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.NbtOps
 import net.minecraft.world.level.saveddata.SavedData
 
 /**
@@ -13,6 +15,7 @@ import net.minecraft.world.level.saveddata.SavedData
 abstract class ManagedSavedData :
 	SavedData,
 	ISyncManaged {
+	private val savedSyncDataKey = "gtceu_sync_data"
 
 	@JvmField
 	protected val syncDataHolder: SyncDataHolder = SyncDataHolder(this)
@@ -20,7 +23,12 @@ abstract class ManagedSavedData :
 	constructor()
 
 	constructor(tag: CompoundTag, registries: HolderLookup.Provider) {
-		getSyncDataHolder().deserializeNBT(registries, tag, false)
+		if (tag.contains(savedSyncDataKey)) {
+			val savedData = DataComponentMap.CODEC
+				.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get(savedSyncDataKey))
+				.getOrThrow()
+			getSyncDataHolder().deserializeComponents(registries, savedData, false)
+		}
 	}
 
 	override fun getSyncDataHolder(): SyncDataHolder = syncDataHolder
@@ -35,5 +43,16 @@ abstract class ManagedSavedData :
 
 	override fun isDirty(): Boolean = true
 
-	override fun save(compoundTag: CompoundTag, registries: HolderLookup.Provider): CompoundTag = getSyncDataHolder().serializeNBT(registries, false)
+	override fun save(compoundTag: CompoundTag, registries: HolderLookup.Provider): CompoundTag {
+		val savedData = getSyncDataHolder().serializeToComponents(registries, writeClientFields = false, fullSync = false)
+		if (!savedData.isEmpty) {
+			compoundTag.put(
+				savedSyncDataKey,
+				DataComponentMap.CODEC
+					.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), savedData)
+					.getOrThrow(),
+			)
+		}
+		return compoundTag
+	}
 }
