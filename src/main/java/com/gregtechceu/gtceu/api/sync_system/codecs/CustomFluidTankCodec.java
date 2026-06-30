@@ -1,9 +1,9 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -24,7 +24,7 @@ public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFl
 
     @Override
     public Tag serializeNBT(CustomFluidTank value, Context<CustomFluidTank> context) {
-        return JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, serializeField(value, context));
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -39,7 +39,7 @@ public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFl
 
     @Override
     public @Nullable CustomFluidTank deserializeNBT(Tag tag, Context<CustomFluidTank> context) {
-        return deserializeField(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), context);
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -63,5 +63,12 @@ public final class CustomFluidTankCodec implements ContextualFieldCodec<CustomFl
                 .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get(FLUID))
                 .getOrThrow());
         return tank;
+    }
+
+    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
+        String message = "Sync: field %s uses CustomFluidTank and must be serialized as DataComponentMap"
+                .formatted(fieldName);
+        GTCEu.LOGGER.error(message);
+        return new UnsupportedOperationException(message);
     }
 }

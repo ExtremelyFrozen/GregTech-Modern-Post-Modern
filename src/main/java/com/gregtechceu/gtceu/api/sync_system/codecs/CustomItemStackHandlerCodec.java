@@ -1,10 +1,10 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 
@@ -26,7 +26,7 @@ public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<C
 
     @Override
     public Tag serializeNBT(CustomItemStackHandler value, Context<CustomItemStackHandler> context) {
-        return JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, serializeField(value, context));
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -47,7 +47,7 @@ public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<C
 
     @Override
     public @Nullable CustomItemStackHandler deserializeNBT(Tag tag, Context<CustomItemStackHandler> context) {
-        return deserializeField(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), context);
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -81,5 +81,12 @@ public final class CustomItemStackHandlerCodec implements ContextualFieldCodec<C
         }
         handler.getOnContentsChanged().run();
         return handler;
+    }
+
+    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
+        String message = "Sync: field %s uses CustomItemStackHandler and must be serialized as DataComponentMap"
+                .formatted(fieldName);
+        GTCEu.LOGGER.error(message);
+        return new UnsupportedOperationException(message);
     }
 }

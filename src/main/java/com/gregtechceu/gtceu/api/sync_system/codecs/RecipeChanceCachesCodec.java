@@ -1,11 +1,10 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 
@@ -28,25 +27,7 @@ public final class RecipeChanceCachesCodec
     @Override
     public Tag serializeNBT(IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> value,
                             Context<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> context) {
-        CompoundTag chanceCache = new CompoundTag();
-        IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> currentValue = context.currentValue();
-        if (currentValue == null) {
-            return chanceCache;
-        }
-
-        for (var entry : currentValue.entrySet()) {
-            RecipeCapability<?> capability = entry.getKey();
-            ListTag cacheTag = new ListTag();
-            for (Object2IntMap.Entry<?> cacheEntry : entry.getValue().object2IntEntrySet()) {
-                CompoundTag cacheEntryTag = new CompoundTag();
-                cacheEntryTag.put("entry", capability.toNbt(cacheEntry.getKey(), context.lookup()));
-                cacheEntryTag.putInt("cached_chance", cacheEntry.getIntValue());
-                cacheTag.add(cacheEntryTag);
-            }
-            chanceCache.put(capability.name, cacheTag);
-        }
-
-        return chanceCache;
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -76,29 +57,7 @@ public final class RecipeChanceCachesCodec
     public @Nullable IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> deserializeNBT(
                                                                                            Tag tag,
                                                                                            Context<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> context) {
-        if (!(tag instanceof CompoundTag compoundTag)) {
-            return context.currentValue();
-        }
-        IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> currentValue = context.currentValue();
-        if (currentValue == null) {
-            return null;
-        }
-
-        for (String key : compoundTag.getAllKeys()) {
-            RecipeCapability<?> capability = GTRegistries.RECIPE_CAPABILITIES.get(ResourceLocation.parse(key));
-            if (capability == null) {
-                continue;
-            }
-            Object2IntMap<Object> map = getOrCreateCache(currentValue, capability);
-
-            ListTag chanceTag = compoundTag.getList(key, Tag.TAG_COMPOUND);
-            for (int i = 0; i < chanceTag.size(); i++) {
-                CompoundTag chanceKey = chanceTag.getCompound(i);
-                Object entry = readEntryNbt(capability, chanceKey.get("entry"), context);
-                map.put(entry, chanceKey.getInt("cached_chance"));
-            }
-        }
-        return currentValue;
+        throw unsupportedNbt(context.fieldName());
     }
 
     @Override
@@ -157,8 +116,10 @@ public final class RecipeChanceCachesCodec
         return ((RecipeCapability<Object>) capability).serializer.fromJson(json.get("entry"), context.lookup());
     }
 
-    @SuppressWarnings("unchecked")
-    private static Object readEntryNbt(RecipeCapability<?> capability, @Nullable Tag tag, Context<?> context) {
-        return ((RecipeCapability<Object>) capability).fromNbt(tag, context.lookup());
+    private static UnsupportedOperationException unsupportedNbt(String fieldName) {
+        String message = "Sync: field %s uses recipe chance caches and must be serialized as DataComponentMap"
+                .formatted(fieldName);
+        GTCEu.LOGGER.error(message);
+        return new UnsupportedOperationException(message);
     }
 }

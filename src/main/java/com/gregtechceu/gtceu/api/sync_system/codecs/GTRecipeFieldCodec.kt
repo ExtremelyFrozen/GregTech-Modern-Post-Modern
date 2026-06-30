@@ -1,12 +1,11 @@
 package com.gregtechceu.gtceu.api.sync_system.codecs
 
+import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.recipe.GTRecipe
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition
 import com.gregtechceu.gtceu.api.recipe.GTRecipeSerializer
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec
 
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.NbtOps
 import net.minecraft.nbt.Tag
 import net.minecraft.resources.ResourceLocation
 
@@ -16,18 +15,7 @@ import com.mojang.serialization.JsonOps
 import org.jetbrains.annotations.Nullable
 
 class GTRecipeFieldCodec private constructor() : ContextualFieldCodec<GTRecipe> {
-	override fun serializeNBT(value: GTRecipe, context: ContextualFieldCodec.Context<GTRecipe>): Tag {
-		val tag = CompoundTag()
-		tag.putString("id", value.id.toString())
-		val recipePayload = checkNotNull(
-			GTRecipeSerializer.CODEC.encode(GTRecipeDefinition.fromRuntime(value), NbtOps.INSTANCE, NbtOps.INSTANCE.mapBuilder())
-				.build(CompoundTag()).result().orElse(CompoundTag()),
-		)
-		tag.put("recipe", recipePayload)
-		tag.putInt("parallels", value.parallels)
-		tag.putInt("ocLevel", value.ocLevel)
-		return tag
-	}
+	override fun serializeNBT(value: GTRecipe, context: ContextualFieldCodec.Context<GTRecipe>): Tag = throw unsupportedNbt(context.fieldName)
 
 	override fun serializeField(value: GTRecipe, context: ContextualFieldCodec.Context<GTRecipe>): JsonElement {
 		val json = JsonObject()
@@ -44,23 +32,7 @@ class GTRecipeFieldCodec private constructor() : ContextualFieldCodec<GTRecipe> 
 	}
 
 	@Nullable
-	override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<GTRecipe>): GTRecipe? {
-		if (tag is CompoundTag && tag.isEmpty) return null
-		var result: GTRecipe? = null
-		if (tag is CompoundTag) {
-			val recipeTag = checkNotNull(tag.get("recipe"))
-			val mapResult = NbtOps.INSTANCE.getMap(recipeTag).result()
-			if (mapResult.isPresent) {
-				result = GTRecipeSerializer.CODEC.decode(NbtOps.INSTANCE, mapResult.get()).result().orElse(null)?.toRuntime()
-			}
-			if (result != null) {
-				result.id = ResourceLocation.parse(tag.getString("id"))
-				result.parallels = if (tag.contains("parallels")) tag.getInt("parallels") else 1
-				result.ocLevel = tag.getInt("ocLevel")
-			}
-		}
-		return result
-	}
+	override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<GTRecipe>): GTRecipe? = throw unsupportedNbt(context.fieldName)
 
 	@Nullable
 	override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<GTRecipe>): GTRecipe? {
@@ -84,5 +56,11 @@ class GTRecipeFieldCodec private constructor() : ContextualFieldCodec<GTRecipe> 
 
 		@JvmField
 		val INSTANCE: GTRecipeFieldCodec = GTRecipeFieldCodec()
+
+		private fun unsupportedNbt(fieldName: String): UnsupportedOperationException {
+			val message = "Sync: field $fieldName uses GTRecipe and must be serialized as DataComponentMap"
+			GTCEu.LOGGER.error(message)
+			return UnsupportedOperationException(message)
+		}
 	}
 }
