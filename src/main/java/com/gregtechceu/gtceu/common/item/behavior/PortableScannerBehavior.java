@@ -11,8 +11,8 @@ import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
 import com.gregtechceu.gtceu.api.machine.feature.IMufflableMachine;
+import com.gregtechceu.gtceu.api.machine.feature.IWorkLogicMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
-import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncBlockEntity;
@@ -314,13 +314,24 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
 
                 // Recipe logic for EU production/consumption
                 RecipeLogic recipeLogic = machine.getTrait(RecipeLogic.TYPE);
-                if (recipeLogic != null) {
-                    GTRecipe recipe = recipeLogic.getLastRecipe();
-                    if (recipeLogic.getStatus().equals(WorkLogic.Status.WAITING)) {
+                boolean waitingDisplayed = false;
+                if (machine instanceof IWorkLogicMachine workLogicMachine) {
+                    var workLogic = workLogicMachine.getWorkLogic();
+                    if (workLogic.isWaiting()) {
                         list.add(Component.translatable("behavior.portable_scanner.divider"));
                         list.add(Component.translatable("gtpm.multiblock.waiting"));
-                        list.addAll(recipeLogic.getFancyTooltip());
-                    } else if (recipe != null) {
+                        list.addAll(workLogic.getFancyTooltip());
+                        waitingDisplayed = true;
+                    }
+                } else if (recipeLogic != null && recipeLogic.isWaiting()) {
+                    list.add(Component.translatable("behavior.portable_scanner.divider"));
+                    list.add(Component.translatable("gtpm.multiblock.waiting"));
+                    list.addAll(recipeLogic.getFancyTooltip());
+                    waitingDisplayed = true;
+                }
+                if (recipeLogic != null) {
+                    GTRecipe recipe = recipeLogic.getLastRecipe();
+                    if (recipe != null && !waitingDisplayed) {
                         list.add(Component.translatable("behavior.portable_scanner.divider"));
                         var EUt = RecipeHelper.getRealEUtWithIO(recipe);
 
