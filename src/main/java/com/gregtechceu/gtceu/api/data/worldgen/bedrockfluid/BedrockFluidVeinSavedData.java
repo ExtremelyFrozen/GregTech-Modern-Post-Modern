@@ -10,6 +10,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -53,8 +54,7 @@ public class BedrockFluidVeinSavedData extends SavedData {
         for (int i = 0; i < list.size(); ++i) {
             CompoundTag compoundTag = list.getCompound(i);
             var chunkPos = new ChunkPos(compoundTag.getLong("p"));
-            veinFluids.put(chunkPos, FluidVeinWorldEntry.readFromNBT(compoundTag.getCompound("d"),
-                    serverLevel.registryAccess()));
+            veinFluids.put(chunkPos, readEntry(compoundTag.getCompound("d"), serverLevel.registryAccess()));
         }
     }
 
@@ -64,11 +64,20 @@ public class BedrockFluidVeinSavedData extends SavedData {
         for (var entry : veinFluids.entrySet()) {
             var tag = new CompoundTag();
             tag.putLong("p", entry.getKey().toLong());
-            tag.put("d", entry.getValue().writeToNBT());
+            tag.put("d", writeEntry(entry.getValue(), provider));
             oilList.add(tag);
         }
         nbt.put("veinInfo", oilList);
         return nbt;
+    }
+
+    private static FluidVeinWorldEntry readEntry(CompoundTag tag, HolderLookup.Provider provider) {
+        return FluidVeinWorldEntry.CODEC.parse(provider.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
+    }
+
+    private static Tag writeEntry(FluidVeinWorldEntry entry, HolderLookup.Provider provider) {
+        return FluidVeinWorldEntry.CODEC.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), entry)
+                .getOrThrow();
     }
 
     public static int getVeinCoord(int chunkCoord) {

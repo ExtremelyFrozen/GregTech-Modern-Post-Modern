@@ -11,6 +11,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -54,8 +55,7 @@ public class BedrockOreVeinSavedData extends SavedData {
         for (Tag tag : list) {
             if (tag instanceof CompoundTag compoundTag) {
                 var chunkPos = new ChunkPos(compoundTag.getLong("pos"));
-                veinOres.put(chunkPos, OreVeinWorldEntry.readFromNBT(compoundTag.getCompound("data"),
-                        serverLevel.registryAccess()));
+                veinOres.put(chunkPos, readEntry(compoundTag.getCompound("data"), serverLevel.registryAccess()));
             }
         }
     }
@@ -66,11 +66,20 @@ public class BedrockOreVeinSavedData extends SavedData {
         for (var entry : veinOres.entrySet()) {
             var tag = new CompoundTag();
             tag.putLong("pos", entry.getKey().toLong());
-            tag.put("data", entry.getValue().writeToNBT());
+            tag.put("data", writeEntry(entry.getValue(), provider));
             oreList.add(tag);
         }
         nbt.put("veinInfo", oreList);
         return nbt;
+    }
+
+    private static OreVeinWorldEntry readEntry(CompoundTag tag, HolderLookup.Provider provider) {
+        return OreVeinWorldEntry.CODEC.parse(provider.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
+    }
+
+    private static Tag writeEntry(OreVeinWorldEntry entry, HolderLookup.Provider provider) {
+        return OreVeinWorldEntry.CODEC.encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), entry)
+                .getOrThrow();
     }
 
     public static int getVeinCoord(int chunkCoord) {
