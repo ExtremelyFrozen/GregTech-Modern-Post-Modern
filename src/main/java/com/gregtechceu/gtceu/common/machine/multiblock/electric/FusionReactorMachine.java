@@ -16,6 +16,7 @@ import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
@@ -173,13 +174,14 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
             return RecipeModifier.nullWrongType(FusionReactorMachine.class, machine);
         }
         if (RecipeHelper.getRecipeEUtTier(recipe) > fusionReactorMachine.getTier() ||
-                !recipe.data.contains("eu_to_start") ||
-                recipe.data.getLong("eu_to_start") > fusionReactorMachine.energyContainer.getEnergyCapacity()) {
+                !RecipeData.contains(recipe.data, "eu_to_start") ||
+                RecipeData.getLong(recipe.data, "eu_to_start") >
+                        fusionReactorMachine.energyContainer.getEnergyCapacity()) {
             return ModifierFunction
                     .cancel(Component.translatable("gtpm.recipe_modifier.insufficient_eu_to_start_fusion"));
         }
 
-        long heatDiff = recipe.data.getLong("eu_to_start") - fusionReactorMachine.heat;
+        long heatDiff = RecipeData.getLong(recipe.data, "eu_to_start") - fusionReactorMachine.heat;
 
         // if the stored heat is >= required energy, recipe is okay to run
         if (heatDiff <= 0) {
@@ -202,8 +204,8 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
     public boolean onWorking() {
         GTRecipe recipe = recipeLogic.getLastRecipe();
         assert recipe != null;
-        if (recipe.data.contains("eu_to_start")) {
-            long heatDiff = recipe.data.getLong("eu_to_start") - this.heat;
+        if (RecipeData.contains(recipe.data, "eu_to_start")) {
+            long heatDiff = RecipeData.getLong(recipe.data, "eu_to_start") - this.heat;
             // if the remaining energy needed is more than stored, do not run
             if (heatDiff > 0) {
                 recipeLogic.setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_fuel"));
@@ -284,7 +286,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
     }
 
     public static void addEUToStartLabel(GTRecipe recipe, WidgetGroup group) {
-        long euToStart = recipe.data.getLong("eu_to_start");
+        long euToStart = RecipeData.getLong(recipe.data, "eu_to_start");
         if (euToStart <= 0) return;
         int recipeTier = RecipeHelper.getPreOCRecipeEuTier(recipe);
         int fusionTier = findCeilingTier(euToStart);

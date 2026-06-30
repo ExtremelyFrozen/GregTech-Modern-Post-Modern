@@ -28,7 +28,7 @@ import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.utils.Position;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.entity.player.Player;
 
 import com.google.common.collect.Tables;
@@ -177,7 +177,7 @@ public class SimpleSteamMachine extends SteamWorkableMachine implements IUIMachi
 
         var group = getRecipeType().getRecipeUI().createUITemplate(recipeLogic::getProgressPercent,
                 storages,
-                new CompoundTag(),
+                DataComponentMap.EMPTY,
                 Collections.emptyList(),
                 true,
                 isHighPressure);

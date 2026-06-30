@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMaterialItems;
@@ -120,7 +121,7 @@ public enum MaceratorLogic implements GTRecipeType.ICustomRecipeLogic {
 
         assert pickaxeRecipe != null : "Default Tool Decomp recipe couldn't be generated";
         pickaxeRecipe.setId(pickaxeRecipe.getId().withPrefix("/"));
-        MACERATOR_RECYCLING.addRecipe(pickaxeRecipe);
-        MACERATOR_RECYCLING.addRecipe(rotorRecipe);
+        MACERATOR_RECYCLING.addRecipe(GTRecipeDefinition.fromRuntime(pickaxeRecipe));
+        MACERATOR_RECYCLING.addRecipe(GTRecipeDefinition.fromRuntime(rotorRecipe));
     }
 }

@@ -31,11 +31,15 @@ import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.ItemStack;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import lombok.Getter;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.Contract;
@@ -502,7 +506,7 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
                     var list = entries.toList();
                     buf.writeVarInt(list.size());
                     for (var entry : list) {
-                        buf.writeNbt(entry.serializeNBT(buf.registryAccess()));
+                        buf.writeJsonWithCodec(ExtraCodecs.JSON, serializeEntry(entry, buf.registryAccess()));
                     }
                 });
             } else if (id == 200) {
@@ -520,11 +524,19 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
                 List<VirtualEntry> entries = new ArrayList<>();
                 for (int i = 0; i < size; i++) {
                     VirtualEntry entry = cover.getEntryType().createInstance();
-                    entry.deserializeNBT(buffer.registryAccess(), Objects.requireNonNull(buffer.readNbt()));
+                    deserializeEntry(entry, buffer.readJsonWithCodec(ExtraCodecs.JSON), buffer.registryAccess());
                     entries.add(entry);
                 }
                 addChannelWidgets(entries);
             }
+        }
+
+        private static JsonElement serializeEntry(VirtualEntry entry, HolderLookup.Provider registries) {
+            return CompoundTag.CODEC.encodeStart(JsonOps.INSTANCE, entry.serializeNBT(registries)).getOrThrow();
+        }
+
+        private static void deserializeEntry(VirtualEntry entry, JsonElement data, HolderLookup.Provider registries) {
+            entry.deserializeNBT(registries, CompoundTag.CODEC.parse(JsonOps.INSTANCE, data).getOrThrow());
         }
     }
 }

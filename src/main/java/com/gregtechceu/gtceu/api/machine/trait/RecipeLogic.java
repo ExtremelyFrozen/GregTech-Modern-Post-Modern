@@ -293,7 +293,7 @@ public class RecipeLogic extends MachineTrait implements IWorkable, IFancyToolti
 
     public void handleRecipeWorking() {
         assert lastRecipe != null;
-        var conditionResult = RecipeHelper.checkConditions(lastRecipe, this);
+        var conditionResult = RecipeHelper.checkConditions(lastRecipe, this, true);
         if (conditionResult.isSuccess()) {
             var handleTick = handleTickRecipe(lastRecipe);
             if (handleTick.isSuccess()) {

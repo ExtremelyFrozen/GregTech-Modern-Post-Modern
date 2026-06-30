@@ -290,7 +290,7 @@ public enum BreweryLogic implements GTRecipeType.ICustomRecipeLogic {
                     PotionFluidHelper.MB_PER_RECIPE);
             FluidStack toFluid = PotionFluidHelper.getFluidFromPotion(mix.to(), PotionFluidHelper.MB_PER_RECIPE);
 
-            GTRecipe recipe = GTRecipeTypes.BREWING_RECIPES
+            var recipe = GTRecipeTypes.BREWING_RECIPES
                     .recipeBuilder("potion_vanilla_" + Potion.getName(Optional.of(mix.to()), "") + "_" + index++)
                     .inputItems(mix.ingredient())
                     .inputFluids(fromFluid)
@@ -298,7 +298,7 @@ public enum BreweryLogic implements GTRecipeType.ICustomRecipeLogic {
                     .duration(400)
                     // is this a good voltage?
                     .EUt(VHA[MV])
-                    .build();
+                    .buildDefinition();
             // for EMI to detect it's a synthetic recipe (not ever in JSON)
             recipe.setId(recipe.getId().withPrefix("/"));
             GTRecipeTypes.BREWING_RECIPES.addToMainCategory(recipe);
@@ -324,13 +324,13 @@ public enum BreweryLogic implements GTRecipeType.ICustomRecipeLogic {
                 name = Potion.getName(output, "");
             }
 
-            GTRecipe recipe = GTRecipeTypes.BREWING_RECIPES.recipeBuilder("potion_forge_" + name + "_" + index++)
+            var recipe = GTRecipeTypes.BREWING_RECIPES.recipeBuilder("potion_forge_" + name + "_" + index++)
                     .inputItems(impl.getIngredient())
                     .inputFluids(fromFluid)
                     .outputFluids(toFluid)
                     .duration(400)
                     .EUt(VHA[MV])
-                    .build();
+                    .buildDefinition();
             // for EMI to detect it's a synthetic recipe (not ever in JSON)
             recipe.setId(recipe.getId().withPrefix("/"));
             GTRecipeTypes.BREWING_RECIPES.addToMainCategory(recipe);
