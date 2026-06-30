@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.common.cover.detector;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.capability.IEnergyInfoProvider;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
@@ -8,6 +9,7 @@ import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.LongInputWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.utils.GTMath;
 
@@ -18,7 +20,8 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 
 import lombok.Getter;
@@ -179,18 +182,21 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        super.copyConfig(tag);
-        tag.putLong("min", minValue);
-        tag.putLong("max", maxValue);
-        tag.putBoolean("percent", usePercent);
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("min"),
+                        ConfigCopyHelper.longValue(minValue))
+                .put(SyncFieldData.key("max"),
+                        ConfigCopyHelper.longValue(maxValue))
+                .put(SyncFieldData.key("percent"),
+                        ConfigCopyHelper.booleanValue(usePercent)));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setMinValue(tag.getLong("min"));
-        setMaxValue(tag.getLong("max"));
-        setUsePercent(tag.getBoolean("percent"));
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setMinValue(ConfigCopyHelper.getLong(config, "min"));
+        setMaxValue(ConfigCopyHelper.getLong(config, "max"));
+        setUsePercent(ConfigCopyHelper.getBoolean(config, "percent"));
+        super.pasteConfig(player, registries, config);
     }
 }

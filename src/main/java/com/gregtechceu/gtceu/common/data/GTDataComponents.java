@@ -11,6 +11,8 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.item.LampBlockItem;
 import com.gregtechceu.gtceu.common.item.behavior.ItemMagnetBehavior;
+import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
+import com.gregtechceu.gtceu.common.data.datacomponents.CoverConfigCopyData;
 import com.gregtechceu.gtceu.common.item.datacomponents.*;
 import com.gregtechceu.gtceu.common.item.tool.behavior.ToolModeSwitchBehavior;
 import com.gregtechceu.gtceu.utils.GlobalPosWithRot;
@@ -131,6 +133,13 @@ public class GTDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<MachineConfigCopyData>> DATA_COPY_TAG = DATA_COMPONENTS
             .registerComponentType("data_copy_tag", builder -> builder.persistent(MachineConfigCopyData.CODEC)
                     .networkSynchronized(MachineConfigCopyData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CoverConfigCopyData>> COVER_CONFIG_COPY_DATA = DATA_COMPONENTS
+            .registerComponentType("cover_config_copy_data", builder -> builder.persistent(CoverConfigCopyData.CODEC)
+                    .networkSynchronized(CoverConfigCopyData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<AEInputConfigCopyData>> AE_INPUT_CONFIG_COPY_DATA = DATA_COMPONENTS
+            .registerComponentType("ae_input_config_copy_data", builder -> builder
+                    .persistent(AEInputConfigCopyData.CODEC)
+                    .networkSynchronized(AEInputConfigCopyData.STREAM_CODEC));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<TextLineList>> FORMAT_STRING_LIST = DATA_COMPONENTS
             .registerComponentType("format_string_list", builder -> builder.persistent(TextLineList.CODEC));

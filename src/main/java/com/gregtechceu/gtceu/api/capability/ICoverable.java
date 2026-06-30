@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.capability;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.blockentity.ICopyable;
 import com.gregtechceu.gtceu.api.blockentity.IGregtechBlockEntity;
 import com.gregtechceu.gtceu.api.blockentity.ITickSubscription;
@@ -11,11 +12,14 @@ import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.CoverConfigCopyData;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -303,45 +307,56 @@ public interface ICoverable extends ITickSubscription, ISyncManaged, ICopyable {
         return null;
     }
 
-    private CompoundTag createCoverConfigTag(@Nullable CoverBehavior cover) {
-        if (cover == null) return new CompoundTag();
-        var tag = new CompoundTag();
-        tag.putString("id", GTRegistries.COVERS.getKey(cover.coverDefinition).toString());
-        tag.put("item", cover.getAttachItem().save(getLevel().registryAccess()));
-        var dataTag = new CompoundTag();
-        cover.copyConfig(dataTag);
-        tag.put("data", dataTag);
-        return tag;
+    private @Nullable CoverConfigCopyData.Entry createCoverConfig(HolderLookup.Provider registries,
+                                                                  @Nullable CoverBehavior cover) {
+        if (cover == null) return null;
+        return new CoverConfigCopyData.Entry(GTRegistries.COVERS.getKey(cover.coverDefinition),
+                cover.getAttachItem(), cover.copyConfig(registries));
     }
 
-    private void applyCoverConfigTag(ServerPlayer player, Direction dir, CompoundTag tag) {
-        if (tag.isEmpty()) return;
-        var def = GTRegistries.COVERS.get(ResourceLocation.parse(tag.getString("id")));
-        ItemStack stack = ItemStack.parseOptional(getLevel().registryAccess(), tag.getCompound("item"));
+    private void applyCoverConfig(ServerPlayer player, HolderLookup.Provider registries, Direction dir,
+                                  CoverConfigCopyData.Entry entry) {
+        ResourceLocation id = entry.id();
+        var def = GTRegistries.COVERS.get(id);
+        ItemStack stack = entry.attachItem().copy();
         if (def == null) return;
 
         placeCoverOnSide(dir, stack, def, player);
 
         CoverBehavior placedCover = getCoverAtSide(dir);
-        if (placedCover != null && tag.contains("data") && !tag.getCompound("data").isEmpty())
-            placedCover.pasteConfig(player, tag.getCompound("data"));
-    }
-
-    @Override
-    default void copyConfig(CompoundTag tag) {
-        for (Direction dir : GTUtil.DIRECTIONS) {
-            tag.put(dir.getName(), hasCover(dir) ? createCoverConfigTag(getCoverAtSide(dir)) : new CompoundTag());
+        if (placedCover != null && !entry.config().isEmpty()) {
+            placedCover.pasteConfig(player, registries, entry.config());
         }
     }
 
     @Override
-    default void pasteConfig(ServerPlayer player, CompoundTag tag) {
+    default DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        Map<Direction, CoverConfigCopyData.Entry> covers = new EnumMap<>(Direction.class);
+        for (Direction dir : GTUtil.DIRECTIONS) {
+            CoverConfigCopyData.Entry entry = createCoverConfig(registries, getCoverAtSide(dir));
+            if (entry != null) {
+                covers.put(dir, entry);
+            }
+        }
+        CoverConfigCopyData data = new CoverConfigCopyData(covers);
+        if (data.isEmpty()) {
+            return ICopyable.super.copyConfig(registries);
+        }
+        return ConfigCopyHelper.withComponent(ICopyable.super.copyConfig(registries),
+                GTDataComponents.COVER_CONFIG_COPY_DATA.get(), data);
+    }
+
+    @Override
+    default void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
         for (Direction side : GTUtil.DIRECTIONS) {
             removeCover(side, player);
         }
 
-        for (Direction dir : GTUtil.DIRECTIONS) {
-            applyCoverConfigTag(player, dir, tag.getCompound(dir.getName()));
+        CoverConfigCopyData data = config.get(GTDataComponents.COVER_CONFIG_COPY_DATA.get());
+        if (data != null) {
+            for (Map.Entry<Direction, CoverConfigCopyData.Entry> entry : data.covers().entrySet()) {
+                applyCoverConfig(player, registries, entry.getKey(), entry.getValue());
+            }
         }
     }
 

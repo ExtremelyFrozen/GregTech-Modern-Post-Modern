@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.cover;
 
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
@@ -11,6 +12,7 @@ import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
 import com.gregtechceu.gtceu.api.gui.widget.PhantomSlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
@@ -25,7 +27,8 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
@@ -289,18 +292,21 @@ public class MachineControllerCover extends CoverBehavior implements IUICover {
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        super.copyConfig(tag);
-        tag.putBoolean("inverted", isInverted);
-        tag.putInt("redstoneLvl", minRedstoneStrength);
-        tag.putBoolean("preventPowerfail", preventPowerFail);
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("inverted"),
+                        ConfigCopyHelper.booleanValue(isInverted))
+                .put(SyncFieldData.key("redstoneLvl"),
+                        ConfigCopyHelper.intValue(minRedstoneStrength))
+                .put(SyncFieldData.key("preventPowerfail"),
+                        ConfigCopyHelper.booleanValue(preventPowerFail)));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setInverted(tag.getBoolean("inverted"));
-        setMinRedstoneStrength(tag.getInt("redstoneLvl"));
-        preventPowerFail = tag.getBoolean("preventPowerfail");
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setInverted(ConfigCopyHelper.getBoolean(config, "inverted"));
+        setMinRedstoneStrength(ConfigCopyHelper.getInt(config, "redstoneLvl"));
+        preventPowerFail = ConfigCopyHelper.getBoolean(config, "preventPowerfail");
+        super.pasteConfig(player, registries, config);
     }
 }

@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.cover;
 
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.filter.FluidFilter;
@@ -7,6 +8,7 @@ import com.gregtechceu.gtceu.api.cover.filter.SimpleFluidFilter;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
 import com.gregtechceu.gtceu.api.gui.widget.NumberInputWidget;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
@@ -16,7 +18,8 @@ import com.gregtechceu.gtceu.common.cover.data.TransferMode;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -247,18 +250,21 @@ public class FluidRegulatorCover extends PumpCover {
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        super.copyConfig(tag);
-        tag.putInt("transferMode", transferMode.ordinal());
-        tag.putInt("transferLimit", globalTransferLimit);
-        tag.putInt("transferBucket", transferBucketMode.ordinal());
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("transferMode"),
+                        ConfigCopyHelper.intValue(transferMode.ordinal()))
+                .put(SyncFieldData.key("transferLimit"),
+                        ConfigCopyHelper.intValue(globalTransferLimit))
+                .put(SyncFieldData.key("transferBucket"),
+                        ConfigCopyHelper.intValue(transferBucketMode.ordinal())));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setTransferMode(TransferMode.values()[tag.getInt("transferMode")]);
-        globalTransferLimit = (tag.getInt("transferLimit"));
-        setTransferBucketMode(BucketMode.values()[tag.getInt("transferBucket")]);
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setTransferMode(TransferMode.values()[ConfigCopyHelper.getInt(config, "transferMode")]);
+        globalTransferLimit = ConfigCopyHelper.getInt(config, "transferLimit");
+        setTransferBucketMode(BucketMode.values()[ConfigCopyHelper.getInt(config, "transferBucket")]);
+        super.pasteConfig(player, registries, config);
     }
 }

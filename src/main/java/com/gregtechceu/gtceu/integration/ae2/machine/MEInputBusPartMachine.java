@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.integration.ae2.gui.widget.AEItemConfigWidget;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEItemList;
@@ -24,11 +25,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.GenericStack;
 import appeng.api.storage.MEStorage;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MEInputBusPartMachine extends MEBusPartMachine
                                    implements IDataStickInteractable, IHasCircuitSlot {
@@ -138,9 +141,7 @@ public class MEInputBusPartMachine extends MEBusPartMachine
     @Override
     public final InteractionResult onDataStickShiftUse(Player player, ItemStack dataStick) {
         if (!isRemote()) {
-            CompoundTag tag = new CompoundTag();
-            tag.put("MEInputBus", writeConfigToTag(player.registryAccess()));
-            dataStick.set(GTDataComponents.DATA_COPY_TAG, CustomData.of(tag));
+            dataStick.set(GTDataComponents.AE_INPUT_CONFIG_COPY_DATA, writeConfigData());
             dataStick.set(DataComponents.CUSTOM_NAME,
                     Component.translatable("gtpm.machine.me.item_import.data_stick.name"));
             player.sendSystemMessage(Component.translatable("gtpm.machine.me.import_copy_settings"));
@@ -150,13 +151,13 @@ public class MEInputBusPartMachine extends MEBusPartMachine
 
     @Override
     public final InteractionResult onDataStickUse(Player player, ItemStack dataStick) {
-        CustomData tag = dataStick.get(GTDataComponents.DATA_COPY_TAG);
-        if (tag == null || !tag.contains("MEInputBus")) {
+        AEInputConfigCopyData data = dataStick.get(GTDataComponents.AE_INPUT_CONFIG_COPY_DATA);
+        if (data == null) {
             return InteractionResult.PASS;
         }
 
         if (!isRemote()) {
-            readConfigFromTag(player.registryAccess(), tag.copyTag().getCompound("MEInputBus"));
+            readConfigData(data);
             this.updateInventorySubscription();
             player.sendSystemMessage(Component.translatable("gtpm.machine.me.import_paste_settings"));
         }
@@ -186,6 +187,15 @@ public class MEInputBusPartMachine extends MEBusPartMachine
         return tag;
     }
 
+    protected AEInputConfigCopyData writeConfigData() {
+        List<GenericStack> stacks = new ArrayList<>(CONFIG_SIZE);
+        for (int i = 0; i < CONFIG_SIZE; i++) {
+            stacks.add(this.aeItemHandler.getInventory()[i].getConfig());
+        }
+        byte ghostCircuit = (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0));
+        return new AEInputConfigCopyData(stacks, ghostCircuit, isDistinct());
+    }
+
     protected void readConfigFromTag(HolderLookup.Provider provider, CompoundTag tag) {
         if (tag.contains("ConfigStacks")) {
             CompoundTag configStacks = tag.getCompound("ConfigStacks");
@@ -205,5 +215,14 @@ public class MEInputBusPartMachine extends MEBusPartMachine
         if (tag.contains("DistinctBuses")) {
             setDistinct(tag.getBoolean("DistinctBuses"));
         }
+    }
+
+    protected void readConfigData(AEInputConfigCopyData data) {
+        List<GenericStack> stacks = data.stacks();
+        for (int i = 0; i < CONFIG_SIZE; i++) {
+            this.aeItemHandler.getInventory()[i].setConfig(i < stacks.size() ? stacks.get(i) : null);
+        }
+        circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(data.ghostCircuit()));
+        setDistinct(data.distinctBuses());
     }
 }

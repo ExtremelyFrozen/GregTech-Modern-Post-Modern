@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.IToolGridHighlight;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.pipenet.*;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -24,6 +25,8 @@ import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -405,27 +408,27 @@ public abstract class PipeBlockEntity<PipeType extends Enum<PipeType> & IPipeTyp
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        tag.putInt("pipe_connections", getConnections());
-        tag.putInt("pipe_blocked_connections", getBlockedConnections());
-
-        var coverTag = new CompoundTag();
-        getCoverContainer().copyConfig(coverTag);
-        tag.put("cover", coverTag);
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        DataComponentMap config = ConfigCopyHelper.withFields(ICopyable.super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("pipe_connections"),
+                        ConfigCopyHelper.intValue(getConnections()))
+                .put(SyncFieldData.key("pipe_blocked_connections"),
+                        ConfigCopyHelper.intValue(getBlockedConnections())));
+        return ConfigCopyHelper.mergeComponents(config, getCoverContainer().copyConfig(registries));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        if (tag.contains("pipe_connections")) {
-            var connections = tag.getInt("pipe_connections");
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        if (ConfigCopyHelper.contains(config, "pipe_connections")) {
+            var connections = ConfigCopyHelper.getInt(config, "pipe_connections");
 
             for (var dir : GTUtil.DIRECTIONS) {
                 if (isConnected(connections, dir)) setConnection(dir, true, false);
             }
 
         }
-        if (tag.contains("pipe_blocked_connections")) {
-            var blockedConnections = tag.getInt("pipe_blocked_connections");
+        if (ConfigCopyHelper.contains(config, "pipe_blocked_connections")) {
+            var blockedConnections = ConfigCopyHelper.getInt(config, "pipe_blocked_connections");
 
             for (var dir : GTUtil.DIRECTIONS) {
                 if (isFaceBlocked(blockedConnections, dir)) setBlocked(dir, true);
@@ -433,7 +436,7 @@ public abstract class PipeBlockEntity<PipeType extends Enum<PipeType> & IPipeTyp
 
         }
 
-        getCoverContainer().pasteConfig(player, tag.getCompound("cover"));
+        getCoverContainer().pasteConfig(player, registries, config);
     }
 
     @Override

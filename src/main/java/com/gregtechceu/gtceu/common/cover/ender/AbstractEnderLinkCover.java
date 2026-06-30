@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.cover.ender;
 
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -18,6 +19,7 @@ import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEnderRegistry;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.entries.VirtualTank;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -32,6 +34,7 @@ import com.lowdragmc.lowdraglib.gui.widget.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -247,20 +250,25 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        tag.putString("colorStr", colorStr);
-        tag.putInt("permission", getPermission().ordinal());
-        tag.putInt("io", getIo().ordinal());
-        tag.putInt("manualIO", getManualIOMode().ordinal());
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("colorStr"),
+                        ConfigCopyHelper.stringValue(colorStr))
+                .put(SyncFieldData.key("permission"),
+                        ConfigCopyHelper.intValue(getPermission().ordinal()))
+                .put(SyncFieldData.key("io"),
+                        ConfigCopyHelper.intValue(getIo().ordinal()))
+                .put(SyncFieldData.key("manualIO"),
+                        ConfigCopyHelper.intValue(getManualIOMode().ordinal())));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setChannelName(tag.getString("colorStr"));
-        setPermission(Permissions.values()[tag.getInt("permission")]);
-        setIo(IO.values()[tag.getInt("io")]);
-        setManualIOMode(ManualIOMode.values()[tag.getInt("manualIO")]);
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setChannelName(ConfigCopyHelper.getString(config, "colorStr"));
+        setPermission(Permissions.values()[ConfigCopyHelper.getInt(config, "permission")]);
+        setIo(IO.values()[ConfigCopyHelper.getInt(config, "io")]);
+        setManualIOMode(ManualIOMode.values()[ConfigCopyHelper.getInt(config, "manualIO")]);
+        super.pasteConfig(player, registries, config);
     }
 
     protected enum Permissions implements EnumSelectorWidget.SelectableEnum {
