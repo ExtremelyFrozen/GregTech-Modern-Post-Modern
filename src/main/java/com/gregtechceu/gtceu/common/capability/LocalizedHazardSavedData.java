@@ -11,12 +11,17 @@ import com.gregtechceu.gtceu.utils.BreadthFirstBlockSearch;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
@@ -24,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -65,7 +69,7 @@ public class LocalizedHazardSavedData extends SavedData {
             CompoundTag zoneTag = allHazardZones.getCompound(i);
 
             BlockPos source = BlockPos.of(zoneTag.getLong("pos"));
-            HazardZone zone = HazardZone.deserializeNBT(zoneTag);
+            HazardZone zone = readZone(zoneTag);
 
             this.hazardZones.put(source, zone);
         }
@@ -292,7 +296,7 @@ public class LocalizedHazardSavedData extends SavedData {
             CompoundTag zoneTag = new CompoundTag();
 
             zoneTag.putLong("pos", entry.getKey().asLong());
-            entry.getValue().serializeNBT(zoneTag);
+            zoneTag.merge(writeZone(entry.getValue()));
 
             hazardZonesTag.add(zoneTag);
         }
@@ -300,40 +304,31 @@ public class LocalizedHazardSavedData extends SavedData {
         return compoundTag;
     }
 
+    private static HazardZone readZone(CompoundTag tag) {
+        return HazardZone.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();
+    }
+
+    private static CompoundTag writeZone(HazardZone zone) {
+        return (CompoundTag) HazardZone.CODEC.encodeStart(NbtOps.INSTANCE, zone).getOrThrow();
+    }
+
     public record HazardZone(Set<BlockPos> blocks, boolean canSpread,
                              HazardProperty.HazardTrigger trigger, MedicalCondition condition) {
 
+        private static final Codec<Set<BlockPos>> BLOCKS_CODEC = BlockPos.CODEC.listOf()
+                .xmap(HashSet::new, ArrayList::new);
+
+        // spotless:off
+        public static final Codec<HazardZone> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                BLOCKS_CODEC.fieldOf("blocks").forGetter(HazardZone::blocks),
+                Codec.BOOL.fieldOf("can_spread").forGetter(HazardZone::canSpread),
+                HazardProperty.HazardTrigger.CODEC.fieldOf("trigger").forGetter(HazardZone::trigger),
+                MedicalCondition.CODEC.fieldOf("condition").forGetter(HazardZone::condition)
+        ).apply(instance, HazardZone::new));
+        // spotless:on
+
         public int strength() {
             return blocks.size();
-        }
-
-        public CompoundTag serializeNBT(CompoundTag zoneTag) {
-            ListTag blocksTag = new ListTag();
-            blocks.stream()
-                    .map(NbtUtils::writeBlockPos)
-                    .forEach(blocksTag::add);
-            zoneTag.put("blocks", blocksTag);
-            zoneTag.putBoolean("can_spread", canSpread);
-            zoneTag.putString("trigger", trigger.name());
-            zoneTag.putString("condition", condition.name);
-
-            return zoneTag;
-        }
-
-        public static HazardZone deserializeNBT(CompoundTag zoneTag) {
-            Set<BlockPos> blocks = zoneTag.getList("blocks", Tag.TAG_INT_ARRAY).stream()
-                    .map(IntArrayTag.class::cast)
-                    .map(tag -> {
-                        int[] aint = tag.getAsIntArray();
-                        return aint.length == 3 ? new BlockPos(aint[0], aint[1], aint[2]) : null;
-                    })
-                    .collect(Collectors.toSet());
-            boolean canSpread = zoneTag.getBoolean("can_spread");
-            HazardProperty.HazardTrigger trigger = HazardProperty.HazardTrigger.ALL_TRIGGERS
-                    .get(zoneTag.getString("trigger"));
-            MedicalCondition condition = MedicalCondition.CONDITIONS.get(zoneTag.getString("condition"));
-
-            return new HazardZone(blocks, canSpread, trigger, condition);
         }
     }
 }
