@@ -2,10 +2,16 @@ package com.gregtechceu.gtceu.api.machine.trait;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
+import com.gregtechceu.gtceu.api.sync_system.SyncSerializationTarget;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 
+import com.google.gson.JsonElement;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.Nullable;
@@ -126,12 +132,7 @@ public final class MachineTraitHolder {
     public CompoundTag serializeSyncData(HolderLookup.Provider lookup, boolean isClientSync, boolean fullSync) {
         CompoundTag tag = new CompoundTag();
         if (isClientSync) {
-            for (int i = 0; i < traits.size(); i++) {
-                CompoundTag traitTag = traits.get(i).getSyncDataHolder().serializeNBT(lookup, true, fullSync);
-                if (fullSync || !traitTag.isEmpty()) {
-                    tag.put(Integer.toString(i), traitTag);
-                }
-            }
+            throw disabledClientSyncNbt();
         } else {
             traitsToSave.forEach((key, trait) -> tag.put(key,
                     trait.getSyncDataHolder().serializeNBT(lookup, false, fullSync)));
@@ -139,12 +140,47 @@ public final class MachineTraitHolder {
         return tag;
     }
 
+    public SyncFieldData serializeSyncFieldData(HolderLookup.Provider lookup, boolean isClientSync, boolean fullSync) {
+        SyncFieldData.Builder builder = SyncFieldData.builder();
+        if (isClientSync) {
+            for (int i = 0; i < traits.size(); i++) {
+                SyncFieldData traitData = traits.get(i).getSyncDataHolder()
+                        .serializeToFieldData(lookup, true, fullSync);
+                if (fullSync || !traitData.isEmpty()) {
+                    builder.put(SyncFieldData.key(Integer.toString(i)), traitData);
+                }
+            }
+        } else {
+            traitsToSave.forEach((key, trait) -> builder.put(SyncFieldData.key(key),
+                    trait.getSyncDataHolder().serializeToFieldData(lookup, false, fullSync)));
+        }
+        return builder.build();
+    }
+
+    public DataComponentMap serializeSyncComponents(HolderLookup.Provider lookup, boolean isClientSync,
+                                                    boolean fullSync) {
+        SyncFieldData fieldData = serializeSyncFieldData(lookup, isClientSync, fullSync);
+        if (fieldData.isEmpty()) {
+            return DataComponentMap.EMPTY;
+        }
+        return DataComponentMap.builder()
+                .set(GTDataComponents.SYNC_FIELD_DATA.get(), fieldData)
+                .build();
+    }
+
     public boolean scanAndMarkClientChanges(HolderLookup.Provider lookup, boolean fullSync) {
+        return scanAndMarkClientChanges(lookup, fullSync, SyncSerializationTarget.DATA_COMPONENTS);
+    }
+
+    public boolean scanAndMarkClientChanges(HolderLookup.Provider lookup, boolean fullSync,
+                                            SyncSerializationTarget serializationTarget) {
         boolean changed = false;
         for (MachineTrait trait : traits) {
             if (fullSync) {
                 trait.getSyncDataHolder().resyncAllFields();
                 changed = true;
+            } else if (serializationTarget == SyncSerializationTarget.NBT) {
+                throw disabledClientSyncNbt();
             } else if (trait.getSyncDataHolder().scanAndMarkChanges(lookup)) {
                 changed = true;
             }
@@ -154,7 +190,24 @@ public final class MachineTraitHolder {
 
     public void deserializeSyncData(HolderLookup.Provider lookup, CompoundTag tag, boolean isClientSync) {
         if (isClientSync) {
-            for (var key : tag.getAllKeys()) {
+            throw disabledClientSyncNbt();
+        }
+
+        for (var key : tag.getAllKeys()) {
+            var trait = getPersistentTrait(key);
+            if (trait == null) {
+                GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but no syncable trait has that ID",
+                        key);
+                continue;
+            }
+            trait.getSyncDataHolder().deserializeNBT(lookup, tag.getCompound(key), isClientSync);
+        }
+    }
+
+    public void deserializeSyncFieldData(HolderLookup.Provider lookup, SyncFieldData data, boolean isClientSync) {
+        if (isClientSync) {
+            for (Map.Entry<ResourceLocation, JsonElement> entry : data.fields().entrySet()) {
+                String key = entry.getKey().getPath();
                 int index;
                 try {
                     index = Integer.parseInt(key);
@@ -168,20 +221,38 @@ public final class MachineTraitHolder {
                             key, traits.size());
                     continue;
                 }
-                traits.get(index).getSyncDataHolder().deserializeNBT(lookup, tag.getCompound(key), true);
+                traits.get(index).getSyncDataHolder()
+                        .deserializeFieldData(lookup, SyncFieldData.fromJson(entry.getValue()), true);
             }
             return;
         }
 
-        for (var key : tag.getAllKeys()) {
+        for (Map.Entry<ResourceLocation, JsonElement> entry : data.fields().entrySet()) {
+            String key = entry.getKey().getPath();
             var trait = getPersistentTrait(key);
             if (trait == null) {
                 GTCEu.LOGGER.warn("Attempted to deserialise syncable trait '{}', but no syncable trait has that ID",
                         key);
                 continue;
             }
-            trait.getSyncDataHolder().deserializeNBT(lookup, tag.getCompound(key), isClientSync);
+            trait.getSyncDataHolder().deserializeFieldData(lookup, SyncFieldData.fromJson(entry.getValue()),
+                    isClientSync);
         }
+    }
+
+    public void deserializeSyncComponents(HolderLookup.Provider lookup, DataComponentMap components,
+                                          boolean isClientSync) {
+        SyncFieldData fieldData = components.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        if (fieldData == null) {
+            return;
+        }
+        deserializeSyncFieldData(lookup, fieldData, isClientSync);
+    }
+
+    private static IllegalStateException disabledClientSyncNbt() {
+        String message = "Sync: MachineTraitHolder client sync NBT is disabled; use DataComponentMap serialization";
+        GTCEu.LOGGER.error(message);
+        return new IllegalStateException(message);
     }
 
     /**

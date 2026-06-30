@@ -19,13 +19,14 @@ import com.gregtechceu.gtceu.common.blockentity.FluidPipeBlockEntity;
 import com.gregtechceu.gtceu.common.capability.EnvironmentalHazardSavedData;
 import com.gregtechceu.gtceu.common.capability.LocalizedHazardSavedData;
 import com.gregtechceu.gtceu.common.data.GTSoundEntries;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.network.packets.prospecting.SPacketProspectBedrockFluid;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -49,6 +50,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.mojang.serialization.JsonOps;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -464,8 +466,12 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
 
             list.add(Component.translatable("behavior.portable_scanner.divider"));
             list.add(Component.literal("Update packet"));
-            list.add(NbtUtils.toPrettyComponent(
-                    syncBlockEntity.getSyncDataHolder().serializeNBT(level.registryAccess(), true, true)));
+            list.add(Component.literal(DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(JsonOps.INSTANCE),
+                            syncBlockEntity.getSyncDataHolder()
+                                    .serializeToComponents(level.registryAccess(), true, true))
+                    .getOrThrow()
+                    .toString()));
         }
 
         return energyCost;

@@ -1,4 +1,4 @@
-package com.gregtechceu.gtceu.common.data.item;
+package com.gregtechceu.gtceu.common.data;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.cover.filter.SimpleFluidFilter;
@@ -6,7 +6,9 @@ import com.gregtechceu.gtceu.api.cover.filter.SimpleItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.SmartItemFilter;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.item.datacomponents.*;
+import com.gregtechceu.gtceu.api.placeholder.PlaceholderRenderData;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.item.LampBlockItem;
 import com.gregtechceu.gtceu.common.item.behavior.ItemMagnetBehavior;
 import com.gregtechceu.gtceu.common.item.datacomponents.*;
@@ -16,13 +18,13 @@ import com.gregtechceu.gtceu.utils.ResearchManager;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.Unit;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -126,9 +128,9 @@ public class GTDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockPos>> DATA_COPY_POS = DATA_COMPONENTS
             .registerComponentType("data_copy_pos", builder -> builder.persistent(BlockPos.CODEC)
                     .networkSynchronized(BlockPos.STREAM_CODEC));
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CustomData>> DATA_COPY_TAG = DATA_COMPONENTS
-            .registerComponentType("data_copy_tag", builder -> builder.persistent(CustomData.CODEC)
-                    .networkSynchronized(CustomData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<MachineConfigCopyData>> DATA_COPY_TAG = DATA_COMPONENTS
+            .registerComponentType("data_copy_tag", builder -> builder.persistent(MachineConfigCopyData.CODEC)
+                    .networkSynchronized(MachineConfigCopyData.STREAM_CODEC));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<TextLineList>> FORMAT_STRING_LIST = DATA_COMPONENTS
             .registerComponentType("format_string_list", builder -> builder.persistent(TextLineList.CODEC));
@@ -158,6 +160,15 @@ public class GTDataComponents {
             .registerComponentType("placeholder_uuid",
                     builder -> builder.persistent(UUIDUtil.CODEC)
                             .networkSynchronized(UUIDUtil.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlaceholderRenderData.Rect>> PLACEHOLDER_RECT_RENDER_DATA = DATA_COMPONENTS
+            .registerComponentType("placeholder_rect_render_data",
+                    builder -> builder.persistent(PlaceholderRenderData.Rect.CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PlaceholderRenderData.Quad>> PLACEHOLDER_QUAD_RENDER_DATA = DATA_COMPONENTS
+            .registerComponentType("placeholder_quad_render_data",
+                    builder -> builder.persistent(PlaceholderRenderData.Quad.CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemStack>> PLACEHOLDER_ITEM_STACK = DATA_COMPONENTS
+            .registerComponentType("placeholder_item_stack", builder -> builder.persistent(ItemStack.OPTIONAL_CODEC)
+                    .networkSynchronized(ItemStack.STREAM_CODEC));
 
     // machine info
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<LargeItemContent>> LARGE_ITEM_CONTENT = DATA_COMPONENTS
@@ -187,6 +198,10 @@ public class GTDataComponents {
             .registerComponentType("lighter_open",
                     builder -> builder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> BLOCK_ITEM_DATA = DATA_COMPONENTS
-            .registerComponentType("block_item_data", builder -> builder.persistent(CompoundTag.CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<SyncFieldData>> SYNC_FIELD_DATA = DATA_COMPONENTS
+            .registerComponentType("sync_field_data", builder -> builder.persistent(SyncFieldData.CODEC)
+                    .networkSynchronized(SyncFieldData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<DataComponentMap>> BLOCK_ITEM_DATA = DATA_COMPONENTS
+            .registerComponentType("block_item_data", builder -> builder.persistent(DataComponentMap.CODEC)
+                    .networkSynchronized(SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC));
 }

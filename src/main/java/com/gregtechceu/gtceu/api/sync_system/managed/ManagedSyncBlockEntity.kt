@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer
+import com.gregtechceu.gtceu.common.network.packets.SPacketMachineSyncToClient
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup
@@ -11,6 +12,8 @@ import net.minecraft.network.Connection
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
@@ -70,32 +73,22 @@ abstract class ManagedSyncBlockEntity :
 	 * Loads BE data from client update packet
 	 */
 	@MustBeInvokedByOverriders
-	open fun clientLoad(tag: CompoundTag, registries: HolderLookup.Provider) {
-		getSyncDataHolder().deserializeNBT(registries, tag, true)
-	}
+	open fun clientLoad(tag: CompoundTag, registries: HolderLookup.Provider) {}
 
-	final override fun handleUpdateTag(tag: CompoundTag, registries: HolderLookup.Provider) {
-		clientLoad(tag, registries)
-	}
+	final override fun handleUpdateTag(tag: CompoundTag, registries: HolderLookup.Provider) {}
 
-	final override fun onDataPacket(net: Connection, pkt: ClientboundBlockEntityDataPacket, registries: HolderLookup.Provider) {
-		val tag = pkt.tag
-		if (tag != null) clientLoad(tag, registries)
-	}
+	final override fun onDataPacket(net: Connection, pkt: ClientboundBlockEntityDataPacket, registries: HolderLookup.Provider) {}
 
 	/**
 	 * Called to gather BE data to be sent when a client loads this BE.
 	 */
-	override fun getUpdateTag(registries: HolderLookup.Provider): CompoundTag {
-		getSyncDataHolder().resyncAllFields()
-		return getSyncDataHolder().serializeFullClientSyncNBT(registries)
-	}
+	override fun getUpdateTag(registries: HolderLookup.Provider): CompoundTag = CompoundTag()
 
 	/**
 	 * Called to get an update packet which is sent to clients to notify them when a loaded BE's data changes.
 	 */
 	@Nullable
-	override fun getUpdatePacket(): Packet<ClientGamePacketListener>? = ClientboundBlockEntityDataPacket.create(this) { _, r -> getSyncDataHolder().serializeNBT(r, true) }
+	override fun getUpdatePacket(): Packet<ClientGamePacketListener>? = null
 
 	@Nullable
 	override fun getParentSyncObject(): ISyncManaged? = null
@@ -111,7 +104,16 @@ abstract class ManagedSyncBlockEntity :
 	@MustBeInvokedByOverriders
 	open fun serverTick() {
 		setChanged()
-		if (level != null && syncDataHolder.scanAndMarkChanges(level!!.registryAccess())) {
+		val serverLevel = level as? ServerLevel
+		if (serverLevel != null && syncDataHolder.scanAndMarkChanges(serverLevel.registryAccess())) {
+			val changes = syncDataHolder.collectClientNetworkChanges(serverLevel.registryAccess(), false)
+			if (changes.isNotEmpty()) {
+				PacketDistributor.sendToPlayersTrackingChunk(
+					serverLevel,
+					ChunkPos(blockPos),
+					SPacketMachineSyncToClient(blockPos, changes),
+				)
+			}
 			dirty = true
 		}
 		if (dirty) {

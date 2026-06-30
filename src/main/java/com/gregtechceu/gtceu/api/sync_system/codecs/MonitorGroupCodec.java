@@ -10,7 +10,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.ItemStack;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import org.jetbrains.annotations.Nullable;
 
 public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGroup> {
@@ -40,6 +45,34 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
     }
 
     @Override
+    public JsonElement serializeField(MonitorGroup value, Context<MonitorGroup> context) {
+        JsonObject json = new JsonObject();
+        json.addProperty("name", value.getName());
+
+        JsonArray positions = new JsonArray();
+        value.getMonitorPositions().forEach(pos -> positions.add(BlockPos.CODEC
+                .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), pos)
+                .getOrThrow()));
+        json.add("positions", positions);
+
+        if (value.getTargetRaw() != null) {
+            json.add("targetPos", BlockPos.CODEC
+                    .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), value.getTargetRaw())
+                    .getOrThrow());
+            if (value.getTargetCoverSide() != null) {
+                json.add("targetSide", Direction.CODEC
+                        .encodeStart(JsonOps.INSTANCE, value.getTargetCoverSide())
+                        .getOrThrow());
+            }
+        }
+
+        json.addProperty("dataSlot", value.getDataSlot());
+        json.add("items", serializeItems(value.getItemStackHandler(), context));
+        json.add("placeholderSlots", serializeItems(value.getPlaceholderSlotsHandler(), context));
+        return json;
+    }
+
+    @Override
     public @Nullable MonitorGroup deserializeNBT(Tag tag, Context<MonitorGroup> context) {
         if (!(tag instanceof CompoundTag compoundTag)) return null;
         CustomItemStackHandler handler = new CustomItemStackHandler();
@@ -63,5 +96,63 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
             }
         }
         return group;
+    }
+
+    @Override
+    public @Nullable MonitorGroup deserializeField(JsonElement value, Context<MonitorGroup> context) {
+        if (!value.isJsonObject()) return null;
+
+        JsonObject json = value.getAsJsonObject();
+        CustomItemStackHandler handler = deserializeItems(json.getAsJsonArray("items"), context,
+                MonitorGroup.createModuleHandler());
+        CustomItemStackHandler placeholderSlotsHandler = deserializeItems(json.getAsJsonArray("placeholderSlots"),
+                context, new CustomItemStackHandler(8));
+        var group = new MonitorGroup(json.get("name").getAsString(), handler, placeholderSlotsHandler);
+
+        JsonArray positions = json.getAsJsonArray("positions");
+        for (JsonElement position : positions) {
+            group.add(BlockPos.CODEC.parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), position)
+                    .getOrThrow());
+        }
+
+        if (json.has("targetPos")) {
+            group.setTarget(BlockPos.CODEC
+                    .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get("targetPos"))
+                    .getOrThrow());
+            if (json.has("targetSide")) {
+                group.setTargetCoverSide(Direction.CODEC.parse(JsonOps.INSTANCE, json.get("targetSide")).getOrThrow());
+            }
+            if (json.has("dataSlot")) {
+                group.setDataSlot(json.get("dataSlot").getAsInt());
+            }
+        }
+        return group;
+    }
+
+    private static JsonArray serializeItems(CustomItemStackHandler handler, Context<MonitorGroup> context) {
+        JsonArray json = new JsonArray();
+        for (ItemStack stack : handler.getStacks()) {
+            json.add(ItemStack.OPTIONAL_CODEC
+                    .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), stack)
+                    .getOrThrow());
+        }
+        return json;
+    }
+
+    private static CustomItemStackHandler deserializeItems(@Nullable JsonArray json,
+                                                           Context<MonitorGroup> context,
+                                                           CustomItemStackHandler handler) {
+        if (json == null) {
+            return handler;
+        }
+
+        int size = Math.min(json.size(), handler.getSlots());
+        for (int i = 0; i < size; i++) {
+            ItemStack stack = ItemStack.OPTIONAL_CODEC
+                    .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get(i))
+                    .getOrThrow();
+            handler.setStackInSlot(i, stack);
+        }
+        return handler;
     }
 }

@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.common.item;
 
 import com.gregtechceu.gtceu.common.block.LampBlock;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.codec.ByteBufCodecs;

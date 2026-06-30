@@ -41,7 +41,7 @@ import com.gregtechceu.gtceu.client.util.RenderUtil;
 import com.gregtechceu.gtceu.common.cover.FluidFilterCover;
 import com.gregtechceu.gtceu.common.cover.ItemFilterCover;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.common.item.behavior.MachineConfigCopyBehaviour;
@@ -234,9 +234,9 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     protected void applyImplicitComponents(DataComponentInput componentInput) {
         if (getLevel() == null) return;
 
-        CompoundTag itemData = componentInput.get(GTDataComponents.BLOCK_ITEM_DATA);
+        DataComponentMap itemData = componentInput.get(GTDataComponents.BLOCK_ITEM_DATA);
         if (itemData != null && !itemData.isEmpty()) {
-            syncDataHolder.deserializeItemNBT(getLevel().registryAccess(), itemData);
+            syncDataHolder.deserializeItemComponents(getLevel().registryAccess(), itemData);
         }
     }
 
@@ -248,7 +248,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     public void collectImplicitComponents(DataComponentMap.Builder components) {
         if (getLevel() == null) return;
 
-        CompoundTag itemData = syncDataHolder.serializeToItemNBT(getLevel().registryAccess());
+        DataComponentMap itemData = syncDataHolder.serializeToItemComponents(getLevel().registryAccess());
         if (!itemData.isEmpty()) {
             components.set(GTDataComponents.BLOCK_ITEM_DATA, itemData);
         }
