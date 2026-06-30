@@ -1,10 +1,5 @@
 package com.gregtechceu.gtceu.integration.ae2.utils;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.neoforged.neoforge.common.util.INBTSerializable;
-
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
@@ -21,8 +16,7 @@ import java.util.Iterator;
  * Used to store {@link appeng.api.stacks.GenericStack } in a way that associates key and amount.
  * Provides methods for serialization and deserialization.
  */
-public class KeyStorage implements INBTSerializable<ListTag>,
-                        Iterable<Object2LongMap.Entry<AEKey>> {
+public class KeyStorage implements Iterable<Object2LongMap.Entry<AEKey>> {
 
     public final Object2LongMap<AEKey> storage = new Object2LongOpenHashMap<>(); // TODO trim periodically or not
 
@@ -63,28 +57,6 @@ public class KeyStorage implements INBTSerializable<ListTag>,
     public void onChanged() {
         if (onContentsChanged != null) {
             onContentsChanged.run();
-        }
-    }
-
-    @Override
-    public ListTag serializeNBT(HolderLookup.Provider provider) {
-        var list = new ListTag();
-        for (var entry : storage.object2LongEntrySet()) {
-            var tag = new CompoundTag();
-            tag.put("key", entry.getKey().toTagGeneric(provider));
-            tag.putLong("value", entry.getLongValue());
-            list.add(tag);
-        }
-        return list;
-    }
-
-    @Override
-    public void deserializeNBT(HolderLookup.Provider provider, ListTag tags) {
-        for (int i = 0; i < tags.size(); i++) {
-            var tag = tags.getCompound(i);
-            var key = AEKey.fromTagGeneric(provider, tag.getCompound("key"));
-            long value = tag.getLong("value");
-            storage.put(key, value);
         }
     }
 
