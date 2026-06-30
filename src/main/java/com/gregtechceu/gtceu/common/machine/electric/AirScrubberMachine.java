@@ -39,7 +39,7 @@ public class AirScrubberMachine extends SimpleTieredMachine {
     }
 
     public boolean validateCleaningOperation(MedicalCondition condition, float amount) {
-        if (this.recipeLogic.isActive()) {
+        if (getWorkLogic().isActive()) {
             return false;
         }
 

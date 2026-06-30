@@ -89,7 +89,7 @@ public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implem
 
     @Override
     public boolean isActive() {
-        return recipeLogic.isWorking();
+        return getWorkLogic().isWorking();
     }
 
     @Override

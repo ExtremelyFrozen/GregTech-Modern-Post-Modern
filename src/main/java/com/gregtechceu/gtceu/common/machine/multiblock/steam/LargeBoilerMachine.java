@@ -99,7 +99,7 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
 
     @SuppressWarnings("unchecked")
     protected void updateCurrentTemperature() {
-        if (recipeLogic.isWorking()) {
+        if (getWorkLogic().isWorking()) {
             if (getOffsetTimer() % 10 == 0) {
                 if (currentTemperature < getMaxTemperature()) {
                     currentTemperature = Mth.clamp(currentTemperature + heatSpeed * 10, 0, getMaxTemperature());

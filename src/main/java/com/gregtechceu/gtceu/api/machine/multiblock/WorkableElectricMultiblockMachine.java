@@ -100,12 +100,13 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
 
     @Override
     public void addDisplayText(@NotNull List<Component> textList) {
+        var workLogic = getWorkLogic();
         int numParallels;
         int subtickParallels;
         int batchParallels;
         int totalRuns;
         boolean exact = false;
-        if (recipeLogic.isActive() && recipeLogic.getLastRecipe() != null) {
+        if (workLogic.isActive() && recipeLogic.getLastRecipe() != null) {
             numParallels = recipeLogic.getLastRecipe().parallels;
             subtickParallels = recipeLogic.getLastRecipe().subtickParallels;
             batchParallels = recipeLogic.getLastRecipe().batchParallels;
@@ -121,7 +122,7 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
         }
 
         MultiblockDisplayText.builder(textList, isFormed())
-                .setWorkingStatus(recipeLogic.isWorkingEnabled(), recipeLogic.isActive())
+                .setWorkingStatus(workLogic.isWorkingEnabled(), workLogic.isActive())
                 .addEnergyUsageLine(energyContainer)
                 .addEnergyTierLine(tier)
                 .addMachineModeLine(getRecipeType(), getRecipeTypes().length > 1)

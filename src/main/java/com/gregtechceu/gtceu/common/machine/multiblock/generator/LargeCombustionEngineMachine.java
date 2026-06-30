@@ -177,8 +177,9 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
 
     @Override
     public void addDisplayText(List<Component> textList) {
+        var workLogic = getWorkLogic();
         MultiblockDisplayText.Builder builder = MultiblockDisplayText.builder(textList, isFormed())
-                .setWorkingStatus(recipeLogic.isWorkingEnabled(), recipeLogic.isActive());
+                .setWorkingStatus(workLogic.isWorkingEnabled(), workLogic.isActive());
 
         long lastEUt = recipeLogic.getLastRecipe() != null ?
                 recipeLogic.getLastRecipe().getOutputEUt().getTotalEU() : 0;
@@ -188,7 +189,7 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
             builder.addEnergyProductionAmpsLine(GTValues.V[tier] * 3, 3);
         }
 
-        if (isActive() && isWorkingEnabled()) {
+        if (workLogic.isActive() && workLogic.isWorkingEnabled()) {
             builder.addCurrentEnergyProductionLine(lastEUt);
         }
 

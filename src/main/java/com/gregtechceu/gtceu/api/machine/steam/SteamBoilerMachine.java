@@ -152,7 +152,7 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
     }
 
     protected void updateCurrentTemperature() {
-        if (recipeLogic.isWorking()) {
+        if (getWorkLogic().isWorking()) {
             if (getOffsetTimer() % 12 == 0) {
                 if (currentTemperature < getMaxTemperature()) {
                     if (isHighPressure) {

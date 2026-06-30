@@ -104,8 +104,9 @@ public class ResearchStationMachine extends WorkableElectricMultiblockMachine
 
     @Override
     public void addDisplayText(List<Component> textList) {
+        var workLogic = getWorkLogic();
         MultiblockDisplayText.builder(textList, isFormed())
-                .setWorkingStatus(recipeLogic.isWorkingEnabled(), recipeLogic.isActive())
+                .setWorkingStatus(workLogic.isWorkingEnabled(), workLogic.isActive())
                 .setWorkingStatusKeys("gtpm.multiblock.idling", "gtpm.multiblock.work_paused",
                         "gtpm.multiblock.research_station.researching")
                 .addEnergyUsageLine(energyContainer)
