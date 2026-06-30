@@ -3,7 +3,7 @@ package com.gregtechceu.gtceu.common.machine.steam;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.steam.SteamBoilerMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
@@ -50,9 +50,9 @@ public class SteamSolarBoiler extends SteamBoilerMachine {
     @Override
     protected void updateCurrentTemperature() {
         if (GTUtil.canSeeSunClearly(Objects.requireNonNull(getLevel()), getBlockPos())) {
-            recipeLogic.setStatus(RecipeLogic.Status.WORKING);
+            recipeLogic.setStatus(WorkLogic.Status.WORKING);
         } else {
-            recipeLogic.setStatus(RecipeLogic.Status.IDLE);
+            recipeLogic.setStatus(WorkLogic.Status.IDLE);
         }
         super.updateCurrentTemperature();
     }

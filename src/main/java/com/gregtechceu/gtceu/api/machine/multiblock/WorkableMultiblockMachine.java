@@ -249,10 +249,10 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     @Override
-    public void notifyStatusChanged(RecipeLogic.Status oldStatus, RecipeLogic.Status newStatus) {
-        IWorkableMultiController.super.notifyStatusChanged(oldStatus, newStatus);
-        if (newStatus == RecipeLogic.Status.WORKING || oldStatus == RecipeLogic.Status.WORKING) {
-            updateActiveBlocks(newStatus == RecipeLogic.Status.WORKING);
+    public void notifyWorkStatusChanged(WorkLogic.Status oldStatus, WorkLogic.Status newStatus) {
+        IWorkableMultiController.super.notifyWorkStatusChanged(oldStatus, newStatus);
+        if (newStatus == WorkLogic.Status.WORKING || oldStatus == WorkLogic.Status.WORKING) {
+            updateActiveBlocks(newStatus == WorkLogic.Status.WORKING);
         }
         for (IMultiPart part : getParts()) {
             MachineRenderState state = part.self().getRenderState();
@@ -263,7 +263,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     @Override
-    public boolean isRecipeLogicAvailable() {
+    public boolean isWorkLogicAvailable() {
         return isFormed && !getMultiblockState(DEFAULT_STRUCTURE).hasError();
     }
 

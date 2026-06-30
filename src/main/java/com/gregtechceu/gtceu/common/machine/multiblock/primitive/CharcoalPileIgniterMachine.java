@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.capability.IWorkable;
 import com.gregtechceu.gtceu.api.item.ComponentItem;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -322,7 +323,7 @@ public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implem
             }
 
             if (shouldActivate) {
-                getRecipeLogic().setStatus(RecipeLogic.Status.WORKING);
+                getRecipeLogic().setStatus(WorkLogic.Status.WORKING);
 
                 getLevel().playSound(null, getBlockPos(),
                         stack.is(Items.FIRE_CHARGE) ? SoundEvents.FIRECHARGE_USE : SoundEvents.FLINTANDSTEEL_USE,

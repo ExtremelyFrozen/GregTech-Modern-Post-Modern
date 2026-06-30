@@ -14,7 +14,7 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDisplayUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -61,7 +61,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
     public void convertEnergyTick() {
         if (isWorkingEnabled()) {
             getRecipeLogic()
-                    .setStatus(isSubscriptionActive() ? RecipeLogic.Status.WORKING : RecipeLogic.Status.SUSPEND);
+                    .setStatus(isSubscriptionActive() ? WorkLogic.Status.WORKING : WorkLogic.Status.SUSPEND);
         }
         if (isWorkingEnabled()) {
             long canDrain = powerInput.getEnergyStored();
@@ -149,7 +149,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
     @Override
     public void invalidateStructure(String structureName) {
         boolean shouldExplode = DEFAULT_STRUCTURE.equals(structureName) &&
-                (isWorkingEnabled() && recipeLogic.getStatus() == RecipeLogic.Status.WORKING) &&
+                (isWorkingEnabled() && recipeLogic.getStatus() == WorkLogic.Status.WORKING) &&
                 !ConfigHolder.INSTANCE.machines.harmlessActiveTransformers;
         float explosionStrength = 6f + getTier();
         super.invalidateStructure(structureName);
@@ -159,7 +159,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
         }
         this.powerOutput = new EnergyContainerList(new ArrayList<>());
         this.powerInput = new EnergyContainerList(new ArrayList<>());
-        getRecipeLogic().setStatus(RecipeLogic.Status.SUSPEND);
+        getRecipeLogic().setStatus(WorkLogic.Status.SUSPEND);
         converterSubscription.unsubscribe();
     }
 

@@ -52,7 +52,7 @@ public class AirScrubberMachine extends SimpleTieredMachine {
     }
 
     @Override
-    public boolean isRecipeLogicAvailable() {
+    public boolean isWorkLogicAvailable() {
         // Don't run recipes if hazards are off
         return ConfigHolder.INSTANCE.gameplay.environmentalHazards;
     }
