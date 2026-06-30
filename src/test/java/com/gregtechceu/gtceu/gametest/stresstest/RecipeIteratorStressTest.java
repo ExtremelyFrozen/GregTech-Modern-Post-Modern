@@ -44,7 +44,7 @@ public class RecipeIteratorStressTest {
         LCR_RECIPE_TYPE = TestUtils.createRecipeType("stress_tests", 3, 3, 3, 3);
         // Force insert the recipe into the manager.
         LCR_RECIPE_TYPE.getAdditionHandler().beginStaging();
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_multiblock_stress_tests"))
                 .inputItems(new ItemStack(Blocks.COBBLESTONE), new ItemStack(Blocks.ACACIA_WOOD))
                 .outputItems(new ItemStack(Blocks.STONE))

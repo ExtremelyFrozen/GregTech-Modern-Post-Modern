@@ -57,10 +57,9 @@ public abstract class RecipeManagerLateMixin {
         var recipesByName = new HashMap<>(byName);
         byName.values().forEach(holder -> {
             if (holder.value() instanceof GTRecipeDefinition definition) {
-                GTRecipe gtRecipe = definition.toRuntime();
-                new GTRecipeBuilder(gtRecipe, gtRecipe.recipeType)
+                new GTRecipeBuilder(definition.toRuntime(), definition.recipeType)
                         .id(holder.id().withPath(path -> path.substring(path.indexOf('/') + 1)))
-                        .onSave(gtRecipe.recipeType.getRecipeBuilder().onSave)
+                        .onSave(definition.recipeType.getRecipeBuilder().onSave)
                         .save(new RecipeOutput() {
 
                             @Override
@@ -104,7 +103,7 @@ public abstract class RecipeManagerLateMixin {
                 } else if (!proxyRecipes.isEmpty()) {
                     proxyRecipes.values().stream()
                             .flatMap(List::stream)
-                            .forEach(gtRecipe -> stagingDB.add(gtRecipe.value()));
+                            .forEach(gtRecipe -> stagingDB.addRuntime(gtRecipe.value()));
                 }
 
                 stagingDB.populateDB(gtRecipeType.db());
@@ -117,10 +116,10 @@ public abstract class RecipeManagerLateMixin {
         Recipe<?> recipe = holder.value();
         if (recipe instanceof GTRecipeDefinition definition) {
             definition.setId(holder.id());
-            stagingDB.add(definition.toRuntime());
+            stagingDB.add(definition);
         } else if (recipe instanceof GTRecipe gtRecipe) {
             gtRecipe.setId(holder.id());
-            stagingDB.add(gtRecipe);
+            stagingDB.addRuntime(gtRecipe);
         }
     }
 

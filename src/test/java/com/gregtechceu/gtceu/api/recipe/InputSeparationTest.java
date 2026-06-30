@@ -31,7 +31,7 @@ public class InputSeparationTest {
         LCR_RECIPE_TYPE = TestUtils.createRecipeType("input_separation_logic_lcr_tests",
                 GTRecipeTypes.LARGE_CHEMICAL_RECIPES);
         LCR_RECIPE_TYPE.getAdditionHandler().beginStaging();
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_multiblock_input_separation"))
                 .inputItems(new ItemStack(Blocks.COBBLESTONE), new ItemStack(Blocks.ACACIA_WOOD))
                 .outputItems(new ItemStack(Blocks.STONE))

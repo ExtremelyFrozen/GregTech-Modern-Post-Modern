@@ -181,7 +181,7 @@ public class TestUtils {
     public static GTRecipeType createRecipeTypeAndInsertRecipe(String name, GTRecipeType original) {
         GTRecipeType type = createRecipeType(name, original);
         type.getAdditionHandler().beginStaging();
-        type.getAdditionHandler().addStaging(type
+        type.getAdditionHandler().addRuntimeStaging(type
                 .recipeBuilder(GTCEu.id("test_recipe"))
                 .inputItems(new ItemStack(Items.COBBLESTONE))
                 .outputItems(new ItemStack(Blocks.STONE))

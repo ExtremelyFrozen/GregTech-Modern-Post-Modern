@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.recipe.lookup;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.AbstractMapIngredient;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.MapIngredientTypeManager;
@@ -17,16 +18,26 @@ import java.util.*;
 @ApiStatus.Internal
 public final class StagingRecipeDB {
 
-    private final @NotNull ObjectOpenHashSet<GTRecipe> recipes = new ObjectOpenHashSet<>();
+    private final @NotNull ObjectOpenHashSet<GTRecipeDefinition> recipes = new ObjectOpenHashSet<>();
 
     /**
-     * Add a recipe to the DB
+     * Add a definition recipe to the DB
      *
      * @param recipe the recipe
      * @return if successful
      */
-    public boolean add(@NotNull GTRecipe recipe) {
+    public boolean add(@NotNull GTRecipeDefinition recipe) {
         return recipes.add(recipe);
+    }
+
+    /**
+     * Add a generated runtime recipe when no definition object exists at the source boundary.
+     *
+     * @param recipe the recipe
+     * @return if successful
+     */
+    public boolean addRuntime(@NotNull GTRecipe recipe) {
+        return add(GTRecipeDefinition.fromRuntime(recipe));
     }
 
     /**
@@ -44,8 +55,9 @@ public final class StagingRecipeDB {
      */
     public void populateDB(@NotNull RecipeDB db) {
         var frequencies = inputFrequencies();
-        for (GTRecipe recipe : recipes) {
-            List<Pair<RecipeCapability<?>, Object>> flattedContent = flattenedContent(recipe);
+        for (GTRecipeDefinition definition : recipes) {
+            GTRecipe runtime = definition.toRuntime();
+            List<Pair<RecipeCapability<?>, Object>> flattedContent = flattenedContent(definition);
             flattedContent.sort(Comparator.comparingInt(entry -> frequencies.getInt(entry.right())));
             List<List<AbstractMapIngredient>> inputs = new ArrayList<>(flattedContent.size());
             for (var entry : flattedContent) {
@@ -53,9 +65,11 @@ public final class StagingRecipeDB {
                 MapIngredientPool.applyPooling(ingredients);
                 inputs.add(ingredients);
             }
-            boolean result = db.add(recipe, inputs);
-            if (!result) {
-                GTCEu.LOGGER.warn("failed to add recipe from staging into lookup DB: {}", recipe.getId());
+            boolean result = db.add(runtime, inputs);
+            if (result) {
+                definition.recipeCategory.addRecipe(definition);
+            } else {
+                GTCEu.LOGGER.warn("failed to add recipe from staging into lookup DB: {}", definition.getId());
             }
         }
     }
@@ -65,7 +79,7 @@ public final class StagingRecipeDB {
      */
     private @NotNull Object2IntMap<Object> inputFrequencies() {
         var map = new Object2IntOpenHashMap<>();
-        for (GTRecipe recipe : recipes) {
+        for (GTRecipeDefinition recipe : recipes) {
             recipe.inputs.forEach((cap, list) -> {
                 for (var input : compressedContent(list, cap)) {
                     map.mergeInt(input, 1, Integer::sum);
@@ -99,7 +113,8 @@ public final class StagingRecipeDB {
      * @param recipe the recipe
      * @return the flattened content
      */
-    private static @NotNull List<Pair<RecipeCapability<?>, Object>> flattenedContent(@NotNull GTRecipe recipe) {
+    private static @NotNull List<Pair<RecipeCapability<?>, Object>> flattenedContent(
+                                                                                     @NotNull GTRecipeDefinition recipe) {
         var map = new Object2ObjectOpenHashMap<RecipeCapability<?>, List<Content>>();
         recipe.inputs.forEach((cap, list) -> buildInputsByCap(map, cap, list));
         recipe.tickInputs.forEach((cap, list) -> buildInputsByCap(map, cap, list));

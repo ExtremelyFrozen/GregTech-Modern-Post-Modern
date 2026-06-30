@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.recipe.lookup;
 
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,16 +32,29 @@ public final class RecipeAdditionHandler {
     }
 
     /**
-     * Add a recipe to the staging DB
+     * Add a definition recipe to the staging DB
      *
      * @param recipe the recipe
      */
     @ApiStatus.Internal
-    public void addStaging(@NotNull GTRecipe recipe) {
+    public void addStaging(@NotNull GTRecipeDefinition recipe) {
         if (!isStaging) {
             throw new IllegalStateException("cannot add a staging recipe while not in staging state");
         }
         stagingDB.add(recipe);
+    }
+
+    /**
+     * Add a generated runtime recipe when the source does not expose a definition recipe.
+     *
+     * @param recipe the recipe
+     */
+    @ApiStatus.Internal
+    public void addRuntimeStaging(@NotNull GTRecipe recipe) {
+        if (!isStaging) {
+            throw new IllegalStateException("cannot add a staging recipe while not in staging state");
+        }
+        stagingDB.addRuntime(recipe);
     }
 
     /**

@@ -38,7 +38,7 @@ public class OverclockLogicTest {
 
         LCR_RECIPE_TYPE.getAdditionHandler().beginStaging();
         CR_RECIPE_TYPE.getAdditionHandler().beginStaging();
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_overclock_logic"))
                 .inputItems(new ItemStack(Items.RED_BED))
                 .outputItems(new ItemStack(Blocks.STONE))
@@ -46,7 +46,7 @@ public class OverclockLogicTest {
                 .duration(20)
                 // NBT has a schematic in it with an HV energy input hatch
                 .build());
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_overclock_logic_2"))
                 .inputItems(new ItemStack(Items.STICK))
                 .outputItems(new ItemStack(Blocks.STONE))
@@ -54,7 +54,7 @@ public class OverclockLogicTest {
                 .duration(1)
                 // NBT has a schematic in it with an HV energy input hatch
                 .build());
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_overclock_logic_3"))
                 .inputItems(new ItemStack(Items.BROWN_BED))
                 .outputItems(new ItemStack(Blocks.STONE))
@@ -62,7 +62,7 @@ public class OverclockLogicTest {
                 .duration(1)
                 // NBT has a schematic in it with an HV energy input hatch
                 .build());
-        CR_RECIPE_TYPE.getAdditionHandler().addStaging(CR_RECIPE_TYPE
+        CR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(CR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_overclock_logic_4"))
                 .inputItems(new ItemStack(Items.RED_BED))
                 .outputItems(new ItemStack(Blocks.STONE))
@@ -70,7 +70,7 @@ public class OverclockLogicTest {
                 .duration(16)
                 // NBT has a schematic in it with an HV charged singleblock CR in it
                 .build());
-        CR_RECIPE_TYPE.getAdditionHandler().addStaging(CR_RECIPE_TYPE
+        CR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(CR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_overclock_logic_5"))
                 .inputItems(new ItemStack(Items.BROWN_BED))
                 .outputItems(new ItemStack(Blocks.STONE))

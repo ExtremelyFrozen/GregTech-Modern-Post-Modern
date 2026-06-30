@@ -32,7 +32,7 @@ public class AdjacentFluidConditionTest {
         ROCK_BREAKER_RECIPE_TYPE = TestUtils.createRecipeType("adjacent_fluid_conditions_tests",
                 GTRecipeTypes.ROCK_BREAKER_RECIPES);
         ROCK_BREAKER_RECIPE_TYPE.getAdditionHandler().beginStaging();
-        ROCK_BREAKER_RECIPE_TYPE.getAdditionHandler().addStaging(ROCK_BREAKER_RECIPE_TYPE
+        ROCK_BREAKER_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(ROCK_BREAKER_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_adjacent_fluid_conditions"))
                 .inputItems(new ItemStack(Blocks.COBBLESTONE))
                 .outputItems(new ItemStack(Blocks.STONE))
@@ -41,7 +41,7 @@ public class AdjacentFluidConditionTest {
                 .duration(8)
                 .build());
 
-        ROCK_BREAKER_RECIPE_TYPE.getAdditionHandler().addStaging(ROCK_BREAKER_RECIPE_TYPE
+        ROCK_BREAKER_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(ROCK_BREAKER_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_adjacent_fluid_conditions_multiple_fluids"))
                 .inputItems(new ItemStack(Blocks.OAK_WOOD))
                 .outputItems(new ItemStack(Items.CHARCOAL))

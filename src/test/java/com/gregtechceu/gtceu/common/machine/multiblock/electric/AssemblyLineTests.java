@@ -36,7 +36,7 @@ public class AssemblyLineTests {
         var assLineHandler = ASSLINE_RECIPE_TYPE.getAdditionHandler();
         assLineHandler.beginStaging();
 
-        assLineHandler.addStaging(ASSLINE_RECIPE_TYPE
+        assLineHandler.addRuntimeStaging(ASSLINE_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_assline"))
                 .inputItems(new ItemStack(Blocks.COBBLESTONE), new ItemStack(Blocks.ACACIA_WOOD))
                 .inputFluids(new FluidStack(Fluids.WATER, 1), new FluidStack(Fluids.LAVA, 1))

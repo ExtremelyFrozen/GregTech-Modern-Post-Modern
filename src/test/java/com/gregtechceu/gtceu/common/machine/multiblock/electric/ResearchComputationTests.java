@@ -52,7 +52,7 @@ public class ResearchComputationTests {
         var handler = RESEARCH_RECIPE_TYPE.getAdditionHandler();
         handler.beginStaging();
         // Research a data stick into a data orb so completion is observable in the object holder's data slot.
-        handler.addStaging(RESEARCH_RECIPE_TYPE
+        handler.addRuntimeStaging(RESEARCH_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_research"))
                 .inputItems(GTItems.TOOL_DATA_STICK.asStack())
                 .outputItems(GTItems.TOOL_DATA_ORB.asStack())
