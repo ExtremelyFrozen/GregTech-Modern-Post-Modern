@@ -96,9 +96,7 @@ public class GTJadePlugin implements IWailaPlugin {
 
             if (provider instanceof MachineInfoProvider<?, ?> machineInfoProvider)
                 clazz = machineInfoProvider.machineType;
-            if (isMetaMachineProvider(provider)) {
-                clazz = MetaMachine.class;
-            }
+            if (provider instanceof MachineTraitProvider<?, ?>) clazz = MetaMachine.class;
 
             reg.registerBlockDataProvider(provider, clazz);
         }
@@ -107,19 +105,11 @@ public class GTJadePlugin implements IWailaPlugin {
     public static void register(IWailaClientRegistration reg, IBlockComponentProvider... providers) {
         for (var provider : providers) {
             Class<? extends Block> clazz = Block.class;
-            if (provider instanceof MachineInfoProvider<?, ?> ||
-                    isMetaMachineProvider(provider)) {
+            if (provider instanceof MachineInfoProvider<?, ?> || provider instanceof MachineTraitProvider<?, ?>) {
                 clazz = MetaMachineBlock.class;
             }
             reg.registerBlockComponent(provider, clazz);
         }
-    }
-
-    private static boolean isMetaMachineProvider(Object provider) {
-        return provider instanceof MachineTraitProvider<?, ?> ||
-                provider instanceof RecipeOutputProvider ||
-                provider instanceof AutoOutputBlockProvider ||
-                provider instanceof ExhaustVentBlockProvider;
     }
 
     static {
