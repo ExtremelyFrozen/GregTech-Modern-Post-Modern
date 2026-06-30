@@ -7,7 +7,11 @@ import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,9 +56,34 @@ public class VirtualItemStorage extends VirtualEntry {
     }
 
     @Override
+    public JsonElement serializeJson(HolderLookup.Provider provider) {
+        JsonObject json = super.serializeJson(provider).getAsJsonObject();
+        JsonArray items = new JsonArray();
+        for (ItemStack stack : handler.getStacks()) {
+            items.add(encodeJson(provider, ItemStack.OPTIONAL_CODEC, stack));
+        }
+        json.add(ITEM_KEY, items);
+        return json;
+    }
+
+    @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         super.deserializeNBT(provider, nbt);
         handler.deserializeNBT(provider, nbt.getCompound(ITEM_KEY));
+    }
+
+    @Override
+    public void deserializeJson(HolderLookup.Provider provider, JsonElement data) {
+        super.deserializeJson(provider, data);
+        JsonObject json = data.getAsJsonObject();
+        if (!json.has(ITEM_KEY)) {
+            return;
+        }
+        JsonArray items = json.getAsJsonArray(ITEM_KEY);
+        int size = Math.min(items.size(), handler.getSlots());
+        for (int i = 0; i < size; i++) {
+            handler.setStackInSlot(i, decodeJson(provider, ItemStack.OPTIONAL_CODEC, items.get(i)));
+        }
     }
 
     @Override

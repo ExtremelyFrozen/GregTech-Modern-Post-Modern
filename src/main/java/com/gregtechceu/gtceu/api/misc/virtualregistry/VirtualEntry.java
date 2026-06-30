@@ -4,6 +4,10 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -68,12 +72,37 @@ public abstract class VirtualEntry implements INBTSerializable<CompoundTag> {
         return tag;
     }
 
+    public JsonElement serializeJson(HolderLookup.@NotNull Provider registries) {
+        JsonObject json = new JsonObject();
+        json.addProperty(COLOR_KEY, this.colorStr);
+        if (!description.isEmpty()) {
+            json.addProperty(DESC_KEY, this.description);
+        }
+        return json;
+    }
+
     @Override
     public void deserializeNBT(HolderLookup.@NotNull Provider registries, CompoundTag nbt) {
         setColor(nbt.getString(COLOR_KEY));
 
         if (nbt.contains(DESC_KEY))
             this.description = nbt.getString(DESC_KEY);
+    }
+
+    public void deserializeJson(HolderLookup.@NotNull Provider registries, JsonElement data) {
+        JsonObject json = data.getAsJsonObject();
+        setColor(json.get(COLOR_KEY).getAsString());
+        if (json.has(DESC_KEY)) {
+            this.description = json.get(DESC_KEY).getAsString();
+        }
+    }
+
+    protected static <T> JsonElement encodeJson(HolderLookup.Provider registries, Codec<T> codec, T value) {
+        return codec.encodeStart(registries.createSerializationContext(JsonOps.INSTANCE), value).getOrThrow();
+    }
+
+    protected static <T> T decodeJson(HolderLookup.Provider registries, Codec<T> codec, JsonElement value) {
+        return codec.parse(registries.createSerializationContext(JsonOps.INSTANCE), value).getOrThrow();
     }
 
     public boolean canRemove() {

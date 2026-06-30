@@ -35,14 +35,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.ItemStack;
 
 import com.google.gson.JsonElement;
-import com.mojang.serialization.JsonOps;
 import lombok.Getter;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.Contract;
@@ -540,11 +538,11 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         }
 
         private static JsonElement serializeEntry(VirtualEntry entry, HolderLookup.Provider registries) {
-            return CompoundTag.CODEC.encodeStart(JsonOps.INSTANCE, entry.serializeNBT(registries)).getOrThrow();
+            return entry.serializeJson(registries);
         }
 
         private static void deserializeEntry(VirtualEntry entry, JsonElement data, HolderLookup.Provider registries) {
-            entry.deserializeNBT(registries, CompoundTag.CODEC.parse(JsonOps.INSTANCE, data).getOrThrow());
+            entry.deserializeJson(registries, data);
         }
     }
 }

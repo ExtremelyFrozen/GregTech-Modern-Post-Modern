@@ -9,6 +9,8 @@ import net.minecraft.nbt.NbtOps;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,12 +60,32 @@ public class VirtualTank extends VirtualEntry {
     }
 
     @Override
+    public JsonElement serializeJson(HolderLookup.@NotNull Provider registries) {
+        JsonObject json = super.serializeJson(registries).getAsJsonObject();
+        json.addProperty(CAPACITY_KEY, this.capacity);
+        if (!this.fluidTank.getFluid().isEmpty()) {
+            json.add(FLUID_KEY, encodeJson(registries, FluidStack.CODEC, this.fluidTank.getFluid()));
+        }
+        return json;
+    }
+
+    @Override
     public void deserializeNBT(HolderLookup.@NotNull Provider registries, CompoundTag nbt) {
         super.deserializeNBT(registries, nbt);
         this.capacity = nbt.getInt(CAPACITY_KEY);
 
         if (nbt.contains(FLUID_KEY))
             setFluid(FluidStack.CODEC.parse(NbtOps.INSTANCE, nbt.getCompound(FLUID_KEY)).getOrThrow());
+    }
+
+    @Override
+    public void deserializeJson(HolderLookup.@NotNull Provider registries, JsonElement data) {
+        super.deserializeJson(registries, data);
+        JsonObject json = data.getAsJsonObject();
+        this.capacity = json.get(CAPACITY_KEY).getAsInt();
+        if (json.has(FLUID_KEY)) {
+            setFluid(decodeJson(registries, FluidStack.CODEC, json.get(FLUID_KEY)));
+        }
     }
 
     @Override

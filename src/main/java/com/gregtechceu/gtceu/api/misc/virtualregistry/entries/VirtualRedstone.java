@@ -6,6 +6,8 @@ import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ShortMap;
 import it.unimi.dsi.fastutil.objects.Object2ShortOpenHashMap;
 import lombok.Getter;
@@ -55,11 +57,36 @@ public class VirtualRedstone extends VirtualEntry {
     }
 
     @Override
+    public JsonElement serializeJson(HolderLookup.@NonNull Provider provider) {
+        JsonObject json = super.serializeJson(provider).getAsJsonObject();
+        JsonObject membersJson = new JsonObject();
+        for (var entry : members.object2ShortEntrySet()) {
+            membersJson.addProperty(entry.getKey().toString(), entry.getShortValue());
+        }
+        json.add(MEMBERS_KEY, membersJson);
+        return json;
+    }
+
+    @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         super.deserializeNBT(provider, nbt);
         CompoundTag tag = nbt.getCompound(MEMBERS_KEY);
         for (String uuid : tag.getAllKeys()) {
             members.put(UUID.fromString(uuid), tag.getShort(uuid));
+        }
+    }
+
+    @Override
+    public void deserializeJson(HolderLookup.Provider provider, JsonElement data) {
+        super.deserializeJson(provider, data);
+        JsonObject json = data.getAsJsonObject();
+        if (!json.has(MEMBERS_KEY)) {
+            return;
+        }
+        JsonObject membersJson = json.getAsJsonObject(MEMBERS_KEY);
+        members.clear();
+        for (String uuid : membersJson.keySet()) {
+            members.put(UUID.fromString(uuid), membersJson.get(uuid).getAsShort());
         }
     }
 
