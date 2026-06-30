@@ -46,7 +46,7 @@ public final class AE2SyncCodecs {
 
         @Override
         public Tag serializeNBT(KeyStorage value, Context<KeyStorage> context) {
-            return JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, serializeField(value, context));
+            throw unsupportedNbt(context.fieldName(), "AE2 key storage");
         }
 
         @Override
@@ -65,7 +65,7 @@ public final class AE2SyncCodecs {
 
         @Override
         public @Nullable KeyStorage deserializeNBT(Tag tag, Context<KeyStorage> context) {
-            return deserializeField(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), context);
+            throw unsupportedNbt(context.fieldName(), "AE2 key storage");
         }
 
         @Override
@@ -94,7 +94,7 @@ public final class AE2SyncCodecs {
 
         @Override
         public Tag serializeNBT(GridNodeHolder value, Context<GridNodeHolder> context) {
-            return JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, serializeField(value, context));
+            throw unsupportedNbt(context.fieldName(), "AE2 grid node holder");
         }
 
         @Override
@@ -104,7 +104,7 @@ public final class AE2SyncCodecs {
 
         @Override
         public @Nullable GridNodeHolder deserializeNBT(Tag tag, Context<GridNodeHolder> context) {
-            return deserializeField(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), context);
+            throw unsupportedNbt(context.fieldName(), "AE2 grid node holder");
         }
 
         @Override
@@ -126,7 +126,7 @@ public final class AE2SyncCodecs {
 
         @Override
         public Tag serializeNBT(T value, Context<T> context) {
-            return JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, serializeField(value, context));
+            throw unsupportedNbt(context.fieldName(), "AE2 export slot");
         }
 
         @Override
@@ -139,7 +139,7 @@ public final class AE2SyncCodecs {
 
         @Override
         public @Nullable T deserializeNBT(Tag tag, Context<T> context) {
-            return deserializeField(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), context);
+            throw unsupportedNbt(context.fieldName(), "AE2 export slot");
         }
 
         @Override
@@ -170,7 +170,7 @@ public final class AE2SyncCodecs {
         @Override
         public Tag serializeNBT(MEPatternBufferPartMachine.InternalSlot value,
                                 Context<MEPatternBufferPartMachine.InternalSlot> context) {
-            return JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, serializeField(value, context));
+            throw unsupportedNbt(context.fieldName(), "AE2 pattern buffer internal slot");
         }
 
         @Override
@@ -204,7 +204,7 @@ public final class AE2SyncCodecs {
         @Override
         public @Nullable MEPatternBufferPartMachine.InternalSlot deserializeNBT(Tag tag,
                                                                                 Context<MEPatternBufferPartMachine.InternalSlot> context) {
-            return deserializeField(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag), context);
+            throw unsupportedNbt(context.fieldName(), "AE2 pattern buffer internal slot");
         }
 
         @Override
@@ -272,5 +272,12 @@ public final class AE2SyncCodecs {
             throw new IllegalArgumentException(message);
         }
         return current;
+    }
+
+    private static UnsupportedOperationException unsupportedNbt(String fieldName, String typeName) {
+        String message = "Sync: field " + fieldName + " uses " + typeName +
+                " and must be serialized as DataComponentMap";
+        GTCEu.LOGGER.error(message);
+        return new UnsupportedOperationException(message);
     }
 }

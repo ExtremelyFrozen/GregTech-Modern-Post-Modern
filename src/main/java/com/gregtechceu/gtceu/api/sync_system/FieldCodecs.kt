@@ -12,7 +12,6 @@ import com.gregtechceu.gtceu.api.sync_system.codecs.CustomItemStackHandlerCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.GTRecipeFieldCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MachineTraitHolderCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MonitorGroupCodec
-import com.gregtechceu.gtceu.api.sync_system.codecs.NBTSerializableCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.VirtualEntryCodec
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank
@@ -31,7 +30,6 @@ import net.minecraft.network.chat.ComponentSerialization
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.StringRepresentable
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.common.util.INBTSerializable
 import net.neoforged.neoforge.fluids.FluidStack
 
 import com.google.gson.JsonArray
@@ -762,7 +760,6 @@ object FieldCodecs {
 		registerContextual(CustomItemStackHandler::class.java, CustomItemStackHandlerCodec.INSTANCE)
 		registerContextual(CustomFluidTank::class.java, CustomFluidTankCodec.INSTANCE)
 		registerContextual(VirtualEntry::class.java, VirtualEntryCodec.INSTANCE)
-		registerContextual(INBTSerializable::class.java, NBTSerializableCodec.INSTANCE)
 		registerContextual(GTRecipeFieldCodec.TYPE, GTRecipeFieldCodec.INSTANCE)
 		registerContextual(MachineTraitHolderCodec.TYPE, MachineTraitHolderCodec.INSTANCE)
 		registerContextual(CoverBehaviorCodec.TYPE, CoverBehaviorCodec.INSTANCE)
