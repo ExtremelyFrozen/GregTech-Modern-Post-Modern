@@ -11,10 +11,10 @@ import com.gregtechceu.gtceu.common.item.datacomponents.MachineConfigCopyData;
 import com.gregtechceu.gtceu.common.machine.owner.MachineOwner;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -73,7 +73,8 @@ public class MachineConfigCopyBehaviour implements IInteractionItem, IAddInforma
 
         if (context.isSecondaryUseActive()) {
             if (blockEntity instanceof ICopyable copyable) {
-                var source = new ItemStack(blockEntity.getBlockState().getBlock().asItem()).getDisplayName().getString();
+                var source = new ItemStack(blockEntity.getBlockState().getBlock().asItem()).getDisplayName()
+                        .getString();
                 stack.set(GTDataComponents.DATA_COPY_TAG,
                         new MachineConfigCopyData(source, copyable.getItemsRequiredToPaste(),
                                 copyable.copyConfig(context.getLevel().registryAccess())));

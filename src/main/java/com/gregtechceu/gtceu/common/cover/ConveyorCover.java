@@ -565,7 +565,8 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
         setIo(IO.values()[ConfigCopyHelper.getInt(config, "io")]);
         setDistributionMode(DistributionMode.values()[ConfigCopyHelper.getInt(config, "distributionMode")]);
         setManualIOMode(ManualIOMode.values()[ConfigCopyHelper.getInt(config, "manualIO")]);
-        filterHandler.setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
+        filterHandler
+                .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
         super.pasteConfig(player, registries, config);
     }
 }

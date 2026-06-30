@@ -127,7 +127,8 @@ public class EnderFluidLinkCover extends AbstractEnderLinkCover<VirtualTank> {
 
     @Override
     public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
-        filterHandler.setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
+        filterHandler
+                .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
         super.pasteConfig(player, registries, config);
     }
 

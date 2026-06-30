@@ -1045,7 +1045,8 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
             config = ConfigCopyHelper.withFields(config, fields -> fields
                     .put(SyncFieldData.key(FLUID_OUTPUT_SIDE),
                             ConfigCopyHelper.stringValue(
-                                    MachineConfigCopyBehaviour.directionToString(outputTrait.getFluidOutputDirection())))
+                                    MachineConfigCopyBehaviour
+                                            .directionToString(outputTrait.getFluidOutputDirection())))
                     .put(SyncFieldData.key(FLUID_AUTO_OUTPUT),
                             ConfigCopyHelper.booleanValue(outputTrait.isAutoOutputFluids()))
                     .put(SyncFieldData.key(ALLOW_FLUID_IN_FROM_OUT),
@@ -1077,23 +1078,27 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
         if (outputTrait != null) {
             if (ConfigCopyHelper.contains(config, ITEM_OUTPUT_SIDE)) {
                 outputTrait.setItemOutputDirection(
-                        MachineConfigCopyBehaviour.stringToDirection(ConfigCopyHelper.getString(config, ITEM_OUTPUT_SIDE)));
+                        MachineConfigCopyBehaviour
+                                .stringToDirection(ConfigCopyHelper.getString(config, ITEM_OUTPUT_SIDE)));
             }
             if (ConfigCopyHelper.contains(config, ITEM_AUTO_OUTPUT)) {
                 outputTrait.setAllowAutoOutputItems(ConfigCopyHelper.getBoolean(config, ITEM_AUTO_OUTPUT));
             }
             if (ConfigCopyHelper.contains(config, ALLOW_ITEM_IN_FROM_OUT)) {
-                outputTrait.setAllowItemInputFromOutputSide(ConfigCopyHelper.getBoolean(config, ALLOW_ITEM_IN_FROM_OUT));
+                outputTrait
+                        .setAllowItemInputFromOutputSide(ConfigCopyHelper.getBoolean(config, ALLOW_ITEM_IN_FROM_OUT));
             }
             if (ConfigCopyHelper.contains(config, FLUID_OUTPUT_SIDE)) {
                 outputTrait.setFluidOutputDirection(
-                        MachineConfigCopyBehaviour.stringToDirection(ConfigCopyHelper.getString(config, FLUID_OUTPUT_SIDE)));
+                        MachineConfigCopyBehaviour
+                                .stringToDirection(ConfigCopyHelper.getString(config, FLUID_OUTPUT_SIDE)));
             }
             if (ConfigCopyHelper.contains(config, FLUID_AUTO_OUTPUT)) {
                 outputTrait.setAllowAutoOutputFluids(ConfigCopyHelper.getBoolean(config, FLUID_AUTO_OUTPUT));
             }
             if (ConfigCopyHelper.contains(config, ALLOW_FLUID_IN_FROM_OUT)) {
-                outputTrait.setAllowFluidInputFromOutputSide(ConfigCopyHelper.getBoolean(config, ALLOW_FLUID_IN_FROM_OUT));
+                outputTrait
+                        .setAllowFluidInputFromOutputSide(ConfigCopyHelper.getBoolean(config, ALLOW_FLUID_IN_FROM_OUT));
             }
         }
 

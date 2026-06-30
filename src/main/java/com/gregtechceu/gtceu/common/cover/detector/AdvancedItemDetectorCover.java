@@ -163,7 +163,8 @@ public class AdvancedItemDetectorCover extends ItemDetectorCover implements IUIC
         setMinValue(ConfigCopyHelper.getInt(config, "min"));
         setMaxValue(ConfigCopyHelper.getInt(config, "max"));
         setLatched(ConfigCopyHelper.getBoolean(config, "latched"));
-        filterHandler.setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
+        filterHandler
+                .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
         super.pasteConfig(player, registries, config);
     }
 }

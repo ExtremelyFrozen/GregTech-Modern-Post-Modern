@@ -18,11 +18,12 @@ public record AEInputConfigCopyData(List<@Nullable GenericStack> stacks, byte gh
             Codec.BYTE.fieldOf("ghost_circuit").forGetter(AEInputConfigCopyData::ghostCircuit),
             Codec.BOOL.fieldOf("distinct_buses").forGetter(AEInputConfigCopyData::distinctBuses))
             .apply(instance, AEInputConfigCopyData::new));
-    public static final StreamCodec<RegistryFriendlyByteBuf, AEInputConfigCopyData> STREAM_CODEC = StreamCodec.composite(
-            GenericStack.STREAM_CODEC.apply(ByteBufCodecs.list()), AEInputConfigCopyData::stacks,
-            ByteBufCodecs.BYTE, AEInputConfigCopyData::ghostCircuit,
-            ByteBufCodecs.BOOL, AEInputConfigCopyData::distinctBuses,
-            AEInputConfigCopyData::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, AEInputConfigCopyData> STREAM_CODEC = StreamCodec
+            .composite(
+                    GenericStack.STREAM_CODEC.apply(ByteBufCodecs.list()), AEInputConfigCopyData::stacks,
+                    ByteBufCodecs.BYTE, AEInputConfigCopyData::ghostCircuit,
+                    ByteBufCodecs.BOOL, AEInputConfigCopyData::distinctBuses,
+                    AEInputConfigCopyData::new);
 
     public AEInputConfigCopyData {
         stacks = List.copyOf(stacks);

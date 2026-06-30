@@ -38,9 +38,9 @@ import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -989,7 +989,7 @@ public class GTPlaceholders {
 
             @Override
             public MultiLineComponent apply(PlaceholderContext ctx, List<MultiLineComponent> args)
-                                             throws PlaceholderException {
+                                                                                                   throws PlaceholderException {
                 BlockEntity blockEntity = ctx.level().getBlockEntity(ctx.pos());
                 if (blockEntity == null) return MultiLineComponent.empty();
                 var components = blockEntity.components();
