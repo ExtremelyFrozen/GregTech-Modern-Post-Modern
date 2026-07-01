@@ -2,8 +2,6 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 
 import com.gregtechceu.gtceu.api.sync_system.annotations.ClientFieldChangeListener
 
-import net.neoforged.neoforge.common.util.INBTSerializable
-
 /**
  * Represents a class with fields that have sync annotations. <br></br>
  *
@@ -20,7 +18,7 @@ import net.neoforged.neoforge.common.util.INBTSerializable
  * <ul>
  * <li>`T` is primitive</li>
  * <li>`T` has a [com.gregtechceu.gtceu.api.sync_system.FieldCodecs] codec registered</li>
- * <li>`T` implements [INBTSerializable]</li>
+ * <li>`T` implements [com.gregtechceu.gtceu.api.transfer.DataComponentTransfer]</li>
  * <li>`T` is an [ISyncAnnotated] class</li>
  * </ul>
  *

@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.transfer;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
+import com.gregtechceu.gtceu.api.sync_system.FieldCodecs;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.SyncSerializationTarget;
 import com.gregtechceu.gtceu.api.sync_system.TypeDeclaration;
@@ -101,6 +102,34 @@ public class TransferComponentTest {
                 "first fluid handler amount did not round-trip");
         helper.assertTrue(decoded.getFluidInTank(1).getAmount() == 1250,
                 "second fluid handler amount did not round-trip");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "TransferComponent")
+    @SuppressWarnings("unchecked")
+    public static void genericTransferCodecImportsIntoCurrentComponentTransfer(GameTestHelper helper) {
+        CustomFluidTank first = new CustomFluidTank(1000);
+        CustomFluidTank second = new CustomFluidTank(4000);
+        first.setFluid(GTMaterials.Steam.getFluid(500));
+        second.setFluid(GTMaterials.Water.getFluid(1250));
+        FluidHandlerList list = new FluidHandlerList(first, second);
+
+        ContextualFieldCodec<DataComponentTransfer> codec = (ContextualFieldCodec<DataComponentTransfer>) FieldCodecs
+                .getContextual(DataComponentTransfer.class);
+        helper.assertTrue(codec != null, "data component transfer codec was not registered");
+        FluidHandlerList decoded = new FluidHandlerList(new CustomFluidTank(1000), new CustomFluidTank(4000));
+        ContextualFieldCodec.Context<DataComponentTransfer> context = new ContextualFieldCodec.Context<>(
+                new Object(), new TypeDeclaration(DataComponentTransfer.class), decoded, "fluidHandlers", true,
+                true, helper.getLevel().registryAccess(), SyncSerializationTarget.DATA_COMPONENTS);
+
+        DataComponentTransfer result = codec.deserializeField(codec.serializeField(list, context), context);
+        helper.assertTrue(result == decoded, "generic transfer codec did not keep current field instance");
+        helper.assertTrue(decoded.getFluidInTank(0).getAmount() == 500,
+                "generic transfer codec did not import first handler");
+        helper.assertTrue(decoded.getFluidInTank(1).getAmount() == 1250,
+                "generic transfer codec did not import second handler");
         helper.succeed();
     }
 
