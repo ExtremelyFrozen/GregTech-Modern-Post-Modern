@@ -10,8 +10,7 @@ import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEItemSlot;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAESlot;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -31,6 +30,7 @@ public final class AE2SyncCodecs {
 
     public static void register() {
         FieldCodecs.registerContextual(KeyStorage.class, KeyStorageCodec.INSTANCE);
+        FieldCodecs.registerContextual(SerializableManagedGridNode.class, SerializableManagedGridNodeCodec.INSTANCE);
         FieldCodecs.registerContextual(GridNodeHolder.class, GridNodeHolderCodec.INSTANCE);
         FieldCodecs.registerContextual(ExportOnlyAEItemSlot.class, ExportOnlyAESlotCodec.ITEM);
         FieldCodecs.registerContextual(ExportOnlyAEFluidSlot.class, ExportOnlyAESlotCodec.FLUID);
@@ -77,20 +77,53 @@ public final class AE2SyncCodecs {
         }
     }
 
+    private static final class SerializableManagedGridNodeCodec
+                                                                implements
+                                                                ContextualFieldCodec<SerializableManagedGridNode> {
+
+        private static final SerializableManagedGridNodeCodec INSTANCE = new SerializableManagedGridNodeCodec();
+
+        @Override
+        public JsonElement serializeField(SerializableManagedGridNode value,
+                                          Context<SerializableManagedGridNode> context) {
+            return encodeComponents(context.lookup(), value.exportComponents());
+        }
+
+        @Override
+        public SerializableManagedGridNode deserializeField(JsonElement value,
+                                                            Context<SerializableManagedGridNode> context) {
+            SerializableManagedGridNode node = currentNode(context);
+            node.importComponents(decodeComponents(context.lookup(), value));
+            return node;
+        }
+
+        private static SerializableManagedGridNode currentNode(Context<SerializableManagedGridNode> context) {
+            SerializableManagedGridNode current = context.currentValue();
+            if (current != null) {
+                return current;
+            }
+            if (context.holder() instanceof GridNodeHolder holder) {
+                return holder.getMainNode();
+            }
+            String message = "Sync: field " + context.fieldName() + " requires an existing AE2 grid node";
+            GTCEu.LOGGER.error(message);
+            throw new IllegalArgumentException(message);
+        }
+    }
+
     private static final class GridNodeHolderCodec implements ContextualFieldCodec<GridNodeHolder> {
 
         private static final GridNodeHolderCodec INSTANCE = new GridNodeHolderCodec();
 
         @Override
         public JsonElement serializeField(GridNodeHolder value, Context<GridNodeHolder> context) {
-            return NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, value.getMainNode().serializeNBT(context.lookup()));
+            return encodeComponents(context.lookup(), value.getMainNode().exportComponents());
         }
 
         @Override
         public GridNodeHolder deserializeField(JsonElement value, Context<GridNodeHolder> context) {
             GridNodeHolder holder = requireCurrent(context);
-            holder.getMainNode().deserializeNBT(context.lookup(), (CompoundTag) JsonOps.INSTANCE
-                    .convertTo(NbtOps.INSTANCE, value));
+            holder.getMainNode().importComponents(decodeComponents(context.lookup(), value));
             return holder;
         }
     }
@@ -209,6 +242,18 @@ public final class AE2SyncCodecs {
         }
         return GenericStack.CODEC
                 .encodeStart(lookup.createSerializationContext(JsonOps.INSTANCE), stack)
+                .getOrThrow();
+    }
+
+    private static JsonElement encodeComponents(HolderLookup.Provider lookup, DataComponentMap components) {
+        return DataComponentMap.CODEC
+                .encodeStart(lookup.createSerializationContext(JsonOps.INSTANCE), components)
+                .getOrThrow();
+    }
+
+    private static DataComponentMap decodeComponents(HolderLookup.Provider lookup, JsonElement value) {
+        return DataComponentMap.CODEC
+                .parse(lookup.createSerializationContext(JsonOps.INSTANCE), value)
                 .getOrThrow();
     }
 
