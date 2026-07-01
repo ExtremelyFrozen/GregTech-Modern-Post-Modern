@@ -64,7 +64,7 @@ object FieldSyncHandler {
 	@Suppress("UNCHECKED_CAST")
 	@JvmStatic
 	fun deserializeFieldData(registries: HolderLookup.Provider, holder: Any, field: FieldSyncData, savedValue: JsonElement, readingClientFields: Boolean) {
-		if (savedValue is JsonNull) {
+		if (savedValue.isJsonNull) {
 			field.handle.set(holder, null)
 			return
 		}

@@ -16,10 +16,13 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Field payload stored as a typed data component outside of block-entity NBT boundaries.
@@ -34,9 +37,8 @@ public record SyncFieldData(Map<ResourceLocation, JsonElement> fields) {
     private static final int MAX_FIELD_JSON_LENGTH = 1_048_576;
 
     public static final SyncFieldData EMPTY = new SyncFieldData(Map.of());
-    public static final Codec<SyncFieldData> CODEC = Codec
-            .unboundedMap(ResourceLocation.CODEC, ExtraCodecs.JSON)
-            .xmap(SyncFieldData::new, SyncFieldData::fields);
+    public static final Codec<SyncFieldData> CODEC = FieldEntry.CODEC.listOf()
+            .xmap(SyncFieldData::fromEntries, SyncFieldData::toEntries);
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncFieldData> STREAM_CODEC = new StreamCodec<>() {
 
         @Override
@@ -81,6 +83,14 @@ public record SyncFieldData(Map<ResourceLocation, JsonElement> fields) {
     };
 
     public SyncFieldData {
+        if (!fields.isEmpty()) {
+            Map<ResourceLocation, JsonElement> copy = new LinkedHashMap<>(fields.size());
+            for (Map.Entry<ResourceLocation, JsonElement> entry : fields.entrySet()) {
+                JsonElement value = entry.getValue();
+                copy.put(entry.getKey(), value == null ? JsonNull.INSTANCE : value);
+            }
+            fields = copy;
+        }
         fields = Map.copyOf(fields);
     }
 
@@ -124,6 +134,20 @@ public record SyncFieldData(Map<ResourceLocation, JsonElement> fields) {
         return CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
     }
 
+    private static SyncFieldData fromEntries(Iterable<FieldEntry> entries) {
+        Map<ResourceLocation, JsonElement> fields = new LinkedHashMap<>();
+        for (FieldEntry entry : entries) {
+            fields.put(entry.key(), entry.value());
+        }
+        return new SyncFieldData(fields);
+    }
+
+    private static List<FieldEntry> toEntries(SyncFieldData data) {
+        return data.fields.entrySet().stream()
+                .map(entry -> new FieldEntry(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
     private static <T> void setDecodedComponent(DataComponentMap.Builder builder, TypedDataComponent<T> component) {
         DataComponentType<T> type = component.type();
         builder.set(type, component.value());
@@ -164,6 +188,22 @@ public record SyncFieldData(Map<ResourceLocation, JsonElement> fields) {
                 return EMPTY;
             }
             return new SyncFieldData(fields);
+        }
+    }
+
+    private record FieldEntry(ResourceLocation key, JsonElement value) {
+
+        private static final Codec<FieldEntry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                ResourceLocation.CODEC.fieldOf("key").forGetter(FieldEntry::key),
+                ExtraCodecs.JSON.optionalFieldOf("value").forGetter(FieldEntry::valueForCodec))
+                .apply(instance, FieldEntry::fromCodec));
+
+        private static FieldEntry fromCodec(ResourceLocation key, Optional<JsonElement> value) {
+            return new FieldEntry(key, value.orElse(JsonNull.INSTANCE));
+        }
+
+        private Optional<JsonElement> valueForCodec() {
+            return value.isJsonNull() ? Optional.empty() : Optional.of(value);
         }
     }
 }

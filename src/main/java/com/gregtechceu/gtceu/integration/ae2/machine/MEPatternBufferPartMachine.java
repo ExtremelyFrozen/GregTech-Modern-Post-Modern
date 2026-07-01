@@ -254,8 +254,10 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
         var internalInv = internalInventory[index];
         var newPattern = patternInventory.getStackInSlot(index);
         var newPatternDetails = PatternDetailsHelper.decodePattern(newPattern, getLevel());
-        var oldPatternDetails = detailsSlotMap.inverse().get(internalInv);
-        detailsSlotMap.forcePut(newPatternDetails, internalInv);
+        var oldPatternDetails = detailsSlotMap.inverse().remove(internalInv);
+        if (newPatternDetails != null) {
+            detailsSlotMap.forcePut(newPatternDetails, internalInv);
+        }
         if (oldPatternDetails != null && !oldPatternDetails.equals(newPatternDetails)) {
             internalInv.refund();
         }
