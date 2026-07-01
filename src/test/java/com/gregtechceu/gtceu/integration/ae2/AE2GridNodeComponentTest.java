@@ -35,6 +35,7 @@ public class AE2GridNodeComponentTest {
         DataComponentMap components = componentNetworkRoundTrip(helper, node.exportComponents());
         AE2GridNodeData data = components.get(GTDataComponents.AE2_GRID_NODE.get());
         helper.assertTrue(data != null, "AE2 grid node did not export typed component data");
+        helper.assertTrue(data.payload().isJsonObject(), "AE2 grid node payload was not stored as structured JSON");
 
         SerializableManagedGridNode decoded = new SerializableManagedGridNode(new Object(),
                 (Object owner, IGridNode gridNode) -> {});
