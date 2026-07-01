@@ -1,10 +1,12 @@
 package com.gregtechceu.gtceu.common.network.packets;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncBlockEntity;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -19,29 +21,29 @@ public class CPacketMachineSyncToServer implements CustomPacketPayload {
 
     public static final ResourceLocation ID = GTCEu.id("machine_sync_to_server");
     public static final Type<CPacketMachineSyncToServer> TYPE = new Type<>(ID);
-    public static final StreamCodec<FriendlyByteBuf, CPacketMachineSyncToServer> CODEC = StreamCodec
+    public static final StreamCodec<RegistryFriendlyByteBuf, CPacketMachineSyncToServer> CODEC = StreamCodec
             .ofMember(CPacketMachineSyncToServer::encode, CPacketMachineSyncToServer::new);
 
     private final BlockPos pos;
-    private final byte[] data;
+    private final DataComponentMap data;
 
-    public CPacketMachineSyncToServer(BlockPos pos, byte[] data) {
+    public CPacketMachineSyncToServer(BlockPos pos, DataComponentMap data) {
         this.pos = pos;
         this.data = data;
     }
 
-    public CPacketMachineSyncToServer(FriendlyByteBuf buf) {
+    public CPacketMachineSyncToServer(RegistryFriendlyByteBuf buf) {
         this.pos = buf.readBlockPos();
-        this.data = buf.readByteArray();
+        this.data = SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buf);
     }
 
-    public void encode(FriendlyByteBuf buf) {
+    public void encode(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
-        buf.writeByteArray(data);
+        SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buf, data);
     }
 
     public void execute(IPayloadContext context) {
-        if (!(context.player() instanceof ServerPlayer player) || data.length == 0) {
+        if (!(context.player() instanceof ServerPlayer player) || data.isEmpty()) {
             return;
         }
 

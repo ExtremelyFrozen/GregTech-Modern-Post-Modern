@@ -124,7 +124,7 @@ abstract class ManagedSyncBlockEntity :
 		val serverLevel = level as? ServerLevel
 		if (serverLevel != null && syncDataHolder.scanAndMarkChanges(serverLevel.registryAccess())) {
 			val changes = syncDataHolder.collectClientNetworkChanges(serverLevel.registryAccess(), false)
-			if (changes.isNotEmpty()) {
+			if (!changes.isEmpty) {
 				PacketDistributor.sendToPlayersTrackingChunk(
 					serverLevel,
 					ChunkPos(blockPos),
@@ -147,7 +147,7 @@ abstract class ManagedSyncBlockEntity :
 		}
 
 		val changes = syncDataHolder.collectServerNetworkChanges(level!!.registryAccess())
-		if (changes.isNotEmpty()) {
+		if (!changes.isEmpty) {
 			PacketDistributor.sendToServer(CPacketMachineSyncToServer(blockPos, changes))
 		}
 	}

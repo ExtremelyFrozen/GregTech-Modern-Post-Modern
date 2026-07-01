@@ -29,14 +29,17 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.RegistryOps;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
+import io.netty.buffer.Unpooled;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -61,9 +64,7 @@ public class PipeNetComponentTest {
         helper.assertTrue(nodes.properties().size() == 1, "equal pipe properties were not deduplicated");
 
         DataComponentMap jsonDecoded = jsonRoundTrip(helper, components);
-        byte[] networkData = SyncFieldData.toNetworkBytes(helper.getLevel().registryAccess(), jsonDecoded);
-        DataComponentMap networkDecoded = SyncFieldData.componentsFromNetworkBytes(helper.getLevel().registryAccess(),
-                networkData);
+        DataComponentMap networkDecoded = networkRoundTrip(helper, jsonDecoded);
 
         TestEnergyNet decodedNet = new TestEnergyNet(levelNet);
         decodedNet.importComponents(helper.getLevel().registryAccess(), networkDecoded);
@@ -98,6 +99,17 @@ public class PipeNetComponentTest {
         return DataComponentMap.CODEC
                 .parse(RegistryOps.create(JsonOps.INSTANCE, helper.getLevel().registryAccess()), json)
                 .getOrThrow(GameTestAssertException::new);
+    }
+
+    private static DataComponentMap networkRoundTrip(GameTestHelper helper, DataComponentMap components) {
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess(), ConnectionType.OTHER);
+        try {
+            SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buffer, components);
+            return SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buffer);
+        } finally {
+            buffer.release();
+        }
     }
 
     private static void roundTripFluidPipeNet(GameTestHelper helper) {

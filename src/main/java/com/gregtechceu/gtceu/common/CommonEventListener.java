@@ -385,9 +385,9 @@ public class CommonEventListener {
                 continue;
             }
 
-            byte[] data = syncBlockEntity.getSyncDataHolder()
+            var data = syncBlockEntity.getSyncDataHolder()
                     .collectClientNetworkChanges(level.registryAccess(), true);
-            if (data.length == 0) {
+            if (data.isEmpty()) {
                 continue;
             }
             PacketDistributor.sendToPlayer(player,

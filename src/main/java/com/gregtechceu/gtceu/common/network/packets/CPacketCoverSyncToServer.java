@@ -3,11 +3,13 @@ package com.gregtechceu.gtceu.common.network.packets;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncBlockEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
@@ -21,33 +23,33 @@ public class CPacketCoverSyncToServer implements CustomPacketPayload {
 
     public static final ResourceLocation ID = GTCEu.id("cover_sync_to_server");
     public static final Type<CPacketCoverSyncToServer> TYPE = new Type<>(ID);
-    public static final StreamCodec<FriendlyByteBuf, CPacketCoverSyncToServer> CODEC = StreamCodec
+    public static final StreamCodec<RegistryFriendlyByteBuf, CPacketCoverSyncToServer> CODEC = StreamCodec
             .ofMember(CPacketCoverSyncToServer::encode, CPacketCoverSyncToServer::new);
 
     private final BlockPos pos;
     private final Direction side;
-    private final byte[] data;
+    private final DataComponentMap data;
 
-    public CPacketCoverSyncToServer(BlockPos pos, Direction side, byte[] data) {
+    public CPacketCoverSyncToServer(BlockPos pos, Direction side, DataComponentMap data) {
         this.pos = pos;
         this.side = side;
         this.data = data;
     }
 
-    public CPacketCoverSyncToServer(FriendlyByteBuf buf) {
+    public CPacketCoverSyncToServer(RegistryFriendlyByteBuf buf) {
         this.pos = buf.readBlockPos();
         this.side = buf.readEnum(Direction.class);
-        this.data = buf.readByteArray();
+        this.data = SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buf);
     }
 
-    public void encode(FriendlyByteBuf buf) {
+    public void encode(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeEnum(side);
-        buf.writeByteArray(data);
+        SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buf, data);
     }
 
     public void execute(IPayloadContext context) {
-        if (!(context.player() instanceof ServerPlayer player) || data.length == 0) {
+        if (!(context.player() instanceof ServerPlayer player) || data.isEmpty()) {
             return;
         }
 

@@ -217,19 +217,15 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		return changes.get(GTDataComponents.SYNC_FIELD_DATA.get()) ?: SyncFieldData.EMPTY
 	}
 
-	fun collectClientNetworkChanges(registries: RegistryAccess, force: Boolean): ByteArray {
+	fun collectClientNetworkChanges(registries: RegistryAccess, force: Boolean): DataComponentMap {
 		if (force) {
 			pendingClientChanges = serializeFullClientSyncComponents(registries)
 		}
 
-		val pendingChanges = getPendingChanges()
-		if (pendingChanges.isEmpty) {
-			return ByteArray(0)
-		}
-		return SyncFieldData.toNetworkBytes(registries, pendingChanges)
+		return getPendingChanges()
 	}
 
-	fun collectServerNetworkChanges(registries: RegistryAccess): ByteArray {
+	fun collectServerNetworkChanges(registries: RegistryAccess): DataComponentMap {
 		val changes = SyncFieldData.builder()
 		var wroteAny = false
 		val fields = syncData.getOrderedServerUpdateFields()
@@ -254,9 +250,9 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		}
 
 		if (!wroteAny) {
-			return ByteArray(0)
+			return DataComponentMap.EMPTY
 		}
-		return SyncFieldData.toNetworkBytes(registries, componentsOf(changes.build()))
+		return componentsOf(changes.build())
 	}
 
 	fun deserializeItemComponents(registries: HolderLookup.Provider, components: DataComponentMap) {
@@ -293,12 +289,11 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		}
 	}
 
-	fun applyServerNetworkUpdate(registries: RegistryAccess, data: ByteArray) {
-		if (data.isEmpty()) {
+	fun applyServerNetworkUpdate(registries: RegistryAccess, components: DataComponentMap) {
+		if (components.isEmpty) {
 			return
 		}
 
-		val components = SyncFieldData.componentsFromNetworkBytes(registries, data)
 		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get()) ?: return
 		for (field in syncData.getServerUpdateFields()) {
 			val value = changes.get(field.componentKey) ?: continue
@@ -306,12 +301,11 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		}
 	}
 
-	fun applyClientNetworkUpdate(registries: RegistryAccess, data: ByteArray) {
-		if (data.isEmpty()) {
+	fun applyClientNetworkUpdate(registries: RegistryAccess, components: DataComponentMap) {
+		if (components.isEmpty) {
 			return
 		}
 
-		val components = SyncFieldData.componentsFromNetworkBytes(registries, data)
 		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get()) ?: return
 		for (field in syncData.getClientSyncFields()) {
 			val value = changes.get(field.componentKey) ?: continue

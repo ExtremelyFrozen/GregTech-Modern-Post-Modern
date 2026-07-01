@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.GTCEu;
 
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.TypedDataComponent;
@@ -10,7 +9,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
-import net.neoforged.neoforge.network.connection.ConnectionType;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -18,7 +16,6 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import io.netty.buffer.Unpooled;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -123,53 +120,8 @@ public record SyncFieldData(Map<ResourceLocation, JsonElement> fields) {
                 .build();
     }
 
-    public static byte[] toNetworkBytes(RegistryAccess registries, DataComponentMap components) {
-        if (components.isEmpty()) {
-            return new byte[0];
-        }
-
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries,
-                ConnectionType.OTHER);
-        try {
-            DATA_COMPONENT_MAP_STREAM_CODEC.encode(buffer, components);
-            byte[] data = new byte[buffer.readableBytes()];
-            buffer.getBytes(0, data);
-            return data;
-        } finally {
-            buffer.release();
-        }
-    }
-
     public static SyncFieldData fromJson(JsonElement json) {
         return CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
-    }
-
-    public static DataComponentMap componentsFromNetworkBytes(RegistryAccess registries, byte[] data) {
-        if (data.length == 0) {
-            return DataComponentMap.EMPTY;
-        }
-
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.wrappedBuffer(data), registries,
-                ConnectionType.OTHER);
-        try {
-            return DATA_COMPONENT_MAP_STREAM_CODEC.decode(buffer);
-        } finally {
-            buffer.release();
-        }
-    }
-
-    public static SyncFieldData fromNetworkBytes(RegistryAccess registries, byte[] data) {
-        if (data.length == 0) {
-            return EMPTY;
-        }
-
-        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.wrappedBuffer(data), registries,
-                ConnectionType.OTHER);
-        try {
-            return STREAM_CODEC.decode(buffer);
-        } finally {
-            buffer.release();
-        }
     }
 
     private static <T> void setDecodedComponent(DataComponentMap.Builder builder, TypedDataComponent<T> component) {
