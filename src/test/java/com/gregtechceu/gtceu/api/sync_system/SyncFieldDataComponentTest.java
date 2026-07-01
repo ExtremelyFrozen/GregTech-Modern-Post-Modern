@@ -13,6 +13,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.util.ExtraCodecs;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
@@ -21,6 +22,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +32,7 @@ public class SyncFieldDataComponentTest {
 
     static {
         FieldCodecs.registerContextual(NullParsedValue.class, NullParsedValueCodec.INSTANCE);
+        FieldCodecs.register(RegularNullParsedValue.class, RegularNullParsedValue.CODEC);
     }
 
     @TestHolder
@@ -68,38 +71,10 @@ public class SyncFieldDataComponentTest {
         SyncFieldData savedData = SyncFieldData.builder()
                 .put(SyncFieldData.key("savedValue"), JsonNull.INSTANCE)
                 .build();
-        SyncFieldData clientData = SyncFieldData.builder()
-                .put(SyncFieldData.key("clientValue"), JsonNull.INSTANCE)
-                .put(SyncFieldData.key("bothValue"), JsonNull.INSTANCE)
-                .build();
-        DataComponentMap clientComponents = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), clientData)
-                .build();
 
         target.getSyncDataHolder().deserializeFieldData(helper.getLevel().registryAccess(), savedData, false);
-        target.getSyncDataHolder().applyClientNetworkUpdate(helper.getLevel().registryAccess(), clientComponents);
 
         helper.assertTrue(target.savedValue == null, "saved field explicit null was skipped");
-        helper.assertTrue(target.clientValue == null, "client field explicit null was skipped");
-        helper.assertTrue(target.bothValue == null, "client network explicit null was skipped");
-        helper.succeed();
-    }
-
-    @TestHolder
-    @EmptyTemplate
-    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
-    public static void syncDataHolderDeserializesServerNetworkExplicitNull(GameTestHelper helper) {
-        NullSyncTarget target = new NullSyncTarget("saved", "client", "both");
-        SyncFieldData serverData = SyncFieldData.builder()
-                .put(SyncFieldData.key("bothValue"), JsonNull.INSTANCE)
-                .build();
-        DataComponentMap serverComponents = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), serverData)
-                .build();
-
-        target.getSyncDataHolder().applyServerNetworkUpdate(helper.getLevel().registryAccess(), serverComponents);
-
-        helper.assertTrue(target.bothValue == null, "server network explicit null was skipped");
         helper.succeed();
     }
 
@@ -107,14 +82,18 @@ public class SyncFieldDataComponentTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "SyncFieldDataComponent")
     public static void syncDataHolderParsesNetworkExplicitNullFields(GameTestHelper helper) {
-        CodecNullSyncTarget target = new CodecNullSyncTarget(
+        ParsedNullSyncTarget target = new ParsedNullSyncTarget(
                 new NullParsedValue("client-original"),
-                new NullParsedValue("server-original"));
+                new NullParsedValue("server-original"),
+                new RegularNullParsedValue("client-regular-original"),
+                new RegularNullParsedValue("server-regular-original"));
         SyncFieldData clientData = SyncFieldData.builder()
                 .put(SyncFieldData.key("clientParsed"), JsonNull.INSTANCE)
+                .put(SyncFieldData.key("clientRegularParsed"), JsonNull.INSTANCE)
                 .build();
         SyncFieldData serverData = SyncFieldData.builder()
                 .put(SyncFieldData.key("serverParsed"), JsonNull.INSTANCE)
+                .put(SyncFieldData.key("serverRegularParsed"), JsonNull.INSTANCE)
                 .build();
         DataComponentMap clientComponents = DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), clientData)
@@ -128,10 +107,18 @@ public class SyncFieldDataComponentTest {
 
         helper.assertTrue(target.clientParsed != null, "client network explicit null was not parsed");
         helper.assertTrue(target.serverParsed != null, "server network explicit null was not parsed");
+        helper.assertTrue(target.clientRegularParsed != null,
+                "client network explicit null was not parsed by regular codec");
+        helper.assertTrue(target.serverRegularParsed != null,
+                "server network explicit null was not parsed by regular codec");
         helper.assertTrue("clientParsed:null".equals(target.clientParsed.value),
-                "client network explicit null did not use the field codec result");
+                "client network explicit null did not use the contextual field codec result");
         helper.assertTrue("serverParsed:null".equals(target.serverParsed.value),
-                "server network explicit null did not use the field codec result");
+                "server network explicit null did not use the contextual field codec result");
+        helper.assertTrue("regular:null".equals(target.clientRegularParsed.value),
+                "client network explicit null did not use the regular field codec result");
+        helper.assertTrue("regular:null".equals(target.serverRegularParsed.value),
+                "server network explicit null did not use the regular field codec result");
         helper.succeed();
     }
 
@@ -164,6 +151,24 @@ public class SyncFieldDataComponentTest {
 
     private record NullParsedValue(String value) {}
 
+    private record RegularNullParsedValue(String value) {
+
+        private static final Codec<RegularNullParsedValue> CODEC = ExtraCodecs.JSON.xmap(
+                RegularNullParsedValue::fromJson,
+                RegularNullParsedValue::toJson);
+
+        private static RegularNullParsedValue fromJson(JsonElement value) {
+            if (value.isJsonNull()) {
+                return new RegularNullParsedValue("regular:null");
+            }
+            return new RegularNullParsedValue(value.getAsString());
+        }
+
+        private JsonElement toJson() {
+            return new JsonPrimitive(value);
+        }
+    }
+
     private enum NullParsedValueCodec implements ContextualFieldCodec<NullParsedValue> {
 
         INSTANCE;
@@ -182,17 +187,25 @@ public class SyncFieldDataComponentTest {
         }
     }
 
-    private static final class CodecNullSyncTarget implements ISyncManaged {
+    private static final class ParsedNullSyncTarget implements ISyncManaged {
 
         private final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
         @SyncToClient
         private NullParsedValue clientParsed;
         @SyncToServer
         private NullParsedValue serverParsed;
+        @SyncToClient
+        private RegularNullParsedValue clientRegularParsed;
+        @SyncToServer
+        private RegularNullParsedValue serverRegularParsed;
 
-        private CodecNullSyncTarget(NullParsedValue clientParsed, NullParsedValue serverParsed) {
+        private ParsedNullSyncTarget(NullParsedValue clientParsed, NullParsedValue serverParsed,
+                                     RegularNullParsedValue clientRegularParsed,
+                                     RegularNullParsedValue serverRegularParsed) {
             this.clientParsed = clientParsed;
             this.serverParsed = serverParsed;
+            this.clientRegularParsed = clientRegularParsed;
+            this.serverRegularParsed = serverRegularParsed;
         }
 
         @Override

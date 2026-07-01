@@ -108,11 +108,6 @@ object FieldSyncHandler {
 			return
 		}
 
-		if (savedValue.isJsonNull) {
-			field.handle.set(holder, null)
-			return
-		}
-
 		if (field.codec == null) {
 			field.setCodec(FieldCodecs.get(field.type.rawType))
 		}
