@@ -12,10 +12,12 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.util.ExtraCodecs;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
@@ -24,6 +26,7 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import io.netty.buffer.Unpooled;
 import org.jetbrains.annotations.Nullable;
 
 @PrefixGameTestTemplate(false)
@@ -95,12 +98,12 @@ public class SyncFieldDataComponentTest {
                 .put(SyncFieldData.key("serverParsed"), JsonNull.INSTANCE)
                 .put(SyncFieldData.key("serverRegularParsed"), JsonNull.INSTANCE)
                 .build();
-        DataComponentMap clientComponents = DataComponentMap.builder()
+        DataComponentMap clientComponents = networkRoundTrip(helper, DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), clientData)
-                .build();
-        DataComponentMap serverComponents = DataComponentMap.builder()
+                .build());
+        DataComponentMap serverComponents = networkRoundTrip(helper, DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), serverData)
-                .build();
+                .build());
 
         target.getSyncDataHolder().applyClientNetworkUpdate(helper.getLevel().registryAccess(), clientComponents);
         target.getSyncDataHolder().applyServerNetworkUpdate(helper.getLevel().registryAccess(), serverComponents);
@@ -120,6 +123,17 @@ public class SyncFieldDataComponentTest {
         helper.assertTrue("regular:null".equals(target.serverRegularParsed.value),
                 "server network explicit null did not use the regular field codec result");
         helper.succeed();
+    }
+
+    private static DataComponentMap networkRoundTrip(GameTestHelper helper, DataComponentMap components) {
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess(), ConnectionType.OTHER);
+        try {
+            SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buffer, components);
+            return SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buffer);
+        } finally {
+            buffer.release();
+        }
     }
 
     private static final class NullSyncTarget implements ISyncManaged {
