@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.datacomponents.AE2GridNodeData;
 import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
+import com.gregtechceu.gtceu.common.data.datacomponents.CapeData;
 import com.gregtechceu.gtceu.common.data.datacomponents.CoverConfigCopyData;
 import com.gregtechceu.gtceu.common.data.datacomponents.FluidProspectionCache;
 import com.gregtechceu.gtceu.common.data.datacomponents.MedicalConditionTrackerData;
@@ -275,6 +276,10 @@ public class GTDataComponents {
             .registerComponentType("ae2_grid_node", builder -> builder
                     .persistent(AE2GridNodeData.CODEC)
                     .networkSynchronized(AE2GridNodeData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CapeData.Registry>> CAPE_REGISTRY = DATA_COMPONENTS
+            .registerComponentType("cape_registry", builder -> builder
+                    .persistent(CapeData.Registry.CODEC)
+                    .networkSynchronized(CapeData.Registry.STREAM_CODEC));
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.RegistryRoot>> VIRTUAL_REGISTRY_ROOT = DATA_COMPONENTS
             .registerComponentType("virtual_registry_root", builder -> builder
                     .persistent(VirtualEntryData.RegistryRoot.CODEC)

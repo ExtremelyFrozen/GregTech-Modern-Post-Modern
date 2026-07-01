@@ -1,10 +1,14 @@
 package com.gregtechceu.gtceu.api.cosmetics;
 
 import com.gregtechceu.gtceu.api.cosmetics.event.RegisterGTCapesEvent;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.CapeData;
 import com.gregtechceu.gtceu.common.network.packets.SPacketNotifyCapeChange;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.*;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +17,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +39,8 @@ public class CapeRegistry extends SavedData {
     private static final Set<ResourceLocation> FREE_CAPES = new HashSet<>();
 
     // This map should always have TreeSet values for iteration consistency.
-    private static final Map<UUID, Set<ResourceLocation>> UNLOCKED_CAPES = new HashMap<>();
-    private static final Map<UUID, ResourceLocation> CURRENT_CAPES = new HashMap<>();
+    private static final Map<UUID, Set<ResourceLocation>> UNLOCKED_CAPES = new Object2ObjectOpenHashMap<>();
+    private static final Map<UUID, ResourceLocation> CURRENT_CAPES = new Object2ObjectOpenHashMap<>();
 
     private static final CapeRegistry INSTANCE = new CapeRegistry();
 
@@ -65,70 +70,60 @@ public class CapeRegistry extends SavedData {
 
     @Override
     public @NotNull CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider registries) {
-        ListTag unlockedCapesTag = new ListTag();
-        for (Map.Entry<UUID, Set<ResourceLocation>> entry : UNLOCKED_CAPES.entrySet()) {
-            CompoundTag entryTag = new CompoundTag();
-            entryTag.putUUID("owner", entry.getKey());
-
-            ListTag capesTag = new ListTag();
-            for (ResourceLocation cape : entry.getValue()) {
-                capesTag.add(StringTag.valueOf(cape.toString()));
-            }
-            entryTag.put("capes", capesTag);
-
-            unlockedCapesTag.add(entryTag);
-        }
-        tag.put("unlocked_capes", unlockedCapesTag);
-
-        ListTag currentCapesTag = new ListTag();
-        for (Map.Entry<UUID, ResourceLocation> entry : CURRENT_CAPES.entrySet()) {
-            if (entry.getValue() == null)
-                continue;
-            String capeLocation = entry.getValue().toString();
-
-            CompoundTag entryTag = new CompoundTag();
-
-            entryTag.putString("cape", capeLocation);
-            entryTag.putUUID("owner", entry.getKey());
-
-            currentCapesTag.add(entryTag);
-        }
-        tag.put("current_capes", currentCapesTag);
-
-        return tag;
+        return writeComponents(registries, exportComponents());
     }
 
     private CapeRegistry load(CompoundTag tag, HolderLookup.Provider registries) {
         init();
-
-        ListTag unlockedCapesTag = tag.getList("unlocked_capes", Tag.TAG_COMPOUND);
-        for (int i = 0; i < unlockedCapesTag.size(); i++) {
-            CompoundTag entryTag = unlockedCapesTag.getCompound(i);
-            UUID uuid = entryTag.getUUID("owner");
-
-            Set<ResourceLocation> capes = UNLOCKED_CAPES.computeIfAbsent(uuid, CapeRegistry::makeSet);
-
-            ListTag capesTag = entryTag.getList("capes", Tag.TAG_STRING);
-            for (int j = 0; j < capesTag.size(); j++) {
-                String capeId = capesTag.getString(j);
-                if (capeId.isEmpty())
-                    continue;
-                capes.add(ResourceLocation.parse(capeId));
-            }
-            UNLOCKED_CAPES.put(uuid, capes);
-        }
-
-        ListTag currentCapesTag = tag.getList("current_capes", Tag.TAG_COMPOUND);
-        for (int i = 0; i < currentCapesTag.size(); i++) {
-            CompoundTag entryTag = currentCapesTag.getCompound(i);
-            String capeId = entryTag.getString("cape");
-            if (capeId.isEmpty())
-                continue;
-            UUID uuid = entryTag.getUUID("owner");
-            CURRENT_CAPES.put(uuid, ResourceLocation.parse(capeId));
-        }
-
+        importComponents(readComponents(registries, tag));
         return this;
+    }
+
+    static DataComponentMap exportComponents() {
+        Map<UUID, List<ResourceLocation>> unlockedCapes = new Object2ObjectOpenHashMap<>();
+        for (Map.Entry<UUID, Set<ResourceLocation>> entry : UNLOCKED_CAPES.entrySet()) {
+            unlockedCapes.put(entry.getKey(), List.copyOf(entry.getValue()));
+        }
+        Map<UUID, ResourceLocation> currentCapes = new Object2ObjectOpenHashMap<>();
+        for (Map.Entry<UUID, ResourceLocation> entry : CURRENT_CAPES.entrySet()) {
+            if (entry.getValue() != null) {
+                currentCapes.put(entry.getKey(), entry.getValue());
+            }
+        }
+        CapeData.Registry registry = new CapeData.Registry(unlockedCapes, currentCapes);
+        if (registry.isEmpty()) {
+            return DataComponentMap.EMPTY;
+        }
+        return DataComponentMap.builder()
+                .set(GTDataComponents.CAPE_REGISTRY.get(), registry)
+                .build();
+    }
+
+    static void importComponents(DataComponentMap components) {
+        if (components.isEmpty()) {
+            return;
+        }
+        CapeData.Registry registry = components.get(GTDataComponents.CAPE_REGISTRY.get());
+        if (registry == null) {
+            throw new IllegalArgumentException("Cape registry data is missing root component");
+        }
+        for (Map.Entry<UUID, List<ResourceLocation>> entry : registry.unlockedCapes().entrySet()) {
+            Set<ResourceLocation> capes = UNLOCKED_CAPES.computeIfAbsent(entry.getKey(), CapeRegistry::makeSet);
+            capes.addAll(entry.getValue());
+        }
+        CURRENT_CAPES.putAll(registry.currentCapes());
+    }
+
+    private static DataComponentMap readComponents(HolderLookup.Provider registries, CompoundTag tag) {
+        return DataComponentMap.CODEC
+                .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag)
+                .getOrThrow();
+    }
+
+    private static CompoundTag writeComponents(HolderLookup.Provider registries, DataComponentMap components) {
+        return (CompoundTag) DataComponentMap.CODEC
+                .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), components)
+                .getOrThrow();
     }
 
     @Nullable
