@@ -7,17 +7,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.fml.loading.FMLPaths;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
@@ -28,6 +26,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ public class ClientCacheManager {
     private static final char resourceLocationSeparator = '=';
     private static final String filePrefix = "DIM";
     private static final String fileEnding = ".componentPatch";
+    private static final Gson GSON = new Gson();
     @Getter
     private static File worldFolder;
     private static final Reference2ObjectMap<IClientCache, ClientCacheInfo> caches = new Reference2ObjectArrayMap<>();
@@ -203,21 +205,15 @@ public class ClientCacheManager {
     }
 
     private static DataComponentMap readComponents(File file, HolderLookup.Provider provider) throws IOException {
-        try (FileInputStream inputStream = new FileInputStream(file)) {
-            CompoundTag tag = NbtIo.readCompressed(inputStream, NbtAccounter.unlimitedHeap());
-            return DataComponentMap.CODEC
-                    .parse(provider.createSerializationContext(NbtOps.INSTANCE), tag)
-                    .getOrThrow();
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            return fromJson(JsonParser.parseReader(reader), provider);
         }
     }
 
     private static void writeComponents(DataComponentMap data, File file,
                                         HolderLookup.Provider provider) throws IOException {
-        CompoundTag tag = (CompoundTag) DataComponentMap.CODEC
-                .encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), data)
-                .getOrThrow();
-        try (FileOutputStream outputStream = new FileOutputStream(file)) {
-            NbtIo.writeCompressed(tag, outputStream);
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+            GSON.toJson(toJson(data, provider), writer);
         }
     }
 
