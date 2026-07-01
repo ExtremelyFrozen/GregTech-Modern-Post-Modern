@@ -1,6 +1,8 @@
 package com.gregtechceu.gtceu.api.misc.virtualregistry;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
@@ -20,15 +22,13 @@ import java.util.function.Predicate;
 public class VirtualEnderRegistry extends SavedData {
 
     private static final String DATA_ID = GTCEu.MOD_ID + ".virtual_entry_data";
-    private static final String PUBLIC_KEY = "Public";
-    private static final String PRIVATE_KEY = "Private";
     private static volatile VirtualEnderRegistry data;
     private final Map<UUID, VirtualRegistryMap> VIRTUAL_REGISTRIES = new HashMap<>();
 
     public VirtualEnderRegistry() {}
 
     public VirtualEnderRegistry(CompoundTag name, HolderLookup.@NotNull Provider registries) {
-        readFromNBT(registries, name);
+        importComponents(registries, readComponents(registries, name));
     }
 
     public static VirtualEnderRegistry getInstance() {
@@ -98,38 +98,51 @@ public class VirtualEnderRegistry extends SavedData {
     }
 
     private VirtualRegistryMap getRegistry(UUID owner) {
-        return getInstance().VIRTUAL_REGISTRIES.computeIfAbsent(owner, key -> new VirtualRegistryMap());
+        return VIRTUAL_REGISTRIES.computeIfAbsent(owner, key -> new VirtualRegistryMap());
     }
 
-    public final void readFromNBT(HolderLookup.@NotNull Provider registries, CompoundTag nbt) {
-        if (nbt.contains(PUBLIC_KEY)) {
-            VIRTUAL_REGISTRIES.put(null, new VirtualRegistryMap(registries,
-                    readComponents(registries, nbt.getCompound(PUBLIC_KEY))));
-        }
-        if (nbt.contains(PRIVATE_KEY)) {
-            CompoundTag privateEntries = nbt.getCompound(PRIVATE_KEY);
-            for (String owner : privateEntries.getAllKeys()) {
-                var privateMap = privateEntries.getCompound(owner);
-                VIRTUAL_REGISTRIES.put(UUID.fromString(owner), new VirtualRegistryMap(registries,
-                        readComponents(registries, privateMap)));
+    public DataComponentMap exportComponents(HolderLookup.@NotNull Provider registries) {
+        DataComponentMap publicEntries = DataComponentMap.EMPTY;
+        Map<String, DataComponentMap> privateEntries = new HashMap<>();
+        for (Map.Entry<UUID, VirtualRegistryMap> entry : VIRTUAL_REGISTRIES.entrySet()) {
+            DataComponentMap registryComponents = entry.getValue().exportComponents(registries);
+            if (entry.getKey() == null) {
+                publicEntries = registryComponents;
+            } else {
+                privateEntries.put(entry.getKey().toString(), registryComponents);
             }
+        }
+        VirtualEntryData.RegistryRoot root = new VirtualEntryData.RegistryRoot(publicEntries, privateEntries);
+        if (root.isEmpty()) {
+            return DataComponentMap.EMPTY;
+        }
+        return DataComponentMap.builder()
+                .set(GTDataComponents.VIRTUAL_REGISTRY_ROOT, root)
+                .build();
+    }
+
+    public void importComponents(HolderLookup.@NotNull Provider registries, DataComponentMap components) {
+        VIRTUAL_REGISTRIES.clear();
+        if (components.isEmpty()) {
+            return;
+        }
+        VirtualEntryData.RegistryRoot root = components.get(GTDataComponents.VIRTUAL_REGISTRY_ROOT.get());
+        if (root == null) {
+            throw new IllegalArgumentException("Virtual ender registry data is missing root component");
+        }
+        if (!root.publicEntries().isEmpty()) {
+            VIRTUAL_REGISTRIES.put(null, new VirtualRegistryMap(registries, root.publicEntries()));
+        }
+        for (Map.Entry<String, DataComponentMap> entry : root.privateEntries().entrySet()) {
+            UUID owner = UUID.fromString(entry.getKey());
+            VIRTUAL_REGISTRIES.put(owner, new VirtualRegistryMap(registries, entry.getValue()));
         }
     }
 
     @NotNull
     @Override
     public final CompoundTag save(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider registries) {
-        var privateTag = new CompoundTag();
-        for (var owner : VIRTUAL_REGISTRIES.keySet()) {
-            var mapTag = writeComponents(registries, VIRTUAL_REGISTRIES.get(owner).exportComponents(registries));
-            if (owner != null) {
-                privateTag.put(owner.toString(), mapTag);
-            } else {
-                tag.put(PUBLIC_KEY, mapTag);
-            }
-        }
-        tag.put(PRIVATE_KEY, privateTag);
-        return tag;
+        return writeComponents(registries, exportComponents(registries));
     }
 
     private static DataComponentMap readComponents(HolderLookup.Provider registries, CompoundTag tag) {

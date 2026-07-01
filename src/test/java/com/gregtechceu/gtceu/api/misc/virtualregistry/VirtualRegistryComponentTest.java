@@ -97,4 +97,42 @@ public class VirtualRegistryComponentTest {
                 new ItemStack(Items.EMERALD, 3)), "registry map did not round-trip item entry");
         helper.succeed();
     }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "VirtualRegistryComponent")
+    public static void virtualEnderRegistryRootCodecRoundTripKeepsPublicAndPrivateEntries(GameTestHelper helper) {
+        VirtualEnderRegistry registry = new VirtualEnderRegistry();
+        VirtualTank publicTank = new VirtualTank();
+        publicTank.setFluid(new FluidStack(Fluids.WATER, 1000));
+        registry.addEntry(null, "public_tank", publicTank);
+
+        UUID owner = UUID.fromString("12345678-9abc-def0-1234-56789abcdef0");
+        VirtualItemStorage privateStorage = new VirtualItemStorage();
+        privateStorage.getHandler().setStackInSlot(0, new ItemStack(Items.DIAMOND, 4));
+        registry.addEntry(owner, "private_storage", privateStorage);
+
+        DataComponentMap components = registry.exportComponents(helper.getLevel().registryAccess());
+        JsonElement json = DataComponentMap.CODEC
+                .encodeStart(RegistryOps.create(JsonOps.INSTANCE, helper.getLevel().registryAccess()), components)
+                .getOrThrow(GameTestAssertException::new);
+        DataComponentMap decodedComponents = DataComponentMap.CODEC
+                .parse(RegistryOps.create(JsonOps.INSTANCE, helper.getLevel().registryAccess()), json)
+                .getOrThrow(GameTestAssertException::new);
+
+        VirtualEnderRegistry decoded = new VirtualEnderRegistry();
+        decoded.importComponents(helper.getLevel().registryAccess(), decodedComponents);
+
+        VirtualTank decodedPublicTank = decoded.getEntry(null, EntryTypes.ENDER_FLUID, "public_tank");
+        VirtualItemStorage decodedPrivateStorage = decoded.getEntry(owner, EntryTypes.ENDER_ITEM, "private_storage");
+        helper.assertTrue(components.has(GTDataComponents.VIRTUAL_REGISTRY_ROOT.get()),
+                "virtual ender registry did not export root component");
+        helper.assertTrue(decodedPublicTank != null && FluidStack.isSameFluidSameComponents(decodedPublicTank
+                .getFluidTank().getFluid(), new FluidStack(Fluids.WATER, 1000)),
+                "public registry entry did not round-trip");
+        helper.assertTrue(decodedPrivateStorage != null && ItemStack.matches(decodedPrivateStorage.getHandler()
+                .getStackInSlot(0), new ItemStack(Items.DIAMOND, 4)),
+                "private registry entry did not round-trip");
+        helper.succeed();
+    }
 }

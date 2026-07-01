@@ -1,6 +1,9 @@
 package com.gregtechceu.gtceu.common.data.datacomponents;
 
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
+
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -11,7 +14,9 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class VirtualEntryData {
@@ -94,5 +99,31 @@ public final class VirtualEntryData {
                 UUIDUtil.STREAM_CODEC, Member::id,
                 ByteBufCodecs.SHORT, Member::signal,
                 Member::new);
+    }
+
+    public record RegistryRoot(DataComponentMap publicEntries, Map<String, DataComponentMap> privateEntries) {
+
+        private static final Codec<Map<String, DataComponentMap>> PRIVATE_ENTRIES_CODEC = Codec.unboundedMap(
+                Codec.STRING, DataComponentMap.CODEC);
+        private static final StreamCodec<RegistryFriendlyByteBuf, Map<String, DataComponentMap>> PRIVATE_ENTRIES_STREAM_CODEC = ByteBufCodecs
+                .map(HashMap::new, ByteBufCodecs.STRING_UTF8, SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC);
+        public static final Codec<RegistryRoot> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                DataComponentMap.CODEC.optionalFieldOf("public_entries", DataComponentMap.EMPTY)
+                        .forGetter(RegistryRoot::publicEntries),
+                PRIVATE_ENTRIES_CODEC.optionalFieldOf("private_entries", Map.of())
+                        .forGetter(RegistryRoot::privateEntries))
+                .apply(instance, RegistryRoot::new));
+        public static final StreamCodec<RegistryFriendlyByteBuf, RegistryRoot> STREAM_CODEC = StreamCodec.composite(
+                SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC, RegistryRoot::publicEntries,
+                PRIVATE_ENTRIES_STREAM_CODEC, RegistryRoot::privateEntries,
+                RegistryRoot::new);
+
+        public RegistryRoot {
+            privateEntries = Map.copyOf(privateEntries);
+        }
+
+        public boolean isEmpty() {
+            return publicEntries.isEmpty() && privateEntries.isEmpty();
+        }
     }
 }

@@ -275,6 +275,10 @@ public class GTDataComponents {
             .registerComponentType("ae2_grid_node", builder -> builder
                     .persistent(AE2GridNodeData.CODEC)
                     .networkSynchronized(AE2GridNodeData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.RegistryRoot>> VIRTUAL_REGISTRY_ROOT = DATA_COMPONENTS
+            .registerComponentType("virtual_registry_root", builder -> builder
+                    .persistent(VirtualEntryData.RegistryRoot.CODEC)
+                    .networkSynchronized(VirtualEntryData.RegistryRoot.STREAM_CODEC));
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<VirtualEntryData.Base>> VIRTUAL_ENTRY_BASE = DATA_COMPONENTS
             .registerComponentType("virtual_entry_base", builder -> builder
                     .persistent(VirtualEntryData.Base.CODEC)
