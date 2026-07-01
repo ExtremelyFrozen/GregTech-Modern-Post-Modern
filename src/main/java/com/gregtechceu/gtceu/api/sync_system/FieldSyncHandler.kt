@@ -62,9 +62,10 @@ object FieldSyncHandler {
 	}
 
 	@Suppress("UNCHECKED_CAST")
+	@JvmOverloads
 	@JvmStatic
-	fun deserializeFieldData(registries: HolderLookup.Provider, holder: Any, field: FieldSyncData, savedValue: JsonElement, readingClientFields: Boolean) {
-		if (savedValue.isJsonNull) {
+	fun deserializeFieldData(registries: HolderLookup.Provider, holder: Any, field: FieldSyncData, savedValue: JsonElement, readingClientFields: Boolean, parseExplicitNull: Boolean = false) {
+		if (savedValue.isJsonNull && !parseExplicitNull) {
 			field.handle.set(holder, null)
 			return
 		}
@@ -104,6 +105,11 @@ object FieldSyncHandler {
 				GTCEu.LOGGER.error("Sync: Failed to contextual-codec deserialize field {} without NBT", field.fieldName, e)
 				throw e
 			}
+			return
+		}
+
+		if (savedValue.isJsonNull) {
+			field.handle.set(holder, null)
 			return
 		}
 

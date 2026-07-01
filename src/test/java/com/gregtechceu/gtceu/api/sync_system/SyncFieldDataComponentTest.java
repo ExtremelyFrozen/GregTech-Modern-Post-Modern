@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToServer;
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
@@ -26,6 +27,10 @@ import org.jetbrains.annotations.Nullable;
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
 public class SyncFieldDataComponentTest {
+
+    static {
+        FieldCodecs.registerContextual(NullParsedValue.class, NullParsedValueCodec.INSTANCE);
+    }
 
     @TestHolder
     @EmptyTemplate
@@ -98,6 +103,38 @@ public class SyncFieldDataComponentTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void syncDataHolderParsesNetworkExplicitNullFields(GameTestHelper helper) {
+        CodecNullSyncTarget target = new CodecNullSyncTarget(
+                new NullParsedValue("client-original"),
+                new NullParsedValue("server-original"));
+        SyncFieldData clientData = SyncFieldData.builder()
+                .put(SyncFieldData.key("clientParsed"), JsonNull.INSTANCE)
+                .build();
+        SyncFieldData serverData = SyncFieldData.builder()
+                .put(SyncFieldData.key("serverParsed"), JsonNull.INSTANCE)
+                .build();
+        DataComponentMap clientComponents = DataComponentMap.builder()
+                .set(GTDataComponents.SYNC_FIELD_DATA.get(), clientData)
+                .build();
+        DataComponentMap serverComponents = DataComponentMap.builder()
+                .set(GTDataComponents.SYNC_FIELD_DATA.get(), serverData)
+                .build();
+
+        target.getSyncDataHolder().applyClientNetworkUpdate(helper.getLevel().registryAccess(), clientComponents);
+        target.getSyncDataHolder().applyServerNetworkUpdate(helper.getLevel().registryAccess(), serverComponents);
+
+        helper.assertTrue(target.clientParsed != null, "client network explicit null was not parsed");
+        helper.assertTrue(target.serverParsed != null, "server network explicit null was not parsed");
+        helper.assertTrue("clientParsed:null".equals(target.clientParsed.value),
+                "client network explicit null did not use the field codec result");
+        helper.assertTrue("serverParsed:null".equals(target.serverParsed.value),
+                "server network explicit null did not use the field codec result");
+        helper.succeed();
+    }
+
     private static final class NullSyncTarget implements ISyncManaged {
 
         private final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
@@ -112,6 +149,50 @@ public class SyncFieldDataComponentTest {
             this.savedValue = savedValue;
             this.clientValue = clientValue;
             this.bothValue = bothValue;
+        }
+
+        @Override
+        public SyncDataHolder getSyncDataHolder() {
+            return syncDataHolder;
+        }
+
+        @Override
+        public @Nullable ISyncManaged getParentSyncObject() {
+            return null;
+        }
+    }
+
+    private record NullParsedValue(String value) {}
+
+    private enum NullParsedValueCodec implements ContextualFieldCodec<NullParsedValue> {
+
+        INSTANCE;
+
+        @Override
+        public JsonElement serializeField(NullParsedValue value, Context<NullParsedValue> context) {
+            return new JsonPrimitive(value.value);
+        }
+
+        @Override
+        public NullParsedValue deserializeField(JsonElement value, Context<NullParsedValue> context) {
+            if (value.isJsonNull()) {
+                return new NullParsedValue(context.fieldName() + ":null");
+            }
+            return new NullParsedValue(value.getAsString());
+        }
+    }
+
+    private static final class CodecNullSyncTarget implements ISyncManaged {
+
+        private final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
+        @SyncToClient
+        private NullParsedValue clientParsed;
+        @SyncToServer
+        private NullParsedValue serverParsed;
+
+        private CodecNullSyncTarget(NullParsedValue clientParsed, NullParsedValue serverParsed) {
+            this.clientParsed = clientParsed;
+            this.serverParsed = serverParsed;
         }
 
         @Override

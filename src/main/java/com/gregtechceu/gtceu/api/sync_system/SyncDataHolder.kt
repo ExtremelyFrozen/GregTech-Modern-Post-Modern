@@ -307,7 +307,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 				continue
 			}
 			val value = changes.get(field.componentKey) ?: JsonNull.INSTANCE
-			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, false)
+			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, false, parseExplicitNull = true)
 		}
 	}
 
@@ -322,7 +322,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 				continue
 			}
 			val value = changes.get(field.componentKey) ?: JsonNull.INSTANCE
-			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, true)
+			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, true, parseExplicitNull = true)
 			cachedClientValues[field] = field.handle.get(holder)
 			invokeClientChangeListeners(field)
 			if (field.triggerClientRerender) holder.scheduleRenderUpdate()
