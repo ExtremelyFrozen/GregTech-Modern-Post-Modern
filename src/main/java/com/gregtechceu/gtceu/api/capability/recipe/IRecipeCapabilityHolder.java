@@ -24,11 +24,36 @@ public interface IRecipeCapabilityHolder {
 
     @NotNull
     default List<RecipeHandlerList> getCapabilitiesForIO(IO io) {
+        if (io == IO.IN || io == IO.OUT) {
+            List<RecipeHandlerList> handlers = getCapabilitiesProxy().getOrDefault(io, Collections.emptyList());
+            List<RecipeHandlerList> bothHandlers = getCapabilitiesProxy().getOrDefault(IO.BOTH,
+                    Collections.emptyList());
+            if (bothHandlers.isEmpty()) return handlers;
+            if (handlers.isEmpty()) return bothHandlers;
+            List<RecipeHandlerList> merged = new ArrayList<>(handlers.size() + bothHandlers.size());
+            merged.addAll(handlers);
+            merged.addAll(bothHandlers);
+            return merged;
+        }
         return getCapabilitiesProxy().getOrDefault(io, Collections.emptyList());
     }
 
     @NotNull
     default List<IRecipeHandler<?>> getCapabilitiesFlat(IO io, RecipeCapability<?> cap) {
+        if (io == IO.IN || io == IO.OUT) {
+            List<IRecipeHandler<?>> handlers = getCapabilitiesFlat()
+                    .getOrDefault(io, Collections.emptyMap())
+                    .getOrDefault(cap, Collections.emptyList());
+            List<IRecipeHandler<?>> bothHandlers = getCapabilitiesFlat()
+                    .getOrDefault(IO.BOTH, Collections.emptyMap())
+                    .getOrDefault(cap, Collections.emptyList());
+            if (bothHandlers.isEmpty()) return handlers;
+            if (handlers.isEmpty()) return bothHandlers;
+            List<IRecipeHandler<?>> merged = new ArrayList<>(handlers.size() + bothHandlers.size());
+            merged.addAll(handlers);
+            merged.addAll(bothHandlers);
+            return merged;
+        }
         return getCapabilitiesFlat()
                 .getOrDefault(io, Collections.emptyMap())
                 .getOrDefault(cap, Collections.emptyList());

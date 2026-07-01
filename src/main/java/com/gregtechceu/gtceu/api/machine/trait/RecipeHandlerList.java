@@ -105,8 +105,8 @@ public class RecipeHandlerList {
     protected void setDistinct(boolean distinct, boolean notify) {
         boolean currentDistinct = isDistinct();
         if (currentDistinct != distinct) {
-            this.group = currentDistinct ? new RecipeHandlerGroupColor(color) :
-                    RecipeHandlerGroupDistinctness.BUS_DISTINCT;
+            this.group = distinct ? RecipeHandlerGroupDistinctness.BUS_DISTINCT :
+                    new RecipeHandlerGroupColor(color);
             for (var rht : allHandlerTraits) {
                 rht.setDistinct(distinct);
                 if (notify) rht.notifyListeners();
@@ -178,7 +178,10 @@ public class RecipeHandlerList {
                                                                Map<RecipeCapability<?>, List<Object>> contents,
                                                                boolean simulate) {
         if (getHandlerMap().isEmpty()) return contents;
-        var copy = new Reference2ObjectOpenHashMap<>(contents);
+        var copy = new Reference2ObjectOpenHashMap<RecipeCapability<?>, List<Object>>(contents.size());
+        for (var entry : contents.entrySet()) {
+            copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
         for (var it = copy.reference2ObjectEntrySet().fastIterator(); it.hasNext();) {
             var entry = it.next();
             var handlerList = getCapability(entry.getKey());

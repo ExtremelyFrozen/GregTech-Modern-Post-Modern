@@ -35,7 +35,7 @@ public class RecipeRunner {
     private final IO io;
     private final boolean isTick;
     private final Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches;
-    private final Map<IO, List<RecipeHandlerList>> capabilityProxies;
+    private final List<RecipeHandlerList> handlers;
     private final boolean simulated;
     private Map<RecipeCapability<?>, List<Object>> recipeContents;
     private final Map<RecipeCapability<?>, List<Object>> searchRecipeContents;
@@ -50,7 +50,7 @@ public class RecipeRunner {
         this.io = io;
         this.isTick = isTick;
         this.chanceCaches = chanceCaches;
-        this.capabilityProxies = holder.getCapabilitiesProxy();
+        this.handlers = new ArrayList<>(holder.getCapabilitiesForIO(io));
         this.recipeContents = new Reference2ObjectOpenHashMap<>();
         this.searchRecipeContents = simulated ? recipeContents : new Reference2ObjectOpenHashMap<>();
         this.simulated = simulated;
@@ -120,7 +120,7 @@ public class RecipeRunner {
 
     private ActionResult handleContents() {
         if (recipeContents.isEmpty()) return ActionResult.SUCCESS;
-        if (!capabilityProxies.containsKey(io)) {
+        if (handlers.isEmpty()) {
             return ActionResult.fail(
                     Component.translatable("gtpm.recipe_logic.no_capabilities")
                             .append(Component.literal(": "))
@@ -128,7 +128,6 @@ public class RecipeRunner {
                     null, io);
         }
 
-        List<RecipeHandlerList> handlers = capabilityProxies.getOrDefault(io, Collections.emptyList());
         // Only sort for non-tick outputs
         if (!isTick && io.support(IO.OUT)) {
             handlers.sort(RecipeHandlerList.COMPARATOR.reversed());

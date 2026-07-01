@@ -124,25 +124,26 @@ public final class RecipeDB {
      * @return a list of all the AbstractMapIngredients in the handlers
      */
     private @Nullable List<List<AbstractMapIngredient>> fromHolder(@NotNull IRecipeCapabilityHolder holder) {
-        var handlerMap = holder.getCapabilitiesFlat().getOrDefault(IO.IN, Collections.emptyMap());
-        if (handlerMap.isEmpty()) {
+        var handlerLists = holder.getCapabilitiesForIO(IO.IN);
+        if (handlerLists.isEmpty()) {
             return null;
         }
 
         // the initial capacity is a "feel-good" value because it's faster to just grow the list
         // than to calculate an accurate value.
-        List<List<AbstractMapIngredient>> list = new ObjectArrayList<>(handlerMap.size() * 8);
-        handlerMap.forEach((cap, handlers) -> {
-            if (!cap.isRecipeSearchFilter()) {
-                return;
-            }
-            for (var handler : handlers) {
-                var compressed = cap.compressIngredients(handler.getContents());
-                for (var ingredient : compressed) {
-                    list.add(MapIngredientTypeManager.getFrom(ingredient, cap));
+        List<List<AbstractMapIngredient>> list = new ObjectArrayList<>(handlerLists.size() * 8);
+        for (var handlerList : handlerLists) {
+            for (var capability : handlerList.getCapabilities()) {
+                if (!capability.isRecipeSearchFilter()) continue;
+                for (var handler : handlerList.getCapability(capability)) {
+                    if (!handler.shouldSearchContent()) continue;
+                    var compressed = capability.compressIngredients(handler.getContents());
+                    for (var ingredient : compressed) {
+                        list.add(MapIngredientTypeManager.getFrom(ingredient, capability));
+                    }
                 }
             }
-        });
+        }
         if (list.isEmpty()) {
             return null;
         }
