@@ -19,16 +19,6 @@ public class SerializableManagedGridNode extends ManagedGridNode implements Data
         super(nodeOwner, listener);
     }
 
-    public CompoundTag exportAENbt() {
-        CompoundTag tag = new CompoundTag();
-        super.saveToNBT(tag);
-        return tag;
-    }
-
-    public void importAENbt(CompoundTag tag) {
-        super.loadFromNBT(tag);
-    }
-
     @Override
     public DataComponentMap exportComponents() {
         return exportComponents(this);
