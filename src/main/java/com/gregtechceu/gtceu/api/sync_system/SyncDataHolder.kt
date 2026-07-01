@@ -9,6 +9,7 @@ import net.minecraft.core.RegistryAccess
 import net.minecraft.core.component.DataComponentMap
 
 import com.google.gson.JsonElement
+import com.google.gson.JsonNull
 import com.mojang.serialization.JsonOps
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectSet
@@ -269,7 +270,10 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 
 	fun deserializeItemFieldData(registries: HolderLookup.Provider, fieldData: SyncFieldData) {
 		for (field in syncData.getItemSaveFields()) {
-			val savedValue = fieldData.get(itemFieldKey(field)) ?: continue
+			if (!fieldData.fields().containsKey(itemFieldKey(field))) {
+				continue
+			}
+			val savedValue = fieldData.get(itemFieldKey(field)) ?: JsonNull.INSTANCE
 			FieldSyncHandler.deserializeFieldData(registries, holder, field, savedValue, false)
 		}
 	}
@@ -277,7 +281,10 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	fun deserializeFieldData(registries: HolderLookup.Provider, fieldData: SyncFieldData, readingClientFields: Boolean) {
 		val fieldsToCheck = if (readingClientFields) syncData.getClientSyncFields() else syncData.getServerSaveFields()
 		for (field in fieldsToCheck) {
-			val savedValue = fieldData.get(field.componentKey) ?: continue
+			if (!fieldData.fields().containsKey(field.componentKey)) {
+				continue
+			}
+			val savedValue = fieldData.get(field.componentKey) ?: JsonNull.INSTANCE
 			FieldSyncHandler.deserializeFieldData(registries, holder, field, savedValue, readingClientFields)
 
 			if (readingClientFields) {
@@ -296,7 +303,10 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 
 		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get()) ?: return
 		for (field in syncData.getServerUpdateFields()) {
-			val value = changes.get(field.componentKey) ?: continue
+			if (!changes.fields().containsKey(field.componentKey)) {
+				continue
+			}
+			val value = changes.get(field.componentKey) ?: JsonNull.INSTANCE
 			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, false)
 		}
 	}
@@ -308,7 +318,10 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 
 		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get()) ?: return
 		for (field in syncData.getClientSyncFields()) {
-			val value = changes.get(field.componentKey) ?: continue
+			if (!changes.fields().containsKey(field.componentKey)) {
+				continue
+			}
+			val value = changes.get(field.componentKey) ?: JsonNull.INSTANCE
 			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, true)
 			cachedClientValues[field] = field.handle.get(holder)
 			invokeClientChangeListeners(field)
