@@ -164,7 +164,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         String structureName = part.getSubstructureName(this);
         if (structureName == null) return IO.BOTH;
         Long2ObjectMap<IO> ioMap = getMultiblockState(structureName).getMatchContext()
-                .getOrCreate("ioMap", Long2ObjectMaps::emptyMap);
+                .getOrDefault("ioMap", Long2ObjectMaps.emptyMap());
         return ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
     }
 
