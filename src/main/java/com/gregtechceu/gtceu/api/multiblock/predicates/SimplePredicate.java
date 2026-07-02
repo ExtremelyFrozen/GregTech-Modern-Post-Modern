@@ -3,20 +3,17 @@ package com.gregtechceu.gtceu.api.multiblock.predicates;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
-import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
 import com.gregtechceu.gtceu.api.multiblock.error.SinglePredicateError;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -34,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 public class SimplePredicate {
 
@@ -57,7 +53,6 @@ public class SimplePredicate {
     public boolean disableRenderFormed = false;
     public IO io = IO.BOTH;
     public String slotName;
-    public String nbtParser;
 
     public SimplePredicate() {}
 
@@ -135,17 +130,6 @@ public class SimplePredicate {
             } else if (blockWorldState.io != io) {
                 blockWorldState.io = null;
             }
-        }
-        if (nbtParser != null && !blockWorldState.world.isClientSide) {
-            BlockEntity te = blockWorldState.getBlockEntity();
-            if (te != null) {
-                CompoundTag nbt = te.saveWithFullMetadata(blockWorldState.world.registryAccess());
-                if (Pattern.compile(nbtParser).matcher(nbt.toString()).find()) {
-                    return true;
-                }
-            }
-            blockWorldState.setError(new PatternStringError("The NBT fails to match"));
-            return false;
         }
         if (slotName != null) {
             Long2ObjectMap<Set<String>> slots = blockWorldState.getMatchContext().getOrCreate("slots",

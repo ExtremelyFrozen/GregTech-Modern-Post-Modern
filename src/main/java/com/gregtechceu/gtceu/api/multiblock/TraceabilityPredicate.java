@@ -232,12 +232,6 @@ public class TraceabilityPredicate {
         return this;
     }
 
-    public TraceabilityPredicate setNBTParser(String nbtParser) {
-        common.forEach(predicate -> predicate.nbtParser = nbtParser);
-        limited.forEach(predicate -> predicate.nbtParser = nbtParser);
-        return this;
-    }
-
     public TraceabilityPredicate setSlotName(String slotName) {
         common.forEach(predicate -> predicate.slotName = slotName);
         limited.forEach(predicate -> predicate.slotName = slotName);
