@@ -69,13 +69,26 @@ public class DataAccessHatchMachine extends TieredPartMachine
 
             @Override
             public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-                boolean isDataBank = isFormed() && getControllers().first() instanceof DataBankMachine;
-                if (ResearchManager.isStackDataItem(stack, isDataBank) && stack.has(GTDataComponents.RESEARCH_ITEM)) {
+                if (acceptsDataItem(stack)) {
                     return super.insertItem(slot, stack, simulate);
                 }
                 return stack;
             }
+
+            @Override
+            public void setStackInSlot(int index, ItemStack stack) {
+                if (!stack.isEmpty() && !acceptsDataItem(stack)) {
+                    throw new IllegalArgumentException("Data access hatch received an invalid data item: " + stack);
+                }
+                super.setStackInSlot(index, stack);
+            }
         };
+    }
+
+    private boolean acceptsDataItem(ItemStack stack) {
+        boolean isDataBank = isFormed() && getControllers().first() instanceof DataBankMachine;
+        return ResearchManager.isStackDataItem(stack, isDataBank) &&
+                (stack.has(GTDataComponents.RESEARCH_ITEM) || stack.has(GTDataComponents.MONITOR_TARGET));
     }
 
     @Override
