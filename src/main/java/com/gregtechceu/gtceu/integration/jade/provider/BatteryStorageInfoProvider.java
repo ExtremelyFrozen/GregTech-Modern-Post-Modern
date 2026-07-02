@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
-import com.gregtechceu.gtceu.common.machine.electric.ChargerMachine;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.nbt.CompoundTag;
@@ -34,10 +33,7 @@ public class BatteryStorageInfoProvider extends MachineInfoProvider<MetaMachine,
     @Override
     protected CompoundTag write(MetaMachine machine) {
         CompoundTag tag = new CompoundTag();
-        if (machine instanceof ChargerMachine charger) {
-            tag.put("energy", getEnergyData(charger.energyContainer));
-            tag.put("storage", charger.getChargerInventory().serializeNBT(machine.getLevel().registryAccess()));
-        } else if (machine instanceof BatteryBufferMachine buffer) {
+        if (machine instanceof BatteryBufferMachine buffer) {
             tag.put("energy", getEnergyData(buffer.energyContainer));
             tag.put("storage", buffer.getBatteryInventory().serializeNBT(machine.getLevel().registryAccess()));
         }
