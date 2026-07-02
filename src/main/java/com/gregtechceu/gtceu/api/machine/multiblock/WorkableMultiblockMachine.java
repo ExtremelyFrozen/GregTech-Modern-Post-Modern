@@ -21,6 +21,7 @@ import com.gregtechceu.gtceu.common.machine.trait.CleanroomReceiverTrait;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -277,10 +278,12 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     @Override
-    public boolean beforeWorking(@Nullable GTRecipe recipe) {
+    @Nullable
+    public Component beforeWorking(@Nullable GTRecipe recipe) {
         for (IMultiPart part : getParts()) {
-            if (!part.beforeWorking(this)) {
-                return false;
+            Component failReason = part.beforeWorking(this);
+            if (failReason != null) {
+                return failReason;
             }
         }
         return IWorkableMultiController.super.beforeWorking(recipe);

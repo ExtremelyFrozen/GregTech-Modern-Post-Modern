@@ -9,6 +9,8 @@ import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.jade.provider.RecipeLogicProvider;
 
+import net.minecraft.network.chat.Component;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,8 +74,9 @@ public interface IRecipeLogicMachine extends IRecipeCapabilityHolder, IWorkLogic
     /**
      * Called in {@link RecipeLogic#setupRecipe(GTRecipe)} ()}
      */
-    default boolean beforeWorking(@Nullable GTRecipe recipe) {
-        return self().getDefinition().getBeforeWorking().test(this, recipe);
+    @Nullable
+    default Component beforeWorking(@Nullable GTRecipe recipe) {
+        return self().getDefinition().getBeforeWorking().apply(this, recipe);
     }
 
     /**

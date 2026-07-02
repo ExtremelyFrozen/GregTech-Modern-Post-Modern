@@ -13,6 +13,9 @@ import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
@@ -48,6 +51,14 @@ public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic, Compo
 
         if (!recipeInfo.isEmpty()) {
             data.put("Recipe", recipeInfo);
+        }
+        if (!capability.getFailureReasonsMap().isEmpty()) {
+            var failureReasons = new ListTag();
+            for (Component reason : capability.getFailureReasonsMap().values()) {
+                failureReasons.add(StringTag.valueOf(Component.Serializer.toJson(reason, capability.getMachine()
+                        .getLevel().registryAccess())));
+            }
+            data.put("FailureReasons", failureReasons);
         }
         return data;
     }
@@ -118,17 +129,27 @@ public class RecipeLogicProvider extends MachineTraitProvider<RecipeLogic, Compo
                     }
                 }
             }
-        } else {
-            if (blockEntity instanceof IRecipeLogicMachine rlm) {
-                var logic = rlm.getRecipeLogic();
+        } else if (blockEntity instanceof IRecipeLogicMachine rlm) {
+            var logic = rlm.getRecipeLogic();
 
-                if (logic.showFancyTooltip() && logic.isWorkingEnabled()) {
-                    Component status = logic.isWaiting() ?
-                            Component.translatable("gtpm.recipe_logic.recipe_waiting")
-                                    .withStyle(ChatFormatting.YELLOW) :
-                            Component.translatable("gtpm.recipe_logic.setup_fail").withStyle(ChatFormatting.RED);
-                    tooltip.add(status);
-                    logic.getFancyTooltip().forEach(tooltip::add);
+            if (logic.isWaiting() && logic.getWaitingReason() != null && logic.isWorkingEnabled()) {
+                tooltip.add(Component.translatable("gtpm.recipe_logic.recipe_waiting")
+                        .withStyle(ChatFormatting.YELLOW));
+                tooltip.add(logic.getWaitingReason());
+                return;
+            }
+
+            if (logic.isWorkingEnabled() && capData.contains("FailureReasons", Tag.TAG_LIST)) {
+                ListTag failureReasons = capData.getList("FailureReasons", Tag.TAG_STRING);
+                if (!failureReasons.isEmpty()) {
+                    tooltip.add(Component.translatable("gtpm.recipe_logic.setup_fail").withStyle(ChatFormatting.RED));
+                    for (Tag tag : failureReasons) {
+                        Component reason = Component.Serializer.fromJson(tag.getAsString(),
+                                block.getLevel().registryAccess());
+                        if (reason != null) {
+                            tooltip.add(Component.literal(" - ").append(reason));
+                        }
+                    }
                 }
             }
         }

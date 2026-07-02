@@ -26,6 +26,7 @@ import com.gregtechceu.gtceu.utils.GTMath;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.neoforged.api.distmarker.Dist;
@@ -61,7 +62,7 @@ public class RecipeLogic extends WorkLogic {
     protected final List<Component> failureReasons = new ArrayList<>();
 
     @Getter
-    protected final Map<GTRecipe, Component> failureReasonMap = new HashMap<>();
+    protected final Map<ResourceLocation, Component> failureReasonsMap = new HashMap<>();
     /**
      * unsafe, it may not be found from {@link RecipeManager}. Do not index it.
      */
@@ -128,6 +129,7 @@ public class RecipeLogic extends WorkLogic {
         isActive = false;
         lastFailedMatches = null;
         failureReasons.clear();
+        failureReasonsMap.clear();
         if (getStatus() != Status.SUSPEND) {
             setStatus(Status.IDLE);
         }
@@ -192,7 +194,7 @@ public class RecipeLogic extends WorkLogic {
                 }
         if (isIdle()) {
             failureReasons.clear();
-            failureReasons.addAll(failureReasonMap.values());
+            failureReasons.addAll(failureReasonsMap.values());
         }
         if (unsubscribe && subscription != null) {
             subscription.unsubscribe();
@@ -225,6 +227,8 @@ public class RecipeLogic extends WorkLogic {
                 lastFailedMatches = null;
                 return true;
             }
+        } else {
+            putFailureReason(this, match, ModifierFunction.DEFAULT_FAILURE);
         }
         return false;
     }
@@ -310,7 +314,7 @@ public class RecipeLogic extends WorkLogic {
                 setupRecipe(recipe);
             } else {
                 // try to find and handle a new recipe
-                failureReasonMap.clear();
+                failureReasonsMap.clear();
                 lastRecipe = null;
                 lastOriginRecipe = null;
                 handleSearchingRecipes(searchRecipe());
@@ -355,12 +359,14 @@ public class RecipeLogic extends WorkLogic {
     }
 
     public void setupRecipe(GTRecipe recipe) {
-        if (!getRLMachine().beforeWorking(recipe)) {
+        Component failReason = getRLMachine().beforeWorking(recipe);
+        if (failReason != null) {
             setStatus(Status.IDLE);
             consecutiveRecipes = 0;
             progress = 0;
             duration = 0;
             isActive = false;
+            putFailureReason(this, recipe, failReason);
             return;
         }
         var handledIO = handleRecipeIO(recipe, IO.IN);
@@ -368,7 +374,7 @@ public class RecipeLogic extends WorkLogic {
             if (lastRecipe != null && !recipe.equals(lastRecipe)) {
                 chanceCaches.clear();
             }
-            failureReasonMap.clear();
+            failureReasonsMap.clear();
             recipeDirty = false;
             lastRecipe = recipe;
             setStatus(Status.WORKING);
@@ -607,13 +613,14 @@ public class RecipeLogic extends WorkLogic {
     }
 
     public static void putFailureReason(RecipeLogic logic, GTRecipe recipe, Component reason) {
-        var map = logic.getFailureReasonMap();
-        if (map.containsKey(recipe)) {
+        var map = logic.getFailureReasonsMap();
+        ResourceLocation recipeId = recipe.id;
+        if (map.containsKey(recipeId)) {
             if (reason != ModifierFunction.DEFAULT_FAILURE) {
-                map.put(recipe, reason);
+                map.put(recipeId, reason);
             }
         } else {
-            map.put(recipe, reason);
+            map.put(recipeId, reason);
         }
     }
 }

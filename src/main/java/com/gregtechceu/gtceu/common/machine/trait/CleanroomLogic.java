@@ -88,7 +88,9 @@ public class CleanroomLogic extends RecipeLogic implements IWorkable {
                     return;
                 }
                 progress = 0;
-                if (!getMachine().beforeWorking(null)) {
+                Component failReason = getMachine().beforeWorking(null);
+                if (failReason != null) {
+                    setWaiting(failReason);
                     return;
                 }
                 adjustCleanAmount(false);

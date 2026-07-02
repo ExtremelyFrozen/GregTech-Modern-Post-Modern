@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.MachineDefinition.BeforeWorkingPredicate;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
@@ -16,6 +17,7 @@ import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifierList;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
@@ -121,7 +123,7 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
     private RecipeModifier recipeModifier = new RecipeModifierList(GTRecipeModifiers.OC_NON_PERFECT);
     private boolean alwaysTryModifyRecipe;
     @Getter
-    private BiPredicate<IRecipeLogicMachine, GTRecipe> beforeWorking = (machine, recipe) -> true;
+    private BeforeWorkingPredicate beforeWorking = (machine, recipe) -> null;
     @Getter
     private Predicate<IRecipeLogicMachine> onWorking = (machine) -> true;
     @Getter
@@ -247,6 +249,12 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
     }
 
     public TYPE beforeWorking(BiPredicate<IRecipeLogicMachine, GTRecipe> beforeWorking) {
+        this.beforeWorking = (machine, recipe) -> beforeWorking.test(machine, recipe) ? null :
+                ModifierFunction.DEFAULT_FAILURE;
+        return getThis();
+    }
+
+    public TYPE beforeWorking(BeforeWorkingPredicate beforeWorking) {
         this.beforeWorking = beforeWorking;
         return getThis();
     }

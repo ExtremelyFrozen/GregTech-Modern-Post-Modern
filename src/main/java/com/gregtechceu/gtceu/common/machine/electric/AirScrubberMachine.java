@@ -4,11 +4,14 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.data.medicalcondition.MedicalCondition;
 import com.gregtechceu.gtceu.api.machine.SimpleTieredMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 import com.gregtechceu.gtceu.common.machine.trait.hazard.EnvironmentalHazardCleanerTrait;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
+
+import net.minecraft.network.chat.Component;
 
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -58,13 +61,17 @@ public class AirScrubberMachine extends SimpleTieredMachine {
     }
 
     @Override
-    public boolean beforeWorking(@Nullable GTRecipe recipe) {
-        if (super.beforeWorking(recipe) && recipe != null) {
-            // Sets the amount of hazard to clean based on the recipe tier, not the machine tier
-            return cleanerTrait.beginCleaningOperation(currentRecipeMedicalCondition,
-                    MIN_CLEANING_PER_OPERATION * (recipe.ocLevel + 1));
+    public @Nullable Component beforeWorking(@Nullable GTRecipe recipe) {
+        Component failReason = super.beforeWorking(recipe);
+        if (failReason != null) {
+            return failReason;
         }
-        return false;
+        // Sets the amount of hazard to clean based on the recipe tier, not the machine tier.
+        if (recipe != null && cleanerTrait.beginCleaningOperation(currentRecipeMedicalCondition,
+                MIN_CLEANING_PER_OPERATION * (recipe.ocLevel + 1))) {
+            return null;
+        }
+        return ModifierFunction.DEFAULT_FAILURE;
     }
 
     @Override
