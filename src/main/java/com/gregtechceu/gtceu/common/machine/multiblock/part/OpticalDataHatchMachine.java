@@ -7,9 +7,7 @@ import com.gregtechceu.gtceu.api.capability.IOpticalDataAccessHatch;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
-import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -73,13 +71,5 @@ public class OpticalDataHatchMachine extends MultiblockPartMachine implements IO
     @Override
     public boolean canShared(MultiblockControllerMachine controller, String structureName) {
         return false;
-    }
-
-    @Override
-    public GTRecipe modifyRecipe(GTRecipe recipe) {
-        if (recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance)) {
-            return recipe;
-        }
-        return isRecipeAvailable(recipe.recipeType, recipe.getId()) ? recipe : null;
     }
 }

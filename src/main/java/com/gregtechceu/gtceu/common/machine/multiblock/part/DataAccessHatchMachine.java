@@ -14,14 +14,12 @@ import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.research.DataBankMachine;
-import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
@@ -190,14 +188,6 @@ public class DataAccessHatchMachine extends TieredPartMachine
     public void addedToController(MultiblockControllerMachine controller, String structureName) {
         rebuildData(controller instanceof DataBankMachine);
         super.addedToController(controller, structureName);
-    }
-
-    @Override
-    public GTRecipe modifyRecipe(GTRecipe recipe) {
-        if (recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance)) {
-            return recipe;
-        }
-        return isRecipeAvailable(recipe.recipeType, recipe.getId()) ? recipe : null;
     }
 
     @Override
