@@ -252,7 +252,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             aisle[i] = pattern[i].toString();
         }
 
-        BlockPattern baseline = FactoryBlockPattern.start()
+        BlockPattern baseline = FactoryBlockPattern.start(getDefinition())
                 .aisle("~")
                 .build();
         return StructurePatternResolver.rebuildRuntimeStringArrayPattern(

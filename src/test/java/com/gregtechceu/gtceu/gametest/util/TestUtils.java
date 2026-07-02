@@ -169,9 +169,33 @@ public class TestUtils {
      * Ideally this doesn't need to happen, but it seems not doing this makes the multiblock tests flakey
      */
     public static void formMultiblock(MultiblockControllerMachine controller) {
-        controller.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE)
-                .checkPatternAt(controller.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE), false);
-        controller.formStructure(MultiblockControllerMachine.DEFAULT_STRUCTURE);
+        String structureName = MultiblockControllerMachine.DEFAULT_STRUCTURE;
+        if (controller.getPattern(structureName) == null) {
+            throw new IllegalStateException("Multiblock " + controller.getDefinition().getId() +
+                    " has no pattern for structure " + structureName);
+        }
+
+        boolean formed = controller.checkPatternWithLock(structureName);
+        if (!formed) {
+            var state = controller.getMultiblockState(structureName);
+            String error = state.error == null ? "unknown" : state.error.getErrorInfo().getString();
+            String actualState = state.error == null ? "unknown" :
+                    controller.getLevel().getBlockState(state.error.getPos()).toString();
+            String relativePos = state.error == null ? "unknown" :
+                    state.error.getPos().subtract(controller.getBlockPos()).toShortString();
+            throw new IllegalStateException("Failed to form multiblock " + controller.getDefinition().getId() +
+                    " at " + controller.getBlockPos() +
+                    " facing " + controller.getFrontFacing() +
+                    " upwards " + controller.getUpwardsFacing() +
+                    " flipped " + controller.isFlipped() +
+                    ": " + error +
+                    ", relative: " + relativePos +
+                    ", actual: " + actualState);
+        }
+
+        var state = controller.getMultiblockState(structureName);
+        controller.setFlipped(state.isNeededFlip());
+        controller.formStructure(structureName);
     }
 
     /**
