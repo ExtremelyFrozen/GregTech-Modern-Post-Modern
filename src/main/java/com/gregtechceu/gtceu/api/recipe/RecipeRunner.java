@@ -17,6 +17,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,15 +38,24 @@ public class RecipeRunner {
     private final Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches;
     private final List<RecipeHandlerList> handlers;
     private final boolean simulated;
+    private final @Nullable RecipeHandlerGroup restrictedGroup;
     private Map<RecipeCapability<?>, List<Object>> recipeContents;
     private final Map<RecipeCapability<?>, List<Object>> searchRecipeContents;
     private final Predicate<RecipeCapability<?>> outputVoid;
     @Getter
     private int groupColor;
+    @Getter
+    private @Nullable RecipeHandlerGroup selectedGroup;
 
     public RecipeRunner(GTRecipe recipe, IO io, boolean isTick,
                         IRecipeCapabilityHolder holder, Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
                         boolean simulated) {
+        this(recipe, io, isTick, holder, chanceCaches, simulated, null);
+    }
+
+    public RecipeRunner(GTRecipe recipe, IO io, boolean isTick,
+                        IRecipeCapabilityHolder holder, Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
+                        boolean simulated, @Nullable RecipeHandlerGroup restrictedGroup) {
         this.recipe = recipe;
         this.io = io;
         this.isTick = isTick;
@@ -54,6 +64,7 @@ public class RecipeRunner {
         this.recipeContents = new Reference2ObjectOpenHashMap<>();
         this.searchRecipeContents = simulated ? recipeContents : new Reference2ObjectOpenHashMap<>();
         this.simulated = simulated;
+        this.restrictedGroup = restrictedGroup;
         this.outputVoid = cap -> holder instanceof IVoidable voidable && voidable.canVoidRecipeOutputs(cap);
         this.groupColor = recipe.groupColor;
     }
@@ -137,6 +148,11 @@ public class RecipeRunner {
         for (var handler : handlers) {
             addToRecipeHandlerMap(handler.getGroup(), handler, handlerGroups);
         }
+
+        if (restrictedGroup != null) {
+            return handleRestrictedGroup(handlerGroups);
+        }
+
         // Specifically check distinct handlers first
         for (RecipeHandlerList handler : handlerGroups.getOrDefault(BUS_DISTINCT, Collections.emptyList())) {
             // Handle the contents of this handler and also all the bypassed handlers
@@ -165,6 +181,7 @@ public class RecipeRunner {
                 }
             }
             recipeContents.clear();
+            selectGroup(BUS_DISTINCT);
             return ActionResult.SUCCESS;
         }
 
@@ -209,6 +226,7 @@ public class RecipeRunner {
             } else if (io == IO.IN) {
                 if (!copiedRecipeContents.isEmpty()) continue;
             }
+            selectGroup(handlerListEntry.getKey());
             if (simulated) return ActionResult.SUCCESS;
             // Start actually removing items.
             // Keep track of the remaining items for this RecipeHandlerGroup
@@ -216,6 +234,7 @@ public class RecipeRunner {
             for (RecipeHandlerList handler : handlerListEntry.getValue()) {
                 recipeContents = handler.handleRecipe(io, recipe, recipeContents, false);
                 if (recipeContents.isEmpty()) {
+                    selectGroup(handlerListEntry.getKey());
                     return ActionResult.SUCCESS;
                 }
             }
@@ -226,6 +245,7 @@ public class RecipeRunner {
                         Collections.emptyList())) {
                     recipeContents = bypassHandler.handleRecipe(io, recipe, recipeContents, false);
                     if (recipeContents.isEmpty()) {
+                        selectGroup(handlerListEntry.getKey());
                         return ActionResult.SUCCESS;
                     }
                 }
@@ -255,6 +275,102 @@ public class RecipeRunner {
         }
 
         return ActionResult.FAIL_NO_REASON;
+    }
+
+    private ActionResult handleRestrictedGroup(Map<RecipeHandlerGroup, List<RecipeHandlerList>> handlerGroups) {
+        RecipeHandlerGroup group = restrictedGroup;
+        Map<RecipeCapability<?>, List<Object>> copiedRecipeContents = searchRecipeContents;
+
+        for (RecipeHandlerList handler : getHandlersForGroup(handlerGroups, group)) {
+            copiedRecipeContents = handler.handleRecipe(io, recipe, copiedRecipeContents, true);
+            if (copiedRecipeContents.isEmpty()) {
+                break;
+            }
+        }
+        if (!group.equals(BYPASS_DISTINCT)) {
+            for (RecipeHandlerList bypassHandler : handlerGroups.getOrDefault(BYPASS_DISTINCT,
+                    Collections.emptyList())) {
+                copiedRecipeContents = bypassHandler.handleRecipe(io, recipe, copiedRecipeContents, true);
+                if (copiedRecipeContents.isEmpty()) {
+                    break;
+                }
+            }
+        }
+
+        if (io == IO.OUT) {
+            if (hasAnyNonVoidingContents(copiedRecipeContents)) {
+                return failRemainingContents(copiedRecipeContents);
+            }
+        } else if (io == IO.IN && !copiedRecipeContents.isEmpty()) {
+            return failRemainingContents(copiedRecipeContents);
+        }
+
+        selectGroup(group);
+        if (simulated) return ActionResult.SUCCESS;
+
+        for (RecipeHandlerList handler : getHandlersForGroup(handlerGroups, group)) {
+            recipeContents = handler.handleRecipe(io, recipe, recipeContents, false);
+            if (recipeContents.isEmpty()) {
+                return ActionResult.SUCCESS;
+            }
+        }
+        if (!group.equals(BYPASS_DISTINCT)) {
+            for (RecipeHandlerList bypassHandler : handlerGroups.getOrDefault(BYPASS_DISTINCT,
+                    Collections.emptyList())) {
+                recipeContents = bypassHandler.handleRecipe(io, recipe, recipeContents, false);
+                if (recipeContents.isEmpty()) {
+                    return ActionResult.SUCCESS;
+                }
+            }
+        }
+
+        return failRemainingContents(recipeContents);
+    }
+
+    private List<RecipeHandlerList> getHandlersForGroup(Map<RecipeHandlerGroup, List<RecipeHandlerList>> handlerGroups,
+                                                        RecipeHandlerGroup group) {
+        List<RecipeHandlerList> groupHandlers = new ArrayList<>(
+                handlerGroups.getOrDefault(group, Collections.emptyList()));
+        if (group instanceof RecipeHandlerGroupColor coloredGroup && coloredGroup.color() != -1) {
+            for (RecipeHandlerList undyedHandler : handlerGroups.getOrDefault(RecipeHandlerGroupColor.UNDYED,
+                    Collections.emptyList())) {
+                if (!groupHandlers.contains(undyedHandler)) {
+                    groupHandlers.add(undyedHandler);
+                }
+            }
+        }
+        return groupHandlers;
+    }
+
+    private ActionResult failRemainingContents(Map<RecipeCapability<?>, List<Object>> remainingContents) {
+        for (var entry : remainingContents.entrySet()) {
+            if (!simulated && io == IO.OUT && this.outputVoid.test(entry.getKey())) {
+                entry.getValue().clear();
+            }
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                return ActionResult.fail(null, entry.getKey(), io);
+            }
+        }
+
+        boolean containsStuff = false;
+        for (var entry : remainingContents.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                containsStuff = true;
+                break;
+            }
+        }
+        if (!containsStuff) {
+            return ActionResult.PASS_NO_CONTENTS;
+        }
+
+        return ActionResult.FAIL_NO_REASON;
+    }
+
+    private void selectGroup(RecipeHandlerGroup group) {
+        selectedGroup = group;
+        if (group instanceof RecipeHandlerGroupColor coloredGroup && coloredGroup.color() != -1) {
+            groupColor = coloredGroup.color();
+        }
     }
 
     private boolean hasAnyNonVoidingContents(Map<RecipeCapability<?>, List<Object>> contents) {

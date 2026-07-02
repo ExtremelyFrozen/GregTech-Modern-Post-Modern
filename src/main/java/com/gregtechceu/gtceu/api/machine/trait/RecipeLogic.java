@@ -93,6 +93,7 @@ public class RecipeLogic extends WorkLogic {
     protected int duration;
     @Getter(onMethod_ = @VisibleForTesting)
     protected boolean recipeDirty;
+    protected boolean recipeSearchDirty;
     @SaveField
     @Getter
     protected long totalContinuousRunningTime;
@@ -102,6 +103,8 @@ public class RecipeLogic extends WorkLogic {
     @SaveField(nbtKey = "chance_cache")
     protected final IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> chanceCaches = makeChanceCaches();
     protected @Nullable Object workingSound;
+    private boolean handlingRecipeSearch;
+    private boolean delayHandlerTriggeredSetup;
 
     public RecipeLogic() {
         super();
@@ -116,6 +119,7 @@ public class RecipeLogic extends WorkLogic {
      */
     public void resetRecipeLogic() {
         recipeDirty = false;
+        recipeSearchDirty = false;
         lastRecipe = null;
         lastOriginRecipe = null;
         consecutiveRecipes = 0;
@@ -167,7 +171,7 @@ public class RecipeLogic extends WorkLogic {
                 }
             } else if (lastRecipe != null) {
                 findAndHandleRecipe();
-            } else if (!getRLMachine().keepSubscribing() || getMachine().getOffsetTimer() % 5 == 0) {
+            } else if (recipeSearchDirty || !getRLMachine().keepSubscribing() || getMachine().getOffsetTimer() % 5 == 0) {
                 findAndHandleRecipe();
                 if (lastFailedMatches != null) {
                     for (GTRecipe match : lastFailedMatches) {
@@ -285,22 +289,35 @@ public class RecipeLogic extends WorkLogic {
     }
 
     public void findAndHandleRecipe() {
-        lastFailedMatches = null;
-
-        // try to execute last recipe if possible
-        if (!recipeDirty && lastRecipe != null && checkRecipe(lastRecipe).isSuccess()) {
-            GTRecipe recipe = lastRecipe;
-            lastRecipe = null;
-            lastOriginRecipe = null;
-            setupRecipe(recipe);
-        } else {
-            // try to find and handle a new recipe
-            failureReasonMap.clear();
-            lastRecipe = null;
-            lastOriginRecipe = null;
-            handleSearchingRecipes(searchRecipe());
+        if (isWorking() && lastRecipe != null) {
+            runDelay = 0;
+            return;
         }
-        recipeDirty = false;
+        if (handlingRecipeSearch) {
+            return;
+        }
+        handlingRecipeSearch = true;
+        try {
+            recipeSearchDirty = false;
+            lastFailedMatches = null;
+
+            // try to execute last recipe if possible
+            if (!recipeDirty && lastRecipe != null && checkRecipe(lastRecipe).isSuccess()) {
+                GTRecipe recipe = lastRecipe;
+                lastRecipe = null;
+                lastOriginRecipe = null;
+                setupRecipe(recipe);
+            } else {
+                // try to find and handle a new recipe
+                failureReasonMap.clear();
+                lastRecipe = null;
+                lastOriginRecipe = null;
+                handleSearchingRecipes(searchRecipe());
+            }
+            recipeDirty = false;
+        } finally {
+            handlingRecipeSearch = false;
+        }
     }
 
     protected void handleSearchingRecipes(Iterator<GTRecipe> matches) {
@@ -356,7 +373,12 @@ public class RecipeLogic extends WorkLogic {
             setStatus(Status.WORKING);
             progress = 0;
             duration = recipe.duration;
+            if (delayHandlerTriggeredSetup) {
+                runDelay = Math.max(runDelay, 1);
+            }
             isActive = true;
+        } else {
+            setWaiting(handledIO.reason());
         }
     }
 
@@ -383,6 +405,23 @@ public class RecipeLogic extends WorkLogic {
      */
     public void markLastRecipeDirty() {
         this.recipeDirty = true;
+    }
+
+    public void onRecipeHandlerChanged() {
+        recipeSearchDirty = true;
+        updateTickSubscription();
+    }
+
+    protected void findAndHandleRecipeFromHandlerChange() {
+        if (handlingRecipeSearch || !isIdle() || lastRecipe != null) {
+            return;
+        }
+        delayHandlerTriggeredSetup = true;
+        try {
+            findAndHandleRecipe();
+        } finally {
+            delayHandlerTriggeredSetup = false;
+        }
     }
 
     @Override
@@ -432,7 +471,11 @@ public class RecipeLogic extends WorkLogic {
             runAttempt = 0;
             runDelay = 0;
             consecutiveRecipes++;
-            handleRecipeIO(lastRecipe, IO.OUT);
+            ActionResult outputResult = handleRecipeIO(lastRecipe, IO.OUT);
+            if (!outputResult.isSuccess()) {
+                setWaiting(outputResult.reason());
+                return;
+            }
             // Don't ready the next recipe after finish if suspend is set
             // so that the modifiers won't be applied until re-starting.
             if (suspendAfterFinish) {

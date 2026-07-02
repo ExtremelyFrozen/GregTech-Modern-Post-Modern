@@ -224,6 +224,23 @@ public class RecipeHelper {
         return result;
     }
 
+    private static RecipeHandleResult matchRecipeWithGroup(IRecipeCapabilityHolder holder, GTRecipe recipe,
+                                                           boolean tick,
+                                                           @Nullable RecipeHandlerGroup group) {
+        if (!holder.hasCapabilityProxies()) {
+            return new RecipeHandleResult(ActionResult.FAIL_NO_CAPABILITIES, group);
+        }
+
+        var inputResult = handleRecipeWithGroup(holder, recipe, IO.IN, tick ? recipe.tickInputs : recipe.inputs,
+                Collections.emptyMap(), tick, true, group);
+        if (!inputResult.result().isSuccess()) return inputResult;
+        RecipeHandlerGroup selectedGroup = inputResult.selectedGroup() == null ? group : inputResult.selectedGroup();
+
+        var outputResult = handleRecipeWithGroup(holder, recipe, IO.OUT, tick ? recipe.tickOutputs : recipe.outputs,
+                Collections.emptyMap(), tick, true, selectedGroup);
+        return new RecipeHandleResult(outputResult.result(), selectedGroup);
+    }
+
     public static ActionResult handleRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
                                               Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches) {
         if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
@@ -231,11 +248,27 @@ public class RecipeHelper {
                 false);
     }
 
+    public static ActionResult handleRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
+                                              Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
+                                              RecipeHandlerGroup group) {
+        if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
+        return handleRecipeWithGroup(holder, recipe, io, io == IO.IN ? recipe.inputs : recipe.outputs, chanceCaches,
+                false, false, group).result();
+    }
+
     public static ActionResult handleTickRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
                                                   Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches) {
         if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
         return handleRecipe(holder, recipe, io, io == IO.IN ? recipe.tickInputs : recipe.tickOutputs, chanceCaches,
                 true, false);
+    }
+
+    public static ActionResult handleTickRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
+                                                  Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
+                                                  RecipeHandlerGroup group) {
+        if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
+        return handleRecipeWithGroup(holder, recipe, io, io == IO.IN ? recipe.tickInputs : recipe.tickOutputs,
+                chanceCaches, true, false, group).result();
     }
 
     /**
@@ -248,12 +281,20 @@ public class RecipeHelper {
                                             Map<RecipeCapability<?>, List<Content>> contents,
                                             Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
                                             boolean isTick, boolean simulated) {
-        RecipeRunner runner = new RecipeRunner(recipe, io, isTick, holder, chanceCaches, simulated);
+        return handleRecipeWithGroup(holder, recipe, io, contents, chanceCaches, isTick, simulated, null).result();
+    }
+
+    public static RecipeHandleResult handleRecipeWithGroup(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
+                                                           Map<RecipeCapability<?>, List<Content>> contents,
+                                                           Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
+                                                           boolean isTick, boolean simulated,
+                                                           @Nullable RecipeHandlerGroup group) {
+        RecipeRunner runner = new RecipeRunner(recipe, io, isTick, holder, chanceCaches, simulated, group);
         var result = runner.handle(contents);
 
         if (result.isSuccess() || result.capability() == null) {
             recipe.groupColor = runner.getGroupColor();
-            return result;
+            return new RecipeHandleResult(result, runner.getSelectedGroup());
         }
 
         if (!simulated && ConfigHolder.INSTANCE.dev.debug) {
@@ -261,8 +302,9 @@ public class RecipeHelper {
                     Component.translatable(io.tooltip).getString(), recipe, holder);
         }
         String key = "gtpm.recipe_logic.insufficient_" + (io == IO.IN ? "in" : "out");
-        return ActionResult.fail(Component.translatable(key)
-                .append(": ").append(result.capability().getName()), result.capability(), io);
+        return new RecipeHandleResult(ActionResult.fail(Component.translatable(key)
+                .append(": ").append(result.capability().getName()), result.capability(), io),
+                runner.getSelectedGroup());
     }
 
     public static ActionResult matchContents(IRecipeCapabilityHolder holder, GTRecipe recipe) {
@@ -271,6 +313,19 @@ public class RecipeHelper {
 
         return matchTickRecipe(holder, recipe);
     }
+
+    public static RecipeHandleResult matchContentsWithGroup(IRecipeCapabilityHolder holder, GTRecipe recipe,
+                                                            @Nullable RecipeHandlerGroup group) {
+        var match = matchRecipeWithGroup(holder, recipe, false, group);
+        if (!match.result().isSuccess()) return match;
+
+        var tickMatch = recipe.hasTick() ? matchRecipeWithGroup(holder, recipe, true, match.selectedGroup()) :
+                new RecipeHandleResult(ActionResult.SUCCESS, match.selectedGroup());
+        if (tickMatch.selectedGroup() == null) return match;
+        return tickMatch;
+    }
+
+    public record RecipeHandleResult(ActionResult result, @Nullable RecipeHandlerGroup selectedGroup) {}
 
     /**
      * Check whether all conditions of a recipe are valid

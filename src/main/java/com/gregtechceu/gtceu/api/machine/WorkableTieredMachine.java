@@ -125,7 +125,7 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
         for (var entry : ioTraits.entrySet()) {
             var handlerList = RecipeHandlerList.of(entry.getKey(), entry.getValue());
             this.addHandlerList(handlerList);
-            traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+            traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
         }
     }
 
@@ -220,5 +220,6 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
             recipeIndex = recipeTypes.length - 1;
         }
         setActiveRecipeType(recipeIndex);
+        recipeLogic.updateTickSubscription();
     }
 }

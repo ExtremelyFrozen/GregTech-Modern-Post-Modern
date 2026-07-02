@@ -108,7 +108,7 @@ public abstract class SteamWorkableMachine extends SteamMachine
         for (var entry : ioTraits.entrySet()) {
             var handlerList = RecipeHandlerList.of(entry.getKey(), entry.getValue());
             this.addHandlerList(handlerList);
-            traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+            traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
         }
     }
 

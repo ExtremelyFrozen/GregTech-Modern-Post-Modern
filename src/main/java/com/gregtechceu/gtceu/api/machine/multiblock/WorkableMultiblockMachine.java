@@ -128,7 +128,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
             for (var handlerList : handlerLists) {
                 if (!handlerList.isValid(io)) continue;
                 this.addHandlerList(handlerList);
-                traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+                traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
             }
         }
 
@@ -143,7 +143,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         for (var entry : ioTraits.entrySet()) {
             var handlerList = RecipeHandlerList.of(entry.getKey(), entry.getValue());
             this.addHandlerList(handlerList);
-            traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+            traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
         }
         // schedule recipe logic
         recipeLogic.updateTickSubscription();
@@ -338,6 +338,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
             recipeIndex = recipeTypes.length - 1;
         }
         setActiveRecipeType(recipeIndex);
+        recipeLogic.updateTickSubscription();
     }
 
     @Override

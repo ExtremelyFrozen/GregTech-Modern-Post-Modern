@@ -232,7 +232,7 @@ public class RecipeLogicTest {
 
     // Test for putting both ingredients in the same bus in 2 stacks.
     @TestHolder
-    @GameTest(template = "lcr_input_separation", batch = "RecipeLogicTest")
+    @GameTest(template = "lcr_input_separation", batch = "RecipeLogic")
     public static void recipeLogicInTwoStacksTest(GameTestHelper helper) {
         RecipeLogicTest.BusHolder busHolder = getBussesAndForm(helper);
         busHolder.inputBus1.getInventory().setStackInSlot(0, new ItemStack(Blocks.STONE, 10));
