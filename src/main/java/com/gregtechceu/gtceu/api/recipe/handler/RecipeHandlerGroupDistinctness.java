@@ -1,4 +1,4 @@
-package com.gregtechceu.gtceu.api.machine.trait;
+package com.gregtechceu.gtceu.api.recipe.handler;
 
 public enum RecipeHandlerGroupDistinctness implements RecipeHandlerGroup {
     BUS_DISTINCT,
