@@ -64,9 +64,16 @@ object FieldSyncHandler {
 	@Suppress("UNCHECKED_CAST")
 	@JvmOverloads
 	@JvmStatic
-	fun deserializeFieldData(registries: HolderLookup.Provider, holder: Any, field: FieldSyncData, savedValue: JsonElement, readingClientFields: Boolean, parseExplicitNull: Boolean = false) {
+	fun deserializeFieldData(
+		registries: HolderLookup.Provider,
+		holder: Any,
+		field: FieldSyncData,
+		savedValue: JsonElement,
+		readingClientFields: Boolean,
+		parseExplicitNull: Boolean = false,
+		serializationTarget: SyncSerializationTarget = SyncSerializationTarget.DATA_COMPONENTS,
+	) {
 		if (savedValue.isJsonNull && !parseExplicitNull) {
-			field.handle.set(holder, null)
 			return
 		}
 
@@ -86,7 +93,8 @@ object FieldSyncHandler {
 						readingClientFields,
 						false,
 						registries,
-						SyncSerializationTarget.DATA_COMPONENTS,
+						serializationTarget,
+						parseExplicitNull,
 					),
 				)
 				if (copyIntoMutableCurrent(current, result)) return

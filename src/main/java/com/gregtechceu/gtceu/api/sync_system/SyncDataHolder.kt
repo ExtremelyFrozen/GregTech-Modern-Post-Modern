@@ -62,16 +62,16 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	fun serializeToItemFieldData(registries: HolderLookup.Provider): SyncFieldData {
 		val builder = SyncFieldData.builder()
 		for (field in syncData.getItemSaveFields()) {
-			builder.put(
-				itemFieldKey(field),
-				FieldSyncHandler.serializeFieldData(
-					registries,
-					holder,
-					field,
-					writeClientFields = false,
-					fullSync = false,
-				),
+			val value = FieldSyncHandler.serializeFieldData(
+				registries,
+				holder,
+				field,
+				writeClientFields = false,
+				fullSync = false,
 			)
+			if (!value.isJsonNull) {
+				builder.put(itemFieldKey(field), value)
+			}
 		}
 		return builder.build()
 	}
@@ -119,16 +119,16 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	fun serializeToSaveFieldData(registries: HolderLookup.Provider): SyncFieldData {
 		val builder = SyncFieldData.builder()
 		for (field in syncData.getServerSaveFields()) {
-			builder.put(
-				field.componentKey,
-				FieldSyncHandler.serializeFieldData(
-					registries,
-					holder,
-					field,
-					writeClientFields = false,
-					fullSync = false,
-				),
+			val value = FieldSyncHandler.serializeFieldData(
+				registries,
+				holder,
+				field,
+				writeClientFields = false,
+				fullSync = false,
 			)
+			if (!value.isJsonNull) {
+				builder.put(field.componentKey, value)
+			}
 		}
 		return builder.build()
 	}
@@ -262,10 +262,11 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		deserializeItemFieldData(registries, fieldData)
 	}
 
-	fun deserializeComponents(registries: HolderLookup.Provider, components: DataComponentMap, readingClientFields: Boolean) {
+	@JvmOverloads
+	fun deserializeComponents(registries: HolderLookup.Provider, components: DataComponentMap, readingClientFields: Boolean, parseExplicitNull: Boolean = false) {
 		val fieldData = components.get(GTDataComponents.SYNC_FIELD_DATA.get())
 			?: return
-		deserializeFieldData(registries, fieldData, readingClientFields)
+		deserializeFieldData(registries, fieldData, readingClientFields, parseExplicitNull)
 	}
 
 	fun deserializeItemFieldData(registries: HolderLookup.Provider, fieldData: SyncFieldData) {
@@ -278,14 +279,15 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		}
 	}
 
-	fun deserializeFieldData(registries: HolderLookup.Provider, fieldData: SyncFieldData, readingClientFields: Boolean) {
+	@JvmOverloads
+	fun deserializeFieldData(registries: HolderLookup.Provider, fieldData: SyncFieldData, readingClientFields: Boolean, parseExplicitNull: Boolean = false) {
 		val fieldsToCheck = if (readingClientFields) syncData.getClientSyncFields() else syncData.getServerSaveFields()
 		for (field in fieldsToCheck) {
 			if (!fieldData.fields().containsKey(field.componentKey)) {
 				continue
 			}
 			val savedValue = fieldData.get(field.componentKey) ?: JsonNull.INSTANCE
-			FieldSyncHandler.deserializeFieldData(registries, holder, field, savedValue, readingClientFields)
+			FieldSyncHandler.deserializeFieldData(registries, holder, field, savedValue, readingClientFields, parseExplicitNull)
 
 			if (readingClientFields) {
 				cachedClientValues[field] = field.handle.get(holder)
@@ -391,7 +393,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 				val components = DataComponentMap.CODEC
 					.parse(context.lookup.createSerializationContext(JsonOps.INSTANCE), value)
 					.getOrThrow()
-				syncManaged.getSyncDataHolder().deserializeComponents(context.lookup, components, context.isClientSync)
+				syncManaged.getSyncDataHolder().deserializeComponents(context.lookup, components, context.isClientSync, context.parseExplicitNull)
 				return syncManaged
 			}
 		}

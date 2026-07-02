@@ -210,7 +210,7 @@ public final class AE2SyncCodecs {
             JsonObject json = value.getAsJsonObject();
             Object2LongOpenCustomHashMap<ItemStack> itemInventory = slot.getItemInventoryForSerialization();
             itemInventory.clear();
-            for (JsonElement element : json.getAsJsonArray(ITEMS)) {
+            for (JsonElement element : getRequiredArray(json, ITEMS, context)) {
                 JsonObject stackJson = element.getAsJsonObject();
                 var stack = ItemStack.OPTIONAL_CODEC
                         .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), stackJson.get(STACK))
@@ -222,7 +222,7 @@ public final class AE2SyncCodecs {
 
             Object2LongOpenCustomHashMap<FluidStack> fluidInventory = slot.getFluidInventoryForSerialization();
             fluidInventory.clear();
-            for (JsonElement element : json.getAsJsonArray(FLUIDS)) {
+            for (JsonElement element : getRequiredArray(json, FLUIDS, context)) {
                 JsonObject stackJson = element.getAsJsonObject();
                 var stack = FluidStack.OPTIONAL_CODEC
                         .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), stackJson.get(STACK))
@@ -233,6 +233,17 @@ public final class AE2SyncCodecs {
             }
             slot.onContentsChanged();
             return slot;
+        }
+
+        private static JsonArray getRequiredArray(JsonObject json,
+                                                  String key,
+                                                  Context<MEPatternBufferPartMachine.InternalSlot> context) {
+            JsonElement element = json.get(key);
+            if (element == null || !element.isJsonArray()) {
+                throw new IllegalArgumentException("Sync: pattern buffer internal slot field " + context.fieldName() +
+                        " must contain array " + key);
+            }
+            return element.getAsJsonArray();
         }
     }
 

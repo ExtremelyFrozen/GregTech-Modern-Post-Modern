@@ -126,6 +126,11 @@ public class GTRecipeSerializer implements RecipeSerializer<GTRecipeDefinition> 
 
     @NotNull
     public static GTRecipeDefinition fromNetwork(@NotNull RegistryFriendlyByteBuf buf) {
+        return fromNetwork(buf, true);
+    }
+
+    @NotNull
+    public static GTRecipeDefinition fromNetwork(@NotNull RegistryFriendlyByteBuf buf, boolean addToRecipeCategory) {
         ResourceLocation recipeType = buf.readResourceLocation();
         ResourceLocation id = buf.readResourceLocation();
         int duration = buf.readVarInt();
@@ -160,6 +165,10 @@ public class GTRecipeSerializer implements RecipeSerializer<GTRecipeDefinition> 
                 inputs, outputs, tickInputs, tickOutputs,
                 inputChanceLogics, outputChanceLogics, tickInputChanceLogics, tickOutputChanceLogics,
                 conditions, ingredientActions, data, duration, category, groupColor);
+
+        if (!addToRecipeCategory) {
+            return recipe;
+        }
 
         recipe.recipeCategory.addRecipe(recipe);
 

@@ -14,11 +14,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -193,9 +198,15 @@ public record SyncFieldData(Map<ResourceLocation, JsonElement> fields) {
 
     private record FieldEntry(ResourceLocation key, JsonElement value) {
 
+        private static final Codec<JsonElement> JSON_STRING_CODEC = Codec.STRING.comapFlatMap(
+                FieldEntry::parseJsonString,
+                GSON::toJson);
+        private static final Codec<JsonElement> VALUE_CODEC = Codec
+                .either(JSON_STRING_CODEC, ExtraCodecs.JSON)
+                .xmap(either -> either.map(Function.identity(), Function.identity()), Either::left);
         private static final Codec<FieldEntry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ResourceLocation.CODEC.fieldOf("key").forGetter(FieldEntry::key),
-                ExtraCodecs.JSON.optionalFieldOf("value").forGetter(FieldEntry::valueForCodec))
+                VALUE_CODEC.optionalFieldOf("value").forGetter(FieldEntry::valueForCodec))
                 .apply(instance, FieldEntry::fromCodec));
 
         private static FieldEntry fromCodec(ResourceLocation key, Optional<JsonElement> value) {
@@ -204,6 +215,14 @@ public record SyncFieldData(Map<ResourceLocation, JsonElement> fields) {
 
         private Optional<JsonElement> valueForCodec() {
             return value.isJsonNull() ? Optional.empty() : Optional.of(value);
+        }
+
+        private static DataResult<JsonElement> parseJsonString(String value) {
+            try {
+                return DataResult.success(JsonParser.parseString(value));
+            } catch (JsonSyntaxException ignored) {
+                return DataResult.success(new JsonPrimitive(value));
+            }
         }
     }
 }

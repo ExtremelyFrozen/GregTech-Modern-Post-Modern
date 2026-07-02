@@ -177,6 +177,11 @@ public final class MachineTraitHolder {
     }
 
     public void deserializeSyncFieldData(HolderLookup.Provider lookup, SyncFieldData data, boolean isClientSync) {
+        deserializeSyncFieldData(lookup, data, isClientSync, false);
+    }
+
+    public void deserializeSyncFieldData(HolderLookup.Provider lookup, SyncFieldData data, boolean isClientSync,
+                                         boolean parseExplicitNull) {
         if (isClientSync) {
             for (Map.Entry<ResourceLocation, JsonElement> entry : data.fields().entrySet()) {
                 String key = entry.getKey().getPath();
@@ -194,7 +199,8 @@ public final class MachineTraitHolder {
                     continue;
                 }
                 traits.get(index).getSyncDataHolder()
-                        .deserializeFieldData(lookup, SyncFieldData.fromJson(entry.getValue()), true);
+                        .deserializeFieldData(lookup, SyncFieldData.fromJson(entry.getValue()), true,
+                                parseExplicitNull);
             }
             return;
         }
@@ -208,17 +214,22 @@ public final class MachineTraitHolder {
                 continue;
             }
             trait.getSyncDataHolder().deserializeFieldData(lookup, SyncFieldData.fromJson(entry.getValue()),
-                    isClientSync);
+                    isClientSync, parseExplicitNull);
         }
     }
 
     public void deserializeSyncComponents(HolderLookup.Provider lookup, DataComponentMap components,
                                           boolean isClientSync) {
+        deserializeSyncComponents(lookup, components, isClientSync, false);
+    }
+
+    public void deserializeSyncComponents(HolderLookup.Provider lookup, DataComponentMap components,
+                                          boolean isClientSync, boolean parseExplicitNull) {
         SyncFieldData fieldData = components.get(GTDataComponents.SYNC_FIELD_DATA.get());
         if (fieldData == null) {
             return;
         }
-        deserializeSyncFieldData(lookup, fieldData, isClientSync);
+        deserializeSyncFieldData(lookup, fieldData, isClientSync, parseExplicitNull);
     }
 
     private static IllegalStateException disabledClientSyncNbt() {

@@ -26,7 +26,7 @@ class MachineTraitHolderCodec private constructor() : ContextualFieldCodec<Machi
 		val components = DataComponentMap.CODEC
 			.parse(context.lookup.createSerializationContext(JsonOps.INSTANCE), value)
 			.getOrThrow()
-		holder.deserializeSyncComponents(context.lookup, components, context.isClientSync)
+		holder.deserializeSyncComponents(context.lookup, components, context.isClientSync, context.parseExplicitNull)
 		return holder
 	}
 

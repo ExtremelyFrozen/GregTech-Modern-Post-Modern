@@ -69,7 +69,42 @@ public class SyncFieldDataComponentTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "SyncFieldDataComponent")
-    public static void syncDataHolderDeserializesExplicitNullFields(GameTestHelper helper) {
+    public static void syncDataHolderParsesNestedNetworkExplicitNullFields(GameTestHelper helper) {
+        NestedNullSyncTarget target = new NestedNullSyncTarget(
+                new ParsedNullSyncTarget(
+                        new NullParsedValue("client-original"),
+                        new NullParsedValue("server-original"),
+                        new RegularNullParsedValue("client-regular-original"),
+                        new RegularNullParsedValue("server-regular-original")));
+        SyncFieldData nestedData = SyncFieldData.builder()
+                .put(SyncFieldData.key("clientParsed"), JsonNull.INSTANCE)
+                .build();
+        JsonElement nestedComponents = DataComponentMap.CODEC
+                .encodeStart(helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE),
+                        DataComponentMap.builder()
+                                .set(GTDataComponents.SYNC_FIELD_DATA.get(), nestedData)
+                                .build())
+                .getOrThrow(GameTestAssertException::new);
+        SyncFieldData clientData = SyncFieldData.builder()
+                .put(SyncFieldData.key("nested"), nestedComponents)
+                .build();
+        DataComponentMap clientComponents = networkRoundTrip(helper, DataComponentMap.builder()
+                .set(GTDataComponents.SYNC_FIELD_DATA.get(), clientData)
+                .build());
+
+        target.getSyncDataHolder().applyClientNetworkUpdate(helper.getLevel().registryAccess(), clientComponents);
+
+        helper.assertTrue(target.nested.clientParsed != null,
+                "nested client network explicit null was not parsed");
+        helper.assertTrue("clientParsed:null".equals(target.nested.clientParsed.value),
+                "nested client network explicit null did not use the contextual field codec result");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void syncDataHolderSkipsSavedExplicitNullFields(GameTestHelper helper) {
         NullSyncTarget target = new NullSyncTarget("saved", "client", "both");
         SyncFieldData savedData = SyncFieldData.builder()
                 .put(SyncFieldData.key("savedValue"), JsonNull.INSTANCE)
@@ -77,7 +112,7 @@ public class SyncFieldDataComponentTest {
 
         target.getSyncDataHolder().deserializeFieldData(helper.getLevel().registryAccess(), savedData, false);
 
-        helper.assertTrue(target.savedValue == null, "saved field explicit null was skipped");
+        helper.assertTrue("saved".equals(target.savedValue), "saved field explicit null was parsed");
         helper.succeed();
     }
 
@@ -220,6 +255,27 @@ public class SyncFieldDataComponentTest {
             this.serverParsed = serverParsed;
             this.clientRegularParsed = clientRegularParsed;
             this.serverRegularParsed = serverRegularParsed;
+        }
+
+        @Override
+        public SyncDataHolder getSyncDataHolder() {
+            return syncDataHolder;
+        }
+
+        @Override
+        public @Nullable ISyncManaged getParentSyncObject() {
+            return null;
+        }
+    }
+
+    private static final class NestedNullSyncTarget implements ISyncManaged {
+
+        private final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
+        @SyncToClient
+        private final ParsedNullSyncTarget nested;
+
+        private NestedNullSyncTarget(ParsedNullSyncTarget nested) {
+            this.nested = nested;
         }
 
         @Override

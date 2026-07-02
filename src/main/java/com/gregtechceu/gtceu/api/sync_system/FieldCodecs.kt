@@ -272,7 +272,7 @@ object FieldCodecs {
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
 				for ((i, elementJson) in value.asJsonArray.withIndex()) {
 					val currentElement = if (current != null && i < current.size) current[i] else null
-					val element = if (elementJson.isJsonNull) {
+					val element = if (elementJson.isJsonNull && !context.parseExplicitNull) {
 						null
 					} else {
 						typedElementCodec.deserializeField(
@@ -316,7 +316,7 @@ object FieldCodecs {
 				val result = LinkedHashSet<Any?>()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
 				for ((i, elementJson) in value.asJsonArray.withIndex()) {
-					val element = if (elementJson.isJsonNull) {
+					val element = if (elementJson.isJsonNull && !context.parseExplicitNull) {
 						null
 					} else {
 						typedElementCodec.deserializeField(
@@ -376,7 +376,7 @@ object FieldCodecs {
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
 				for ((i, elementJson) in value.asJsonArray.withIndex()) {
 					val currentElement = if (current != null && i < Array.getLength(current)) Array.get(current, i) else null
-					val element = if (elementJson.isJsonNull) {
+					val element = if (elementJson.isJsonNull && !context.parseExplicitNull) {
 						null
 					} else {
 						typedElementCodec.deserializeField(
@@ -400,6 +400,7 @@ object FieldCodecs {
 		parent.isClientFullSyncUpdate,
 		parent.lookup,
 		parent.serializationTarget,
+		parent.parseExplicitNull,
 	)
 
 	@Suppress("UNCHECKED_CAST")
@@ -470,7 +471,7 @@ object FieldCodecs {
 				type: Type,
 				fieldName: String,
 			): Any? {
-				if (value == null || value.isJsonNull) return null
+				if (value == null || (value.isJsonNull && !context.parseExplicitNull)) return null
 				if (contextualCodec != null) {
 					return (contextualCodec as ContextualFieldCodec<Any>).deserializeField(value, nestedContext(context, type, null, fieldName))
 				}
