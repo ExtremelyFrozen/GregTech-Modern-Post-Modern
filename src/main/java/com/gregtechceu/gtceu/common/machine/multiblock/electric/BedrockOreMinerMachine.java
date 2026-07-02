@@ -50,7 +50,8 @@ public class BedrockOreMinerMachine extends WorkableElectricMultiblockMachine im
         if (energyContainers.isEmpty()) return this.tier;
         var energyCont = new EnergyContainerList(energyContainers.stream().filter(IEnergyContainer.class::isInstance)
                 .map(IEnergyContainer.class::cast).toList());
-        return Math.min(this.tier + 1, Math.max(this.tier, GTUtil.getFloorTierByVoltage(energyCont.getInputVoltage())));
+        return Math.min(this.tier + 1,
+                Math.max(this.tier, GTUtil.getFloorTierByVoltage(energyCont.getEffectiveVoltage())));
     }
 
     @Override

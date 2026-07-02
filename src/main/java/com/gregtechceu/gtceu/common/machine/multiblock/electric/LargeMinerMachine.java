@@ -126,16 +126,16 @@ public class LargeMinerMachine extends WorkableElectricMultiblockMachine
         this.energyContainer = new EnergyContainerList(energyContainers);
         this.inputFluidInventory = new FluidHandlerList(fluidTanks);
 
-        getRecipeLogic().setVoltageTier(GTUtil.getTierByVoltage(this.energyContainer.getInputVoltage()));
+        getRecipeLogic().setVoltageTier(GTUtil.getTierByVoltage(this.energyContainer.getEffectiveVoltage()));
         getRecipeLogic().setOverclockAmount(
-                Math.max(1, GTUtil.getTierByVoltage(this.energyContainer.getInputVoltage()) - this.tier));
+                Math.max(1, GTUtil.getTierByVoltage(this.energyContainer.getEffectiveVoltage()) - this.tier));
         getRecipeLogic().initPos(getBlockPos(), getRecipeLogic().getCurrentRadius());
     }
 
     public int getEnergyTier() {
         if (energyContainer == null) return this.tier;
         return Math.min(this.tier + 1,
-                Math.max(this.tier, GTUtil.getFloorTierByVoltage(energyContainer.getInputVoltage())));
+                Math.max(this.tier, GTUtil.getFloorTierByVoltage(energyContainer.getEffectiveVoltage())));
     }
 
     @Override

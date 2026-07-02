@@ -75,7 +75,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
     private static final double DAMAGE_TEMPERATURE = 1000;
 
     private IMaintenanceMachine maintenance;
-    private IEnergyContainer energyContainer;
+    private EnergyContainerList energyContainer;
     private IFluidHandler coolantHandler;
     @SaveField
     @SyncToClient
@@ -93,7 +93,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
 
     public HPCAMachine(BlockEntityCreationInfo info) {
         super(info);
-        this.energyContainer = new EnergyContainerList(new ArrayList<>());
+        this.energyContainer = EnergyContainerList.EMPTY;
         this.progressSupplier = new TimedProgressSupplier(200, 47, false);
         this.hpcaHandler = new HPCAGridHandler(this);
     }
@@ -166,7 +166,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
         super.invalidateStructure(structureName);
         if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         this.updateActive(false);
-        this.energyContainer = new EnergyContainerList(new ArrayList<>());
+        this.energyContainer = EnergyContainerList.EMPTY;
         this.hpcaHandler.onStructureInvalidate();
     }
 

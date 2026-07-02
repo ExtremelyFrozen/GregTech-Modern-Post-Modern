@@ -39,7 +39,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     public static final int EUT_PER_HATCH_CHAINED = GTValues.VA[GTValues.LuV];
 
     private IMaintenanceMachine maintenance;
-    private IEnergyContainer energyContainer;
+    private EnergyContainerList energyContainer;
     private final List<IDataAccessMachine> dataAccesses = new ArrayList<>();
     private final List<IDataAccessMachine> receivers = new ArrayList<>();
     private final List<IDataAccessMachine> transmitters = new ArrayList<>();
@@ -53,7 +53,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
 
     public DataBankMachine(BlockEntityCreationInfo info) {
         super(info);
-        this.energyContainer = new EnergyContainerList(new ArrayList<>());
+        this.energyContainer = EnergyContainerList.EMPTY;
     }
 
     @Override
@@ -129,7 +129,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
         super.invalidateStructure(structureName);
         if (DEFAULT_STRUCTURE.equals(structureName)) {
             notifyListeners();
-            this.energyContainer = new EnergyContainerList(new ArrayList<>());
+            this.energyContainer = EnergyContainerList.EMPTY;
             this.energyUsage = 0;
             this.maintenance = null;
             this.dataAccesses.clear();

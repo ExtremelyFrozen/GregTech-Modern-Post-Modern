@@ -169,7 +169,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
         }
         this.inputEnergyContainers = new EnergyContainerList(energyContainers);
         getRecipeLogic().setEnergyContainer(this.inputEnergyContainers);
-        this.tier = Math.min(GTValues.MAX, GTUtil.getFloorTierByVoltage(getMaxVoltage()));
+        this.tier = Math.min(GTValues.MAX, inputEnergyContainers.getTier());
     }
 
     @SuppressWarnings("RedundantIfStatement") // `return false` being a separate statement is better for readability
@@ -444,7 +444,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     @Override
     public long getMaxVoltage() {
         if (inputEnergyContainers == null) return GTValues.LV;
-        return inputEnergyContainers.getInputVoltage();
+        return GTValues.V[inputEnergyContainers.getTier()];
     }
 
     // Do not allow cleanroom to be paused due to custom recipe logic

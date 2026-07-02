@@ -16,7 +16,6 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
-import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.misc.EnergyInfoProviderList;
 import com.gregtechceu.gtceu.api.misc.LaserContainerList;
 import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncEntityBlock;
@@ -439,9 +438,7 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
                 }
                 var list = getCapabilitiesFromTraits(machine.getTraitHolder().getAllTraits(), side,
                         IEnergyContainer.class);
-                if (!list.isEmpty()) {
-                    return list.size() == 1 ? list.getFirst() : new EnergyContainerList(list);
-                }
+                if (!list.isEmpty()) return list.getFirst();
             }
             return null;
         }, this);

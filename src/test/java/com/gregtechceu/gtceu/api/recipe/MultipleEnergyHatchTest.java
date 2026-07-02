@@ -109,14 +109,14 @@ public class MultipleEnergyHatchTest {
     }
 
     private static void checkContainerList(GameTestHelper helper, BusHolder busHolder, List<Hatch> hatches) {
-        long totalVoltage = 0;
+        long totalEUt = 0;
         for (var hatch : hatches) {
-            totalVoltage += hatch.EU * hatch.amps;
+            totalEUt += hatch.EU * hatch.amps;
         }
         EnergyContainerList containerList = busHolder.controller.getEnergyContainer();
 
-        helper.assertTrue(totalVoltage == containerList.getInputVoltage(),
-                "Hatches on multiblock didn't match expected input voltage");
+        helper.assertTrue(totalEUt == containerList.getTotalEUt(),
+                "Hatches on multiblock didn't match expected input EU/t");
     }
 
     @TestHolder()
