@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties;
 import com.gregtechceu.gtceu.api.capability.*;
 import com.gregtechceu.gtceu.api.capability.compat.EnergyStorageList;
+import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
@@ -497,6 +498,19 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
                         ILaserContainer.class);
                 if (!list.isEmpty()) {
                     return list.size() == 1 ? list.getFirst() : new LaserContainerList(list);
+                }
+            }
+            return null;
+        }, this);
+        event.registerBlock(GTCapability.CAPABILITY_COMPUTATION_PORT, (level, pos, state, blockEntity, side) -> {
+            if (blockEntity instanceof MetaMachine machine) {
+                if (machine instanceof ComputationPort computationPort) {
+                    return computationPort;
+                }
+                var list = getCapabilitiesFromTraits(machine.getTraitHolder().getAllTraits(), side,
+                        ComputationPort.class);
+                if (!list.isEmpty()) {
+                    return list.getFirst();
                 }
             }
             return null;

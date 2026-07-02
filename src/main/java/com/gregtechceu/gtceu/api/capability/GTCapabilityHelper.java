@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.capability;
 
+import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.common.data.GTAttachmentTypes;
@@ -88,6 +89,11 @@ public class GTCapabilityHelper {
     public static IOpticalComputationProvider getOpticalComputationProvider(Level level, BlockPos pos,
                                                                             @Nullable Direction side) {
         return level.getCapability(GTCapability.CAPABILITY_COMPUTATION_PROVIDER, pos, side);
+    }
+
+    @Nullable
+    public static ComputationPort getComputationPort(Level level, BlockPos pos, @Nullable Direction side) {
+        return level.getCapability(GTCapability.CAPABILITY_COMPUTATION_PORT, pos, side);
     }
 
     @Nullable

@@ -25,6 +25,7 @@ import com.gregtechceu.gtceu.common.capability.WorldIDSaveData;
 import com.gregtechceu.gtceu.common.commands.GTCommands;
 import com.gregtechceu.gtceu.common.commands.HazardCommands;
 import com.gregtechceu.gtceu.common.commands.MedicalConditionCommands;
+import com.gregtechceu.gtceu.common.computation.ComputationNetworkManager;
 import com.gregtechceu.gtceu.common.cosmetics.GTCapes;
 import com.gregtechceu.gtceu.common.data.GTAttributeModifierIds;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
@@ -205,6 +206,7 @@ public class CommonEventListener {
     public static void levelTick(LevelTickEvent.Post event) {
         if (event.getLevel() instanceof ServerLevel serverLevel) {
             TaskHandler.onTickUpdate(serverLevel);
+            ComputationNetworkManager.tick(serverLevel);
             if (ConfigHolder.INSTANCE.gameplay.environmentalHazards) {
                 EnvironmentalHazardSavedData.getOrCreate(serverLevel).tick();
                 LocalizedHazardSavedData.getOrCreate(serverLevel).tick();
@@ -225,6 +227,7 @@ public class CommonEventListener {
     public static void worldUnload(LevelEvent.Unload event) {
         if (event.getLevel() instanceof ServerLevel serverLevel) {
             TaskHandler.onWorldUnLoad(serverLevel);
+            ComputationNetworkManager.unload(serverLevel);
             MultiblockWorldSavedData.getOrCreate(serverLevel).releaseExecutorService();
             ServerCache.instance.invalidateWorld(serverLevel);
         } else if (event.getLevel().isClientSide()) {

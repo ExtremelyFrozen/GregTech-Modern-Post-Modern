@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
 import com.gregtechceu.gtceu.api.capability.IOpticalDataAccessHatch;
+import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.pipenet.IRoutePath;
 import com.gregtechceu.gtceu.common.blockentity.OpticalPipeBlockEntity;
 
@@ -41,6 +42,12 @@ public class OpticalRoutePath implements IRoutePath<IDataAccessMachine> {
     @Nullable
     public IOpticalComputationProvider getComputationHatch() {
         return getTargetCapability(GTCapability.CAPABILITY_COMPUTATION_PROVIDER, targetPipe.getLevel());
+    }
+
+    @Nullable
+    public ComputationPort getComputationPort(Level world) {
+        return GTCapabilityHelper.getComputationPort(world, getTargetPipePos().relative(targetFacing),
+                targetFacing.getOpposite());
     }
 
     @Override
