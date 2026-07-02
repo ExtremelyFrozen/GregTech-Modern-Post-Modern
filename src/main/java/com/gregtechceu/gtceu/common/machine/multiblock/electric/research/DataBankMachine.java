@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric.research;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IControllable;
+import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -16,26 +17,33 @@ import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DataBankMachine extends WorkableElectricMultiblockMachine
-                             implements IFancyUIMachine, IDisplayUIMachine, IControllable {
+                             implements IFancyUIMachine, IDisplayUIMachine, IControllable, IDataAccessMachine {
 
     public static final int EUT_PER_HATCH = GTValues.VA[GTValues.EV];
     public static final int EUT_PER_HATCH_CHAINED = GTValues.VA[GTValues.LuV];
 
     private IMaintenanceMachine maintenance;
     private IEnergyContainer energyContainer;
+    private final List<IDataAccessMachine> dataAccesses = new ArrayList<>();
+    private final List<IDataAccessMachine> receivers = new ArrayList<>();
+    private final List<IDataAccessMachine> transmitters = new ArrayList<>();
+    private boolean isQuerying;
 
     @Getter
     private int energyUsage = 0;
@@ -52,11 +60,24 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     public void formStructure(String structureName) {
         super.formStructure(structureName);
         if (!DEFAULT_STRUCTURE.equals(structureName)) return;
+        dataAccesses.clear();
+        receivers.clear();
+        transmitters.clear();
         List<IEnergyContainer> energyContainers = new ArrayList<>();
         Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrDefault("ioMap",
                 Long2ObjectMaps.emptyMap());
         for (IMultiPart part : getParts()) {
             IO io = ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
+            var block = part.self().getBlockState().getBlock();
+            if (part instanceof IDataAccessMachine dataAccessMachine) {
+                if (PartAbility.DATA_ACCESS.isApplicable(block)) {
+                    dataAccesses.add(dataAccessMachine);
+                } else if (PartAbility.OPTICAL_DATA_RECEPTION.isApplicable(block)) {
+                    receivers.add(dataAccessMachine);
+                } else if (PartAbility.OPTICAL_DATA_TRANSMISSION.isApplicable(block)) {
+                    transmitters.add(dataAccessMachine);
+                }
+            }
             if (part instanceof IMaintenanceMachine maintenanceMachine) {
                 this.maintenance = maintenanceMachine;
             }
@@ -78,6 +99,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
             return;
         }
         updateTickSubscription();
+        notifyListeners();
     }
 
     protected int calculateEnergyUsage() {
@@ -106,8 +128,54 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     public void invalidateStructure(String structureName) {
         super.invalidateStructure(structureName);
         if (DEFAULT_STRUCTURE.equals(structureName)) {
+            notifyListeners();
             this.energyContainer = new EnergyContainerList(new ArrayList<>());
             this.energyUsage = 0;
+            this.maintenance = null;
+            this.dataAccesses.clear();
+            this.receivers.clear();
+            this.transmitters.clear();
+        }
+    }
+
+    @Override
+    public boolean isRecipeAvailable(@NotNull GTRecipeType recipeType, @NotNull ResourceLocation recipeId) {
+        if (isQuerying) return false;
+        isQuerying = true;
+        try {
+            return queryRecipe(recipeType, recipeId);
+        } finally {
+            isQuerying = false;
+        }
+    }
+
+    private boolean queryRecipe(@NotNull GTRecipeType recipeType, @NotNull ResourceLocation recipeId) {
+        if (!getWorkLogic().isWorking()) {
+            return false;
+        }
+        for (IDataAccessMachine dataAccess : dataAccesses) {
+            if (dataAccess.isRecipeAvailable(recipeType, recipeId)) {
+                return true;
+            }
+        }
+        for (IDataAccessMachine receiver : receivers) {
+            if (receiver.isRecipeAvailable(recipeType, recipeId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void notifyListeners() {
+        if (isQuerying) return;
+        isQuerying = true;
+        try {
+            for (IDataAccessMachine transmitter : transmitters) {
+                transmitter.notifyListeners();
+            }
+        } finally {
+            isQuerying = false;
         }
     }
 
@@ -136,6 +204,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     }
 
     public void tick() {
+        boolean wasProviding = getWorkLogic().isWorking();
         int energyToConsume = this.getEnergyUsage();
         boolean hasMaintenance = ConfigHolder.INSTANCE.machines.enableMaintenance && this.maintenance != null;
         if (hasMaintenance) {
@@ -160,6 +229,9 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
         } else {
             getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in").append(": ")
                     .append(EURecipeCapability.CAP.getName()));
+        }
+        if (wasProviding != getWorkLogic().isWorking()) {
+            notifyListeners();
         }
         updateTickSubscription();
     }

@@ -516,11 +516,11 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
         }, this);
         event.registerBlock(GTCapability.CAPABILITY_DATA_ACCESS, (level, pos, state, blockEntity, side) -> {
             if (blockEntity instanceof MetaMachine machine) {
-                if (machine instanceof IDataAccessHatch dataAccess) {
+                if (machine instanceof IDataAccessMachine dataAccess) {
                     return dataAccess;
                 }
                 var list = getCapabilitiesFromTraits(machine.getTraitHolder().getAllTraits(), side,
-                        IDataAccessHatch.class);
+                        IDataAccessMachine.class);
                 if (!list.isEmpty()) {
                     return list.getFirst();
                 }

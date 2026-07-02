@@ -3,18 +3,20 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
-import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
+import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.capability.IMonitorComponent;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
+import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
@@ -29,6 +31,7 @@ import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -38,11 +41,12 @@ import net.neoforged.neoforge.items.IItemHandler;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class DataAccessHatchMachine extends TieredPartMachine
-                                    implements IDataAccessHatch, IDataInfoProvider, IMonitorComponent {
+                                    implements IDataAccessMachine, IDataInfoProvider, IMonitorComponent {
 
     private final Set<GTRecipeDefinition> recipeDefinitions;
     @Getter
@@ -137,19 +141,20 @@ public class DataAccessHatchMachine extends TieredPartMachine
                 }
             }
         }
+        notifyDataAccessControllers();
     }
 
     @Override
-    public boolean isRecipeAvailable(GTRecipe recipe, Collection<IDataAccessHatch> seen) {
-        seen.add(this);
-        return recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance) ||
-                recipeDefinitions.stream().anyMatch(definition -> isSameRecipe(definition, recipe));
+    public boolean isRecipeAvailable(@NotNull GTRecipeType recipeType, @NotNull ResourceLocation recipeId) {
+        return isCreative ||
+                recipeDefinitions.stream().anyMatch(definition -> isSameRecipe(definition, recipeType, recipeId));
     }
 
-    private static boolean isSameRecipe(GTRecipeDefinition definition, GTRecipe recipe) {
-        return definition.recipeType == recipe.recipeType &&
+    private static boolean isSameRecipe(GTRecipeDefinition definition, GTRecipeType recipeType,
+                                        ResourceLocation recipeId) {
+        return definition.recipeType == recipeType &&
                 definition.getId() != null &&
-                definition.getId().equals(recipe.getId());
+                definition.getId().equals(recipeId);
     }
 
     @Override
@@ -189,7 +194,10 @@ public class DataAccessHatchMachine extends TieredPartMachine
 
     @Override
     public GTRecipe modifyRecipe(GTRecipe recipe) {
-        return IDataAccessHatch.super.modifyRecipe(recipe);
+        if (recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance)) {
+            return recipe;
+        }
+        return IDataAccessMachine.super.modifyRecipe(recipe);
     }
 
     @Override
@@ -200,5 +208,16 @@ public class DataAccessHatchMachine extends TieredPartMachine
     @Override
     public IItemHandler getDataItems() {
         return importItems.storage;
+    }
+
+    private void notifyDataAccessControllers() {
+        if (!isFormed()) return;
+        for (MultiblockControllerMachine controller : getControllers()) {
+            if (controller instanceof IDataAccessMachine dataAccessMachine) {
+                dataAccessMachine.notifyListeners();
+            } else if (controller instanceof IRecipeLogicMachine recipeLogicMachine) {
+                recipeLogicMachine.getRecipeLogic().onRecipeHandlerChanged();
+            }
+        }
     }
 }

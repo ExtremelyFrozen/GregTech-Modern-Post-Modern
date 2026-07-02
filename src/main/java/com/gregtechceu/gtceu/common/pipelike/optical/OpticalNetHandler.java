@@ -1,13 +1,14 @@
 package com.gregtechceu.gtceu.common.pipelike.optical;
 
-import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
+import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
 import com.gregtechceu.gtceu.api.capability.IOpticalDataAccessHatch;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.common.blockentity.OpticalPipeBlockEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
 import lombok.Getter;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class OpticalNetHandler implements IDataAccessHatch, IOpticalComputationProvider {
+public class OpticalNetHandler implements IDataAccessMachine, IOpticalComputationProvider {
 
     private final OpticalPipeBlockEntity pipe;
     private final Level world;
@@ -37,15 +38,18 @@ public class OpticalNetHandler implements IDataAccessHatch, IOpticalComputationP
     }
 
     @Override
-    public boolean isRecipeAvailable(@NotNull GTRecipe recipe, @NotNull Collection<IDataAccessHatch> seen) {
-        boolean isAvailable = traverseRecipeAvailable(recipe, seen);
+    public boolean isRecipeAvailable(@NotNull GTRecipeType recipeType, @NotNull ResourceLocation recipeId) {
+        boolean isAvailable = traverseRecipeAvailable(recipeType, recipeId);
         if (isAvailable) setPipesActive();
         return isAvailable;
     }
 
     @Override
-    public boolean isCreative() {
-        return false;
+    public void notifyListeners() {
+        IOpticalDataAccessHatch hatch = getDataHatch();
+        if (hatch != null && !hatch.isTransmitter()) {
+            hatch.notifyListeners();
+        }
     }
 
     @Override
@@ -78,19 +82,9 @@ public class OpticalNetHandler implements IDataAccessHatch, IOpticalComputationP
         return net == null || pipe == null || pipe.isRemoved();
     }
 
-    private boolean traverseRecipeAvailable(@NotNull GTRecipe recipe, @NotNull Collection<IDataAccessHatch> seen) {
-        if (isNetInvalidForTraversal()) return false;
-
-        OpticalRoutePath inv = net.getNetData(pipe.getBlockPos(), facing);
-        if (inv == null) return false;
-
-        IOpticalDataAccessHatch hatch = inv.getDataHatch();
-        if (hatch == null || seen.contains(hatch)) return false;
-
-        if (hatch.isTransmitter()) {
-            return hatch.isRecipeAvailable(recipe, seen);
-        }
-        return false;
+    private boolean traverseRecipeAvailable(@NotNull GTRecipeType recipeType, @NotNull ResourceLocation recipeId) {
+        IOpticalDataAccessHatch hatch = getDataHatch();
+        return hatch != null && hatch.isTransmitter() && hatch.isRecipeAvailable(recipeType, recipeId);
     }
 
     private int traverseRequestCWUt(int cwut, boolean simulate, @NotNull Collection<IOpticalComputationProvider> seen) {
@@ -121,5 +115,15 @@ public class OpticalNetHandler implements IDataAccessHatch, IOpticalComputationP
         IOpticalComputationProvider hatch = inv.getComputationHatch();
         if (hatch == null || seen.contains(hatch)) return null;
         return hatch;
+    }
+
+    @Nullable
+    private IOpticalDataAccessHatch getDataHatch() {
+        if (isNetInvalidForTraversal()) return null;
+
+        OpticalRoutePath routePath = net.getNetData(pipe.getBlockPos(), facing);
+        if (routePath == null) return null;
+
+        return routePath.getDataHatch();
     }
 }

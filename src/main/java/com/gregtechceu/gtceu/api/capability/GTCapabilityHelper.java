@@ -91,7 +91,7 @@ public class GTCapabilityHelper {
     }
 
     @Nullable
-    public static IDataAccessHatch getDataAccess(Level level, BlockPos pos, @Nullable Direction side) {
+    public static IDataAccessMachine getDataAccess(Level level, BlockPos pos, @Nullable Direction side) {
         return level.getCapability(GTCapability.CAPABILITY_DATA_ACCESS, pos, side);
     }
 
