@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.capability.*;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.computation.ComputationProducer;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.util.TimedProgressSupplier;
 import com.gregtechceu.gtceu.api.gui.widget.ExtendedProgressWidget;
@@ -68,7 +69,7 @@ import static com.gregtechceu.gtceu.data.recipe.CustomTags.HPCA_COOLANTS;
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public class HPCAMachine extends WorkableElectricMultiblockMachine
-                         implements IOpticalComputationProvider, IControllable {
+                         implements IOpticalComputationProvider, IControllable, ComputationProducer {
 
     private static final double IDLE_TEMPERATURE = 200;
     private static final double DAMAGE_TEMPERATURE = 1000;
@@ -186,6 +187,23 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
         seen.add(this);
         // don't show a problem if the structure is not yet formed
         return !isFormed() || hpcaHandler.hasHPCABridge();
+    }
+
+    @Override
+    public int getOfferedCWUt() {
+        return isActive() && isWorkingEnabled() && !hasNotEnoughEnergy ? hpcaHandler.getMaxCWUt() : 0;
+    }
+
+    @Override
+    public void applyProducedCWUt(int allocatedCWUt) {
+        if (allocatedCWUt > 0) {
+            hpcaHandler.setAllocatedCWUt(allocatedCWUt);
+        }
+    }
+
+    @Override
+    public boolean canBridgeComputation() {
+        return hpcaHandler.hasHPCABridge();
     }
 
     public void tick() {
@@ -563,6 +581,10 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
                 this.allocatedCWUt += toAllocate;
             }
             return toAllocate;
+        }
+
+        public void setAllocatedCWUt(int allocatedCWUt) {
+            this.allocatedCWUt = Math.max(0, Math.min(allocatedCWUt, getMaxCWUt()));
         }
 
         /** The maximum amount of CWUs (Compute Work Units) created per tick. */
