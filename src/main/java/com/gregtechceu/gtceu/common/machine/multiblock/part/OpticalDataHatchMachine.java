@@ -80,6 +80,6 @@ public class OpticalDataHatchMachine extends MultiblockPartMachine implements IO
         if (recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance)) {
             return recipe;
         }
-        return IOpticalDataAccessHatch.super.modifyRecipe(recipe);
+        return isRecipeAvailable(recipe.recipeType, recipe.getId()) ? recipe : null;
     }
 }

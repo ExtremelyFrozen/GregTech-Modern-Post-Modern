@@ -197,7 +197,7 @@ public class DataAccessHatchMachine extends TieredPartMachine
         if (recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance)) {
             return recipe;
         }
-        return IDataAccessMachine.super.modifyRecipe(recipe);
+        return isRecipeAvailable(recipe.recipeType, recipe.getId()) ? recipe : null;
     }
 
     @Override
