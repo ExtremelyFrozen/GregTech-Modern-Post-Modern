@@ -28,7 +28,6 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.RegistryOps;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -83,7 +82,7 @@ public class PipeNetComponentTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "PipeNetComponent")
-    public static void levelPipeNetNbtBoundaryRoundTripsConcretePipeData(GameTestHelper helper) {
+    public static void pipeNetComponentsRoundTripConcretePipeData(GameTestHelper helper) {
         roundTripFluidPipeNet(helper);
         roundTripItemPipeNet(helper);
         roundTripDuctPipeNet(helper);
@@ -112,16 +111,21 @@ public class PipeNetComponentTest {
         }
     }
 
+    private static DataComponentMap componentRoundTrip(GameTestHelper helper, PipeNet<?> net) {
+        DataComponentMap components = net.exportComponents(helper.getLevel().registryAccess());
+        return networkRoundTrip(helper, jsonRoundTrip(helper, components));
+    }
+
     private static void roundTripFluidPipeNet(GameTestHelper helper) {
         LevelFluidPipeNet levelNet = new LevelFluidPipeNet(helper.getLevel());
         BlockPos pos = new BlockPos(4, 5, 6);
         FluidPipeProperties properties = new FluidPipeProperties(1200, 480, true, true, true, false, 4);
         levelNet.addNode(pos, properties, 3, Node.ALL_OPENED, true);
 
-        CompoundTag tag = levelNet.save(new CompoundTag(), helper.getLevel().registryAccess());
-        LevelFluidPipeNet decoded = new LevelFluidPipeNet(helper.getLevel(), tag, helper.getLevel().registryAccess());
-        FluidPipeNet net = decoded.getNetFromPos(pos);
-        FluidPipeProperties decodedProperties = net.getNodeAt(pos).data;
+        FluidPipeNet decoded = new FluidPipeNet(new LevelFluidPipeNet(helper.getLevel()));
+        decoded.importComponents(helper.getLevel().registryAccess(),
+                componentRoundTrip(helper, levelNet.getNetFromPos(pos)));
+        FluidPipeProperties decodedProperties = decoded.getNodeAt(pos).data;
         helper.assertTrue(decodedProperties.equals(properties), "fluid pipe properties did not round-trip");
         helper.assertTrue(decodedProperties.isAcidProof(), "fluid pipe acid proof flag did not round-trip");
         helper.assertTrue(decodedProperties.isCryoProof(), "fluid pipe cryo proof flag did not round-trip");
@@ -133,11 +137,11 @@ public class PipeNetComponentTest {
         ItemPipeProperties properties = new ItemPipeProperties(12, 2.5f);
         levelNet.addNode(pos, properties, 4, Node.ALL_OPENED, false);
 
-        CompoundTag tag = levelNet.save(new CompoundTag(), helper.getLevel().registryAccess());
-        LevelItemPipeNet decoded = new LevelItemPipeNet(helper.getLevel(), tag, helper.getLevel().registryAccess());
-        ItemPipeNet net = decoded.getNetFromPos(pos);
-        helper.assertTrue(net.getNodeAt(pos).data.equals(properties), "item pipe properties did not round-trip");
-        helper.assertTrue(net.getNodeAt(pos).mark == 4, "item pipe mark did not round-trip");
+        ItemPipeNet decoded = new ItemPipeNet(new LevelItemPipeNet(helper.getLevel()));
+        decoded.importComponents(helper.getLevel().registryAccess(),
+                componentRoundTrip(helper, levelNet.getNetFromPos(pos)));
+        helper.assertTrue(decoded.getNodeAt(pos).data.equals(properties), "item pipe properties did not round-trip");
+        helper.assertTrue(decoded.getNodeAt(pos).mark == 4, "item pipe mark did not round-trip");
     }
 
     private static void roundTripDuctPipeNet(GameTestHelper helper) {
@@ -146,10 +150,10 @@ public class PipeNetComponentTest {
         DuctPipeProperties properties = new DuctPipeProperties(3.75f);
         levelNet.addNode(pos, properties, 5, Node.ALL_OPENED, true);
 
-        CompoundTag tag = levelNet.save(new CompoundTag(), helper.getLevel().registryAccess());
-        LevelDuctPipeNet decoded = new LevelDuctPipeNet(helper.getLevel(), tag, helper.getLevel().registryAccess());
-        DuctPipeNet net = decoded.getNetFromPos(pos);
-        helper.assertTrue(net.getNodeAt(pos).data.equals(properties), "duct pipe properties did not round-trip");
+        DuctPipeNet decoded = new DuctPipeNet(new LevelDuctPipeNet(helper.getLevel()));
+        decoded.importComponents(helper.getLevel().registryAccess(),
+                componentRoundTrip(helper, levelNet.getNetFromPos(pos)));
+        helper.assertTrue(decoded.getNodeAt(pos).data.equals(properties), "duct pipe properties did not round-trip");
     }
 
     private static void roundTripLaserPipeNet(GameTestHelper helper) {
@@ -157,10 +161,10 @@ public class PipeNetComponentTest {
         BlockPos pos = new BlockPos(13, 14, 15);
         levelNet.addNode(pos, LaserPipeProperties.INSTANCE, 0, Node.ALL_OPENED, false);
 
-        CompoundTag tag = levelNet.save(new CompoundTag(), helper.getLevel().registryAccess());
-        LevelLaserPipeNet decoded = new LevelLaserPipeNet(helper.getLevel(), tag, helper.getLevel().registryAccess());
-        LaserPipeNet net = decoded.getNetFromPos(pos);
-        helper.assertTrue(net.getNodeAt(pos).data == LaserPipeProperties.INSTANCE,
+        LaserPipeNet decoded = new LaserPipeNet(new LevelLaserPipeNet(helper.getLevel()));
+        decoded.importComponents(helper.getLevel().registryAccess(),
+                componentRoundTrip(helper, levelNet.getNetFromPos(pos)));
+        helper.assertTrue(decoded.getNodeAt(pos).data == LaserPipeProperties.INSTANCE,
                 "laser pipe properties did not round-trip");
     }
 
@@ -169,11 +173,10 @@ public class PipeNetComponentTest {
         BlockPos pos = new BlockPos(16, 17, 18);
         levelNet.addNode(pos, OpticalPipeProperties.INSTANCE, 0, Node.ALL_OPENED, true);
 
-        CompoundTag tag = levelNet.save(new CompoundTag(), helper.getLevel().registryAccess());
-        LevelOpticalPipeNet decoded = new LevelOpticalPipeNet(helper.getLevel(), tag,
-                helper.getLevel().registryAccess());
-        OpticalPipeNet net = decoded.getNetFromPos(pos);
-        helper.assertTrue(net.getNodeAt(pos).data == OpticalPipeProperties.INSTANCE,
+        OpticalPipeNet decoded = new OpticalPipeNet(new LevelOpticalPipeNet(helper.getLevel()));
+        decoded.importComponents(helper.getLevel().registryAccess(),
+                componentRoundTrip(helper, levelNet.getNetFromPos(pos)));
+        helper.assertTrue(decoded.getNodeAt(pos).data == OpticalPipeProperties.INSTANCE,
                 "optical pipe properties did not round-trip");
     }
 

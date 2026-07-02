@@ -41,7 +41,7 @@ public class BlockEntityMixin {
         }
     }
 
-    @Inject(method = "loadAdditional", at = @At(value = "HEAD"))
+    @Inject(method = "loadAdditional", at = @At(value = "RETURN"))
     private void gtceu$clearRegistriesLoad(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         if (this instanceof IAutoSyncBlockEntity autoSyncBlockEntity &&
                 tag.get(autoSyncBlockEntity.getSyncTag()) instanceof CompoundTag) {
