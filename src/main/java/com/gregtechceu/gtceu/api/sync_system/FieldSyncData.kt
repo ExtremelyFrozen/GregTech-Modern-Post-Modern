@@ -29,7 +29,7 @@ class FieldSyncData(field: Field, @JvmField val handle: VarHandle, @JvmField val
 	val nbtSaveKey: String
 
 	@JvmField
-	val itemNbtKey: String
+	val itemDataName: String
 
 	@JvmField
 	@field:Nullable
@@ -80,9 +80,9 @@ class FieldSyncData(field: Field, @JvmField val handle: VarHandle, @JvmField val
 		hasSyncToServer = field.isAnnotationPresent(SyncToServer::class.java)
 		hasSyncBoth = field.isAnnotationPresent(SyncBoth::class.java)
 		nbtSaveKey = if (saveField != null && saveField.nbtKey.isNotBlank()) saveField.nbtKey else fieldName
-		itemNbtKey = if (itemSave != null && itemSave.nbtKey.isNotBlank()) itemSave.nbtKey else fieldName
+		itemDataName = if (itemSave != null && itemSave.nbtKey.isNotBlank()) itemSave.nbtKey else fieldName
 		itemComponentKey = itemSave?.let {
-			val componentKey = if (it.component.isNotBlank()) it.component else itemNbtKey
+			val componentKey = if (it.component.isNotBlank()) it.component else itemDataName
 			SyncFieldData.key(componentKey)
 		}
 		itemDataKey = itemComponentKey
