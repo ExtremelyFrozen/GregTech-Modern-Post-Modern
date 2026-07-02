@@ -4,12 +4,12 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.IRecipeCapabilityHolder;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.machine.feature.IVoidable;
-import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroup;
-import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupColor;
-import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.chance.boost.ChanceBoostFunction;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroup;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupColor;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 
 import net.minecraft.network.chat.Component;
 
@@ -26,9 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static com.gregtechceu.gtceu.api.recipe.RecipeHelper.addToRecipeHandlerMap;
 import static com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupDistinctness.BUS_DISTINCT;
 import static com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupDistinctness.BYPASS_DISTINCT;
-import static com.gregtechceu.gtceu.api.recipe.RecipeHelper.addToRecipeHandlerMap;
 
 public class RecipeRunner {
 

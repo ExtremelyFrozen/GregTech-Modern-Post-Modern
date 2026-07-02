@@ -171,14 +171,15 @@ public class RecipeLogic extends WorkLogic {
                 }
             } else if (lastRecipe != null) {
                 findAndHandleRecipe();
-            } else if (recipeSearchDirty || !getRLMachine().keepSubscribing() || getMachine().getOffsetTimer() % 5 == 0) {
-                findAndHandleRecipe();
-                if (lastFailedMatches != null) {
-                    for (GTRecipe match : lastFailedMatches) {
-                        if (checkMatchedRecipeAvailable(match)) break;
+            } else
+                if (recipeSearchDirty || !getRLMachine().keepSubscribing() || getMachine().getOffsetTimer() % 5 == 0) {
+                    findAndHandleRecipe();
+                    if (lastFailedMatches != null) {
+                        for (GTRecipe match : lastFailedMatches) {
+                            if (checkMatchedRecipeAvailable(match)) break;
+                        }
                     }
                 }
-            }
         }
         boolean unsubscribe = false;
         if (isSuspend()) {
