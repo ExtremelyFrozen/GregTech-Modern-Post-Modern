@@ -1,6 +1,6 @@
 ---
-title: Gameplay
+title: 玩法指南
 ---
 
 
-# Gameplay Docs
+# 玩法文档

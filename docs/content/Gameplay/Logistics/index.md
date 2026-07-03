@@ -1,11 +1,10 @@
-# Logistics: Automated Item and Fluid Transport
-GregTech Modern contains several options for how items and fluids can be transferred between machines, at varying speeds
-and technology levels.
+# 物流：自动化物品与流体运输
+GregTech Modern 提供了多种在机器之间传输物品和流体的方式，它们对应不同的速度与科技阶段。
 
-Automated item and fluid transport is managed by three separate systems:
+自动化物品与流体运输由三个独立系统管理：
 
-* [**Machines**](./Machines.md)
-* [**Pipes**](./Pipes.md)
-* [**Covers**](./Covers.md)
+* [**机器**](./Machines.md)
+* [**管道**](./Pipes.md)
+* [**覆盖板（Covers）**](./Covers.md)
 
-These systems are commonly manipulated using Tools such as a Wrench, Screwdriver, or Soft Mallet.
+这些系统通常通过 Wrench、Screwdriver 或 Soft Mallet 等工具进行操作。

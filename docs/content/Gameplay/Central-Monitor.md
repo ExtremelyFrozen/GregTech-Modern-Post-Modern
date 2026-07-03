@@ -1,46 +1,47 @@
 ---
-title: The Central Monitor & Placeholder System
+title: Central Monitor（中央监视器）与 Placeholder（占位符）系统
 ---
 
-### The Central Monitor
+### Central Monitor（中央监视器）
 
-The Central Monitor is a multiblock that allows you to insert modules into it to render images and text.<br>
-Images update every 120 seconds, text update rate depends on the voltage provided to the multiblock.
-Guide on how to use the central monitor:
+Central Monitor 是一个多方块结构，可以插入模块来渲染图片和文本。<br>
+图片每 120 秒更新一次，文本更新速度取决于提供给该多方块结构的电压。
+Central Monitor 使用指南：
 
-1. Right-click the controller
-2. In the UI, you will see a grid of monitors, the controller, energy hatch and (optionally) a data hatch
-3. Select some of the monitors (in any configuration) by left-clicking on them
-4. Click the "Create group" button
-5. You should see a group appear on the left of the UI, click on it to select all monitors in that group, click again to unselect
-6. Click on the gear icon next to the name of the group you want to edit
-7. A UI with a single slot should open, put a module into that slot (while it is possible to put a stack of modules in, that does literally nothing)
-8. If it's a text/image module a new field should appear, where you can enter some text (for image it'll be a single line for a URL)
-9. Once you've entered your text, click on the green checkmark below the slot, that will save the text you entered
-10. Click on the gear icon next to the group you're editing to go back to the main menu
-11. You should see the text/image on the Central Monitor
+1. 右键点击 Controller
+2. 在 UI 中，你会看到一个由 Monitor 组成的网格，以及 Controller、Energy Hatch 和（可选的）Data Hatch
+3. 左键选择一些 Monitor（任意形状都可以）
+4. 点击 "Create group" 按钮
+5. 你应当会在 UI 左侧看到一个 group，点击它会选中该 group 中的全部 Monitor，再次点击则取消选择
+6. 点击要编辑的 group 名称旁边的齿轮图标
+7. 此时会打开一个只有单个槽位的 UI，将模块放入该槽位（虽然可以放入一整组模块，但那没有任何实际效果）
+8. 如果放入的是文本或图片模块，会出现一个新输入框，你可以在其中输入文本（图片模块则是一行 URL）
+9. 输入文本后，点击槽位下方的绿色对勾，这会保存你输入的文本
+10. 点击正在编辑的 group 旁边的齿轮图标，返回主菜单
+11. 此时你应当能在 Central Monitor 上看到文本或图片
 
-To remove a group, select it and click "Remove from group". To remove a single monitor from a group select only it and click "Remove from group".
-You cannot add monitors to a group after it has been created. Image dimensions are determined by the left-up corner of the group and the right-down corner,
-the blocks between them have to be in the same group. The text module will only display text on monitors of its group.
+要移除一个 group，选中它并点击 "Remove from group"。要从 group 中移除单个 Monitor，只选中它并点击 "Remove from group"。
+group 创建后不能再向其中添加 Monitor。图片尺寸由该 group 的左上角和右下角决定，
+两者之间的方块必须属于同一个 group。Text Module 只会在其 group 的 Monitor 上显示文本。
 
-!!! warning "The image module is a bit buggy, so the image may not appear immediately"
+!!! warning "Image Module 有一些 Bug，因此图片可能不会立即显示"
 
-### Text Module
+### Text Module（文本模块）
 
-You may have noticed that the text module has a number input in its UI. It is the text scale, where 1 represents a line height of 1/16th of a block.
-You may have also noticed that the text module has some additional slots on the left.
-Those are referenced by placeholders, you can put any item in them. Most placeholders also need a target block to work. To select a target for your monitor group,
-in the main UI of the controller select the group, right-click the block you want to target and click "Set target". You may want to target a block that is not in the
-central monitor, to do that you have to use a Wireless Transmitter Cover. Place it on the block you want to target and right-click it with a data stick. Then put that
-data stick into a data hatch in the Central Monitor multiblock. If you select the data hatch as a target, you will see a new number field appear. Enter the number of the
-slot your data stick is in and click "Set target". The target will be set to the block the Wireless Transmitter Cover is on. It can work cross-dimensionally.
+你可能已经注意到 Text Module 的 UI 中有一个数字输入框。它是文本缩放值，其中 1 表示 1/16 方块高度的行高。
+你可能也注意到 Text Module 左侧还有一些额外槽位。
+这些槽位由 Placeholder 引用，你可以在里面放入任意物品。大多数 Placeholder 还需要一个目标方块才能工作。要为 Monitor group 选择目标，
+请在 Controller 的主 UI 中选中 group，右键点击要设为目标的方块，然后点击 "Set target"。如果想把 Central Monitor 外部的方块设为目标，
+需要使用 Wireless Transmitter Cover。将它放在目标方块上，并用 Data Stick 右键点击它。然后将该 Data Stick 放入 Central Monitor 多方块结构中的 Data Hatch。
+如果选择 Data Hatch 作为目标，你会看到一个新的数字输入框。输入 Data Stick 所在槽位的编号并点击 "Set target"。
+目标会被设置为 Wireless Transmitter Cover 所在的方块。它可以跨维度工作。
 
-!!! note "For the Computer Monitor Cover, the targeted block is always the block it's placed on."
+!!! note "对于 Computer Monitor Cover，目标方块始终是该 Cover 放置在其上的方块。"
 
-### Placeholders
-Placeholders can be used by players in the monitor text module, or in the computer monitor cover (though a bit more limited).
-For example, a player may write something like this in a text module:
+### Placeholders（占位符）
+
+玩家可以在 Monitor Text Module 或 Computer Monitor Cover 中使用 Placeholder（后者的能力稍受限制）。
+例如，玩家可以在 Text Module 中写入如下内容：
 ```
 Hello on day {calc {tick} / 20000}!
 Current energy buffer: {formatInt {energy}}/{formatInt {energyCapacity}} EU\
@@ -48,7 +49,7 @@ Current energy buffer: {formatInt {energy}}/{formatInt {energyCapacity}} EU\
 Here's some random stuff:
 {repeat 5 {repeat {random 2 10} {block}}
 ```
-And something like this would be displayed:
+显示效果会类似这样：
 ```
 Hello on day 420!
 Current energy buffer: 4.2M/6.9M EU
@@ -60,13 +61,13 @@ Here's some random stuff:
 ████
 ██████████
 ```
-This system is turing-complete (i.e. if the player really wanted to play Doom on the Central Monitor, they could).<br>
-All placeholders work on strings (or, more specifically, `Component`s to allow text formatting), so when you write `{calc {calc 2 + 4} * 3}`,
-first `{calc 2 + 4}` will be evaluated into `6`, then it will be converted to a string and back to an int, and then it will be passed into the second placeholder
-to evaluate `{calc 6 * 3}` into `18`, which will be turned into a string again. That also allows for things like `{calc 3 + 1}2`, which will evaluate into `42`,
-since outside of placeholders text is simply concatenated. Placeholder arguments are separated by spaces, which may be a bit annoying, when wanting to pass a string
-with a space into a placeholder, for example `{if 1 string with spaces}`, which will cause an error. In these cases, double quotes can be used: `{if 1 "string with spaces"}`
-will work perfectly fine. There are placeholders that need reference items, to achieve that, there are 8 slots in the text module's UI on the left.
-Items can be inserted/extracted from these slots automatically using the `ender` placeholder by interacting with Ender Item Links.<br>
+这个系统是图灵完备的（也就是说，如果玩家真的想在 Central Monitor 上玩 Doom，理论上可以做到）。<br>
+所有 Placeholder 都作用于字符串（更准确地说，是 `Component`，以支持文本格式），因此当你写下 `{calc {calc 2 + 4} * 3}` 时，
+首先 `{calc 2 + 4}` 会被求值为 `6`，然后它会被转换成字符串，再转换回整数，接着传给第二个 Placeholder，
+将 `{calc 6 * 3}` 求值为 `18`，最后再次转为字符串。这也允许像 `{calc 3 + 1}2` 这样的写法，其结果会是 `42`，
+因为 Placeholder 外部的文本只是简单拼接在一起。Placeholder 参数以空格分隔；当你想把带空格的字符串传给 Placeholder 时，这可能有些麻烦，
+例如 `{if 1 string with spaces}` 会导致错误。这种情况下可以使用双引号：`{if 1 "string with spaces"}` 可以正常工作。
+有些 Placeholder 需要引用物品。为实现这一点，Text Module 的 UI 左侧提供了 8 个槽位。
+通过与 Ender Item Links 交互，可以使用 `ender` Placeholder 自动向这些槽位插入或从中取出物品。<br>
 
-!!! tip "The full list of placeholders with explanations on what they do and usage examples can be found in-game in the text module or computer monitor UI on the left."
+!!! tip "完整的 Placeholder 列表、作用说明和用法示例可以在游戏内 Text Module 或 Computer Monitor UI 左侧查看。"

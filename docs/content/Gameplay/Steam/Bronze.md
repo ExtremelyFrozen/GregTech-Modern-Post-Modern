@@ -1,15 +1,15 @@
 ---
-title: Bronze
+title: 青铜
 ---
 
-# Bronze
+# 青铜
 
-Bronze is the most important material in the [Steam Age](./index.md). 
+青铜（Bronze）是 [Steam 阶段](./index.md)中最重要的材料。
 
-To prepare the first batch of it you will need [Tin and Copper](../Ore-Generation.md).
-Just crush the ingots with a GT mortar and mix them in a crafting table in a _3_ to _1_ proportion. Then smelt the resulting dust to receive the ingot.
+要准备第一批青铜，你需要 [Tin（锡）和 Copper（铜）](../Ore-Generation.md)。
+只需用 GT Mortar（研钵）碾碎锭，并在 Crafting Table（工作台）中按 _3_ 比 _1_ 的比例混合。然后熔炼得到的粉即可获得锭。
 
-![Ingot crushing recipe](./assets/ingot_crushed.png)
-![Bronze dust recipe](./assets/bronze_recipe.png)
+![锭粉碎配方](./assets/ingot_crushed.png)
+![青铜粉配方](./assets/bronze_recipe.png)
 
-After you get the steam [alloy smelter](Steam-Usage.md), you can get bronze faster and without needing a mortar.
+获得 Steam [Alloy Smelter（合金冶炼炉）](Steam-Usage.md) 后，你就可以更快地获得青铜，而且不再需要 Mortar。

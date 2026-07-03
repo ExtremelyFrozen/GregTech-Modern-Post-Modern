@@ -1,5 +1,5 @@
 nav:
-  - 'Home': 'index.md'
-  - 'Gameplay'
-  - 'Modpack Authors': Modpacks
-  - 'Developers': 'Development'
+  - '首页': 'index.md'
+  - '玩法指南': 'Gameplay'
+  - '整合包作者': Modpacks
+  - '开发者': 'Development'

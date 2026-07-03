@@ -1,380 +1,380 @@
 ---
-title: "Ore Generation"
+title: "矿石生成"
 ---
 
 
-# Ore Generation
+# 矿石生成
 
-This is an overview of GTCEu's ore veins and the ore types they contain.  
-Please note that these are the default settings and may be different in certain modpacks.
-
-
-## Overworld
+这里概述了 GTCEu 的矿脉及其包含的矿石类型。
+请注意，这些是默认设置，在某些整合包中可能会有所不同。
 
 
-### Apatite Vein
+## 主世界
+
+
+### Apatite 矿脉
 
 - Apatite
 - Tricalcium Phosphate
 - Pyrochlore
 
-**Height range:** 10 to 80
+**高度范围：** 10 到 80
 
 
-### Cassiterite Vein
+### Cassiterite 矿脉
 
 - Tin
 - Cassiterite
 
-**Height range:** 10 to 80
+**高度范围：** 10 到 80
 
 
-### Coal Vein
+### Coal 矿脉
 
 - Coal
 
-**Height range:** 10 to 140
+**高度范围：** 10 到 140
 
 
-### Copper Tin Vein
+### Copper Tin 矿脉
 
 - Chalcopyrite
 - Zeolite
 - Cassiterite
 - Realgar
 
-**Height range:** -10 to 160
+**高度范围：** -10 到 160
 
 
-### Galena Vein
+### Galena 矿脉
 
 - Galena
 - Silver
 - Lead
 
-**Height range:** -15 to 45
+**高度范围：** -15 到 45
 
 
-### Garnet Tin Vein
+### Garnet Tin 矿脉
 
 - Cassiterite Sand
 - Garnet Sand
 - Asbestos
 - Diatomite
 
-**Height range:** 30 to 60
+**高度范围：** 30 到 60
 
 
-### Iron Vein
+### Iron 矿脉
 
 - Goethite
 - Limonite
 - Hematite
 - Malachite
 
-**Height range:** -10 to 60
+**高度范围：** -10 到 60
 
 
-### Lubricant Vein
+### Lubricant 矿脉
 
 - Soapstone
 - Talc
 - Glauconite Sand
 - Pentlandite
 
-**Height range:** 0 to 50
+**高度范围：** 0 到 50
 
 
-### Magnetite Vein
+### Magnetite 矿脉
 
 - Magnetite
 - Vanadium Magnetite
 - Gold
 
-**Height range:** 10 to 60
+**高度范围：** 10 到 60
 
 
-### Mineral Sand Vein
+### Mineral Sand 矿脉
 
 - Basaltic Mineral Sand
 - Granitic Mineral Sand
 - Fuller's Earth
 - Gypsum
 
-**Height range:** 15 to 60
+**高度范围：** 15 到 60
 
 
-### Nickel Vein
+### Nickel 矿脉
 
 - Garnierite
 - Nickel
 - Cobaltite
 - Pentlandite
 
-**Height range:** -10 to 60
+**高度范围：** -10 到 60
 
 
-### Salts Vein
+### Salts 矿脉
 
 - Rock Salt
 - Salt
 - Lepidolite
 - Spodumene
 
-**Height range:** 30 to 70
+**高度范围：** 30 到 70
 
 
-### Oilsands Vein
+### Oilsands 矿脉
 
 - Oilsands
 
-**Height range:** 30 to 80
+**高度范围：** 30 到 80
 
 
-<!-- Deepslate veins -->
-### Copper Vein
+<!-- 深板岩矿脉 -->
+### Copper 矿脉
 
 - Chalcopyrite
 - Iron
 - Pyrite
 - Copper
 
-**Height range:** -40 to 10
+**高度范围：** -40 到 10
 
 
-### Diamond Vein
+### Diamond 矿脉
 
 - Graphite
 - Diamond
 - Coal
 
-**Height range:** -65 to -30
+**高度范围：** -65 到 -30
 
 
-### Lapis Vein
+### Lapis 矿脉
 
 - Lazurite
 - Sodalite
 - Lapis
 - Calcite
 
-**Height range:** -60 to 10
+**高度范围：** -60 到 10
 
 
-### Manganese Vein
+### Manganese 矿脉
 
 - Grossular
 - Spessartine
 - Pyrolusite
 - Tantalite
 
-**Height range:** -30 to 0
+**高度范围：** -30 到 0
 
 
-### Mica Vein
+### Mica 矿脉
 
 - Kyanite
 - Mica
 - Bauxite
 - Pollucite
 
-**Height range:** -40 to -10
+**高度范围：** -40 到 -10
 
 
-### Olivine Vein
+### Olivine 矿脉
 
 - Bentonite
 - Magnetite
 - Olivine
 - Glauconite Sand
 
-**Height range:** -20 to 10
+**高度范围：** -20 到 10
 
 
-### Redstone Vein
+### Redstone 矿脉
 
 - Redstone
 - Ruby
 - Cinnabar
 
-**Height range:** -65 to -10
+**高度范围：** -65 到 -10
 
 
-### Sapphire Vein
+### Sapphire 矿脉
 
 - Almandine
 - Pyrope
 - Sapphire
 - Green Sapphire
 
-**Height range:** -40 to 0
+**高度范围：** -40 到 0
 
 
-## Nether
+## 下界
 
 
-### Banded Iron Vein
+### Banded Iron 矿脉
 
 - Goethite
 - Limonite
 - Hematite
 - Gold
 
-**Height range:** 20 to 40
+**高度范围：** 20 到 40
 
 
-### Beryllium Vein
+### Beryllium 矿脉
 
 - Beryllium
 - Emerald
 
-**Height range:** 5 to 30
+**高度范围：** 5 到 30
 
 
-### Certus Quartz Vein
+### Certus Quartz 矿脉
 
 - Quartzite
 - Certus Quartz
 - Barite
 
-**Height range:** 80 to 120
+**高度范围：** 80 到 120
 
 
-### Manganese Vein (Nether)
+### Manganese 矿脉（下界）
 
 - Grossular
 - Pyrolusite
 - Tantalite
 
-**Height range:** 20 to 30
+**高度范围：** 20 到 30
 
 
-### Molybdenum Vein
+### Molybdenum 矿脉
 
 - Wulfenite
 - Molybdenite
 - Molybdenum
 - Powellite
 
-**Height range:** 20 to 50
+**高度范围：** 20 到 50
 
 
-### Monazite Vein
+### Monazite 矿脉
 
 - Bastnasite
 - Molybdenum
 - Neodymium
 
-**Height range:** 20 to 40
+**高度范围：** 20 到 40
 
 
-### Nether Quartz Vein
+### Nether Quartz 矿脉
 
 - Nether Quartz
 - Quartzite
 
-**Height range:** 40 to 80
+**高度范围：** 40 到 80
 
 
-### Redstone Vein (Nether)
+### Redstone 矿脉（下界）
 
 - Redstone
 - Ruby
 - Cinnabar
 
-**Height range:** 5 to 40
+**高度范围：** 5 到 40
 
 
-### Saltpeter Vein
+### Saltpeter 矿脉
 
 - Saltpeter
 - Diatomite
 - Electrotine
 - Alunite
 
-**Height range:** 5 to 45
+**高度范围：** 5 到 45
 
 
-### Sulfur Vein
+### Sulfur 矿脉
 
 - Sulfur
 - Pyrite
 - Sphalerite
 
-**Height range:** 10 to 30
+**高度范围：** 10 到 30
 
 
-### Tetrahedryte Vein
+### Tetrahedryte 矿脉
 
 - Tetrahedryte
 - Copper
 - Stibnite
 
-**Height range:** 80 to 120
+**高度范围：** 80 到 120
 
 
-### Topaz Vein
+### Topaz 矿脉
 
 - Blue Topaz
 - Topaz
 - Chalcocite
 - Bornite
 
-**Height range:** 80 to 120
+**高度范围：** 80 到 120
 
 
-## The End
+## 末地
 
 
-### Bauxite Vein
+### Bauxite 矿脉
 
 - Bauxite
 - Ilmenite
 - Aluminium
 
-**Height range:** 10 to 80
+**高度范围：** 10 到 80
 
 
-### Magnetite Vein (The End)
+### Magnetite 矿脉（末地）
 
 - Magnetite
 - Vanadium Magnetite
 - Chromite
 - Gold
 
-**Height range:** 20 to 80
+**高度范围：** 20 到 80
 
 
-### Naquadah Vein
+### Naquadah 矿脉
 
 - Naquadah
 - Plutonium 239
 
-**Height range:** 10 to 90
+**高度范围：** 10 到 90
 
 
-### Pitchblende Vein
+### Pitchblende 矿脉
 
 - Pitchblende
 - Uraninite
 
-**Height range:** 30 to 60
+**高度范围：** 30 到 60
 
 
-### Scheelite Vein
+### Scheelite 矿脉
 
 - Scheelite
 - Tungstate
 - Lithium
 
-**Height range:** 20 to 60
+**高度范围：** 20 到 60
 
 
-### Sheldonite Vein
+### Sheldonite 矿脉
 
 - Bornite
 - Cooperite
 - Platinum
 - Palladium
 
-**Height range:** 5 to 50
+**高度范围：** 5 到 50
