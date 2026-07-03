@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.sync_system.managed
 
+import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 
 import net.minecraft.core.HolderLookup
@@ -15,14 +16,25 @@ import net.minecraft.world.level.saveddata.SavedData
 abstract class ManagedSavedData :
 	SavedData,
 	ISyncManaged {
-	private val savedSyncDataKey = "gtceu_sync_data"
+	protected var savedSyncDataKey: String = DEFAULT_SYNC_DATA_KEY
 
 	@JvmField
 	protected val syncDataHolder: SyncDataHolder = SyncDataHolder(this)
 
 	constructor()
 
-	constructor(tag: CompoundTag, registries: HolderLookup.Provider) {
+	protected constructor(savedSyncDataKey: String) {
+		this.savedSyncDataKey = savedSyncDataKey
+	}
+
+	constructor(tag: CompoundTag, registries: HolderLookup.Provider) : this(tag, registries, DEFAULT_SYNC_DATA_KEY)
+
+	protected constructor(tag: CompoundTag, registries: HolderLookup.Provider, savedSyncDataKey: String) {
+		this.savedSyncDataKey = savedSyncDataKey
+		loadSavedSyncData(tag, registries)
+	}
+
+	private fun loadSavedSyncData(tag: CompoundTag, registries: HolderLookup.Provider) {
 		if (tag.contains(savedSyncDataKey)) {
 			val savedData = DataComponentMap.CODEC
 				.parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get(savedSyncDataKey))
@@ -54,5 +66,10 @@ abstract class ManagedSavedData :
 			)
 		}
 		return compoundTag
+	}
+
+	private companion object {
+
+		private val DEFAULT_SYNC_DATA_KEY = "${GTCEu.MOD_ID}_sync_data"
 	}
 }

@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.sync_system.managed
 
+import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer
@@ -35,7 +36,7 @@ import java.util.*
 abstract class ManagedSyncBlockEntity :
 	BlockEntity,
 	ISyncManaged {
-	private val savedSyncDataKey = "gtceu_sync_data"
+	private val savedSyncDataKey = "${GTCEu.MOD_ID}_sync_data"
 
 	@JvmField
 	protected val syncDataHolder: SyncDataHolder = SyncDataHolder(this)
