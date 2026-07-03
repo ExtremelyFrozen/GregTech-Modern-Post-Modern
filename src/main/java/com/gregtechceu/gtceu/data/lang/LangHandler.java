@@ -1245,6 +1245,42 @@ public class LangHandler {
         provider.add("gtpm.multiblock.pattern.single", "§6Only this block can be used§r");
         provider.add("gtpm.multiblock.pattern.location_end", "§cVery End§r");
         provider.add("gtpm.multiblock.pattern.replaceable_air", "Replaceable by Air");
+        provider.add("gtpm.multiblock.autobuild.success",
+                "Auto-build completed: placed %d, removed %d, stages %d.");
+        provider.add("gtpm.multiblock.autobuild.failed", "Auto-build failed.");
+        provider.add("gtpm.multiblock.autobuild.server_only", "Auto-build can only run on the server.");
+        provider.add("gtpm.multiblock.autobuild.unknown_structure", "Unknown multiblock structure: %s.");
+        provider.add("gtpm.multiblock.autobuild.pattern_unavailable",
+                "Multiblock structure pattern is not available: %s.");
+        provider.add("gtpm.multiblock.autobuild.permission_denied", "No permission at %s.");
+        provider.add("gtpm.multiblock.autobuild.invalid_repeat", "Invalid repeat count: %d.");
+        provider.add("gtpm.multiblock.autobuild.flip_not_allowed",
+                "This multiblock does not support flipped auto-build.");
+        provider.add("gtpm.multiblock.autobuild.unknown_tier_category", "Unknown tier block category: %s.");
+        provider.add("gtpm.multiblock.autobuild.invalid_tier", "Invalid tier %2$d for category %1$s.");
+        provider.add("gtpm.multiblock.autobuild.unloaded", "Target position is not loaded: %s.");
+        provider.add("gtpm.multiblock.autobuild.blocked", "Target position is blocked: %s.");
+        provider.add("gtpm.multiblock.autobuild.no_candidate", "No placeable candidate for %s.");
+        provider.add("gtpm.multiblock.autobuild.missing_material", "Missing material for %s.");
+        provider.add("gtpm.multiblock.autobuild.not_placeable", "%s cannot be placed.");
+        provider.add("gtpm.multiblock.autobuild.unsupported_liquid_candidate",
+                "Liquid candidate is not supported: %s.");
+        provider.add("gtpm.multiblock.autobuild.commit_material_failed", "Could not commit material for %s.");
+        provider.add("gtpm.multiblock.autobuild.demolition_failed", "Could not demolish block at %s.");
+        provider.add("gtpm.multiblock.autobuild.place_failed", "Could not place block at %s.");
+        provider.add("gtpm.multiblock.autobuild.controller_protected", "The controller cannot be removed.");
+        provider.add("gtpm.multiblock.autobuild.unbreakable", "Target block is unbreakable: %s.");
+        provider.add("gtpm.multiblock.autobuild.me_unavailable", "ME network is unavailable.");
+        provider.add("gtpm.multiblock.autobuild.me_no_player_inventory", "Could not access player inventory for ME.");
+        provider.add("gtpm.multiblock.autobuild.me_no_linked_terminal", "No linked ME terminal found.");
+        provider.add("gtpm.multiblock.autobuild.me_linked_level_missing", "Linked ME dimension is unavailable.");
+        provider.add("gtpm.multiblock.autobuild.me_wrong_dimension", "Linked ME access point is in another dimension.");
+        provider.add("gtpm.multiblock.autobuild.me_access_point_missing", "Linked ME access point is missing.");
+        provider.add("gtpm.multiblock.autobuild.me_access_point_inactive", "Linked ME access point is inactive.");
+        provider.add("gtpm.multiblock.autobuild.me_out_of_range", "Linked ME access point is out of range.");
+        provider.add("gtpm.multiblock.autobuild.me_grid_missing", "Linked ME grid is missing.");
+        provider.add("gtpm.multiblock.autobuild.structure_check_failed",
+                "Auto-built structure failed final pattern check: %s.");
 
         provider.add("gtpm.multiblock.computation.max", "Max CWU/t: %s");
         provider.add("gtpm.multiblock.computation.usage", "Using: %s");

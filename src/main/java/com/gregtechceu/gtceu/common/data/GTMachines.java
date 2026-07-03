@@ -873,6 +873,7 @@ public class GTMachines {
 
     public static final MachineDefinition COKE_OVEN_HATCH = REGISTRATE.machine("coke_oven_hatch", CokeOvenHatch::new)
             .rotationState(RotationState.ALL)
+            .abilities(PartAbility.COKE_OVEN_HATCH)
             .modelProperty(IS_FORMED, false)
             .tooltips(Component.translatable("gtpm.part_sharing.disabled"))
             .simpleModel(GTCEu.id("block/machine/part/coke_oven_hatch"))
