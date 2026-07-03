@@ -1,13 +1,13 @@
 ---
-title: "Migrating from LDLib SyncData"
+title: "从 LDLib SyncData 迁移"
 ---
-# Migrating from LDLib SyncData
+# 从 LDLib SyncData 迁移
 
-### Simple example
+### 简单示例
 
-This simple example covers the majority of use cases when adding sync/save fields to a standard machine, machine trait or cover.
+这个简单示例覆盖了向标准 machine、machine trait 或 cover 添加同步/保存字段时的大多数用例。
 
-#### With LDLib:
+#### 使用 LDLib 时：
 ```java
 class CustomMachine extends SimpleTieredMachine {
     protected static final ManagedFieldHolder MANAGED_FIELD_HOLDER = new ManagedFieldHolder(CustomMachine.class,
@@ -18,12 +18,12 @@ class CustomMachine extends SimpleTieredMachine {
         return MANAGED_FIELD_HOLDER;
     }
 
-    @Getter 
+    @Getter
     @Persisted
     @DescSynced
     @RequireRerender
     protected int customIntValue;
-    
+
     @Persisted(key = "customNBTKey")
     protected String customStringValue;
 
@@ -33,17 +33,17 @@ class CustomMachine extends SimpleTieredMachine {
 }
 ```
 
-#### New System:
+#### 新系统：
 ```java
 class CustomMachine extends SimpleTieredMachine {
-    @Getter 
+    @Getter
     @SaveField
     @SyncToClient
     protected int customIntValue;
-    
+
     @SaveField(nbtKey = "customNBTKey")
     protected String customStringValue;
-    
+
     public void setCustomIntValue(int newValue) {
         this.customIntValue = newValue;
         ////// IMPORTANT: markClientSyncFieldDirty must be called to update client synced fields.
@@ -53,25 +53,26 @@ class CustomMachine extends SimpleTieredMachine {
 
 ```
 
-### General migration guidelines
+### 通用迁移准则
 
-- Remove all `ManagedFieldHolder` fields.
-- Replace `FieldManagedStorage` fields with `SyncDataHolder` fields.
-- Replace `IEnhancedManaged` objects with `ISyncManaged`.
-- Replace `IAsyncAutoSyncBlockEntity`, `IAutoPersistBlockEntity`, `IAutoSyncBlockEntity` and `IManagedBlockEntity` by extending `ManagedSyncBlockEntity`.
+- 移除所有 `ManagedFieldHolder` 字段。
+- 将 `FieldManagedStorage` 字段替换为 `SyncDataHolder` 字段。
+- 将 `IEnhancedManaged` 对象替换为 `ISyncManaged`。
+- 将 `IAsyncAutoSyncBlockEntity`、`IAutoPersistBlockEntity`、`IAutoSyncBlockEntity` 和 `IManagedBlockEntity` 替换为继承 `ManagedSyncBlockEntity`。
+- 只有真正需要 `SavedData` 后端的全局或跨区块持久数据才迁移到 `ManagedSavedData`。默认 sync save key 是 `${GTCEu.MOD_ID}_sync_data`，当前 key 为 `gtpm_sync_data`；如果某个 `SavedData` 子类需要独立后端，应设置专用 key。
 
-### Annotations
+### 注解
 
 !!! warning
-Client sync fields **do not** automatically detect changes. When changing a client sync field, call `ISyncManaged.syncDataHolder.markClientSyncFieldDirty(FIELD_NAME)`
+client 同步字段**不会**自动检测变更。修改 client 同步字段时，请调用 `ISyncManaged.syncDataHolder.markClientSyncFieldDirty(FIELD_NAME)`。
 
 - `@DescSynced` -> `@SyncToClient`
 - `@RequireRerender` -> `@RerenderOnChanged`
 - `@Persisted` -> `@SaveField`
-- `@UpdateListener` -> `@ClientFieldChangeListener` on listener method.
-- `@DropSaved` - Removed, make machines implement `IDropSaveMachine` instead
-- `@ReadOnlyManaged` and `@LazyManaged` See usage docs for instructions on complex sync objects 
+- `@UpdateListener` -> 在 listener method 上使用 `@ClientFieldChangeListener`
+- `@DropSaved` - 已移除，改为让 machine 实现 `IDropSaveMachine`
+- `@ReadOnlyManaged` 和 `@LazyManaged` - 有关复杂 sync object 的说明，请参阅用法文档
 
-### Other changes
+### 其他变更
 
- - `saveCustomPersistedData` & `loadCustomPersistedData` methods, and serialization of custom data types - See `ValueTransformer<T>` and `ValueTransformers` classes.
+ - `saveCustomPersistedData` 和 `loadCustomPersistedData` 方法，以及自定义数据类型的序列化 - 请参阅 `ValueTransformer<T>` 和 `ValueTransformers` 类。
