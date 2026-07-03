@@ -12,6 +12,9 @@ import com.gregtechceu.gtceu.api.machine.trait.multiblock.MultiblockMachineTrait
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockWorldSavedData;
+import com.gregtechceu.gtceu.api.multiblock.autobuild.AutoBuildProblem;
+import com.gregtechceu.gtceu.api.multiblock.autobuild.AutoBuildRequest;
+import com.gregtechceu.gtceu.api.multiblock.autobuild.AutoBuildResult;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ClientFieldChangeListener;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -19,13 +22,16 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 import com.gregtechceu.gtceu.client.renderer.MultiblockInWorldPreviewRenderer;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.ParallelHatchPartMachine;
+import com.gregtechceu.gtceu.common.machine.owner.MachineOwner;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -363,6 +369,64 @@ public class MultiblockControllerMachine extends MetaMachine {
         return getDefinition().getPattern(structureName);
     }
 
+    public AutoBuildResult autoBuild(ServerPlayer player, AutoBuildRequest request) {
+        if (!(getLevel() instanceof ServerLevel serverLevel)) {
+            return AutoBuildResult.failed(new AutoBuildProblem(AutoBuildProblem.Type.INVALID_OPTIONS, getBlockPos(),
+                    Component.translatable("gtpm.multiblock.autobuild.server_only")));
+        }
+        String requestedStructureName = request.structureName();
+        String checkedStructureName;
+        try {
+            checkedStructureName = validateStructureName(requestedStructureName);
+        } catch (IllegalArgumentException exception) {
+            GTCEu.LOGGER.warn("Cannot auto-build {}, unknown structure {}", getDefinition().getId(),
+                    requestedStructureName);
+            return AutoBuildResult.failed(new AutoBuildProblem(AutoBuildProblem.Type.UNKNOWN_STRUCTURE, getBlockPos(),
+                    Component.translatable("gtpm.multiblock.autobuild.unknown_structure", requestedStructureName)));
+        }
+        if (!MachineOwner.canBreakOwnerMachine(player, this)) {
+            return AutoBuildResult.failed(new AutoBuildProblem(AutoBuildProblem.Type.PERMISSION_DENIED, getBlockPos(),
+                    Component.translatable("gtpm.multiblock.autobuild.permission_denied",
+                            getBlockPos().toShortString())));
+        }
+        BlockPattern pattern = getPattern(checkedStructureName);
+        if (pattern == null) {
+            GTCEu.LOGGER.warn("Cannot auto-build {}, structure pattern {} is not initialized",
+                    getDefinition().getId(), checkedStructureName);
+            return AutoBuildResult.failed(new AutoBuildProblem(AutoBuildProblem.Type.PATTERN_UNAVAILABLE,
+                    getBlockPos(), Component.translatable("gtpm.multiblock.autobuild.pattern_unavailable",
+                            checkedStructureName)));
+        }
+
+        AutoBuildResult result = MultiblockAutoBuild.execute(this, player, checkedStructureName, pattern, request);
+        if (!result.success()) {
+            if (result.placed() > 0 || result.removed() > 0) {
+                invalidateStructure(checkedStructureName);
+            }
+            return result;
+        }
+        if (request.options().demolitionMode()) {
+            if (result.removed() > 0) {
+                invalidateStructure(checkedStructureName);
+            }
+            return result;
+        }
+
+        if (checkPatternWithLock(checkedStructureName)) {
+            MultiblockState checkedState = getMultiblockState(checkedStructureName);
+            if (DEFAULT_STRUCTURE.equals(checkedStructureName)) {
+                setFlipped(checkedState.isNeededFlip());
+            }
+            formStructure(checkedStructureName);
+            MultiblockWorldSavedData.getOrCreate(serverLevel).addMapping(checkedState);
+            return result;
+        }
+
+        invalidateStructure(checkedStructureName);
+        return result.failedWith(new AutoBuildProblem(AutoBuildProblem.Type.STRUCTURE_CHECK_FAILED, getBlockPos(),
+                Component.translatable("gtpm.multiblock.autobuild.structure_check_failed", checkedStructureName)));
+    }
+
     /**
      * Get lock for pattern checking.
      */
@@ -452,10 +516,6 @@ public class MultiblockControllerMachine extends MetaMachine {
     }
 
     protected String validateStructureName(String structureName) {
-        Objects.requireNonNull(structureName, "structureName");
-        if (structureName.isBlank()) {
-            throw new IllegalArgumentException("structureName must not be blank");
-        }
         if (!getDefinition().getStructureNames().contains(structureName)) {
             throw new IllegalArgumentException("Unknown multiblock structure '" + structureName + "' for " +
                     getDefinition().getId());
