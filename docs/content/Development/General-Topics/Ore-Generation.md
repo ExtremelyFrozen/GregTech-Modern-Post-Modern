@@ -1,98 +1,90 @@
 ---
-title: Ore Generation
+title: Ore 生成
 ---
 
 
-# Ore Generation
+# Ore 生成
 
-Due to Minecraft's worldgen limitations (1), GTCEu's ore vein generation does not use the native worldgen feature system.  
-Instead, we have our own system of generating ore veins separately from the actual ore placement,
-so that ores are only ever placed for the currently generating chunk.  
-This page roughly describes the process of generating, caching and placing ores.
+由于 Minecraft 的 worldgen 限制 (1)，GTCEu 的 ore vein 生成没有使用原生 worldgen feature 系统。
+相反，我们使用自己的系统，将 ore vein 的生成与实际 ore 放置分离，确保 ore 只会被放置到当前正在生成的 chunk 中。
+本页大致说明 ore 的生成、缓存和放置流程。
 { .annotate }
 
-1. In Minecraft, worldgen features are only able to generate in a 3x3 chunk area, centered on the feature's origin chunk.  
-   Because GTCEu introduces veins that may be larger than that (and have a random offset additionally),
-   the ore generation would exceed the allowed area in certain situations, causing the server thread to freeze/deadlock.
+1. 在 Minecraft 中，worldgen feature 只能在以 feature origin chunk 为中心的 3x3 chunk 区域内生成。
+   由于 GTCEu 引入的 vein 可能比这个范围更大，并且还会额外带有 random offset，ore 生成在某些情况下会超出允许区域，导致 server thread 卡死或死锁。
 
 
-The generation can be (roughly) split up into three steps:
+生成流程大致可以分为三个步骤：
 
-- Vein Generation
-- Generated Vein Caching
-- Ore Placement (during chunk generation)
+- Vein 生成
+- 已生成 vein 缓存
+- Ore 放置（chunk 生成期间）
 
-This document will cover these steps from the bottom up, starting at the chunk generation mixin (`ChunkGeneratorMixin.gtceu$applyBiomeDecoration()`).
-
-
-## Chunk Generation & Ore Placement
-
-The `ChunkGeneratorMixin` holds a reference to the `OrePlacer` (not to be confused with `OreBlockPlacer`) - which is used to place the
-generated veins' blocks into the world, limited to the currently generating chunk.
+本文会自底向上介绍这些步骤，从 chunk 生成 mixin（`ChunkGeneratorMixin.gtceu$applyBiomeDecoration()`）开始。
 
 
-## Generated Vein Caching
+## Chunk 生成与 Ore 放置
 
-When trying to generate a chunk, the `OrePlacer` will query the `OreGenCache` for a list of veins surrounding the current chunk.
-
-The radius for querying the surrounding area is determined by the `oreVeinRandomOffset` config option, as well as the largest registered vein size.  
-It is therefore automatically compatible with any additional (or changed default) veins registered through either KubeJS, or by an addon.
-
-Of course, the ore gen cache can only hold a limited amount of generated veins at once (see the `oreGenerationChunkCacheSize` config option).
+`ChunkGeneratorMixin` 持有对 `OrePlacer` 的引用。不要将它与 `OreBlockPlacer` 混淆；`OrePlacer` 用于将已生成 vein 的方块放入世界，并且会限制在当前正在生成的 chunk 内。
 
 
-### Randomness
+## 已生成 Vein 缓存
 
-Because veins may be removed from the cache before all of their chunks are generated, it is **extremely important** that the ore generation is fully deterministic!  
+尝试生成 chunk 时，`OrePlacer` 会向 `OreGenCache` 查询当前 chunk 周围的 vein 列表。
 
-This ensures that we do not generate ore veins that are either cut off, or have a mismatch in shape or type across chunk borders.  
-It also automatically applies across game restarts, keeping continuity even then.
+周围区域的查询半径由 `oreVeinRandomOffset` 配置项和已注册的最大 vein size 共同决定。
+因此，无论额外 vein 是通过 KubeJS 还是 addon 注册，或默认 vein 被修改，它都会自动兼容。
 
-The only situation where ore veins will differ across chunk borders (other than certain internal changes to the generation, of course), is after
-the relevant config options have been changed.
-
-In our case, that means that the `RandomSource`s used for world generation must be completely new for generating each vein, so that its type, shape, offset,
-contents, etc. are not influenced by previous queries to the random generator.  
-It is completely and exclusively seeded from the world's seed, as well as the chunk position.
-
-For the random ore vein offset, we also include the vein's world generation layer in the random seed.  
-This may need to include an additional component in the future, in case we add support for multiple veins per chunk and worldgen-layer.
+当然，ore gen cache 一次只能保存有限数量的已生成 vein，参见 `oreGenerationChunkCacheSize` 配置项。
 
 
-## Vein Generation
+### 随机性
 
-Whenever the `OreGenCache` cannot find a vein for a specific chunk, it will request a list of that chunk's `GeneratedVein`s from the `OreGenerator`.
+由于 vein 可能在其所有 chunk 生成完成前就从缓存中移除，ore 生成必须保持**完全确定性**，这一点极其重要。
 
-The `OreGenerator` is responsible for determining a vein's type, its origin (influenced by the `oreVeinRandomOffset` config option), as well as providing the appropriate
-randomness source to the used implementation of `VeinGenerator`.
+这可以确保不会生成被截断的 ore vein，也不会在 chunk 边界两侧出现形状或类型不匹配的情况。
+它也会自动跨游戏重启生效，即使重启后也能保持连续性。
 
-!!! info "Vein Origin vs Center"
-    
-    A vein's origin is always the chunk it originates in, regardless of the random offset.  
-    The actual center of a vein **is** influenced by the random offset and might not be located at the chunk center - or in the same chunk at all.
+除了某些内部生成逻辑变更外，ore vein 只会在相关配置项发生变化后，才可能在 chunk 边界两侧产生差异。
 
-Once the relevant `VeinGenerator` implementation has finished generating the vein's shape, it will be cached per chunk, inside a `GeneratedVein`.
+在我们的实现中，这意味着用于 world generation 的 `RandomSource` 必须在生成每条 vein 时都是全新的，确保 vein 的类型、形状、offset、内容等不会受到之前 random generator 查询的影响。
+它只由世界 seed 和 chunk position 完全决定。
 
-
-### `VeinGenerator` and `OreBlockPlacer`
-
-A vein generator is what will generate the actual shape of the vein.
-
-It should, however, never try to place any blocks directly. Instead, its `generate()` method will only return a map of `OreBlockPlacer`s by block position, which
-are responsible for actually placing the blocks in the world, as soon as a chunk generates.  
-Each `OreBlockPlacer` should only place either a single block, or no block.
+对于随机 ore vein offset，我们还会将 vein 的 world generation layer 纳入 random seed。
+如果未来支持每个 chunk 和 worldgen-layer 生成多条 vein，这里可能需要额外加入一个组成部分。
 
 
-### Using Randomness in `OreBlockPlacer`s
+## Vein 生成
 
-In certain situations, the process of actually placing the block requires a randomness source (e.g. to determine the chance of its block being placed).
+当 `OreGenCache` 找不到某个特定 chunk 的 vein 时，它会向 `OreGenerator` 请求该 chunk 的 `GeneratedVein` 列表。
 
-To keep the ore generation fully deterministic in this case as well, it is recommended to generate a new seed using the supplied `RandomSource` at the time of
-vein shape generation. This seed should be passed into the `OreBlockPlacer` returned for the each block position.
+`OreGenerator` 负责决定 vein 的类型、origin（受 `oreVeinRandomOffset` 配置项影响），并向使用的 `VeinGenerator` 实现提供合适的 randomness source。
 
-Inside the `OreBlockPlacer`, you can then simply create a new `RandomSource` using the precomputed seed.
+!!! info "Vein Origin 与 Center"
 
-??? example "Using Randomness in an OreBlockPlacer"
+    vein 的 origin 始终是它来源的 chunk，与 random offset 无关。
+    vein 的实际 center **会**受到 random offset 影响，可能不在 chunk 中心，甚至可能不在同一个 chunk 内。
+
+相关 `VeinGenerator` 实现完成 vein 形状生成后，结果会按 chunk 缓存在 `GeneratedVein` 中。
+
+
+### `VeinGenerator` 与 `OreBlockPlacer`
+
+vein generator 负责生成 vein 的实际形状。
+
+但是，它不应尝试直接放置任何方块。相反，它的 `generate()` 方法只会返回一张以 block position 为 key、以 `OreBlockPlacer` 为 value 的 map；这些 `OreBlockPlacer` 会在 chunk 生成时负责实际向世界放置方块。
+每个 `OreBlockPlacer` 应只放置一个方块，或者不放置方块。
+
+
+### 在 `OreBlockPlacer` 中使用随机性
+
+某些情况下，实际放置方块的过程需要 randomness source，例如用于决定某个方块是否会被放置。
+
+为了在这种情况下也保持 ore 生成完全确定，建议在 vein 形状生成时使用传入的 `RandomSource` 生成一个新 seed。这个 seed 应传入为每个 block position 返回的 `OreBlockPlacer`。
+
+在 `OreBlockPlacer` 内部，只需使用预先计算的 seed 创建新的 `RandomSource`。
+
+??? example "在 OreBlockPlacer 中使用随机性"
 
     ```java
     public class MyVeinGenerator {

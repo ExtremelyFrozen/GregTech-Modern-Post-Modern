@@ -1,7 +1,7 @@
 nav:
-  - index.md
-  - Glossary.md
-  - External-Resources.md
-  - FAQ.md
-  - General-Topics
+  - 开发首页: index.md
+  - 术语表: Glossary.md
+  - 外部资源: External-Resources.md
+  - 常见问题: FAQ.md
+  - 通用主题: General-Topics
   - ...

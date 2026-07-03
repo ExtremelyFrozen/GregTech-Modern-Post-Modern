@@ -1,6 +1,6 @@
 ---
 icon: "material/information-box"
-title: "Development Glossary"
+title: "开发术语表"
 search:
     boost: 100
 ---
@@ -15,48 +15,45 @@ search:
 -->
 
 
-# :material-information-box: Development Glossary
+# :material-information-box: 开发术语表
 
 !!! info
-    This is an overview of technical terms that are commonly used in this documentation.  
-    If you're not sure what something means (or how it applies to the current context), please refer to this page.
+    这里概述了本文档中常用的技术术语。
+    如果你不确定某个术语的含义，或者不确定它在当前上下文中的作用，请参考本页。
 
 
-## Client Side
+## Client Side（客户端侧） { #client-side }
 
-The part of the game running on a player's computer.
+运行在玩家电脑上的游戏部分。
 
-It always hosts the [Remote Side](#remote-side).  
-In singleplayer mode, the [Server Side](#server-side) is hosted on the client as well. In multiplayer mode, the client
-connects to a dedicated server instead.
-
-
-## Remote Side
-
-!!! info inline end "See also: [Server Side](#server-side)"
-
-The remote side is the part of the game that is **connected to** the game's server side.  
-It always runs on the [client](#client-side).
-
-This side may not have the same amount of data available to it as the server does (see [SyncData](../Development/SyncData/index.md) if you
-need to automatically synchronize certain data to the remote side).
-It also does not perform any tick update logic.
+它始终承载 [Remote Side](#remote-side)。
+在单人模式中，[Server Side](#server-side) 也托管在 client 上；在多人模式中，client 会连接到专用服务器。
 
 
-## Server Side
+## Remote Side（远程侧） { #remote-side }
 
-!!! info inline end "See also: [Remote Side](#remote-side)"
+!!! info inline end "另请参阅：[Server Side](#server-side)"
 
-The server side is what one or more players connect to.  
-In singleplayer mode, it runs on the [client](#client-side). In multiplayer mode, it runs on a dedicated server.
+Remote Side 是游戏中**连接到** Server Side 的部分。
+它始终运行在 [client](#client-side) 上。
 
-This side usually has all of the world's data available to it and runs tick update logic.  
-This is therefore, where [TPS](#tps) impact becomes relevant. In general, use 
+这一侧可用的数据量可能少于 server。如果需要自动将某些数据同步到 Remote Side，请参阅 [Data Sync/Save 系统](Data-Sync-System/index.md)。
+它也不会执行任何 tick 更新逻辑。
 
 
-## TPS
+## Server Side（服务器侧） { #server-side }
 
-Short for "ticks per second". Should stay at exactly 20.
+!!! info inline end "另请参阅：[Remote Side](#remote-side)"
 
-See [Tick Updates](General-Topics/Tick-Updates.md) and [Optimization](General-Topics/Optimization.md) for techniques
-on how to reduce performance impact.
+Server Side 是一个或多个玩家连接到的游戏部分。
+在单人模式中，它运行在 [client](#client-side) 上；在多人模式中，它运行在专用服务器上。
+
+这一侧通常拥有完整的世界数据，并负责执行 tick 更新逻辑。
+因此，[TPS](#tps) 影响通常只在这一侧变得相关。
+
+
+## TPS（每秒 tick 数） { #tps }
+
+即 "ticks per second" 的缩写，理想情况下应保持为 20。
+
+有关降低性能影响的做法，请参阅 [Tick Updates](General-Topics/Tick-Updates.md) 和 [Optimization](General-Topics/Optimization.md)。
