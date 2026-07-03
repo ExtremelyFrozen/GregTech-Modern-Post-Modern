@@ -1,18 +1,18 @@
 ---
-title: "Crafting Components"
+title: "合成组件"
 ---
 
-# Crafting Components
+# 合成组件
 
-Crafting Components are a way to organize and simplify the various similar recipes that GregTech generates. For example: writing out the recipes for all tiers of an alloy smelter can be done iteratively rather than one by one.
+Crafting Components 是一种组织和简化 GregTech 生成的各类相似配方的方式。例如：所有 tier 的合金炉配方可以迭代写出，而不必逐个手写。
 
-Crafting Components are a map pairing a Voltage tier (the tier number) to a value. The value can be a `MaterialEntry`, `ItemStack`, or `TagPrefix<Item>`.
+Crafting Components 是一个 map，将 Voltage tier（tier number）映射到一个值。该值可以是 `MaterialEntry`、`ItemStack` 或 `TagPrefix<Item>`。
 
-## Changing a single entry
+## 修改单个条目
 
-With KubeJS it is possible to modify the predefined components of existing GTCEu Modern machine crafting recipes.
-You can replace singular entries, or do bulk modification of components.
--1 is defined as a fallback value if no other entries exist.
+使用 KubeJS 可以修改现有 GTCEu Modern 机器合成配方中预定义的 components。
+你可以替换单个条目，也可以批量修改 components。
+如果没有其他条目存在，-1 会作为 fallback 值。
 
 ```js title="startup/modification.js"
 const Map = Java.loadClass("java.util.Map")
@@ -34,17 +34,17 @@ GTCEuStartupEvents.craftingComponents(event => {
     event.removeTier("sensor", 3) // (5)
 })
 ```
-1. Replaces the MV circuit tag in all GT machine crafting recipes with a single block of `minecraft:dirt`.
-2. Modifies all pumps in GT machine crafting recipes by replacing the pump with a robot arm.
-3. Replaces the EV casing with the `#minecraft:logs` tag. note the lack of `#` at the beginning of the tag!
-4. Adds a new entry to the plate component for UEV with prefix `plate` and material `gtceu:infinity`.
-5. Removes the 3rd offset entry `(HV Tier)` of the sensor crafting component, will default to the fallback `(LV Sensor)`
+1. 将所有 GT 机器合成配方中的 MV circuit tag 替换为单个 `minecraft:dirt` 方块。
+2. 将 GT 机器合成配方中的所有 pumps 替换为 robot arm。
+3. 将 EV casing 替换为 `#minecraft:logs` 标签。注意标签开头没有 `#`！
+4. 为 plate component 的 UEV 添加一个新条目，prefix 为 `plate`，material 为 `gtceu:infinity`。
+5. 移除 sensor crafting component 的第 3 个偏移条目 `(HV Tier)`，会回退到 fallback `(LV Sensor)`。
 
 
-## Creating new components
+## 创建新 components
 
-It's also possible to create new crafting components with KubeJS.
-The crafting component is constructed with a id and a fallback value. You can add entries by chaining `.add(tier, value)` methods after your construction.
+也可以使用 KubeJS 创建新的 crafting components。
+crafting component 通过一个 id 和一个 fallback 值构造。构造后可以链式调用 `.add(tier, value)` 方法添加条目。
 
 ```js title="creation.js"
 const Map = Java.loadClass("java.util.Map")
@@ -87,13 +87,13 @@ GTCEuServerEvents.craftingComponents(event => {
 })
 ```
 
-1. Creates a new crafting component with item stack entries.
-2. Creates a new crafting component with item tag entries. note the lack of `#` at the beginning of the tag!
-3. Creates a new crafting component with UnificationEntry entries.
+1. 创建带 item stack 条目的新 crafting component。
+2. 创建带 item tag 条目的新 crafting component。注意标签开头没有 `#`！
+3. 创建带 UnificationEntry 条目的新 crafting component。
 
-## Retrieving existing crafting components
+## 获取现有 crafting components
 
-All `remove`, `modify*`, and `setFallback*` methods use a Crafting Component as its first argument, you can supply that argument with just a string matching the id of the crafting component
+所有 `remove`、`modify*` 和 `setFallback*` 方法都会将 Crafting Component 作为第一个参数；你可以只提供匹配该 crafting component id 的字符串作为参数。
 
 ```js title="modify.js"
 
@@ -104,10 +104,10 @@ GTCEuServerEvents.craftingComponents(event => {
 })
 ```
 
-1. Finds the crafting component with id `robot_arm` and removes the entry for `EV` tier
-2. Finds the crafting component with id `pump` and removes the entry for `EV, IV & LuV` tiers
+1. 找到 id 为 `robot_arm` 的 crafting component，并移除 `EV` tier 的条目。
+2. 找到 id 为 `pump` 的 crafting component，并移除 `EV, IV & LuV` tiers 的条目。
 
-### Builtin Crafting Components
+### 内置 Crafting Components
 
 - `CIRCUIT 'circuit'`
 - `BETTER_CIRCUIT 'better_circuit'`

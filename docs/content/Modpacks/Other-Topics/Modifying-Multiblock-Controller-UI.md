@@ -1,12 +1,12 @@
 ---
-title: Modifying Multiblock Controller UI
+title: 修改 Multiblock Controller UI
 ---
-# Modifying Multiblock Controller UI
+# 修改 Multiblock Controller UI
 
-## Adding text component  
-To add text component to the UI, you need to use `.additionalDisplay` in the multiblock registration builder.  
-`.additionalDisplay` takes a lambda that takes 2 arguments: the `IMultiController` machine that the components are being added to, and the  `List<Component>` of existing components.  
-An example of using it would be:  
+## 添加 text component
+要向 UI 添加 text component，需要在 multiblock registration builder 中使用 `.additionalDisplay`。
+`.additionalDisplay` 接收一个 lambda，该 lambda 接收 2 个参数：正在被添加 component 的 `IMultiController` machine，以及现有 components 的 `List<Component>`。
+使用示例如下：
 
 ```js title="ui_modified_multiblock.js"
 GTCEuStartupEvents.registry('gtceu:machine', event => {
@@ -37,6 +37,6 @@ GTCEuStartupEvents.registry('gtceu:machine', event => {
 });
 ```
 
-1. Check if multiblock is formed
-2. To add new line - Use `components.add(Component)`.
-3. Using `.additionalDisplay()` to add text component.
+1. 检查 multiblock 是否已 formed。
+2. 要添加新行，请使用 `components.add(Component)`。
+3. 使用 `.additionalDisplay()` 添加 text component。

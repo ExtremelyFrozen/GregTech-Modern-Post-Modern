@@ -1,15 +1,15 @@
 ---
-title: "Customizing Veins"
+title: "自定义 Ore Veins"
 ---
 
 
-# Creating and Modifying Ore Veins
+# 创建和修改 Ore Veins
 
-You can create your own custom ore veins using KJS.  
-It is also possible to modify or even delete existing ones.
+你可以使用 KJS 创建自己的自定义 Ore Veins。
+也可以修改甚至删除已有矿脉。
 
 
-## Creating New Veins
+## 创建新矿脉
 
 ```js title="server_scripts/custom_ore_vein.js"
 GTCEuServerEvents.oreVeins(event => {
@@ -40,24 +40,24 @@ GTCEuServerEvents.oreVeins(event => {
 })
 ```
 
-1. An ore vein's weight determines the chance of it being chosen over another vein type, to be generated at a possible vein location.  
-   The higher the weight, the more frequently an ore vein type will be generated.
-2. Cluster size determines the diameter of an ore vein.
-3. The density determines how frequently ores occur inside the vein.
-4. Determines the chance of an ore block being skipped when it is exposed to air. Must be between `0` and `1`.  
-   **Default:** `0`
-5. See [Layers & Dimensions](./04-Layers-and-Dimensions.md)
-6. Limits vein generation to the supplied dimensions. Note that these vein's layer must be applicable for them.  
-   **Default:** All dimensions of the vein's layer.  
+1. Ore Vein 的 weight 决定在一个可能的矿脉位置上，相比其他矿脉类型它被选中生成的概率。
+   weight 越高，该 Ore Vein 类型生成得越频繁。
+2. Cluster size 决定 Ore Vein 的直径。
+3. Density 决定矿脉内部矿石出现的频率。
+4. 决定矿石方块暴露在空气中时被跳过的概率。必须介于 `0` 和 `1` 之间。
+   **默认值：** `0`
+5. 参见 [Layers & Dimensions](./04-Layers-and-Dimensions.md)
+6. 将矿脉生成限制到提供的 Dimensions。注意这些矿脉的 layer 必须适用于这些 Dimensions。
+   **默认值：** 该矿脉 layer 的所有 Dimensions。
    <br>
-   _Accepts any number of parameters._
-7. Determines the biome (or biome tag) the vein can generate in.  
-   **Default:** If no biome is explicitly set, the vein will generate in any biome.  
+   _接受任意数量的参数。_
+7. 决定矿脉可以在哪些 Biome（或 Biome tag）中生成。
+   **默认值：** 如果没有显式设置 Biome，矿脉会在任意 Biome 中生成。
    <br>
-   _Accepts either a single biome tag (prefixed with `#`), or any number of individual biomes._
-8. Uniformly distributed across the height range
-9. Biased towards the center of the height range
-10. You can also use Minecraft's `HeightRangePlacement` directly, instead of the above shorthand versions:  
+   _接受单个 Biome tag（以 `#` 为前缀），或任意数量的单独 Biomes。_
+8. 在高度范围内均匀分布
+9. 偏向高度范围中心
+10. 也可以直接使用 Minecraft 的 `HeightRangePlacement`，而不是上面的简写版本：
     ```js
     vein.heightRange(
         height: {
@@ -70,12 +70,12 @@ GTCEuServerEvents.oreVeins(event => {
             }
         })
     ```
-11. See [Generators](./02-Generators.md#vein-generators) for a list of available generators.
-12. See [Generators](./02-Generators.md#indicator-generators) for a list of available generators.
+11. 可用矿脉生成器列表见 [矿脉生成器](./02-Generators.md#vein-generators)。
+12. 可用指示物生成器列表见 [指示物生成器](./02-Generators.md#indicator-generators)。
 
 
-??? example "Creating a new biome tag for your ore vein"
-    In case you want to limit your ore vein to multiple biomes that don't have a common tag yet, you can either specify all biomes manually, or you can create a biome tag:
+??? example "为 Ore Vein 创建新的 Biome tag"
+    如果想把 Ore Vein 限制到多个尚无公共 tag 的 Biomes，可以手动指定所有 Biomes，也可以创建一个 Biome tag：
 
     ```js title="server_scripts/biome_tags.js"
     ServerEvents.tags('biome', event => {
@@ -84,21 +84,21 @@ GTCEuServerEvents.oreVeins(event => {
     })
     ```
 
-    You can then use your biome tag by simply calling `vein.biomes('#kubejs:my_biome_tag')` in your vein definition.
+    之后只需在矿脉定义中调用 `vein.biomes('#kubejs:my_biome_tag')` 即可使用你的 Biome tag。
 
 
-## Removing an Existing Ore Vein
+## 移除现有 Ore Vein
 
 ```js title="server_scripts/remove_ore_vein.js"
 GTCEuServerEvents.oreVeins(event => {
-     event.remove("gtceu:magnetite_vein_ow") 
+     event.remove("gtceu:magnetite_vein_ow")
 })
 ```
 
 
-??? example "Removing all ore veins"
-    If you want to remove **all** predefined ore veins (for example if you want to completely change ore generation
-    in your modpack), you can use the following code:
+??? example "移除所有 Ore Veins"
+    如果想移除**所有**预定义 Ore Veins（例如你想在整合包中完全改变 Ore Generation），
+    可以使用以下代码：
 
     ```js
     GTCEuServerEvents.oreVeins(event => {
@@ -106,14 +106,14 @@ GTCEuServerEvents.oreVeins(event => {
     })
     ```
 
-    You can also filter the veins you want to remove:
+    也可以筛选要移除的矿脉：
 
     ```js
     event.removeAll((id, vein) => id.path != "magnetite_vein_ow")
     ```
 
 
-## Modifying Existing Veins
+## 修改现有矿脉
 
 ```js title="server_scripts/modify_ore_vein.js"
 GTCEuServerEvents.oreVeins(event => {
@@ -123,15 +123,15 @@ GTCEuServerEvents.oreVeins(event => {
 })
 ```
 
-The API for vein modifications is the same as for creating new veins.
+用于修改矿脉的 API 与创建新矿脉时相同。
 
 
-!!! warning "Moving veins to other dimensions"
-    When moving one of the default veins to another dimension, keep in mind that you also have to change their biome(s) accordingly.
+!!! warning "将矿脉移动到其他 Dimensions"
+    将默认矿脉之一移动到另一个 Dimension 时，请记得也要相应修改它们的 Biome(s)。
 
 
-??? example "Modifying ALL existing veins"
-    You can also modify all existing ore veins at once:
+??? example "修改所有现有矿脉"
+    你也可以一次修改所有现有 Ore Veins：
 
     ```js title="server_scripts/modify_all_veins.js"
     GTCEuServerEvents.oreVeins(event => {

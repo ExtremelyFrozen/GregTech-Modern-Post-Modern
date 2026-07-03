@@ -1,5 +1,5 @@
 ---
-title: "Ingredients"
+title: "配方原料"
 ---
 
-These pages contain information about custom ingredients to be used in your recipes.
+这些页面包含可在配方中使用的自定义 ingredients 信息。

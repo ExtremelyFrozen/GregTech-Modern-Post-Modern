@@ -1,12 +1,12 @@
 ---
-title: Material Flags
+title: "Material Flags（材料 Flag）"
 ---
 
 
-# Material Flags
+# Material Flags（材料 Flag）
 
-Using material flags, you can specify several properties of each material, which
-can influence how the material behaves, as well as which items are generated for it.
+使用 Material Flags 可以为每种 Material 指定若干属性，
+这些属性会影响该 Material 的行为，以及会为它生成哪些物品。
 
 === "Javascript"
     ```js
@@ -29,200 +29,200 @@ can influence how the material behaves, as well as which items are generated for
     ```
 
 
-# Generic Flags
+# 通用 Flags
 
 - `NO_UNIFICATION`
-  - Description: Add to material to disable automatic recipe generation for it fully. This flag is deprecated, please use DISABLE_MATERIAL_RECIPES instead.
+  - 说明：添加到 Material 后会完全禁用其自动配方生成。此 Flag 已弃用，请改用 `DISABLE_MATERIAL_RECIPES`。
 
 - `DISABLE_MATERIAL_RECIPES`
-  - Description: Add to material to disable automatic recipe generation for it fully. This replaces NO_UNIFICATION.
+  - 说明：添加到 Material 后会完全禁用其自动配方生成。它取代了 `NO_UNIFICATION`。
 
 - `DECOMPOSITION_BY_ELECTROLYZING`
-    - Description: Enables electrolyzer decomposition recipe generation Requires `.components(...)` to be set.
+    - 说明：启用电解机分解配方生成。需要设置 `.components(...)`。
 
 - `DECOMPOSITION_BY_CENTRIFUGING`
-    - Description: Enables centrifuge decomposition recipe generation. Requires `.components(...)` to be set.
+    - 说明：启用离心机分解配方生成。需要设置 `.components(...)`。
 
 - `DISABLE_DECOMPOSITION`
-    - Description: Disables decomposition recipe generation for this material.
+    - 说明：禁用此 Material 的分解配方生成。
 
 - `EXPLOSIVE`
-    - Description: Any material with this flag wont have implosion compression recipes, and it will give ash when you arc furnace recycle it instead of that material.
+    - 说明：带有此 Flag 的 Material 不会拥有内爆压缩配方，并且在电弧炉回收时会产出灰烬，而不是该 Material 本身。
 
 - `FLAMMABLE`
-    - Description: Adding this flag means you cant smelt that material and thus wont generate an ebf recipe/furnace recipe. Also disables implosion compressor recipes like `EXPLOSIVE` does.
+    - 说明：添加此 Flag 表示该 Material 不能被熔炼，因此不会生成 EBF 配方/熔炉配方。同时也会像 `EXPLOSIVE` 一样禁用内爆压缩机配方。
 
 - `STICKY`
-    - Description: Add to material if it is sticky. This changes the viscosity of the placed fluid. Only the oils and creosote have a placeable state by default.
+    - 说明：如果 Material 是黏性的，请添加此 Flag。它会改变已放置流体的黏度。默认只有油类和木馏油拥有可放置状态。
 
 - `PHOSPHORESCENT`
-    - Description: Adding this flag onto a material gives liquids a luminosity of 15, no matter the fluid state(liquid, gas, plasma). Otherwise they default to 10 for specifically liquid state.
+    - 说明：将此 Flag 添加到 Material 后，无论流体状态如何（液体、气体、等离子体），其流体亮度都会变为 15。否则，只有液态默认亮度为 10。
 
-# Dust Flags
+# Dust Flags（粉类 Flag） { #dust-flags }
 
-- `GENERATE_PLATE` 
-     - Description: Generates a plate and double plate for this material.
-     - Required Flags: `GENERATE_PLATE`.
-     - Required Properties: `PropertyKey.DUST`.
+- `GENERATE_PLATE`
+     - 说明：为此 Material 生成板和双重板。
+     - 必需 Flags：`GENERATE_PLATE`。
+     - 必需 Properties：`PropertyKey.DUST`。
 
-- `GENERATE_DENSE` 
-     - Description: Generates a dense plate for this material.
-     - Required Flags: `GENERATE_PLATE`.
-     - Required Properties: `PropertyKey.DUST`.
+- `GENERATE_DENSE`
+     - 说明：为此 Material 生成致密板。
+     - 必需 Flags：`GENERATE_PLATE`。
+     - 必需 Properties：`PropertyKey.DUST`。
 
 - `GENERATE_ROD`
-    - Description: Generates a rod for this material.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：为此 Material 生成杆。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `GENERATE_BOLT_SCREW`
-    - Description: Generates a bolt and screw for this material.
-    - Required Flags: `GENERATE_ROD`.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：为此 Material 生成螺栓和螺丝。
+    - 必需 Flags：`GENERATE_ROD`。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `GENERATE_FRAME`
-    - Description: Generates a frame for this material.
-    - Required Flags: `GENERATE_ROD`.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：为此 Material 生成框架。
+    - 必需 Flags：`GENERATE_ROD`。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `GENERATE_GEAR`
-    - Description: Generates a gear for this material.
-    - Required Flags: `GENERATE_PLATE`, `GENERATE_ROD`.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：为此 Material 生成齿轮。
+    - 必需 Flags：`GENERATE_PLATE`、`GENERATE_ROD`。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `GENERATE_LONG_ROD`
-    - Description: Generates a long rod for this material.
-    - Required Flags: `GENERATE_ROD`.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：为此 Material 生成长杆。
+    - 必需 Flags：`GENERATE_ROD`。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `FORCE_GENERATE_BLOCK`
-    - Description: Add this to a material to force generate a block.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：添加到 Material 后会强制生成方块。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `EXCLUDE_BLOCK_CRAFTING_RECIPES`
-    - Description: This will prevent material from creating Shapeless recipes for dust to block and vice versa. Also preventing extruding and alloy smelting recipes via `SHAPE_EXTRUDING`/`MOLD_BLOCK`.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：阻止 Material 创建粉到方块以及方块到粉的无序配方。同时也会阻止通过 `SHAPE_EXTRUDING`/`MOLD_BLOCK` 生成挤压和合金冶炼配方。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `EXCLUDE_PLATE_COMPRESSOR_RECIPE`
-    - Description: Add this to material if you want to disable the forge hammer plate recipe.
-    - Required Flags: `GENERATE_PLATE`.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：如果想禁用锻造锤制板配方，请添加到 Material。
+    - 必需 Flags：`GENERATE_PLATE`。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `EXCLUDE_BLOCK_CRAFTING_BY_HAND_RECIPES`
-    - Description: This will prevent material from creating Shapeless recipes for dust to block and vice versa.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：阻止 Material 创建粉到方块以及方块到粉的无序配方。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `MORTAR_GRINDABLE`
-    - Description: Adds a mortar grinding recipe to this material.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：为此 Material 添加研钵研磨配方。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `NO_WORKING`
-    - Description: Add to material if it cannot be worked by any other means, than smashing or smelting. This is used for coated materials.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：如果该 Material 除砸碎或熔炼外不能通过其他方式加工，请添加此 Flag。这用于带涂层的 Material。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `NO_SMASHING`
-    - Description: Add to material if it cannot be used for regular metal working techniques since it is not possible to bend it.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：如果 Material 无法弯折，因此不能用于常规金属加工技术，请添加此 Flag。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `NO_SMELTING`
-    - Description: Add to material if it's impossible to smelt it.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：如果无法熔炼此 Material，请添加此 Flag。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `NO_ORE_SMELTING`
-    - Description: Add to material if it's impossible to smelt it from an ore.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：如果无法从矿石熔炼得到此 Material，请添加此 Flag。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `NO_ORE_PROCESSING_TAB`
-    - Description: Add to a material to disable creating an ore processing tab.
-    - Required Properties: `PropertyKey.ORE`.
+    - 说明：添加到 Material 后会禁用矿石处理标签页的创建。
+    - 必需 Properties：`PropertyKey.ORE`。
 
 - `BLAST_FURNACE_CALCITE_DOUBLE`
-    - Description: Add this to your material if you want to have its ore calcite heated in a Blast Furnace for double output. Already listed are: Iron, Pyrite, PigIron, WroughtIron.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：如果想让此 Material 的矿石在 Blast Furnace 中配合方解石加热并获得双倍产出，请添加此 Flag。已列出的 Material 包括：Iron、Pyrite、PigIron、WroughtIron。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `BLAST_FURNACE_CALCITE_TRIPLE`
-    - Description: Add this to your material if you want to have its ore calcite heated in a Blast Furnace for triple output.
-    - Required Properties: `PropertyKey.DUST`.
+    - 说明：如果想让此 Material 的矿石在 Blast Furnace 中配合方解石加热并获得三倍产出，请添加此 Flag。
+    - 必需 Properties：`PropertyKey.DUST`。
 
 - `DISABLE_ALLOY_BLAST`
-    - Description: Use to disable alloy blast recipes from generating.
-    - Required Properties: `PropertyKey.BLAST`, `PropertyKey.FLUID`.
+    - 说明：用于禁用合金高炉配方生成。
+    - 必需 Properties：`PropertyKey.BLAST`、`PropertyKey.FLUID`。
 
 - `DISABLE_ALLOY_PROPERTY`
-    - Description: Use to disable everything related to alloy blasting.
-    - Required Flags: `DISABLE_ALLOY_BLAST`.
-    - Required Properties: `PropertyKey.BLAST`, `PropertyKey.FLUID`.
+    - 说明：用于禁用与合金高炉处理相关的一切内容。
+    - 必需 Flags：`DISABLE_ALLOY_BLAST`。
+    - 必需 Properties：`PropertyKey.BLAST`、`PropertyKey.FLUID`。
 
-# Fluid Flags
+# Fluid Flags（流体 Flag） { #fluid-flags }
 
 - `SOLDER_MATERIAL`
-    - Description: Allows this material to be used in place of soldering alloy.
-    - Required Properties: `PropertyKey.FLUID`.
+    - 说明：允许此 Material 代替焊料合金使用。
+    - 必需 Properties：`PropertyKey.FLUID`。
 
 - `SOLDER_MATERIAL_BAD`
-    - Description: Not yet implemented. Supposed to set this material as a bad soldering material.
-    - Required Properties: `PropertyKey.FLUID`.
+    - 说明：尚未实现。预期用于将此 Material 设置为较差的焊料材料。
+    - 必需 Properties：`PropertyKey.FLUID`。
 
 - `SOLDER_MATERIAL_GOOD`
-    - Description: Not yet implemented. Supposed to set this material as a good soldering material.
-    - Required Properties: `PropertyKey.FLUID`.
+    - 说明：尚未实现。预期用于将此 Material 设置为优良的焊料材料。
+    - 必需 Properties：`PropertyKey.FLUID`。
 
-# Ingot Flags
+# Ingot Flags（锭 Flag） { #ingot-flags }
 
 - `GENERATE_FOIL`
-    - Description: Generates a foil for this material.
-    - Required Flags: `GENERATE_PLATE`.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成箔。
+    - 必需 Flags：`GENERATE_PLATE`。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 - `GENERATE_RING`
-    - Description: Generates a ring for this material.
-    - Required Flags: `GENERATE_ROD`.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成环。
+    - 必需 Flags：`GENERATE_ROD`。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 - `GENERATE_SPRING`
-    - Description: Generates a spring for this material.
-    - Required Flags: `GENERATE_LONG_ROD`.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成弹簧。
+    - 必需 Flags：`GENERATE_LONG_ROD`。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 - `GENERATE_SPRING_SMALL`
-    - Description: Generates a small spring for this material.
-    - Required Flags: `GENERATE_ROD`.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成小弹簧。
+    - 必需 Flags：`GENERATE_ROD`。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 - `GENERATE_SMALL_GEAR`
-    - Description: Generates a small gear for this material.
-    - Required Flags: `GENERATE_PLATE`, `GENERATE_ROD`.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成小齿轮。
+    - 必需 Flags：`GENERATE_PLATE`、`GENERATE_ROD`。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 -   `GENERATE_FINE_WIRE`
-    - Description: Generates all wires for this material.
-    - Required Flags: `GENERATE_FOIL`.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成所有线材。
+    - 必需 Flags：`GENERATE_FOIL`。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 - `GENERATE_ROTOR`
-    - Description: Generates a rotor for this material.
-    - Required Flags: `GENERATE_BOLT_SCREW`, `GENERATE_RING, GENERATE_PLATE`.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成转子。
+    - 必需 Flags：`GENERATE_BOLT_SCREW`、`GENERATE_RING, GENERATE_PLATE`。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 - `GENERATE_ROUND`
-    - Description: Generates a round for this material.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：为此 Material 生成圆片。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
 - `IS_MAGNETIC`
-    - Description: Add this to your Material if it is a magnetized form of another Material. When this flag is on a Material, it macerates into the non-magnetic version of said Material, which is then used for certain crafting recipes.
-    - Required Properties: `PropertyKey.INGOT`.
+    - 说明：如果此 Material 是另一种 Material 的磁化形态，请添加此 Flag。当 Material 拥有此 Flag 时，研磨机会将它研磨成对应的非磁性版本，后者会用于某些合成配方。
+    - 必需 Properties：`PropertyKey.INGOT`。
 
-# Gem Flags
+# Gem Flags（宝石 Flag） { #gem-flags }
 
 - `CRYSTALLIZABLE`
-    - Description: If this material can be crystallized (turned back into gem by autoclave).
-    - Required Properties: `PropertyKey.GEM`.
+    - 说明：此 Material 是否可以结晶（通过高压釜重新转化为宝石）。
+    - 必需 Properties：`PropertyKey.GEM`。
 
 - `GENERATE_LENS`
-    - Description: Generates a lens for this material.
-    - Required Flags: `GENERATE_PLATE`.
-    - Required Properties: `PropertyKey.GEM`.
+    - 说明：为此 Material 生成透镜。
+    - 必需 Flags：`GENERATE_PLATE`。
+    - 必需 Properties：`PropertyKey.GEM`。
 
-# Ore Flags
+# Ore Flags（矿石 Flag） { #ore-flags }
 - `HIGH_SIFTER_OUTPUT`
-    - Description: Boosts sifter output of the gem ore for the material.
-    - Required Properties: `PropertyKey.GEM`, `PropertyKey.ORE`.
+    - 说明：提高该 Material 的宝石矿石在筛选机中的产出。
+    - 必需 Properties：`PropertyKey.GEM`、`PropertyKey.ORE`。

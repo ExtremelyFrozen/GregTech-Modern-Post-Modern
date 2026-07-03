@@ -1,13 +1,13 @@
 ---
-title: Element Creation
+title: Element 创建
 ---
 
 
-## Element Creation
+## Element 创建
 !!! Note
-    You can add only elements that are not yet present on the periodic table.
-    For those elements, see GTElements.
-Elements are the base of GT materials. Registering an element WILL NOT add any items.
+    你只能添加元素周期表中尚不存在的 elements。
+    对于这些 elements，请参见 GTElements。
+Elements 是 GT materials 的基础。注册 element **不会**添加任何物品。
 
 ```js
 GTCEuStartupEvents.registry('gtceu:element', event => {
@@ -21,12 +21,12 @@ GTCEuStartupEvents.registry('gtceu:element', event => {
 })
 ```
 
-1.  `.create(String name)` ->  The element name.
-2.  `.protons(int protons)` -> Proton Count. Use `-1` if it is an element that will not get a material.
-3.  `.neutrons(int neutrons)` -> Neutron Count. Use `-1` if it is an element that will not get a material
-4.  `.halfLifeSeconds(int seconds)` -> Half Life Decay in Seconds. After N seconds, half of the material will have decayed. Use `-1` if your element doesn't decay.
-5.  `.decayTo(Material material)` -> Material to decay to. Use `null` if your element doesn't decay.
-6.  `.symbol(String symbol)` -> Atomic Symbol, which will be displayed as in chemical formulas.
-7.  `.isIsotope(boolean isotope)` -> Whether the element is an isotope, e.g. Uranium 235 and Uranium 238.
+1.  `.create(String name)` -> element 名称。
+2.  `.protons(int protons)` -> proton 数量。如果它是不会获得 material 的 element，请使用 `-1`。
+3.  `.neutrons(int neutrons)` -> neutron 数量。如果它是不会获得 material 的 element，请使用 `-1`。
+4.  `.halfLifeSeconds(int seconds)` -> 半衰期秒数。N 秒后，一半 material 会衰变。如果 element 不会衰变，请使用 `-1`。
+5.  `.decayTo(Material material)` -> 衰变目标 material。如果 element 不会衰变，请使用 `null`。
+6.  `.symbol(String symbol)` -> 原子符号，会显示在化学式中。
+7.  `.isIsotope(boolean isotope)` -> 该 element 是否为 isotope，例如 Uranium 235 和 Uranium 238。
 
-When a material will be created from this element, the above properties will affect the auto-generated recipes.
+当从此 element 创建 material 时，上述属性会影响自动生成的配方。

@@ -1,11 +1,11 @@
 ---
-title: "Machines Duration Reduction"
+title: "机器耗时缩减"
 ---
 
 
-# Reducing Duration Of All Machine Recipes
+# 缩短所有机器配方的耗时
 
-## Reducing Script
+## 缩短耗时脚本
 
 ```js title="Reduce_Duration.js"
 ServerEvents.recipes(event => {
@@ -20,8 +20,8 @@ ServerEvents.recipes(event => {
 })
 ```
 
-1. A function to run code for every recipe in gregtech.
-2. Uses a try to avoid using recipes that don't have a duration, like crafting.
-3. Gets a variable of the duration current duration to change.
-4. Edits the recipes duration to a tenth of the old recipes duration.
-5. Catches the error if the recipe has no duration and logs it.
+1. 对 GregTech 中每个配方运行代码的函数。
+2. 使用 try 来跳过没有 duration 的配方，例如合成配方。
+3. 获取当前 duration，存入准备修改的变量。
+4. 将配方的 duration 修改为原 duration 的十分之一。
+5. 如果配方没有 duration，则捕获错误并记录日志。

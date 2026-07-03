@@ -1,16 +1,16 @@
 ---
-title: "Material Entry"
+title: "材料条目"
 ---
 
-# Material Entries
+# 材料条目
 
-With the abundance of items in GregTech, there comes an abundance of recipes to craft those items into. However, sometimes you make too many of a certain item and want to recover your lost materials. Luckily you can do that with GT's built in recycling system.
+GregTech 中有大量物品，也就会有大量用于合成这些物品的配方。不过，有时你会制作过多某种物品，并希望回收损失的材料。幸运的是，GT 内置的回收系统可以做到这一点。
 
-Any recipe that crafts an item, whether it be through a crafting table or a GT machine, can be specified to generate an additional recipe for decomposing that output item in the Macerator, Arc Furnace, and Extractor.
+任何会合成物品的配方，无论是通过 crafting table 还是 GT 机器，都可以指定为额外生成一个配方，用于在 Macerator、Arc Furnace 和 Extractor 中分解该输出物品。
 
 ## ItemMaterialInfo
 
-Before 7.0, the way to specify the decomposition information (called the `ItemMaterialInfo`) of an item was to strictly append it like the following:
+在 7.0 之前，指定物品分解信息（称为 `ItemMaterialInfo`）的方式是像下面这样严格追加：
 
 ```java title="ItemMaterialInfo.java"
 ChemicalHelper.registerMaterialInfo(GTBlocks.COIL_KANTHAL.get(),
@@ -20,21 +20,21 @@ ChemicalHelper.registerMaterialInfo(GTBlocks.COIL_KANTHAL.get(),
         ); // (1)
 
         VanillaRecipeHelper.addShapedRecipe(provider, true, // (2)
-             "casing_bronze_bricks", GTBlocks.CASING_BRONZE_BRICKS.asStack(ConfigHolder.INSTANCE.recipes.casingsPerCraft), 
-             "PhP", "PBP", "PwP", 
-             'P', new MaterialEntry(TagPrefix.plate, GTMaterials.Bronze), 
+             "casing_bronze_bricks", GTBlocks.CASING_BRONZE_BRICKS.asStack(ConfigHolder.INSTANCE.recipes.casingsPerCraft),
+             "PhP", "PBP", "PwP",
+             'P', new MaterialEntry(TagPrefix.plate, GTMaterials.Bronze),
              'B', new ItemStack(Blocks.BRICKS));
 
 ```
 
-1. `GTValues.M` denotes a single (1) mol amount of the material (usually 1 full dust's worth)
-2. The boolean denotes whether to generate a decomposition recipe for this recipe 
+1. `GTValues.M` 表示一个（1）mol 的材料量（通常等于 1 个完整粉的量）
+2. 该 boolean 表示是否为此配方生成分解配方
 
-In 7.0, a system was introduced to automatically detect the inputs of a recipe and use that information when generating a decomposition recipe for the resulting items.
+在 7.0 中，引入了一个系统，可以自动检测配方输入，并在为结果物品生成分解配方时使用这些信息。
 
-You can tell recipes to generate recycling information using either `.addMaterialInfo()` for item inputs ONLY or `addMaterialInfo(true, true)` for item and fluid inputs. You can also remove existing ItemMaterialInfo from an output item using `.removePreviousMaterialInfo()`, which will tell GT to not generate recycling recipes for the item output in that recipe.
+你可以用 `.addMaterialInfo()` 让配方只基于 item inputs 生成回收信息，也可以用 `addMaterialInfo(true, true)` 基于 item 和 fluid inputs 生成。还可以使用 `.removePreviousMaterialInfo()` 从输出物品上移除现有 ItemMaterialInfo，这会告诉 GT 不要为该配方的物品输出生成回收配方。
 
-In KubeJS, adding decomposition info to a recipe would look as follows:
+在 KubeJS 中，为配方添加分解信息如下：
 
 ```js title="itemDecomp.js"
 
@@ -56,13 +56,13 @@ ServerEvents.recipes(event => {
 
 ```
 
-1. Generates a recycling recipe turning an MV energy hatch into 17 iron dust.
+1. 生成一个将 MV energy hatch 研磨成 17 个 iron dust 的回收配方。
 !!! note inline end
-    This will overwrite the original recycling recipe if it exists.
+    如果原本存在回收配方，这会覆盖它。
 
-2. Buckets will no longer have recycling recipes
+2. Buckets 将不再拥有回收配方
 
-The ItemMaterialInfo system only takes into account the first item output a recipe has when appending material information to that item. However, it will automatically scale the decomposition rate based on the amount of the output stack.
+ItemMaterialInfo 系统在向物品追加材料信息时，只会考虑配方的第一个 item output。不过，它会根据输出 stack 的数量自动缩放分解比例。
 
 ```js title="Seven Dirt"
 ServerEvents.recipes(event => {
@@ -75,12 +75,12 @@ ServerEvents.recipes(event => {
 })
 ```
 
-1. Each dirt will turn into 3 iron dust when macerated
+1. 每个 dirt 被研磨时都会变成 3 个 iron dust
 
-## Crafting Table Recipes with Decomposition information
+## 带分解信息的 Crafting Table 配方
 
 ```js title="Crafting Table"
-ServerEvents.recipes(event => { 
+ServerEvents.recipes(event => {
     event.recipes.gtceu.shaped('4x kubejs:examplium', [
             " A ",
             "ABA",
@@ -89,11 +89,11 @@ ServerEvents.recipes(event => {
             A: "gtceu:steel_ingot",
             B: "minecraft:nether_star"
         })
-        .addMaterialInfo(true) // (1) 
+        .addMaterialInfo(true) // (1)
 })
 ```
 
-1. Each examplium will turn into 1 steel dust and 1 small nether star dust when macerated
+1. 每个 examplium 被研磨时都会变成 1 个 steel dust 和 1 个 small nether star dust
 
-??? tip "Decomposition recipes with Java"
-    You can still generate decomposition information for shapeless or shaped recipes with `VanillaRecipeHelper`, the argument was just renamed from `withUnificationData` to `setMaterialInfoData`
+??? tip "Java 中的分解配方"
+    你仍然可以用 `VanillaRecipeHelper` 为 shapeless 或 shaped recipes 生成分解信息，只是参数名从 `withUnificationData` 重命名为 `setMaterialInfoData`。

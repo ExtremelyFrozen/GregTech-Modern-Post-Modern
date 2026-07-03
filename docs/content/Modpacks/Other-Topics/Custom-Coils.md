@@ -1,9 +1,9 @@
 ---
-title: Custom Coils
+title: 自定义 Coil
 ---
 
 
-## Coil Creation
+## Coil 创建 { #standard-coils }
 
 ```js
 StartupEvents.registry('block', event => {
@@ -20,4 +20,4 @@ StartupEvents.registry('block', event => {
 })
 ```
 
-1. The Energy Discount must be at least 1.
+1. Energy Discount 必须至少为 1。

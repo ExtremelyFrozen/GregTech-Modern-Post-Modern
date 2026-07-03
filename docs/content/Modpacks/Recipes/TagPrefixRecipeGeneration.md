@@ -1,12 +1,12 @@
 ---
-title: "Tag Prefix Recipe Generation"
+title: "Tag Prefix 配方生成"
 ---
 
-# Generating recipes based on TagPrefixes
+# 基于 TagPrefixes 生成配方
 
-Most recipes that turn some form of a material into another form, like iron ingots to iron plates, or tin bolts into tin screws, are done through tag prefix based recipe generation.
+大多数将某种材料形态转换为另一种形态的配方，例如 iron ingots 到 iron plates，或 tin bolts 到 tin screws，都是通过基于 tag prefix 的配方生成完成的。
 
-Gregtech will iterate through all materials and all tag prefixes possible for that material to generate recipes. You can do the same in your addon by mirroring the following:
+Gregtech 会遍历所有 materials，以及该 material 可用的所有 tag prefixes 来生成配方。你也可以在自己的 addon 中参照以下方式执行同样逻辑：
 
 ```java title="TagPrefixRecipes.java"
 
@@ -19,7 +19,7 @@ public static void recipeAddition(Consumer<FinishedRecipe> consumer) {
         MaterialRecipeHandler.run(provider, material)
     }
 
-} 
+}
 
 ```
 
@@ -51,4 +51,4 @@ private static void processFrame(@NotNull Consumer<FinishedRecipe> provider, @No
     }
 
 ```
-1. Checks that the material has a valid item with that specific tag prefix and can generate the recipe.
+1. 检查该 material 是否拥有带特定 tag prefix 的有效物品，并且能生成对应配方。

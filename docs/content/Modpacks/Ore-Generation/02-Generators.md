@@ -1,14 +1,14 @@
 ---
-title: "Generators"
+title: "Generators（生成器）"
 ---
 
 
-# Vein & Indicator Generators
+# 矿脉与指示物生成器
 
-## Vein Generators
+## 矿脉生成器 { #vein-generators }
 
 
-### Layered Vein Generator
+### 分层矿脉生成器
 
 ```js
 vein.layeredVeinGenerator(generator => generator
@@ -22,7 +22,7 @@ vein.layeredVeinGenerator(generator => generator
 ```
 
 
-### Veined Vein Generator
+### 脉状矿脉生成器
 
 ```js
 vein.veinedVeinGenerator(generator => generator
@@ -38,27 +38,27 @@ vein.veinedVeinGenerator(generator => generator
 )
 ```
 
-1. **Param 1:** Either a material or block state  
-   **Param 2:** Generation weight
-2. **Param 1:** Either a material or block state  
-   **Param 2:** Generation weight
-3. Determines how much the veins become thinner towards their ends
-4. Determines how much the veins become thinner towards their ends
+1. **参数 1：** Material 或 block state
+   **参数 2：** 生成权重
+2. **参数 1：** Material 或 block state
+   **参数 2：** 生成权重
+3. 决定矿脉向末端变细的程度
+4. 决定矿脉向末端变细的程度
 
 
-!!! info "Noise Parameters"
-    The vein's noise parameters can be summarized as follows:
-    - `veininessThreshold` defines how "sharp" the edges of the vein are.  
-      Higher values result in more "blurry" edges.
-    - `maxRichnessThreshold` defines how many ores generate _inside_ the vein (must be `>= veininessThreshold`).  
-      A higher distance between the values results in less "filled" veins.
-    - `minRichness` and `maxRichness` allow you to limit the output of this calculation to a specific range.
+!!! info "噪声参数"
+    矿脉的噪声参数可以概括如下：
+    - `veininessThreshold` 定义矿脉边缘有多“锐利”。
+      值越高，边缘越“模糊”。
+    - `maxRichnessThreshold` 定义矿脉_内部_生成多少矿石（必须 `>= veininessThreshold`）。
+      两个值之间的距离越大，矿脉越不“充实”。
+    - `minRichness` 和 `maxRichness` 允许你将此计算的输出限制在特定范围内。
 
-    The output of this calculation determines the chance for each block in the vein to generate.
+    此计算的输出会决定矿脉中每个方块生成的概率。
 
 
-!!! info "Height Ranges"
-    The height range of the generator is automatically inferred if you use `heightRangeUniform()` or `heightRangeTriangle()` in the vein definition, _before setting the generator_. Otherwise you need to set the height range manually:
+!!! info "高度范围"
+    如果你在矿脉定义中使用 `heightRangeUniform()` 或 `heightRangeTriangle()`，并且是在_设置生成器之前_调用，生成器的高度范围会自动推断。否则需要手动设置高度范围：
 
     ```js
     generator.minYLevel(10)
@@ -66,7 +66,7 @@ vein.veinedVeinGenerator(generator => generator
     ```
 
 
-### Dike Vein Generator
+### 岩墙矿脉生成器
 
 ```js
 vein.dikeVeinGenerator(generator => generator
@@ -75,13 +75,13 @@ vein.dikeVeinGenerator(generator => generator
 )
 ```
 
-1. **Param 1:** Either a material or block state  
-   **Param 2:** Generation weight  
-   **Param 3:** Min Y Position  
-   **Param 4:** Max Y Position  
+1. **参数 1：** Material 或 block state
+   **参数 2：** 生成权重
+   **参数 3：** 最小 Y 坐标
+   **参数 4：** 最大 Y 坐标
 
-!!! info "Height Ranges"
-    The height range of the generator is automatically inferred if you use `heightRangeUniform()` or `heightRangeTriangle()` in the vein definition, _before setting the generator_. Otherwise you need to set the height range manually:
+!!! info "高度范围"
+    如果你在矿脉定义中使用 `heightRangeUniform()` 或 `heightRangeTriangle()`，并且是在_设置生成器之前_调用，生成器的高度范围会自动推断。否则需要手动设置高度范围：
 
     ```js
     generator.minYLevel(10)
@@ -89,28 +89,24 @@ vein.dikeVeinGenerator(generator => generator
     ```
 
 
-### Standard Vein Generator
-
-!!! failure "Not yet documented"
+### 标准矿脉生成器
 
 ```js
 vein.standardVeinGenerator(generator => /* ... */)
 ```
 
 
-### Geode Vein Generator
-
-!!! failure "Not yet documented"
+### 晶洞矿脉生成器
 
 ```js
 vein.geodeVeinGenerator(generator => /* ... */)
 ```
 
 
-## Indicator Generators
+## 指示物生成器 { #indicator-generators }
 
 
-### Surface Rock Indicators
+### 地表岩石指示物
 
 ```js
 vein.surfaceIndicatorGenerator(indicator => indicator
@@ -121,7 +117,7 @@ vein.surfaceIndicatorGenerator(indicator => indicator
 )
 ```
 
-1. Instead of a surface rock, you can also define any other block:  
+1. 除了 surface rock（地表岩石），也可以定义任意其他方块：
     ```js
     // Using a block:
     indicator.block(Block.getBlock('minecraft:oak_log'))
@@ -129,9 +125,9 @@ vein.surfaceIndicatorGenerator(indicator => indicator
     // Using a block state:
     indicator.state(Block.getBlock('minecraft:oak_log').defaultBlockState())
     ```
-2. Valid options:  
-   `surface` generates indicators on the world's surface  
-   `above` generates indicators in the next free space above  
-   `below` generates indicators in the next free space below  
+2. 有效选项：
+   `surface` 在世界表面生成指示物
+   `above` 在上方下一个自由空间生成指示物
+   `below` 在下方下一个自由空间生成指示物
    <br>
-   **Default:** `surface`
+   **默认值：** `surface`

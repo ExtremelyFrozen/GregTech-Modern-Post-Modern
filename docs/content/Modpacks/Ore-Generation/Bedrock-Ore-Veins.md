@@ -1,24 +1,24 @@
 ---
-title: Bedrock Ore Veins
+title: "Bedrock Ore Veins（基岩矿脉）"
 ---
 
 
-# Bedrock Ore Veins
+# Bedrock Ore Veins（基岩矿脉）
 
-While not enabled by default, GTCEu Modern contains bedrock ore veins and bedrock ore miners.
+虽然默认未启用，但 GTCEu Modern 包含 bedrock ore veins 和 bedrock ore miners。
 
-To enable this feature, you need to enable the config option **Machines -> doBedrockOres** and restart your game.
+要启用此功能，需要启用配置选项 **Machines -> doBedrockOres** 并重启游戏。
 
-!!! warning "No recipes by default"
-    The various tiers of bedrock ore miners don't have any recipes by default. It is up to modpack developers to create
-    crafting recipes for these machines.
+!!! warning "默认没有配方"
+    各等级的 bedrock ore miners 默认没有任何配方。整合包开发者需要自行为这些机器创建
+    合成配方。
 
 
-## Adding Bedrock Veins
+## 添加 Bedrock Veins
 
-By default, the mod doesn't include any bedrock ore veins.
+默认情况下，mod 不包含任何 bedrock ore veins。
 
-You can add them using the `bedrockOreVeins` server event:
+可以使用 `bedrockOreVeins` server event 添加它们：
 
 ```js
 GTCEuServerEvents.bedrockOreVeins(event => {
@@ -35,5 +35,5 @@ GTCEuServerEvents.bedrockOreVeins(event => {
 })
 ```
 
-1. The diameter of the bedrock vein in chunks
-2. The second parameter defines the chance of each material being mined on each cycle
+1. Bedrock vein 的直径，以 chunks 为单位
+2. 第二个参数定义每个循环中开采到各 Material 的概率

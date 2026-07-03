@@ -1,11 +1,11 @@
 ---
-title: Custom Recipe Modifiers
+title: 自定义 Recipe Modifiers
 ---
 
-# Custom Recipe Modifiers / Data Logic
+# 自定义 Recipe Modifiers / Data Logic
 
-## Adding a Modifier
-Custom recipe modifiers in KubeJS are done through a function. For this example, we will make multiblock that requires temperature for recipes, like the EBF does.
+## 添加 Modifier
+KubeJS 中的自定义 recipe modifiers 通过函数实现。这个示例会制作一个像 EBF 一样要求配方温度的多方块。
 ```js title="temperature_recipe_modifier.js"
 const $GTRecipe = Java.loadClass("com.gregtechceu.gtceu.api.recipe.GTRecipe");
 const $MetaMachine = Java.loadClass("com.gregtechceu.gtceu.api.machine.MetaMachine");
@@ -13,7 +13,7 @@ const $MetaMachine = Java.loadClass("com.gregtechceu.gtceu.api.machine.MetaMachi
 function TemperatureModifier(machine, recipe) {
     if (!(machine instanceof $MetaMachine)) return ModifierFunction.NULL // (1)
     if (!(recipe instanceof $GTRecipe)) return ModifierFunction.NULL
-    
+
     if (!machine instanceof $CoilWorkableElectricMultiblockMachine) {
         return $RecipeModifier.nullWrongType($CoilWorkableElectricMultiblockMachine, machine);
     } else {
@@ -29,12 +29,12 @@ function TemperatureModifier(machine, recipe) {
 }
 ```
 
-1. `ModifierFunction.NULL` Stops recipe.
-2. `ModifierFunction.IDENTITY` Starts recipe.
-3. Getting the coil temperature, multiblock **must** contain ``.heatingCoils()`` in any of its keys.
-4. Checking if coil temperature is high enough.
+1. `ModifierFunction.NULL` 会停止配方。
+2. `ModifierFunction.IDENTITY` 会启动配方。
+3. 获取线圈温度，多方块任意 key 中**必须**包含 ``.heatingCoils()``。
+4. 检查线圈温度是否足够。
 
-## Using Modifier
+## 使用 Modifier
 ```js title="example_temperature_multiblock.js"
 const $CoilWorkableElectricMultiblockMachine = Java.loadClass("com.gregtechceu.gtceu.api.machine.multiblock.CoilWorkableElectricMultiblockMachine");
 
@@ -74,13 +74,13 @@ GTCEuStartupEvents.registry('gtceu:machine', event => {
 })
 ```
 
-1. Making multiblock **coilMachine**, without it our modifier won't work.
-2. Using our modifier.
-3. Display our data in EMI.
-4. Getting `RequiredTemp` data from our recipe.
+1. 创建多方块 **coilMachine**；没有它，我们的 modifier 无法工作。
+2. 使用我们的 modifier。
+3. 在 EMI 中显示我们的数据。
+4. 从配方中获取 `RequiredTemp` 数据。
 
-## Using our Modifier in a Recipe
-To use our modifier in recipe, you need to add data to it.
+## 在配方中使用我们的 Modifier
+要在配方中使用我们的 modifier，需要向配方添加 data。
 ```js title="example_smelting.js"
 ServerEvents.recipes(event => {
 	event.recipes.gtceu.example_smelting('example:diamondirt')
@@ -92,4 +92,4 @@ ServerEvents.recipes(event => {
 })
 ```
 
-1. Adding data to our recipe, in this situation - Temperature
+1. 向配方添加 data，在这个场景中是 Temperature。

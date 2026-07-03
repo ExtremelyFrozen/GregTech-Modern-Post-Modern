@@ -1,10 +1,9 @@
 ---
-title: LDLib UI Editor
+title: LDLib UI Editor（UI 编辑器）
 ---
 
 
-# LDLib UI Editor
+# LDLib UI Editor（UI 编辑器）
 
-Low Drag Lib (bundled with GTCEu Modern) provides an in-game UI Editor for creating custom GUI's for 
-machines and for Recipe Types. The UI Editor is accessible in-game 
-via the command `/gtceu ui_editor`.
+Low Drag Lib（随 GTCEu Modern 捆绑）提供了一个游戏内 UI Editor，用于为 Machine 和 Recipe Type 创建自定义 GUI。
+可以在游戏内通过命令 `/gtceu ui_editor` 访问 UI Editor。

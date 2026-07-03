@@ -1,8 +1,8 @@
 ---
-title: "Other Topics"
+title: "其他主题"
 ---
 
 
-# Other Topics
+# 其他主题
 
-This section contains other topics that aren't necessarily large enough to be grouped into their own categories.
+本节包含其他主题，这些内容通常还不足以单独归入独立分类。
