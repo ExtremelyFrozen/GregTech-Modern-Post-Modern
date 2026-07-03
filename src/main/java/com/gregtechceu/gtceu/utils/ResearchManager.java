@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeSerializer;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
@@ -77,14 +76,14 @@ public final class ResearchManager {
 
             createDefaultResearchRecipe(builder.recipeType, entry.researchId(),
                     entry.researchItem(), entry.researchFluid(),
-                    entry.dataStack(), entry.duration(), entry.EUt(), entry.CWUt(), provider);
+                    entry.dataStack(), entry.duration(), entry.tier(), entry.EUt(), entry.CWUt(), provider);
         }
     }
 
     public static void createDefaultResearchRecipe(GTRecipeType recipeType, String researchId,
                                                    ItemStack researchItem, FluidStack researchFluid,
                                                    ItemStack dataItem,
-                                                   int duration, EnergyStack eut, int CWUt,
+                                                   int duration, int tier, long eut, int CWUt,
                                                    RecipeOutput provider) {
         if (!ConfigHolder.INSTANCE.machines.enableResearch) return;
 
@@ -99,7 +98,8 @@ public final class ResearchManager {
             if (!researchFluid.isEmpty()) builder.inputFluids(researchFluid);
 
             builder.outputItems(dataItem)
-                    .EUt(eut.voltage(), eut.amperage())
+                    .EUt(eut)
+                    .tier(tier)
                     .CWUt(CWUt)
                     .totalCWU(duration)
                     .save(provider);
@@ -112,7 +112,8 @@ public final class ResearchManager {
 
             builder.outputItems(dataItem)
                     .duration(duration)
-                    .EUt(eut.voltage(), eut.amperage())
+                    .EUt(eut)
+                    .tier(tier)
                     .researchScan(true)
                     .save(provider);
         }

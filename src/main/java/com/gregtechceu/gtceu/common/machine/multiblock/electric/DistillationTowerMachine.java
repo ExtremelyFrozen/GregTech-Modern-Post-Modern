@@ -156,7 +156,7 @@ public class DistillationTowerMachine extends WorkableElectricMultiblockMachine
                 recipe.outputChanceLogics,
                 recipe.tickInputChanceLogics, recipe.tickOutputChanceLogics, recipe.conditions,
                 recipe.ingredientActions,
-                RecipeData.copy(recipe.data), recipe.duration, recipe.recipeCategory, recipe.groupColor);
+                RecipeData.copy(recipe.data), recipe.tier, recipe.duration, recipe.recipeCategory, recipe.groupColor);
     }
 
     public static class DistillationTowerLogic extends RecipeLogic {

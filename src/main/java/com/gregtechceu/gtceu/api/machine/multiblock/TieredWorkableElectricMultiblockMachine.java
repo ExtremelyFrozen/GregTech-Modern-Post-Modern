@@ -33,7 +33,6 @@ public class TieredWorkableElectricMultiblockMachine extends WorkableElectricMul
     //////////////////////////////////////
     // ******** OVERCLOCK *********//
     //////////////////////////////////////
-    @Override
     public int getMinOverclockTier() {
         return 0;
     }
@@ -60,7 +59,7 @@ public class TieredWorkableElectricMultiblockMachine extends WorkableElectricMul
     }
 
     @Override
-    public long getMaxVoltage() {
+    public long getTierVoltage() {
         return Math.min(GTValues.V[tier], super.getMaxVoltage());
     }
 }

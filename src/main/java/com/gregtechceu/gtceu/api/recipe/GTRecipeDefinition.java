@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentListMap;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.AbstractMapIngredient;
 
 import net.minecraft.core.HolderLookup;
@@ -49,6 +48,7 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
     public final List<?> ingredientActions;
     @NotNull
     public final DataComponentMap data;
+    public final int tier;
     public final int duration;
     public final int groupColor;
 
@@ -65,6 +65,7 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
                               List<RecipeCondition<?>> conditions,
                               List<?> ingredientActions,
                               @NotNull DataComponentMap data,
+                              int tier,
                               int duration,
                               @NotNull GTRecipeCategory recipeCategory,
                               int groupColor) {
@@ -81,6 +82,7 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
         this.conditions = conditions;
         this.ingredientActions = ingredientActions;
         this.data = data;
+        this.tier = tier;
         this.duration = duration;
         this.recipeCategory = recipeCategory != GTRecipeCategory.DEFAULT ? recipeCategory : recipeType.getCategory();
         this.groupColor = groupColor;
@@ -93,7 +95,7 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
                 new HashMap<>(recipe.inputChanceLogics), new HashMap<>(recipe.outputChanceLogics),
                 new HashMap<>(recipe.tickInputChanceLogics), new HashMap<>(recipe.tickOutputChanceLogics),
                 new ArrayList<>(recipe.conditions), new ArrayList<>(recipe.ingredientActions),
-                RecipeData.copy(recipe.data), recipe.duration, recipe.recipeCategory, recipe.groupColor);
+                RecipeData.copy(recipe.data), recipe.tier, recipe.duration, recipe.recipeCategory, recipe.groupColor);
     }
 
     public GTRecipe toRuntime() {
@@ -102,7 +104,7 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
                 tickInputs.copy().asContentMap(), tickOutputs.copy().asContentMap(),
                 new HashMap<>(inputChanceLogics), new HashMap<>(outputChanceLogics),
                 new HashMap<>(tickInputChanceLogics), new HashMap<>(tickOutputChanceLogics),
-                new ArrayList<>(conditions), new ArrayList<>(ingredientActions), RecipeData.copy(data), duration,
+                new ArrayList<>(conditions), new ArrayList<>(ingredientActions), RecipeData.copy(data), tier, duration,
                 recipeCategory, groupColor);
     }
 
@@ -111,7 +113,7 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
                 inputs.copy(), outputs.copy(), tickInputs.copy(), tickOutputs.copy(),
                 new HashMap<>(inputChanceLogics), new HashMap<>(outputChanceLogics),
                 new HashMap<>(tickInputChanceLogics), new HashMap<>(tickOutputChanceLogics),
-                new ArrayList<>(conditions), new ArrayList<>(ingredientActions), RecipeData.copy(data), duration,
+                new ArrayList<>(conditions), new ArrayList<>(ingredientActions), RecipeData.copy(data), tier, duration,
                 recipeCategory, groupColor);
     }
 
@@ -135,11 +137,11 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
         return !tickInputs.isEmpty() || !tickOutputs.isEmpty();
     }
 
-    public EnergyStack getInputEUt() {
+    public long getInputEUt() {
         return calculateEUt(tickInputs);
     }
 
-    public EnergyStack getOutputEUt() {
+    public long getOutputEUt() {
         return calculateEUt(tickOutputs);
     }
 
@@ -160,17 +162,14 @@ public class GTRecipeDefinition implements Recipe<RecipeInput> {
         return ChanceLogic.OR;
     }
 
-    private EnergyStack calculateEUt(ContentListMap contents) {
+    private long calculateEUt(ContentListMap contents) {
         var outputs = contents.get(EURecipeCapability.CAP);
-        if (outputs == null) return EnergyStack.EMPTY;
-        long v = 0;
-        long a = 0;
+        if (outputs == null) return 0;
+        long eut = 0;
         for (var content : outputs) {
-            EnergyStack stack = EURecipeCapability.CAP.of(content.content);
-            v += stack.voltage();
-            a += stack.amperage();
+            eut += EURecipeCapability.CAP.of(content.content);
         }
-        return new EnergyStack(v, a);
+        return eut;
     }
 
     public List<List<AbstractMapIngredient>> getInputMapIngredients() {

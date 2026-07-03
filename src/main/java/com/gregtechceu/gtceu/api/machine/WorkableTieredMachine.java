@@ -152,12 +152,10 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
     // ******** OVERCLOCK *********//
     //////////////////////////////////////
 
-    @Override
     public int getMaxOverclockTier() {
         return GTUtil.getTierByVoltage(Math.max(energyContainer.getInputVoltage(), energyContainer.getOutputVoltage()));
     }
 
-    @Override
     public int getMinOverclockTier() {
         return 0;
     }

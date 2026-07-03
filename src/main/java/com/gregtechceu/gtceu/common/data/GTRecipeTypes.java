@@ -213,14 +213,14 @@ public class GTRecipeTypes {
                     recipeBuilder
                             .copy(recipeBuilder.id.withSuffix("_water"))
                             .inputFluids(GTMaterials.Water.getFluid((int) GTMath.clamp(
-                                    recipeBuilder.duration * recipeBuilder.EUt().getTotalEU() / 320, 4, 1000)))
+                                    recipeBuilder.duration * recipeBuilder.EUt() / 320, 4, 1000)))
                             .duration(recipeBuilder.duration * 2)
                             .save(provider);
 
                     recipeBuilder
                             .copy(recipeBuilder.id.withSuffix("_distilled_water"))
                             .inputFluids(GTMaterials.DistilledWater.getFluid((int) GTMath.clamp(
-                                    recipeBuilder.duration * recipeBuilder.EUt().getTotalEU() / 426, 3, 750)))
+                                    recipeBuilder.duration * recipeBuilder.EUt() / 426, 3, 750)))
                             .duration((int) (recipeBuilder.duration * 1.5))
                             .save(provider);
 
@@ -228,7 +228,7 @@ public class GTRecipeTypes {
                     // buildAndRegister call.
                     // Adding a second call will result in duplicate recipe generation attempts
                     recipeBuilder.inputFluids(GTMaterials.Lubricant.getFluid((int) GTMath.clamp(
-                            recipeBuilder.duration * recipeBuilder.EUt().getTotalEU() / 1280, 1, 250)));
+                            recipeBuilder.duration * recipeBuilder.EUt() / 1280, 1, 250)));
                 }
             });
 
@@ -555,7 +555,8 @@ public class GTRecipeTypes {
                         GTRecipeBuilder builder = DISTILLERY_RECIPES
                                 .recipeBuilder(recipeBuilder.id.getPath() + "_to_" +
                                         BuiltInRegistries.FLUID.getKey(output.getFluids()[0].getFluid()).getPath())
-                                .EUt(Math.max(1, recipeBuilder.EUt().voltage() / 4), recipeBuilder.EUt().amperage())
+                                .EUt(Math.max(1, recipeBuilder.EUt() / 4))
+                                .tier(recipeBuilder.tier)
                                 .circuitMeta(i + 1);
 
                         int ratio = RecipeHelper.getRatioForDistillery(input, output, outputItem);

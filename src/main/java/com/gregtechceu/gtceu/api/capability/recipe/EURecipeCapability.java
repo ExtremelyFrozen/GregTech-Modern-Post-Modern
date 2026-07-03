@@ -6,8 +6,7 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
-import com.gregtechceu.gtceu.api.recipe.content.SerializerEnergyStack;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
+import com.gregtechceu.gtceu.api.recipe.content.SerializerLong;
 import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.utils.GTMath;
 
@@ -16,36 +15,36 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import java.util.List;
 import java.util.Map;
 
-public class EURecipeCapability extends RecipeCapability<EnergyStack> {
+public class EURecipeCapability extends RecipeCapability<Long> {
 
     public final static EURecipeCapability CAP = new EURecipeCapability();
 
     protected EURecipeCapability() {
-        super("eu", 0xFFFFFF00, false, 2, SerializerEnergyStack.INSTANCE);
+        super("eu", 0xFFFFFF00, false, 2, SerializerLong.INSTANCE);
     }
 
     @Override
-    public EnergyStack copyInner(EnergyStack content) {
+    public Long copyInner(Long content) {
         return content;
     }
 
     @Override
-    public EnergyStack copyWithModifier(EnergyStack content, ContentModifier modifier) {
-        return content.withVoltage(modifier.apply(content.voltage()));
+    public Long copyWithModifier(Long content, ContentModifier modifier) {
+        return modifier.apply(content);
     }
 
     @Override
     public int limitMaxParallelByOutput(IRecipeCapabilityHolder holder, GTRecipe recipe, int multiplier, boolean tick) {
         if (holder instanceof ICustomParallel p) return p.limitEUParallel(recipe, multiplier, tick);
         if (tick) {
-            long recipeEUt = recipe.getOutputEUt().getTotalEU();
+            long recipeEUt = recipe.getOutputEUt();
             if (recipeEUt == 0) return multiplier;
 
             long maxVoltage = Long.MAX_VALUE;
             if (holder instanceof IOverclockMachine overclockMachine) {
                 maxVoltage = overclockMachine.getOverclockVoltage();
             } else if (holder instanceof ITieredMachine tieredMachine) {
-                maxVoltage = tieredMachine.getMaxVoltage();
+                maxVoltage = tieredMachine.getTierVoltage();
             }
 
             return Math.min(multiplier, Math.abs(GTMath.saturatedCast(maxVoltage / recipeEUt)));
@@ -61,7 +60,7 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
             int maxMultiplier = multiplier;
 
             long totalEU = 0L;
-            for (var content : outputs) totalEU += of(content.content).getTotalEU();
+            for (var content : outputs) totalEU += of(content.content);
             if (totalEU != 0 && multiplier > Long.MAX_VALUE / totalEU) {
                 maxMultiplier = multiplier = GTMath.saturatedCast(Long.MAX_VALUE / totalEU);
             }
@@ -90,10 +89,10 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
             if (holder instanceof IOverclockMachine overclockMachine) {
                 maxVoltage = overclockMachine.getOverclockVoltage();
             } else if (holder instanceof ITieredMachine tieredMachine) {
-                maxVoltage = tieredMachine.getMaxVoltage();
+                maxVoltage = tieredMachine.getTierVoltage();
             }
 
-            long recipeEUt = recipe.getInputEUt().getTotalEU();
+            long recipeEUt = recipe.getInputEUt();
             if (recipeEUt == 0) return limit;
             return Math.min(limit, Math.abs(GTMath.saturatedCast(maxVoltage / recipeEUt)));
         } else {
@@ -104,9 +103,9 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
             long nonConsumable = 0;
             long consumable = 0;
             for (Content content : inputs) {
-                EnergyStack s = of(content.content);
-                if (content.chance == 0) nonConsumable += s.getTotalEU();
-                else consumable += s.getTotalEU();
+                long eu = of(content.content);
+                if (content.chance == 0) nonConsumable += eu;
+                else consumable += eu;
             }
 
             if (nonConsumable == 0 && consumable == 0) return limit;
@@ -114,13 +113,13 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
             long sum = 0;
             for (var handler : holder.getCapabilitiesFlat(IO.IN, this)) {
                 for (var content : handler.getContents()) {
-                    if (content instanceof EnergyStack es) sum += es.getTotalEU();
-                    else if (content instanceof Long l) sum += l;
+                    if (content instanceof Long l) sum += l;
                 }
             }
 
             if (sum < nonConsumable) return 0;
             sum -= nonConsumable;
+            if (consumable == 0) return limit;
             return Math.min(GTMath.saturatedCast(sum / consumable), limit);
         }
     }
@@ -131,7 +130,7 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
      * @param eu EU/t value to put in the Content
      * @return Singleton list of a new Content with the given EU value
      */
-    public static List<Content> makeEUContent(EnergyStack eu) {
+    public static List<Content> makeEUContent(Long eu) {
         return List.of(
                 new Content(eu, ChanceLogic.getMaxChancedValue(), ChanceLogic.getMaxChancedValue(), 0));
     }
@@ -142,7 +141,7 @@ public class EURecipeCapability extends RecipeCapability<EnergyStack> {
      * @param contents content map
      * @param eu       EU value to put inside content map
      */
-    public static void putEUContent(Map<RecipeCapability<?>, List<Content>> contents, EnergyStack eu) {
+    public static void putEUContent(Map<RecipeCapability<?>, List<Content>> contents, Long eu) {
         contents.put(EURecipeCapability.CAP, makeEUContent(eu));
     }
 

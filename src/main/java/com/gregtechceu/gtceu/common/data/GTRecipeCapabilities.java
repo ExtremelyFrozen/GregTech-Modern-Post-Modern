@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.common.data;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
@@ -12,7 +11,7 @@ public class GTRecipeCapabilities {
 
     public final static RecipeCapability<SizedIngredient> ITEM = ItemRecipeCapability.CAP;
     public final static RecipeCapability<SizedFluidIngredient> FLUID = FluidRecipeCapability.CAP;
-    public final static RecipeCapability<EnergyStack> EU = EURecipeCapability.CAP;
+    public final static RecipeCapability<Long> EU = EURecipeCapability.CAP;
     public final static RecipeCapability<Integer> CWU = CWURecipeCapability.CAP;
 
     public static void init() {

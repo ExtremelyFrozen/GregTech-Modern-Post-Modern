@@ -19,7 +19,6 @@ import com.gregtechceu.gtceu.common.data.GTMaterialItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
-import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
@@ -385,8 +384,7 @@ public class MinerLogic extends RecipeLogic implements IRecipeCapabilityHolder {
         }
 
         if (recipe != null) {
-            long eut = recipe.getInputEUt().getTotalEU();
-            if (GTUtil.getTierByVoltage(eut) <= getVoltageTier()) {
+            if (recipe.tier <= getVoltageTier()) {
                 if (RecipeHelper.handleRecipeIO(this, recipe, IO.OUT, this.chanceCaches).isSuccess()) {
                     blockDrops.clear();
                     var result = new ArrayList<ItemStack>();

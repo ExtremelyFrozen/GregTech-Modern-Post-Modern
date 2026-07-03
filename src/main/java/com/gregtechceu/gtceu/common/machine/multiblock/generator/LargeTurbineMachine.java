@@ -9,7 +9,6 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
@@ -103,7 +102,7 @@ public class LargeTurbineMachine extends WorkableElectricMultiblockMachine imple
 
     public long getCurrentProduction() {
         return isActive() && recipeLogic.getLastRecipe() != null ?
-                recipeLogic.getLastRecipe().getOutputEUt().voltage() : 0;
+                recipeLogic.getLastRecipe().getOutputEUt() : 0;
     }
 
     public int getRotorDurabilityPercent() {
@@ -137,21 +136,21 @@ public class LargeTurbineMachine extends WorkableElectricMultiblockMachine imple
         var rotorHolder = turbineMachine.getRotorHolder();
         if (rotorHolder == null) return ModifierFunction.NULL;
 
-        EnergyStack EUt = recipe.getOutputEUt();
+        long EUt = recipe.getOutputEUt();
         long turbineMaxVoltage = turbineMachine.getOverclockVoltage();
         double holderEfficiency = rotorHolder.getTotalEfficiency() / 100.0;
 
-        if (EUt.isEmpty() || turbineMaxVoltage <= EUt.voltage() || holderEfficiency <= 0) return ModifierFunction.NULL;
+        if (EUt <= 0 || turbineMaxVoltage <= EUt || holderEfficiency <= 0) return ModifierFunction.NULL;
 
         // get the amount of parallel required to match the desired output voltage
         // Max Parallel is Ceilinged not Floored to ensure the output voltage is actually met,
         // at the cost of slightly increased fuel
-        int maxParallel = (int) (turbineMaxVoltage / EUt.getTotalEU());
-        if (turbineMaxVoltage % EUt.getTotalEU() != 0) maxParallel++;
+        int maxParallel = (int) (turbineMaxVoltage / EUt);
+        if (turbineMaxVoltage % EUt != 0) maxParallel++;
 
         int actualParallel = ParallelLogic.getParallelAmountFast(turbineMachine, recipe, maxParallel);
         double eutMultiplier = (maxParallel == actualParallel) ?
-                turbineMachine.productionBoost() * turbineMaxVoltage / EUt.voltage() :
+                turbineMachine.productionBoost() * turbineMaxVoltage / EUt :
                 turbineMachine.productionBoost() * actualParallel;
 
         return ModifierFunction.builder()

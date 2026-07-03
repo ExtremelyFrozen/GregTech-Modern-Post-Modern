@@ -5,15 +5,14 @@ import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.condition.RecipeConditionType;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
+import com.gregtechceu.gtceu.api.recipe.content.ContentListMap;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroup;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupColor;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupDistinctness;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.recipe.ingredient.ExDataComponentFluidIngredient;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
-import com.gregtechceu.gtceu.utils.GTUtil;
 import com.gregtechceu.gtceu.utils.TagUtil;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -40,15 +39,15 @@ import java.util.stream.Collectors;
 
 public class RecipeHelper {
 
-    public static EnergyStack getRealEUt(@NotNull GTRecipe recipe) {
-        EnergyStack stack = recipe.getInputEUt();
-        if (!stack.isEmpty()) return stack;
+    public static long getRealEUt(@NotNull GTRecipe recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
         return recipe.getOutputEUt();
     }
 
-    public static EnergyStack getRealEUt(@NotNull GTRecipeDefinition recipe) {
-        EnergyStack stack = recipe.getInputEUt();
-        if (!stack.isEmpty()) return stack;
+    public static long getRealEUt(@NotNull GTRecipeDefinition recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
         return recipe.getOutputEUt();
     }
 
@@ -56,43 +55,44 @@ public class RecipeHelper {
      * Get a pair of the absolute EU/t value this recipe inputs or outputs and if it's input or output
      *
      * @param recipe
-     * @return A pair of {@code (EnergyStack, isInput)}
+     * @return signed EU/t. Positive values are recipe inputs, negative values are recipe outputs.
      */
-    public static EnergyStack.WithIO getRealEUtWithIO(@NotNull GTRecipe recipe) {
-        EnergyStack stack = recipe.getInputEUt();
-        if (!stack.isEmpty()) return new EnergyStack.WithIO(stack, IO.IN);
-        return new EnergyStack.WithIO(recipe.getOutputEUt(), IO.OUT);
+    public static long getRealEUtWithIO(@NotNull GTRecipe recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
+        return -recipe.getOutputEUt();
     }
 
-    public static EnergyStack.WithIO getRealEUtWithIO(@NotNull GTRecipeDefinition recipe) {
-        EnergyStack stack = recipe.getInputEUt();
-        if (!stack.isEmpty()) return new EnergyStack.WithIO(stack, IO.IN);
-        return new EnergyStack.WithIO(recipe.getOutputEUt(), IO.OUT);
+    public static long getRealEUtWithIO(@NotNull GTRecipeDefinition recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
+        return -recipe.getOutputEUt();
     }
 
     public static int getRecipeEUtTier(GTRecipe recipe) {
-        EnergyStack stack = getRealEUt(recipe);
-        long EUt = stack.voltage();
-        if (recipe.parallels > 1) EUt /= recipe.parallels;
-        return GTUtil.getTierByVoltage(EUt);
+        return recipe.tier;
     }
 
     public static int getRecipeEUtTier(GTRecipeDefinition recipe) {
-        EnergyStack stack = getRealEUt(recipe);
-        return GTUtil.getTierByVoltage(stack.voltage());
+        return recipe.tier;
     }
 
     public static int getPreOCRecipeEuTier(GTRecipe recipe) {
-        EnergyStack stack = getRealEUt(recipe);
-        long EUt = stack.getTotalEU();
-        if (recipe.parallels > 1) EUt /= recipe.parallels;
-        EUt >>= (recipe.ocLevel * 2);
-        return GTUtil.getTierByVoltage(EUt);
+        return recipe.tier;
     }
 
     public static int getPreOCRecipeEuTier(GTRecipeDefinition recipe) {
-        EnergyStack stack = getRealEUt(recipe);
-        return GTUtil.getTierByVoltage(stack.getTotalEU());
+        return recipe.tier;
+    }
+
+    public static long calculateEUt(ContentListMap contents) {
+        var outputs = contents.get(EURecipeCapability.CAP);
+        if (outputs == null) return 0;
+        long eut = 0;
+        for (var content : outputs) {
+            eut += EURecipeCapability.CAP.of(content.content);
+        }
+        return eut;
     }
 
     public static <T> List<T> getInputContents(GTRecipeBuilder builder, RecipeCapability<T> capability) {

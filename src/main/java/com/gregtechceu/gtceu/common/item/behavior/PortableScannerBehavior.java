@@ -328,15 +328,16 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
                     if (recipe != null && !waitingDisplayed) {
                         list.add(Component.translatable("behavior.portable_scanner.divider"));
                         var EUt = RecipeHelper.getRealEUtWithIO(recipe);
+                        long displayVoltage = Math.max(1, recipeLogic.getRLMachine().getDisplayRecipeVoltage());
 
                         list.add(Component.translatable(
-                                EUt.isInput() ? "behavior.portable_scanner.workable_consumption" :
+                                EUt > 0 ? "behavior.portable_scanner.workable_consumption" :
                                         "behavior.portable_scanner.workable_production",
                                 // TODO is this supposed to show voltage or total EU/t?
-                                Component.translatable(FormattingUtil.formatNumbers(EUt.getTotalEU()))
+                                Component.translatable(FormattingUtil.formatNumbers(Math.abs(EUt)))
                                         .withStyle(ChatFormatting.RED),
                                 Component.translatable(
-                                        FormattingUtil.formatNumbers(EUt.amperage()))
+                                        FormattingUtil.formatNumbers(Math.abs(EUt) / displayVoltage))
                                         .withStyle(ChatFormatting.RED)));
                     }
                 }

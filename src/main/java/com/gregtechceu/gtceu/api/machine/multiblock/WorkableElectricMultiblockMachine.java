@@ -188,17 +188,14 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
     //////////////////////////////////////
     // ******** OVERCLOCK *********//
     //////////////////////////////////////
-    @Override
     public int getOverclockTier() {
         return getTier();
     }
 
-    @Override
     public int getMaxOverclockTier() {
         return getTier();
     }
 
-    @Override
     public int getMinOverclockTier() {
         return getTier();
     }
@@ -230,7 +227,6 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
         return new EnergyContainerList(containers);
     }
 
-    @Override
     public long getMaxVoltage() {
         if (this.energyContainer == null) {
             this.energyContainer = getEnergyContainer();
@@ -239,6 +235,11 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
             return energyContainer.getEffectiveVoltage();
         }
         return GTValues.V[energyContainer.getTier()];
+    }
+
+    @Override
+    public long getTierVoltage() {
+        return getMaxVoltage();
     }
 
     @Override

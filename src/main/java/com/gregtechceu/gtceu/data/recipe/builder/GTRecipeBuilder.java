@@ -92,6 +92,7 @@ public class GTRecipeBuilder {
     public ResourceLocation id;
     @Setter
     public GTRecipeType recipeType;
+    public int tier = 0;
     public int duration = 100;
     @Setter
     public boolean perTick;
@@ -137,6 +138,7 @@ public class GTRecipeBuilder {
         this.tickOutputChanceLogic.putAll(toCopy.tickOutputChanceLogics);
         this.conditions.addAll(toCopy.conditions);
         this.data = RecipeData.copy(toCopy.data);
+        this.tier = toCopy.tier;
         this.duration = toCopy.duration;
         this.recipeCategory = toCopy.recipeCategory;
     }
@@ -165,6 +167,7 @@ public class GTRecipeBuilder {
         copy.tickOutputChanceLogic.putAll(this.tickOutputChanceLogic);
         copy.conditions.addAll(this.conditions);
         copy.data = RecipeData.copy(this.data);
+        copy.tier = this.tier;
         copy.duration = this.duration;
         copy.chance = this.chance;
         copy.perTick = this.perTick;
@@ -226,12 +229,21 @@ public class GTRecipeBuilder {
         return this;
     }
 
+    public GTRecipeBuilder tier(int tier) {
+        if (tier < GTValues.ULV || tier > GTValues.MAX) {
+            throw new IllegalArgumentException("Recipe tier out of range, id: %s".formatted(this.id));
+        }
+        this.tier = tier;
+        return this;
+    }
+
     public GTRecipeBuilder inputEU(long eu) {
         return inputEU(eu, 1);
     }
 
     public GTRecipeBuilder inputEU(long voltage, long amperage) {
-        return input(EURecipeCapability.CAP, new EnergyStack(voltage, amperage));
+        this.tier = GTUtil.getTierByVoltage(voltage);
+        return input(EURecipeCapability.CAP, voltage * amperage);
     }
 
     public GTRecipeBuilder EUt(long eu) {
@@ -263,7 +275,8 @@ public class GTRecipeBuilder {
     }
 
     public GTRecipeBuilder outputEU(long voltage, long amperage) {
-        return output(EURecipeCapability.CAP, new EnergyStack(voltage, amperage));
+        this.tier = GTUtil.getTierByVoltage(voltage);
+        return output(EURecipeCapability.CAP, voltage * amperage);
     }
 
     public GTRecipeBuilder inputCWU(int cwu) {
@@ -1648,7 +1661,7 @@ public class GTRecipeBuilder {
         return new GTRecipe(recipeType, id.withPrefix(recipeType.registryName.getPath() + "/"),
                 input, output, tickInput, tickOutput,
                 inputChanceLogic, outputChanceLogic, tickInputChanceLogic, tickOutputChanceLogic,
-                conditions, List.of(), data, duration, recipeCategory, -1);
+                conditions, List.of(), data, tier, duration, recipeCategory, -1);
     }
 
     public GTRecipeDefinition buildDefinition() {
@@ -1657,7 +1670,7 @@ public class GTRecipeBuilder {
                 ContentListMap.copyOf(tickInput), ContentListMap.copyOf(tickOutput),
                 new HashMap<>(inputChanceLogic), new HashMap<>(outputChanceLogic),
                 new HashMap<>(tickInputChanceLogic), new HashMap<>(tickOutputChanceLogic),
-                new ArrayList<>(conditions), List.of(), RecipeData.copy(data), duration, recipeCategory, -1);
+                new ArrayList<>(conditions), List.of(), RecipeData.copy(data), tier, duration, recipeCategory, -1);
     }
 
     protected void warnTooManyIngredients(RecipeCapability<?> capability,
@@ -1701,9 +1714,9 @@ public class GTRecipeBuilder {
     //////////////////////////////////////
     // ******* Quick Query *******//
     //////////////////////////////////////
-    public EnergyStack EUt() {
-        if (!tickInput.containsKey(EURecipeCapability.CAP)) return EnergyStack.EMPTY;
-        if (tickInput.get(EURecipeCapability.CAP).isEmpty()) return EnergyStack.EMPTY;
+    public long EUt() {
+        if (!tickInput.containsKey(EURecipeCapability.CAP)) return 0;
+        if (tickInput.get(EURecipeCapability.CAP).isEmpty()) return 0;
         return EURecipeCapability.CAP.of(tickInput.get(EURecipeCapability.CAP).getFirst().content);
     }
 
@@ -1727,7 +1740,7 @@ public class GTRecipeBuilder {
      */
     public record ResearchRecipeEntry(@NotNull String researchId,
                                       @NotNull ItemStack researchItem, @NotNull FluidStack researchFluid,
-                                      @NotNull ItemStack dataStack, int duration, EnergyStack EUt, int CWUt) {
+                                      @NotNull ItemStack dataStack, int duration, int tier, long EUt, int CWUt) {
 
     }
 }

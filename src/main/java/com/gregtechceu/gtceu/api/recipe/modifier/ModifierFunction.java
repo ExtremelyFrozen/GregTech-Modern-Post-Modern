@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 
 import net.minecraft.network.chat.Component;
 
@@ -184,7 +183,8 @@ public interface ModifierFunction {
                         new HashMap<>(recipe.inputChanceLogics), new HashMap<>(recipe.outputChanceLogics),
                         new HashMap<>(recipe.tickInputChanceLogics), new HashMap<>(recipe.tickOutputChanceLogics),
                         newConditions, new ArrayList<>(recipe.ingredientActions),
-                        RecipeData.copy(recipe.data), recipe.duration, recipe.recipeCategory, recipe.groupColor);
+                        RecipeData.copy(recipe.data), recipe.tier, recipe.duration, recipe.recipeCategory,
+                        recipe.groupColor);
                 copied.parallels = recipe.parallels * parallels;
                 copied.subtickParallels = recipe.subtickParallels * subtickParallels;
                 copied.ocLevel = recipe.ocLevel + addOCs;
@@ -196,8 +196,10 @@ public interface ModifierFunction {
                 }
                 if (eutModifier != ContentModifier.IDENTITY) {
                     var preEUt = RecipeHelper.getRealEUtWithIO(recipe);
-                    EnergyStack eut = EURecipeCapability.CAP.copyWithModifier(preEUt.stack(), eutModifier);
-                    EURecipeCapability.putEUContent(preEUt.isInput() ? copied.tickInputs : copied.tickOutputs, eut);
+                    if (preEUt != 0) {
+                        long eut = EURecipeCapability.CAP.copyWithModifier(Math.abs(preEUt), eutModifier);
+                        EURecipeCapability.putEUContent(preEUt > 0 ? copied.tickInputs : copied.tickOutputs, eut);
+                    }
                 }
                 return copied;
             };

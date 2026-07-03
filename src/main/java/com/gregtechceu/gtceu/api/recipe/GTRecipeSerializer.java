@@ -156,6 +156,7 @@ public class GTRecipeSerializer implements RecipeSerializer<GTRecipeDefinition> 
         }
         DataComponentMap data = SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buf);
         int groupColor = buf.readInt();
+        int tier = buf.readVarInt();
         ResourceLocation categoryLoc = buf.readResourceLocation();
 
         GTRecipeType type = (GTRecipeType) BuiltInRegistries.RECIPE_TYPE.get(recipeType);
@@ -164,7 +165,7 @@ public class GTRecipeSerializer implements RecipeSerializer<GTRecipeDefinition> 
         GTRecipeDefinition recipe = new GTRecipeDefinition(id, type,
                 inputs, outputs, tickInputs, tickOutputs,
                 inputChanceLogics, outputChanceLogics, tickInputChanceLogics, tickOutputChanceLogics,
-                conditions, ingredientActions, data, duration, category, groupColor);
+                conditions, ingredientActions, data, tier, duration, category, groupColor);
 
         if (!addToRecipeCategory) {
             return recipe;
@@ -208,6 +209,7 @@ public class GTRecipeSerializer implements RecipeSerializer<GTRecipeDefinition> 
         }
         SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buf, recipe.data);
         buf.writeInt(recipe.groupColor);
+        buf.writeVarInt(recipe.tier);
         buf.writeResourceLocation(recipe.recipeCategory.registryKey);
     }
 
@@ -257,16 +259,17 @@ public class GTRecipeSerializer implements RecipeSerializer<GTRecipeDefinition> 
                             RecipeCondition.CODEC.listOf().optionalFieldOf("recipeConditions", List.of()).forGetter(val -> val.conditions),
                              RecipeData.CODEC.optionalFieldOf("data", RecipeData.EMPTY)
                                       .xmap(RecipeData::toComponentMap, RecipeData::get).forGetter(val -> val.data),
+                             ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("tier", 0).forGetter(val -> val.tier),
                              quietExceptionCodec(ExtraCodecs.NON_NEGATIVE_INT, "duration", isKubeLoaded).forGetter(val -> val.duration),
                              GTRegistries.RECIPE_CATEGORIES.byNameCodec().optionalFieldOf("category", GTRecipeCategory.DEFAULT).forGetter(val -> val.recipeCategory),
                              Codec.INT.optionalFieldOf("groupColor", -1).forGetter(val -> val.groupColor))
                     .apply(instance, (recipeType, inputs, outputs, tickInputs, tickOutputs,
                                       inputChanceLogics, outputChanceLogics, tickInputChanceLogics,
-                                      tickOutputChanceLogics, conditions, data, duration, recipeCategory,
+                                      tickOutputChanceLogics, conditions, data, tier, duration, recipeCategory,
                                       groupColor) -> new GTRecipeDefinition(null, recipeType, inputs, outputs,
                                               tickInputs, tickOutputs, inputChanceLogics, outputChanceLogics,
                                        tickInputChanceLogics, tickOutputChanceLogics, conditions, List.of(),
-                                               data, duration, recipeCategory, groupColor)));
+                                               data, tier, duration, recipeCategory, groupColor)));
         } else {
             return RecordCodecBuilder.mapCodec(instance -> instance.group(
                     GT_RECIPE_TYPE_CODEC.fieldOf("type").forGetter(val -> val.recipeType),
@@ -282,16 +285,17 @@ public class GTRecipeSerializer implements RecipeSerializer<GTRecipeDefinition> 
                     IngredientActionHolder.CODEC.listOf().optionalFieldOf("kubejs:actions", List.of()).forGetter(val -> (List<IngredientActionHolder>) val.ingredientActions),
                     RecipeData.CODEC.optionalFieldOf("data", RecipeData.EMPTY)
                             .xmap(RecipeData::toComponentMap, RecipeData::get).forGetter(val -> val.data),
+                    ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("tier", 0).forGetter(val -> val.tier),
                     quietExceptionCodec(ExtraCodecs.NON_NEGATIVE_INT, "duration", isKubeLoaded).forGetter(val -> val.duration),
                     GTRegistries.RECIPE_CATEGORIES.byNameCodec().optionalFieldOf("category", GTRecipeCategory.DEFAULT).forGetter(val -> val.recipeCategory),
                     Codec.INT.optionalFieldOf("groupColor", -1).forGetter(val -> val.groupColor))
             .apply(instance, (recipeType, inputs, outputs, tickInputs, tickOutputs,
                               inputChanceLogics, outputChanceLogics, tickInputChanceLogics,
-                              tickOutputChanceLogics, conditions, ingredientActions, data, duration, recipeCategory,
+                              tickOutputChanceLogics, conditions, ingredientActions, data, tier, duration, recipeCategory,
                               groupColor) -> new GTRecipeDefinition(null, recipeType, inputs, outputs,
                                       tickInputs, tickOutputs, inputChanceLogics, outputChanceLogics,
                                       tickInputChanceLogics, tickOutputChanceLogics, conditions, ingredientActions,
-                                      data, duration, recipeCategory, groupColor)));
+                                      data, tier, duration, recipeCategory, groupColor)));
         }
         // spotless:on
     }

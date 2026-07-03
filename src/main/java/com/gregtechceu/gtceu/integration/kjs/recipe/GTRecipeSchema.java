@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.integration.kjs.recipe;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.capability.recipe.CWURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
@@ -31,6 +32,7 @@ import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.integration.kjs.recipe.components.CapabilityMap;
 import com.gregtechceu.gtceu.integration.kjs.recipe.components.CapabilityMapComponent;
 import com.gregtechceu.gtceu.integration.kjs.recipe.components.GTRecipeComponents;
+import com.gregtechceu.gtceu.utils.GTUtil;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
 import net.minecraft.core.component.DataComponentMap;
@@ -58,6 +60,7 @@ import dev.latvian.mods.kubejs.error.KubeRuntimeException;
 import dev.latvian.mods.kubejs.recipe.KubeRecipe;
 import dev.latvian.mods.kubejs.recipe.RecipeKey;
 import dev.latvian.mods.kubejs.recipe.component.ComponentRole;
+import dev.latvian.mods.kubejs.recipe.component.NumberComponent;
 import dev.latvian.mods.kubejs.recipe.component.TimeComponent;
 import dev.latvian.mods.kubejs.recipe.schema.KubeRecipeFactory;
 import dev.latvian.mods.kubejs.recipe.schema.RecipeConstructor;
@@ -161,43 +164,69 @@ public interface GTRecipeSchema {
             return this;
         }
 
-        public GTKubeRecipe inputEU(EnergyStack eu) {
-            return input(EURecipeCapability.CAP, eu);
+        public GTKubeRecipe tier(int tier) {
+            if (tier < GTValues.ULV || tier > GTValues.MAX) {
+                throw new KubeRuntimeException(String.format("Recipe tier out of range, id: %s", id));
+            }
+            setValue(TIER, tier);
+            save();
+            return this;
+        }
+
+        public GTKubeRecipe inputEU(long eu) {
+            if (eu < 0) {
+                throw new KubeRuntimeException(String.format("Input EU must be non-negative, id: %s", id));
+            }
+            return input(EURecipeCapability.CAP, eu).tier(GTUtil.getTierByVoltage(eu));
         }
 
         public GTKubeRecipe inputEU(long voltage, long amperage) {
-            return inputEU(new EnergyStack(voltage, amperage));
+            if (voltage < 0) {
+                throw new KubeRuntimeException(String.format("Input EU must be non-negative, id: %s", id));
+            }
+            if (amperage < 1) {
+                throw new KubeRuntimeException(String.format("Amperage must be a positive integer, id: %s", id));
+            }
+            return inputEU(voltage * amperage).tier(GTUtil.getTierByVoltage(voltage));
         }
 
-        @SuppressWarnings("ConstantValue")
-        public GTKubeRecipe EUt(EnergyStack.WithIO eu) {
-            if (eu.isEmpty()) {
+        public GTKubeRecipe EUt(long eu) {
+            if (eu == 0) {
                 throw new KubeRuntimeException(String.format("EUt can't be explicitly set to 0, id: %s", id));
-            }
-            if (eu.amperage() < 1) {
-                throw new KubeRuntimeException(String.format("Amperage must be a positive integer, id: %s", id));
             }
             var lastPerTick = perTick;
             perTick = true;
-            if (eu.isInput()) {
-                inputEU(eu.stack());
-            } else if (eu.isOutput()) {
-                outputEU(eu.stack());
+            if (eu > 0) {
+                inputEU(eu);
+            } else {
+                outputEU(-eu);
             }
             perTick = lastPerTick;
             return this;
         }
 
         public GTKubeRecipe EUt(long voltage, long amperage) {
-            return EUt(EnergyStack.WithIO.fromVA(voltage, amperage));
+            if (amperage < 1) {
+                throw new KubeRuntimeException(String.format("Amperage must be a positive integer, id: %s", id));
+            }
+            return EUt(voltage * amperage).tier(GTUtil.getTierByVoltage(Math.abs(voltage)));
         }
 
-        public GTKubeRecipe outputEU(EnergyStack eu) {
-            return output(EURecipeCapability.CAP, eu);
+        public GTKubeRecipe outputEU(long eu) {
+            if (eu < 0) {
+                throw new KubeRuntimeException(String.format("Output EU must be non-negative, id: %s", id));
+            }
+            return output(EURecipeCapability.CAP, eu).tier(GTUtil.getTierByVoltage(eu));
         }
 
         public GTKubeRecipe outputEU(long voltage, long amperage) {
-            return outputEU(new EnergyStack(voltage, amperage));
+            if (voltage < 0) {
+                throw new KubeRuntimeException(String.format("Output EU must be non-negative, id: %s", id));
+            }
+            if (amperage < 1) {
+                throw new KubeRuntimeException(String.format("Amperage must be a positive integer, id: %s", id));
+            }
+            return outputEU(voltage * amperage).tier(GTUtil.getTierByVoltage(voltage));
         }
 
         public GTKubeRecipe inputCWU(int cwu) {
@@ -1204,6 +1233,7 @@ public interface GTRecipeSchema {
 
     RecipeKey<ResourceLocation> ID = GTRecipeComponents.RESOURCE_LOCATION.key("id", ComponentRole.OTHER);
     RecipeKey<TickDuration> DURATION = TimeComponent.TICKS.key("duration", ComponentRole.OTHER).optional(new TickDuration(100));
+    RecipeKey<Integer> TIER = NumberComponent.NON_NEGATIVE_INT.key("tier", ComponentRole.OTHER).optional(0);
     RecipeKey<DataComponentMap> DATA = GTRecipeComponents.RECIPE_DATA.key("data", ComponentRole.OTHER)
             .optional(r -> DataComponentMap.EMPTY);
     RecipeKey<List<RecipeCondition<?>>> CONDITIONS = GTRecipeComponents.RECIPE_CONDITION.asList().key("recipeConditions", ComponentRole.OTHER).defaultOptional();
@@ -1224,7 +1254,7 @@ public interface GTRecipeSchema {
     RecipeKey<Map<RecipeCapability<?>, ChanceLogic>> TICK_OUTPUT_CHANCE_LOGICS = GTRecipeComponents.CHANCE_LOGIC_MAP
             .key("tickOutputChanceLogics", ComponentRole.OTHER).defaultOptional();
 
-    RecipeSchema SCHEMA = new RecipeSchema(DURATION, DATA, CONDITIONS,
+    RecipeSchema SCHEMA = new RecipeSchema(DURATION, TIER, DATA, CONDITIONS,
             ALL_INPUTS, ALL_TICK_INPUTS, ALL_OUTPUTS, ALL_TICK_OUTPUTS,
             INPUT_CHANCE_LOGICS, OUTPUT_CHANCE_LOGICS, TICK_INPUT_CHANCE_LOGICS, TICK_OUTPUT_CHANCE_LOGICS, CATEGORY)
             .factory(RECIPE_FACTORY)
