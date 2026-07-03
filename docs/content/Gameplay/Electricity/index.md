@@ -1,5 +1,5 @@
 # 电力
-GregTech Modern 中绝大多数机器都依靠 Electricity 运行，也就是 EU（"Energy Units"）。Electricity 与
+GregTech Post Modern 中绝大多数机器都依靠 Electricity 运行，也就是 EU（"Energy Units"）。Electricity 与
 Electric machines 共享若干常见的安全和行为规则。
 
 ## EU 基础概念

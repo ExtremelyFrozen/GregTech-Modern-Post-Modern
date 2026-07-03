@@ -5,7 +5,7 @@ title: 超频与并行逻辑
 
 # 如何设置超频与并行逻辑
 
-为了提高通用性，GTCEu Modern 重写了 `RecipeLogic`，使其支持 EU、item 和 fluid 之外的输入与输出。
+为了提高通用性，GregTech Post Modern 重写了 `RecipeLogic`，使其支持 EU、item 和 fluid 之外的输入与输出。
 
 新的 `RecipeLogic` 不再直接处理超频和并行逻辑，而是通过 `IRecipeLogicMachine` 将这些逻辑委托给 machine：
 

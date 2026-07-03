@@ -1,6 +1,6 @@
 # 电力机器（Electric Machines） { #electric-machines }
 
-GregTech Modern 中绝大多数功能性机器都由 EU 驱动。和 Generators 一样，它们之间也有许多共同规则和模式。
+GregTech Post Modern 中绝大多数功能性机器都由 EU 驱动。和 Generators 一样，它们之间也有许多共同规则和模式。
 
 ## 单方块机器（Singleblock Machines） { #singleblock-machines }
 
@@ -29,7 +29,7 @@ GregTech Modern 中绝大多数功能性机器都由 EU 驱动。和 Generators 
     * 当能量缓冲低于 50% 且正在运行配方时，机器会额外接受 1 Amp。
 
 最后一点意味着，通常情况下，单方块机器会从任何连接的发电机接受 1 或 2 Amps 电力。
-虽然可以创建消耗多个 Amp 电力的配方，但 GregTech Modern 目前没有这样的配方。
+虽然可以创建消耗多个 Amp 电力的配方，但 GregTech Post Modern 目前没有这样的配方。
 
 * 包含一个以闪电图标标记的 Battery Slot。Batteries 会在 [Energy Storage](./Energy-Storage.md#batteries)
   中进一步讨论，不过放入 Machines 内部的 Batteries 会：
@@ -40,7 +40,7 @@ GregTech Modern 中绝大多数功能性机器都由 EU 驱动。和 Generators 
 Battery 也能抵消 Powerstalling，让机器缓冲足够电力以短时间爆发运行并完成重要配方。
 
 在 IndustrialCraft 2 的古早时代，Redstone Dust 可以放入机器的 Battery Slot，为机器提供 1000 EU。
-这*不是* GregTech Modern 中的功能。
+这*不是* GregTech Post Modern 中的功能。
 
 ## 多方块机器（Multiblock Machines） { #multiblock-machines }
 
@@ -100,7 +100,7 @@ Battery 也能抵消 Powerstalling，让机器缓冲足够电力以短时间爆�
 
 建造 Alloy Blast Smelter 会解锁多种复杂金属合金的生产。这些合金用于建造一系列 IV-tier 机器，
 有时称为 Gregicality Multiblocks。GCYM 曾是一个独立的 GregTech 附属 mod，现已完全集成进
-GregTech Modern，并加入了一组用于替代单方块机器的多方块机器。
+GregTech Post Modern，并加入了一组用于替代单方块机器的多方块机器。
 GCYM Multiblocks 具备上述普通 Multiblock machines 的所有属性，并额外拥有一些特性：
 
 * 由 Alloy Blast Smelter 制造的合金建造。

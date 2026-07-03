@@ -5,9 +5,9 @@ hide:
 title: 首页
 ---
 
-# 欢迎阅读 GregTech CEu Modern 1.21.1 文档！
+# 欢迎阅读 GregTech Post Modern 1.21.1 文档！
 
-GregTech CEu Modern 是 [GregTech Community Edition Unofficial](https://github.com/GregTechCEu/GregTech)
+GregTech Post Modern 是 [GregTech Community Edition Unofficial](https://github.com/GregTechCEu/GregTech)
 面向现代 Minecraft 版本的移植版。
 
 !!! danger "施工中"
@@ -18,8 +18,8 @@ GregTech CEu Modern 是 [GregTech Community Edition Unofficial](https://github.c
 
 ## 下载
 你可以在这里下载此 wiki 的离线版本：
-[下载 Zip](https://github.com/GregTechCEu/gtceu-modern-docs/archive/refs/heads/gh-pages.zip)
+[下载 Zip](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/archive/refs/heads/gh-pages.zip)
 
 
 ## 想参与贡献？
-如果你想为这个文档站点做贡献，欢迎阅读 [贡献说明](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/docs/CONTRIBUTING.md)，并在 [GitHub 仓库](https://github.com/GregTechCEu/GregTech-Modern) 中发起 pull request。
+如果你想为这个文档站点做贡献，欢迎阅读 [贡献说明](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/docs/CONTRIBUTING.md)，并在 [GitHub 仓库](https://github.com/ExtremelyFrozen/GregTech-Post-Modern) 中发起 pull request。

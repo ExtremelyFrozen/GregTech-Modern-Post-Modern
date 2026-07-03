@@ -10,7 +10,7 @@ Crafting Components 是一个 map，将 Voltage tier（tier number）映射到�
 
 ## 修改单个条目
 
-使用 KubeJS 可以修改现有 GTCEu Modern 机器合成配方中预定义的 components。
+使用 KubeJS 可以修改现有 GregTech Post Modern 机器合成配方中预定义的 components。
 你可以替换单个条目，也可以批量修改 components。
 如果没有其他条目存在，-1 会作为 fallback 值。
 

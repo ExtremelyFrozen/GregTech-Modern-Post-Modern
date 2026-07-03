@@ -7,7 +7,7 @@ title: "添加与移除配方"
 
 ## 移除配方
 
-用 KubeJS 移除 GTCEu Modern 配方的方式与其他配方相同，可以按：
+用 KubeJS 移除 GregTech Post Modern 配方的方式与其他配方相同，可以按：
 ID、Mod、Input、Output、Type 或它们的组合来移除。
 
 ```js title="gtceu_removal.js"
@@ -31,7 +31,7 @@ ServerEvents.recipes(event => {
 
 ## 修改配方
 
-使用 KubeJS 可以修改现有 GTCEu Modern 配方的 Inputs 或 Outputs，定位配方时使用同一套方式。
+使用 KubeJS 可以修改现有 GregTech Post Modern 配方的 Inputs 或 Outputs，定位配方时使用同一套方式。
 
 ```js title="gtceu_modify.js"
 ServerEvents.recipes(event => {
@@ -72,8 +72,8 @@ ServerEvents.recipes(event => {
 - 基础调用：
     - `.input()`:
       最基础的输入定义。接收两个参数：一个定义输入类型的 RecipeCapability，以及一个定义输入内容的 Object。
-      可用的 RecipeCapability 可以在 GTCEu Modern 的 GitHub 或 mod 的 .JAR 文件中找到，但包含
-      GTCEu Modern 原生 RecipeCapability 的类 `GTRecipeCapabilites` 需要在脚本中手动加载。
+      可用的 RecipeCapability 可以在 GregTech Post Modern 的 GitHub 或 mod 的 .JAR 文件中找到，但包含
+      GregTech Post Modern 原生 RecipeCapability 的类 `GTRecipeCapabilites` 需要在脚本中手动加载。
       这个方法在 Javascript 中不太方便使用；通常更建议使用下方这些明确表达输入类型的方法。
     - `.output()`:
       与上方类似，但定义的是输出。接收完全相同的参数。这个方法同样不太方便使用；
@@ -183,7 +183,7 @@ ServerEvents.recipes(event => {
 
 碎石机配方使用 AdjacentFluidConditions。
 
-要添加条件，可以使用 `adjacentFluids(Fluid...)` 方法，参见[其他 condition builder 方法](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/src/main/java/com/gregtechceu/gtceu/integration/kjs/recipe/GTRecipeSchema.java#L894)。
+要添加条件，可以使用 `adjacentFluids(Fluid...)` 方法，参见[其他 condition builder 方法](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/src/main/java/com/gregtechceu/gtceu/integration/kjs/recipe/GTRecipeSchema.java#L894)。
 
 ```js title="rock_breaker.js"
 ServerEvents.recipes(event => {

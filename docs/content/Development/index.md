@@ -3,9 +3,9 @@ title: 开发者文档
 ---
 
 
-# 开发 GTCEu Modern
+# 开发 GregTech Post Modern
 
-如果你希望参与 GTCEu Modern 的开发，欢迎提交包含改动的 pull request。
+如果你希望参与 GregTech Post Modern 的开发，欢迎提交包含改动的 pull request。
 
 以下页面介绍了在处理本代码库时经常会遇到的一些重要概念。
 

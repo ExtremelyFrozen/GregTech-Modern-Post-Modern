@@ -8,7 +8,7 @@ Generators 是每 tick 消耗 Fuel 并产生 EU 的机器。发电机有多种�
 从 LV 到 HV，EU 通过单方块发电机产生，例如 Basic Steam Turbine 或 Advanced Combustion
 Generator。所有单方块发电机都具备以下特性：
 
-* 消耗 Fuel。在基础 GregTech Modern 中，所有电力发电机都会消耗液体或气体作为燃料，但不会消耗物品。
+* 消耗 Fuel。在基础 GregTech Post Modern 中，所有电力发电机都会消耗液体或气体作为燃料，但不会消耗物品。
   EMI 可以显示发电机可消耗的全部有效燃料列表。该燃料显示会列出：
     * 每个燃烧周期消耗的数量。对大多数燃料而言是 1mb，但对某些低效率燃料（例如 Steam）来说可能高得多。
     * 燃烧时间。

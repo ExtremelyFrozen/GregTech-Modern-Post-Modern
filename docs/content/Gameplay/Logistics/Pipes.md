@@ -1,5 +1,5 @@
 # 管道
-GregTech Modern 提供 Item Pipes（物品管道）与 Fluid Pipes（流体管道），它们可以由多种材料制成，并覆盖多种容量规格。
+GregTech Post Modern 提供 Item Pipes（物品管道）与 Fluid Pipes（流体管道），它们可以由多种材料制成，并覆盖多种容量规格。
 
 ## 放置管道
 管道（Pipes）与线缆（Cables）使用一套共享且独特的世界内放置系统。
@@ -62,7 +62,7 @@ Item Pipes 可以一次传输不限数量的物品类型，但 Fluid Pipes 不�
 ## 危险
 Fluid Pipes 还具有一组额外属性：Max Temperature 与 Fluid Containment。
 
-GregTech Modern 中所有流体都有 Temperature，其中一些还具有额外属性：
+GregTech Post Modern 中所有流体都有 Temperature，其中一些还具有额外属性：
 * Acids
 * Gases
 * Cryogenics

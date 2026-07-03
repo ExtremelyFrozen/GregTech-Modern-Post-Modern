@@ -40,7 +40,7 @@ Buses 和 Hatches 也可以接受来自其他侧面的自动化导入或导出�
 这些配方的原料可能互相冲突，并被组合成另一个不想运行的第三种配方。此外，当机器以这种方式使用时，
 产出的物品或流体会被送往哪个 output bus/hatch 选择得相当随意，使得规划 pipes 来运走特定输出产物变得困难且笨重。
 
-GTM 为此提供了三种工具：Fluid Hatch Filter Locking、Distinct Buses 与 Painted Buses/Hatches。
+GregTech Post Modern 为此提供了三种工具：Fluid Hatch Filter Locking、Distinct Buses 与 Painted Buses/Hatches。
 
 * Fluid Hatch Filter Locking 是一个简单系统，用于解决哪些 output hatches 接收哪些产出流体的问题。
 使用与 Super Tank 相同的界面，可以将 Fluid Output Hatch 当前包含的流体 Locked，意味着只有该流体会被放入其中；

@@ -5,7 +5,7 @@ title: 优化
 
 # 优化技巧
 
-GTCEu Modern 的优化目标是让昂贵逻辑只在真正需要时运行，并让数据变更能精确通知相关系统。开发新 machine、trait 或 capability 时，应优先检查是否可以复用现有的订阅、缓存和 notifiable 容器，而不是每 tick 轮询全部状态。
+GregTech Post Modern 的优化目标是让昂贵逻辑只在真正需要时运行，并让数据变更能精确通知相关系统。开发新 machine、trait 或 capability 时，应优先检查是否可以复用现有的订阅、缓存和 notifiable 容器，而不是每 tick 轮询全部状态。
 
 ## Tick 订阅
 

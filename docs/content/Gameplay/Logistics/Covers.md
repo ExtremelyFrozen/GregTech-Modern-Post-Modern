@@ -1,15 +1,15 @@
 # 覆盖板（Covers）
-**所有**包含 BlockEntity 的 GregTech Modern 方块都可以安装 Covers，以添加额外功能或改变其常规功能。
+**所有**包含 BlockEntity 的 GregTech Post Modern 方块都可以安装 Covers，以添加额外功能或改变其常规功能。
 其中部分 covers 会影响物品与流体传输。
 
-Covers 可以通过所有 GregTech Modern 机器与 hatches 中的机器侧面配置 UI 来安装、配置或移除。它们也可以通过以下方式操作：
+Covers 可以通过所有 GregTech Post Modern 机器与 hatches 中的机器侧面配置 UI 来安装、配置或移除。它们也可以通过以下方式操作：
 
 * 手持 cover 右键机器以安装
 * 使用 Screwdriver 右键对应侧面，或空手 shift-right-click 对应侧面以配置
 * 使用 Crowbar 右键以移除
 
 物流 covers 从 LV 起的所有电压 tier 都可用，其物品与流体的最大传输速率取决于自身电压 tier。
-（有一个 add-on mod 也添加了 ULV covers，但它们不属于基础 GregTech Modern。）
+（有一个 add-on mod 也添加了 ULV covers，但它们不属于基础 GregTech Post Modern。）
 
 ## 传送带模块与电动泵（Conveyor Modules and Electric Pumps）
 Conveyor Modules 和 Electric Pumps 是标准物流 covers。它们可以分别放在带物品栏或流体罐的方块上，

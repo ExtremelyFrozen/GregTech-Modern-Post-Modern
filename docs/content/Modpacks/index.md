@@ -5,7 +5,7 @@ title: 整合包制作
 
 # 整合包制作
 
-GTCEu Modern 为可定制性提供了广泛的 KubeJS 集成。
+GregTech Post Modern 为可定制性提供了广泛的 KubeJS 集成。
 面向整合包作者的大多数工具都围绕这个 KubeJS API 展开。
 
 请参考本节了解如何使用这些工具，以及相关示例。

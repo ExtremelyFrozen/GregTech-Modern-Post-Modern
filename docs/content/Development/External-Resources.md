@@ -22,7 +22,7 @@ title: "外部资源"
 
 ## LDLib 库
 
-LDLib 是 GTCEu-Modern 使用的主要库。
+LDLib 是 GregTech Post Modern 使用的主要库。
 
 !!! link "LDLib 文档"
     [:material-github: LDLib-Architectury :material-arrow-right: Wiki](https://github.com/Low-Drag-MC/LDLib-Architectury/wiki)

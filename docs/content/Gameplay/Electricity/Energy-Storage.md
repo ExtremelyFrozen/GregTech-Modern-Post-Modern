@@ -4,7 +4,7 @@
 但建造少量发电机并配合一种存储已生成 EU 的手段会便宜得多，从而让少量发电机驱动大量机器。
 在 EV 及以后尤其如此，因为此时不再提供单方块发电机。
 
-GregTech Modern 包含三种主要的能量存储形式：Batteries、Battery Buffers 和 Power Substation。
+GregTech Post Modern 包含三种主要的能量存储形式：Batteries、Battery Buffers 和 Power Substation。
 
 ## 电池（Batteries） { #batteries }
 
@@ -39,7 +39,7 @@ Machine Controller Cover。这样就可以在电池电量偏低时自动开启 T
 
 ## 电力变电站（Power Substation） { #power-substation }
 
-Power Substation 是 GregTech Modern 对能量存储、集中化和分配需求的最强解决方案。PSS
+Power Substation 是 GregTech Post Modern 对能量存储、集中化和分配需求的最强解决方案。PSS
 是一个多方块结构，在 EV 中期可用，由 Palladium、Laminated Glass 和 Capacitor Blocks 建造。
 Power Substation 的总能量存储量取决于用于建造它的 Capacitor Blocks 组合。
 

@@ -59,5 +59,5 @@ CTM renderer 会通过从 5 张可用的 Block 纹理中组装 4 个象限来绘
         }
     }
     ```
-    未连接纹理的 CTM texture layout 在 [这里](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/src/main/resources/assets/gtceu/textures/block/ctm_test.png)，其连接纹理的布局在 [这里](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/src/main/resources/assets/gtceu/textures/block/ctm_test_ctm.png)。
-    对应的 MCMeta metadata 文件是 [这个](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/src/main/resources/assets/gtceu/textures/block/ctm_test.png.mcmeta)。
+    未连接纹理的 CTM texture layout 在 [这里](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/src/main/resources/assets/gtceu/textures/block/ctm_test.png)，其连接纹理的布局在 [这里](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/src/main/resources/assets/gtceu/textures/block/ctm_test_ctm.png)。
+    对应的 MCMeta metadata 文件是 [这个](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/src/main/resources/assets/gtceu/textures/block/ctm_test.png.mcmeta)。

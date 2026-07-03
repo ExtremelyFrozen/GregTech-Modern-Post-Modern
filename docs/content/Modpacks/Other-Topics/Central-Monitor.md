@@ -32,8 +32,8 @@ Module 可以拥有自定义 UI，可以被 tick（在 placeholder 中或不在�
         public IMonitorRenderer getRenderer(ItemStack stack) {
             // this is only called on the logical client
             // should return a new instance of the renderer for this module (not null)
-            // for examples of renderer code look in the GTCEu Modern github:
-            // https://github.com/GregTechCEu/GregTech-Modern/tree/1.20.1/src/main/java/com/gregtechceu/gtceu/client/renderer
+            // for examples of renderer code look in the GregTech Post Modern github:
+            // https://github.com/ExtremelyFrozen/GregTech-Post-Modern/tree/1.21/src/main/java/com/gregtechceu/gtceu/client/renderer
             return new MonitorTextRenderer(MultiLineComponent.of("this text is displayed on the monitor"), 1.0);
         }
 

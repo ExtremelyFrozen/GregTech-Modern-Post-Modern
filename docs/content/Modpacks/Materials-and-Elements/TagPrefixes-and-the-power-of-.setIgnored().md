@@ -7,7 +7,7 @@ title: "TagPrefixes 与 .setIgnored()"
 
 ## 什么是 TagPrefix？
 
-TagPrefixes 是 GTCEu Modern 用来简化给 Materials 应用物品和方块 tags 的方式，同时还承担一些其他
+TagPrefixes 是 GregTech Post Modern 用来简化给 Materials 应用物品和方块 tags 的方式，同时还承担一些其他
 功能。`TagPrefix` class 可在 startup 和 server scripts 中使用，其中包含许多预定义的
 TagPrefixes，可以把从钻头到无瑕宝石等各种对象与某个 Material 关联起来。
 
@@ -17,19 +17,19 @@ TagPrefixes 提供本地化、物品和方块 tagging，并影响许多合成配
 GTCEu 的 Material 定义系统能够正常工作的核心组成部分。
 
 !!! tip "有哪些 TagPrefixes？"
-所有可用 TagPrefixes 的列表可以在 GTCEu Modern 的 GitHub 中找到，对应 class 为 `TagPrefix`。
+所有可用 TagPrefixes 的列表可以在 GregTech Post Modern 的 GitHub 中找到，对应 class 为 `TagPrefix`。
 
 
 ## 什么是 `.setIgnored()`？
 
-在浏览 GTCEu Modern 代码库或单纯游玩 Minecraft 时，你可能已经注意到 GTCEu Modern
-会对部分原版材料做特殊处理。例如铁锭是原版物品，但 GTCEu Modern 不会像其 Material 定义所暗示的那样
+在浏览 GregTech Post Modern 代码库或单纯游玩 Minecraft 时，你可能已经注意到 GregTech Post Modern
+会对部分原版材料做特殊处理。例如铁锭是原版物品，但 GregTech Post Modern 不会像其 Material 定义所暗示的那样
 再创建一个重复的铁锭。
 
-相反，GTCEu Modern 的铁 Material 条目会将原版铁锭视为该 Material 的锭，因此
+相反，GregTech Post Modern 的铁 Material 条目会将原版铁锭视为该 Material 的锭，因此
 不会产出重复物品。
 此功能由 TagPrefixes 管理，整合包作者也可以将它用于自己的自定义物品，或用于编写
-GTCEu Modern 与其他 mod 之间的兼容。
+GregTech Post Modern 与其他 mod 之间的兼容。
 
 
 ## 好的，那该如何使用？
@@ -65,12 +65,12 @@ GTCEuStartupEvents.materialModification(event => { // (1)
 
 1. 此 event 没有 `event.create()` 之类的方法，因为它并不用于创建任何内容，只用于调整
    已存在的 Material 关联。事实上，此 event 完全没有可访问的方法。
-2. 此调用会阻止 GTCEu Modern 为自定义 `fluix_crystal` Material 创建 chipped gem 变种。
-3. 此调用会使 GTCEu Modern 将 AE2 的 Sky Stone 方块作为 rock 类型（类似原版石头与
-   GTCEu Modern 的石头 `Material` 的关联方式）关联到自定义 `sky_stone` Material。根据 mod 作者
+2. 此调用会阻止 GregTech Post Modern 为自定义 `fluix_crystal` Material 创建 chipped gem 变种。
+3. 此调用会使 GregTech Post Modern 将 AE2 的 Sky Stone 方块作为 rock 类型（类似原版石头与
+   GregTech Post Modern 的石头 `Material` 的关联方式）关联到自定义 `sky_stone` Material。根据 mod 作者
    如何向 KubeJS 暴露其 mod class，你可能需要手动加载包含希望与 `Material` 关联的 `ItemLike` 的数据定义 class。
-4. 此调用会让 GTCEu Modern 解除原版铁锭与 GTCEu Modern 的铁 Material 条目之间的关联，导致它
+4. 此调用会让 GregTech Post Modern 解除原版铁锭与 GregTech Post Modern 的铁 Material 条目之间的关联，导致它
    生成一个重复的铁锭。
 
-你要调整 TagPrefix 的 `Material` 必须已经注册到 GTCEu Modern 的 Material registry 中；如果该
+你要调整 TagPrefix 的 `Material` 必须已经注册到 GregTech Post Modern 的 Material registry 中；如果该
 Material 是自定义的，则需要像这些文档所示，使用 `GTCEuStartupEvents.registry()` 完成注册。

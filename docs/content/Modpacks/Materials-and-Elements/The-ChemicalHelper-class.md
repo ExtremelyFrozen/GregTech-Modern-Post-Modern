@@ -5,7 +5,7 @@ title: "ChemicalHelper Class（ChemicalHelper 类）"
 
 # `ChemicalHelper` Class（ChemicalHelper 类）
 
-使用 GTCEu Modern 制作整合包时，了解 ChemicalHelper class 会很有帮助。
+使用 GregTech Post Modern 制作整合包时，了解 ChemicalHelper class 会很有帮助。
 
 此 class 可在 server scripts 中使用，包含许多实用方法；当无法使用物品或方块 tags，
 或直接使用它们不够安全时，这些方法可以简化 GTCEu Materials 的处理。

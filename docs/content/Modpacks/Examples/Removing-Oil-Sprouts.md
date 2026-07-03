@@ -24,5 +24,5 @@ Oil Sprouts（原油苗）通过 Minecraft 的 "Configured Feature" 系统生成
 ## 调整 Oil Sprout 放置条件
 
 如果你只是想调整 Oil Sprouts 的稀有度，需要通过 "Placed Feature" 系统配置。复制 placed feature 文件的
-[当前版本](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/src/generated/resources/data/gtceu/worldgen/placed_feature/raw_oil_sprout.json)
+[当前版本](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/src/generated/resources/data/gtceu/worldgen/placed_feature/raw_oil_sprout.json)
 到 `kubejs/data/gtceu/worldgen/placed_feature/raw_oil_sprout.json`，然后按需修改设置。（默认文件使用 `"minecraft:rarity_filter"`，让每个区块有 1/64 的概率包含一个原油苗。）

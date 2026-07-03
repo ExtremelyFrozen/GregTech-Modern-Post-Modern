@@ -20,5 +20,5 @@ GTCEuStartupEvents.registry('gtceu:recipe_type', event => {
 ```
 
 1. 最大 Item 输入数、最大 Item 输出数、最大 Fluid 输入数、最大 Fluid 输出数
-2. 可用的 ```GuiTextures``` 和 ```FillDirection``` 列表可在 GTCEu Modern GitHub 或 .jar 文件中找到。
+2. 可用的 ```GuiTextures``` 和 ```FillDirection``` 列表可在 GregTech Post Modern GitHub 或 .jar 文件中找到。
 
