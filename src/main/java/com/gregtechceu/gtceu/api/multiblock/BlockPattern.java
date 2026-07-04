@@ -18,12 +18,6 @@ import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -31,19 +25,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import it.unimi.dsi.fastutil.ints.IntObjectPair;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -58,7 +47,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -382,171 +370,44 @@ public class BlockPattern {
         return true;
     }
 
-    public void autoBuild(Player player, MultiblockState worldState) {
-        Level world = player.level();
-        int minZ = -centerOffset.maxZ();
-        worldState.clean();
-        MultiblockControllerMachine controller = worldState.getController();
-        BlockPos centerPos = controller.getBlockPos();
-        Direction facing = controller.getFrontFacing();
-        Direction upwardsFacing = controller.getUpwardsFacing();
-        boolean isFlipped = controller.isFlipped();
-        Object2IntOpenHashMap<SimplePredicate> cacheGlobal = worldState.getGlobalCount();
-        Object2IntOpenHashMap<SimplePredicate> cacheLayer = worldState.getLayerCount();
-        LongOpenHashSet blocks = new LongOpenHashSet(1024, 0.5F);
-        Long2ObjectOpenHashMap<MetaMachine> machines = new Long2ObjectOpenHashMap<>();
-        Set<BlockPos> placeBlockPos = new HashSet<>();
-        blocks.add(centerPos.asLong());
-        for (int c = 0, z = minZ++, r; c < this.aisleRepetitions.length; c++) {
-            int unitStart = this.unitStarts[c];
-            int unitDepth = this.unitDepths[c];
-            for (r = 0; r < aisleRepetitions[c][0]; r++) {
-                for (int inner = 0; inner < unitDepth; inner++, z++) {
-                    cacheLayer.clear();
-                    worldState.getStructureLayerCount().clear();
-                    for (int b = 0, y = -centerOffset.j(); b < this.thumbLength; b++, y++) {
-                        for (int a = 0, x = -centerOffset.k(); a < this.palmLength; a++, x++) {
-                            var bc = this.blockMatches[unitStart + inner];
-                            if (bc == null) continue;
-                            var bb = bc[b];
-                            if (bb == null) continue;
-                            TraceabilityPredicate predicate = bb[a];
-                            if (predicate == null) continue;
-                            BlockPos pos = setActualRelativeOffset(x, y, z, facing, upwardsFacing, isFlipped)
-                                    .offset(centerPos.getX(), centerPos.getY(), centerPos.getZ());
-                            worldState.update(pos, predicate);
-                            long posLong = pos.asLong();
-                            if (!world.isEmptyBlock(pos)) {
-                                blocks.add(posLong);
-                                for (SimplePredicate limit : predicate.limited) {
-                                    limit.testLimited(worldState);
-                                }
-                            } else {
-                                boolean find = false;
-                                Block[] infos = new Block[0];
-                                for (SimplePredicate limit : predicate.limited) {
-                                    if (limit.minLayerCount > 0) {
-                                        int curr = cacheLayer.getInt(limit);
-                                        if (curr < limit.minLayerCount &&
-                                                (limit.maxLayerCount == -1 || curr < limit.maxLayerCount)) {
-                                            cacheLayer.addTo(limit, 1);
-                                        } else {
-                                            continue;
-                                        }
-                                    } else {
-                                        continue;
-                                    }
-                                    infos = limit.candidates == null ? null : limit.candidates.get();
-                                    find = true;
-                                    break;
-                                }
-                                if (!find) {
-                                    for (SimplePredicate limit : predicate.limited) {
-                                        if (limit.minCount > 0) {
-                                            int curr = cacheGlobal.getInt(limit);
-                                            if (curr < limit.minCount &&
-                                                    (limit.maxCount == -1 || curr < limit.maxCount)) {
-                                                cacheGlobal.addTo(limit, 1);
-                                            } else {
-                                                continue;
-                                            }
-                                        } else {
-                                            continue;
-                                        }
-                                        infos = limit.candidates == null ? null : limit.candidates.get();
-                                        find = true;
-                                        break;
-                                    }
-                                }
-                                if (!find) { // no limited
-                                    for (SimplePredicate limit : predicate.limited) {
-                                        if (limit.maxLayerCount != -1 &&
-                                                cacheLayer.getOrDefault(limit,
-                                                        Integer.MAX_VALUE) == limit.maxLayerCount) {
-                                            continue;
-                                        }
-                                        if (limit.maxCount != -1 &&
-                                                cacheGlobal.getOrDefault(limit, Integer.MAX_VALUE) == limit.maxCount) {
-                                            continue;
-                                        }
-                                        cacheLayer.addTo(limit, 1);
-                                        cacheGlobal.addTo(limit, 1);
-                                        infos = ArrayUtils.addAll(infos,
-                                                limit.candidates == null ? null : limit.candidates.get());
-                                    }
-                                    for (SimplePredicate common : predicate.common) {
-                                        infos = ArrayUtils.addAll(infos,
-                                                common.candidates == null ? null : common.candidates.get());
-                                    }
-                                }
-                                List<ItemStack> candidates = new ArrayList<>();
-                                if (infos != null) {
-                                    for (Block info : infos) {
-                                        if (info != Blocks.AIR) {
-                                            candidates.add(SimplePredicate.toItem(info).getDefaultInstance());
-                                        }
-                                    }
-                                }
+    public int getMinZ() {
+        return -centerOffset.maxZ();
+    }
 
-                                // check inventory
-                                ItemStack found = null;
-                                int foundSlot = -1;
-                                IItemHandler handler = null;
-                                if (!player.isCreative()) {
-                                    var foundHandler = getMatchStackWithHandler(candidates,
-                                            player.getCapability(Capabilities.ItemHandler.ENTITY));
-                                    if (foundHandler != null) {
-                                        foundSlot = foundHandler.firstInt();
-                                        handler = foundHandler.second();
-                                        found = handler.getStackInSlot(foundSlot).copy();
-                                    }
-                                } else {
-                                    for (ItemStack candidate : candidates) {
-                                        found = candidate.copy();
-                                        if (!found.isEmpty() && found.getItem() instanceof BlockItem) {
-                                            break;
-                                        }
-                                        found = null;
-                                    }
-                                }
-                                if (found == null) continue;
-                                BlockItem itemBlock = (BlockItem) found.getItem();
-                                BlockPlaceContext context = new BlockPlaceContext(world, player,
-                                        InteractionHand.MAIN_HAND, found,
-                                        BlockHitResult.miss(player.getEyePosition(0), Direction.UP, pos));
-                                InteractionResult interactionResult = itemBlock.place(context);
-                                if (interactionResult != InteractionResult.FAIL) {
-                                    if (handler != null) {
-                                        handler.extractItem(foundSlot, 1, false);
-                                    }
-                                    Direction direction = predicate.getDirection(worldState, facing, upwardsFacing,
-                                            isFlipped);
-                                    if (direction != null) {
-                                        BlockState directedState = setDirectionalState(world.getBlockState(pos),
-                                                direction);
-                                        if (directedState != world.getBlockState(pos)) {
-                                            world.setBlock(pos, directedState,
-                                                    Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
-                                        }
-                                    }
-                                    if (world.getBlockEntity(pos) instanceof MetaMachine be) {
-                                        machines.put(posLong, be);
-                                    }
-                                    blocks.add(posLong);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Direction frontFacing = controller.getFrontFacing();
-        machines.long2ObjectEntrySet().fastForEach(entry -> { // adjust facing
+    public int getMinY() {
+        return -centerOffset.j();
+    }
+
+    public int getMinX() {
+        return -centerOffset.k();
+    }
+
+    public TraceabilityPredicate getPredicate(int z, int y, int x) {
+        return blockMatches[z][y][x];
+    }
+
+    public BlockPos getActualRelativeOffset(int x, int y, int z, Direction facing, Direction upwardsFacing,
+                                            boolean isFlipped) {
+        return setActualRelativeOffset(x, y, z, facing, upwardsFacing, isFlipped);
+    }
+
+    public boolean matchesDirectionalPredicate(TraceabilityPredicate predicate, MultiblockState worldState,
+                                               Direction frontFacing, Direction upwardsFacing, boolean isFlipped) {
+        return matchesDirectionalPredicateInternal(predicate, worldState, frontFacing, upwardsFacing, isFlipped);
+    }
+
+    public static BlockState applyDirectionalState(BlockState state, Direction direction) {
+        return setDirectionalState(state, direction);
+    }
+
+    public void resetPlacedMachineFacings(Level world, Direction frontFacing, LongOpenHashSet occupiedBlocks,
+                                          Long2ObjectOpenHashMap<MetaMachine> machines) {
+        machines.long2ObjectEntrySet().fastForEach(entry -> {
             long posLong = entry.getLongKey();
-            var machine = entry.getValue();
+            MetaMachine machine = entry.getValue();
             BlockPos pos = BlockPos.of(posLong);
             resetFacing(pos, machine.getBlockState(), frontFacing, (p, f) -> {
-                if (!blocks.contains(p.relative(f).asLong())) {
+                if (!occupiedBlocks.contains(p.relative(f).asLong())) {
                     return machine.isFacingValid(f);
                 }
                 return false;
@@ -760,8 +621,9 @@ public class BlockPattern {
         consumer.accept(blockState.setValue(property, found));
     }
 
-    private boolean matchesDirectionalPredicate(TraceabilityPredicate predicate, MultiblockState worldState,
-                                                Direction frontFacing, Direction upwardsFacing, boolean isFlipped) {
+    private boolean matchesDirectionalPredicateInternal(TraceabilityPredicate predicate, MultiblockState worldState,
+                                                        Direction frontFacing, Direction upwardsFacing,
+                                                        boolean isFlipped) {
         Direction direction = predicate.getDirection(worldState, frontFacing, upwardsFacing, isFlipped);
         return direction == null || matchesDirectionalState(worldState.getBlockState(), direction);
     }
@@ -810,33 +672,5 @@ public class BlockPattern {
         int[] c0 = new int[] { x, y, z };
         int[] c1 = new int[3];
         return new BlockPos(c1[0], c1[1], c1[2]);
-    }
-
-    @Nullable
-    private static IntObjectPair<IItemHandler> getMatchStackWithHandler(
-                                                                        List<ItemStack> candidates,
-                                                                        IItemHandler handler) {
-        if (handler == null) {
-            return null;
-        }
-        for (int i = 0; i < handler.getSlots(); i++) {
-            ItemStack stack = handler.getStackInSlot(i);
-            if (stack.isEmpty()) continue;
-
-            @Nullable
-            IItemHandler stackCap = stack.getCapability(Capabilities.ItemHandler.ITEM);
-            // spotless:off
-            if (stackCap != null) {
-                var rt = getMatchStackWithHandler(candidates, stackCap);
-                if (rt != null) {
-                    return rt;
-                }
-            } else if (candidates.stream().anyMatch(candidate -> ItemStack.isSameItemSameComponents(candidate, stack)) &&
-                    !stack.isEmpty() && stack.getItem() instanceof BlockItem) {
-                return IntObjectPair.of(i, handler);
-            }
-            // spotless:on
-        }
-        return null;
     }
 }
