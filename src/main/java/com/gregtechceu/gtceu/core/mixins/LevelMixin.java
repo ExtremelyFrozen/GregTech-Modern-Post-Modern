@@ -3,7 +3,7 @@ package com.gregtechceu.gtceu.core.mixins;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockWorldSavedData;
 
-import com.lowdragmc.lowdraglib.async.AsyncThreadData;
+import com.lowdragmc.lowdraglib2.async.AsyncThreadData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

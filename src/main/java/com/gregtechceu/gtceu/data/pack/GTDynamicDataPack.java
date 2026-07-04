@@ -4,7 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.addon.AddonFinder;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
-import com.lowdragmc.lowdraglib.Platform;
+import com.lowdragmc.lowdraglib2.Platform;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.advancements.Advancement;
