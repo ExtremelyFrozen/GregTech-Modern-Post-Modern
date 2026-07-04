@@ -70,9 +70,7 @@ public class GTRecipeTypeUI {
 
     @Getter
     @Setter
-    private ProgressTexture progressBarTexture = new ProgressTexture(
-            GuiTextures.PROGRESS_BAR_ARROW.getSubTexture(0, 0, 1, 0.5),
-            GuiTextures.PROGRESS_BAR_ARROW.getSubTexture(0, 0.5, 1, 0.5));
+    private ProgressTexture progressBarTexture = GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ARROW);
     @Setter
     private SteamTexture steamProgressBarTexture = null;
     @Setter
@@ -216,10 +214,11 @@ public class GTRecipeTypeUI {
             progressWidget.setId("progress");
             group.addWidget(progressWidget);
 
-            progressWidget.setProgressTexture((isSteam && steamProgressBarTexture != null) ? new ProgressTexture(
-                    steamProgressBarTexture.get(isHighPressure).getSubTexture(0, 0, 1, 0.5),
-                    steamProgressBarTexture.get(isHighPressure).getSubTexture(0, 0.5, 1, 0.5))
-                    .setFillDirection(steamMoveType) : progressBarTexture);
+            progressWidget.setProgressTexture((isSteam && steamProgressBarTexture != null) ?
+                    GuiTextures.progressBar(
+                            steamProgressBarTexture.get(isHighPressure).getSubTexture(0, 0, 1, 0.5),
+                            steamProgressBarTexture.get(isHighPressure).getSubTexture(0, 0.5, 1, 0.5))
+                            .setFillDirection(steamMoveType) : progressBarTexture);
 
             return group;
         }, (template, recipeHolder) -> {
