@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
-import com.lowdragmc.lowdraglib.LDLib;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.editor.Icons;
 import com.lowdragmc.lowdraglib.gui.editor.annotation.LDLRegister;
@@ -25,7 +24,6 @@ import net.minecraft.resources.ResourceLocation;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -113,9 +111,8 @@ public class MachineUIProject extends UIProject {
                 menu.remove("ldlib.gui.editor.menu.save");
                 menu.leaf(Icons.SAVE, "ldlib.gui.editor.menu.save", () -> {
                     var editableUI = machineDefinition.getEditableUI();
-                    var path = new File(LDLib.getLDLibDir(),
+                    GTUIEditor.createWorkspaceDirectory(
                             "assets/%s/ui/machine".formatted(editableUI.getUiPath().getNamespace()));
-                    path.mkdirs();
                     saveProject(Path.of(editableUI.getUiPath().getPath(), ".", this.getRegisterUI().name()));
                     editableUI.reloadCustomUI();
                 });

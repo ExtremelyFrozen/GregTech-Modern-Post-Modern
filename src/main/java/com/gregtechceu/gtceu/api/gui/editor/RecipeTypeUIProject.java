@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
-import com.lowdragmc.lowdraglib.LDLib;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.editor.Icons;
 import com.lowdragmc.lowdraglib.gui.editor.annotation.LDLRegister;
@@ -29,7 +28,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -117,9 +115,8 @@ public class RecipeTypeUIProject extends UIProject {
             } else {
                 menu.remove("ldlib.gui.editor.menu.save");
                 menu.leaf(Icons.SAVE, "ldlib.gui.editor.menu.save", () -> {
-                    var path = new File(LDLib.getLDLibDir(),
+                    GTUIEditor.createWorkspaceDirectory(
                             "assets/%s/ui/recipe_type".formatted(recipeType.registryName.getNamespace()));
-                    path.mkdirs();
                     saveProject(Path.of(recipeType.registryName.getPath(), ".", this.getRegisterUI().name()));
                     recipeType.getRecipeUI().reloadCustomUI();
                 });
