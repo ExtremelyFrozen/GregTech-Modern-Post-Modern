@@ -34,8 +34,16 @@ public class GuiTextures {
         return ResourceTexture.fromSpirit(texture);
     }
 
+    public static ProgressTexture progressBar() {
+        return new ProgressTexture();
+    }
+
+    public static ProgressTexture progressBar(IGuiTexture emptyBar, IGuiTexture filledBar) {
+        return new ProgressTexture(emptyBar, filledBar);
+    }
+
     public static ProgressTexture progressBar(ResourceTexture texture) {
-        return new ProgressTexture(texture.getSubTexture(0, 0, 1, 0.5),
+        return progressBar(texture.getSubTexture(0, 0, 1, 0.5),
                 texture.getSubTexture(0, 0.5, 1, 0.5));
     }
 

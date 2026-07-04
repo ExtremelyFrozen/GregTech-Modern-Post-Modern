@@ -1,5 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.widget;
 
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 
@@ -26,7 +28,7 @@ public class ExtendedProgressWidget extends ProgressWidget {
     private Consumer<List<Component>> serverTooltipSupplier;
 
     public ExtendedProgressWidget() {
-        super(JEIProgress, 0, 0, 40, 40, new ProgressTexture());
+        super(JEIProgress, 0, 0, 40, 40, GuiTextures.progressBar());
     }
 
     public ExtendedProgressWidget(DoubleSupplier progressSupplier, int x, int y, int width, int height,
