@@ -1,8 +1,9 @@
 package com.gregtechceu.gtceu.integration.emi.recipe;
 
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
+
 import com.lowdragmc.lowdraglib.gui.modular.ModularUIContainer;
 import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 
 import net.minecraft.world.inventory.Slot;
 
@@ -16,7 +17,7 @@ public class GTEmiRecipeHandler implements StandardRecipeHandler<ModularUIContai
     @Override
     public List<Slot> getInputSources(ModularUIContainer handler) {
         return handler.getModularUI().getSlotMap().values().stream()
-                .filter(e -> e.getIngredientIO() == IngredientIO.INPUT || e.isPlayerContainer || e.isPlayerHotBar)
+                .filter(e -> GTXEIHelper.isInput(e.getIngredientIO()) || e.isPlayerContainer || e.isPlayerHotBar)
                 .map(SlotWidget::getHandler)
                 .toList();
     }
@@ -24,7 +25,7 @@ public class GTEmiRecipeHandler implements StandardRecipeHandler<ModularUIContai
     @Override
     public List<Slot> getCraftingSlots(ModularUIContainer handler) {
         return handler.getModularUI().getSlotMap().values().stream()
-                .filter(e -> e.getIngredientIO() == IngredientIO.INPUT)
+                .filter(e -> GTXEIHelper.isInput(e.getIngredientIO()))
                 .map(SlotWidget::getHandler)
                 .toList();
     }

@@ -10,7 +10,6 @@ import com.lowdragmc.lowdraglib.emi.ModularWrapperWidget;
 import com.lowdragmc.lowdraglib.gui.ingredient.IRecipeIngredientSlot;
 import com.lowdragmc.lowdraglib.gui.widget.DraggableScrollableWidgetGroup;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 import com.lowdragmc.lowdraglib.jei.ModularWrapper;
 
 import net.minecraft.network.chat.Component;
@@ -94,9 +93,9 @@ public class GTEmiRecipe extends ModularEmiRecipe<WidgetGroup> {
                             .customBackground(null, w.getPosition().x, w.getPosition().y, w.getSize().width,
                                     w.getSize().height)
                             .drawBack(false);
-                    if (io == IngredientIO.CATALYST) {
+                    if (GTXEIHelper.isCatalyst(io)) {
                         slotWidget.catalyst(true);
-                    } else if (io == IngredientIO.OUTPUT) {
+                    } else if (GTXEIHelper.isOutput(io)) {
                         slotWidget.recipeContext(this);
                     }
                     for (Component component : w.getTooltipTexts()) {
