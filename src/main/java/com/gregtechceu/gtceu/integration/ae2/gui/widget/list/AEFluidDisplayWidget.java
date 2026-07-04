@@ -4,10 +4,10 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.client.TooltipsHandler;
 import com.gregtechceu.gtceu.integration.ae2.utils.AEUtil;
 
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.gregtechceu.gtceu.integration.ae2.gui.widget.slot.AEConfigSlotWidget.drawSelectionOverlay;
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawText;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawText;
 
 /**
  * Display a certain {@link FluidStack} element.
@@ -51,7 +51,7 @@ public class AEFluidDisplayWidget extends Widget {
         int stackY = position.y + 1;
         if (fluid != null) {
             FluidStack fluidStack = AEUtil.toFluidStack(fluid);
-            DrawerHelper.drawFluidForGui(graphics, fluidStack, stackX, stackY, 16, 16);
+            DrawerHelper.drawFluidForGui(graphics, fluidStack, stackX, stackY, 16, 16, -1);
             String amountStr = String.format("x%,d", fluid.amount());
             drawText(graphics, amountStr, stackX + 20, stackY + 5, 1, 0xFFFFFFFF);
         }

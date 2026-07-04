@@ -11,9 +11,9 @@ import com.gregtechceu.gtceu.integration.ae2.utils.AEUtil;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
@@ -34,7 +34,7 @@ import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.GenericStack;
 import org.jetbrains.annotations.NotNull;
 
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawStringFixedCorner;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawStringFixedCorner;
 
 public class AEFluidConfigSlotWidget extends AEConfigSlotWidget implements IGhostFluidTarget {
 
@@ -60,7 +60,7 @@ public class AEFluidConfigSlotWidget extends AEConfigSlotWidget implements IGhos
         if (config != null) {
             var stack = AEUtil.toFluidStack(config);
             if (!stack.isEmpty()) {
-                DrawerHelper.drawFluidForGui(graphics, stack, stackX, stackY, 16, 16);
+                DrawerHelper.drawFluidForGui(graphics, stack, stackX, stackY, 16, 16, -1);
                 if (!parentWidget.isStocking()) {
                     String amountStr = FormattingUtil.formatNumberReadable(config.amount(), true,
                             FormattingUtil.DECIMAL_FORMAT_0F, "B");
@@ -71,7 +71,7 @@ public class AEFluidConfigSlotWidget extends AEConfigSlotWidget implements IGhos
         if (stock != null) {
             var stack = AEUtil.toFluidStack(stock);
             if (!stack.isEmpty()) {
-                DrawerHelper.drawFluidForGui(graphics, stack, stackX, stackY + 18, 16, 16);
+                DrawerHelper.drawFluidForGui(graphics, stack, stackX, stackY + 18, 16, 16, -1);
                 String amountStr = FormattingUtil.formatNumberReadable(stock.amount(), true,
                         FormattingUtil.DECIMAL_FORMAT_0F, "B");
                 drawStringFixedCorner(graphics, amountStr, stackX + 17, stackY + 18 + 17, 16777215, true, 0.5f);

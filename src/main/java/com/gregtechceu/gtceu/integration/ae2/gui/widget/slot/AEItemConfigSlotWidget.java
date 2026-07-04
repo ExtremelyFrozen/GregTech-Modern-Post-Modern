@@ -22,8 +22,8 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import org.jetbrains.annotations.NotNull;
 
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawItemStack;
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawStringFixedCorner;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawItemStack;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawStringFixedCorner;
 
 public class AEItemConfigSlotWidget extends AEConfigSlotWidget implements IGhostItemTarget {
 

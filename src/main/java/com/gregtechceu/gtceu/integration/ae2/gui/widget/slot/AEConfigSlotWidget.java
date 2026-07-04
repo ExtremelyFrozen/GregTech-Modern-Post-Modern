@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawGradientRect;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawGradientRect;
 
 public class AEConfigSlotWidget extends Widget {
 

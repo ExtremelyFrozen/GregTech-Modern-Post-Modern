@@ -16,7 +16,7 @@ import appeng.api.stacks.GenericStack;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawStringSized;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawStringSized;
 
 public class AmountSetWidget extends Widget {
 

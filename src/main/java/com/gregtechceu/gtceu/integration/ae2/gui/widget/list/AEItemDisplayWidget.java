@@ -15,8 +15,8 @@ import appeng.api.stacks.GenericStack;
 import org.jetbrains.annotations.NotNull;
 
 import static com.gregtechceu.gtceu.integration.ae2.gui.widget.slot.AEConfigSlotWidget.drawSelectionOverlay;
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawItemStack;
-import static com.lowdragmc.lowdraglib.gui.util.DrawerHelper.drawText;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawItemStack;
+import static com.lowdragmc.lowdraglib2.gui.util.DrawerHelper.drawText;
 
 /**
  * Display a certain {@link appeng.api.stacks.GenericStack} element.
