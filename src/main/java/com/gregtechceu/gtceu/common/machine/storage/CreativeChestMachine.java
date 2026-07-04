@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.core.component.DataComponentMap;
@@ -96,9 +95,9 @@ public class CreativeChestMachine extends QuantumChestMachine {
         group.addWidget(new SwitchWidget(7, 101, 162, 20, (clickData, value) -> setWorkingEnabled(value))
                 .setTexture(
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtpm.creative.activity.off")),
+                                GuiTextures.text("gtpm.creative.activity.off")),
                         new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtpm.creative.activity.on")))
+                                GuiTextures.text("gtpm.creative.activity.on")))
                 .setPressed(isWorkingEnabled()));
 
         return group;

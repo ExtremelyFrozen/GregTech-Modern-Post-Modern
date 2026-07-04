@@ -13,7 +13,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
 import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
@@ -119,8 +118,8 @@ public class CreativeComputationProviderMachine extends MetaMachine
                 .widget(new SwitchWidget(9, 66, 122, 20, (clickData, value) -> setActive(value))
                         .setSupplier(this::isActive)
                         .setTexture(new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtpm.creative.activity.off")),
+                                GuiTextures.text("gtpm.creative.activity.off")),
                                 new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                        new TextTexture("gtpm.creative.activity.on"))));
+                                        GuiTextures.text("gtpm.creative.activity.on"))));
     }
 }
