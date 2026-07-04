@@ -10,7 +10,7 @@ import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
+import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.world.item.ItemStack;

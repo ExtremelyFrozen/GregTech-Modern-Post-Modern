@@ -20,7 +20,7 @@ import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.jei.IngredientIO;
-import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
+import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;

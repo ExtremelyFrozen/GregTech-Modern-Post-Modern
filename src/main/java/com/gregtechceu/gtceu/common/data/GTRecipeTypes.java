@@ -28,7 +28,7 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
+import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.HolderSet;
