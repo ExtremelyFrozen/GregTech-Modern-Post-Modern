@@ -40,6 +40,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         var patterns = [
                 'com.lowdragmc.lowdraglib.',
                 'IngredientIO.RENDER_ONLY',
+                'IngredientIO.valueOf("RENDER_ONLY")',
                 'IngredientIO.BOTH',
                 '@RPCMethod',
                 'RPCEmitter',
