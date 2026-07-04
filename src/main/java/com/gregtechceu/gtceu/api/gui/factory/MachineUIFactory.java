@@ -9,12 +9,12 @@ import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-public class MachineUIFactory extends UIFactory<MetaMachine> {
+public class MachineUIFactory extends UIFactory<MachineUIHolderImpl> {
 
     public static final MachineUIFactory INSTANCE = new MachineUIFactory();
 
@@ -22,9 +22,14 @@ public class MachineUIFactory extends UIFactory<MetaMachine> {
         super(GTCEu.id("machine"));
     }
 
+    public boolean openUI(MetaMachine machine, ServerPlayer player) {
+        return openUI(new MachineUIHolderImpl(player, machine), player);
+    }
+
     @Override
-    protected ModularUI createUITemplate(MetaMachine holder, Player entityPlayer) {
-        if (holder instanceof IUIMachine machine) {
+    protected ModularUI createUITemplate(MachineUIHolderImpl holder, Player entityPlayer) {
+        if (holder == null) return null;
+        if (holder.getMachine() instanceof IUIMachine machine) {
             return machine.createUI(entityPlayer);
         }
         return null;
@@ -32,17 +37,16 @@ public class MachineUIFactory extends UIFactory<MetaMachine> {
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    protected MetaMachine readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
-        Level world = Minecraft.getInstance().level;
-        if (world == null) return null;
-        if (world.getBlockEntity(syncData.readBlockPos()) instanceof MetaMachine holder) {
-            return holder;
-        }
-        return null;
+    protected MachineUIHolderImpl readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
+        var minecraft = Minecraft.getInstance();
+        if (minecraft.level == null) return null;
+        var player = minecraft.player;
+        if (player == null) return null;
+        return new MachineUIHolderImpl(player, syncData.readBlockPos());
     }
 
     @Override
-    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, MetaMachine holder) {
-        syncData.writeBlockPos(holder.getBlockPos());
+    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, MachineUIHolderImpl holder) {
+        syncData.writeBlockPos(holder.getPos());
     }
 }
