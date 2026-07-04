@@ -21,7 +21,6 @@ import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.core.mixins.neoforge.BakedModelWrapperAccessor;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.client.bakedpipeline.FaceQuad;
 import com.lowdragmc.lowdraglib.client.model.custommodel.CustomBakedModel;
 
 import net.minecraft.Util;
@@ -277,7 +276,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
             if (itemFace != null && side == itemFace) {
                 quads.add(StaticFaceBakery.bakeFace(StaticFaceBakery.OUTPUT_OVERLAY, side, pipeOverlaySprite));
                 if (outputTrait.isAutoOutputItems()) {
-                    quads.add(FaceQuad.bakeFace(StaticFaceBakery.AUTO_OUTPUT_OVERLAY, side,
+                    quads.add(StaticFaceBakery.bakeFace(StaticFaceBakery.AUTO_OUTPUT_OVERLAY, side,
                             itemOutputOverlaySprite, BlockModelRotation.X0_Y0, -101, 15, true, true));
                 }
             }
@@ -287,7 +286,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
             if (fluidFace != null && side == fluidFace) {
                 quads.add(StaticFaceBakery.bakeFace(StaticFaceBakery.OUTPUT_OVERLAY, side, pipeOverlaySprite));
                 if (outputTrait.isAutoOutputFluids()) {
-                    quads.add(FaceQuad.bakeFace(StaticFaceBakery.AUTO_OUTPUT_OVERLAY, side,
+                    quads.add(StaticFaceBakery.bakeFace(StaticFaceBakery.AUTO_OUTPUT_OVERLAY, side,
                             fluidOutputOverlaySprite, BlockModelRotation.X0_Y0, -101, 15, true, true));
                 }
             }
