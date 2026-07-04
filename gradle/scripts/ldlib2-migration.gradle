@@ -66,10 +66,14 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         var matches = []
         filesToScan.each { scannedFile ->
             var relativePath = rootProject.relativePath(scannedFile)
-            scannedFile.eachLine('UTF-8') { line, number ->
-                patterns.each { pattern ->
-                    if (line.contains(pattern)) {
-                        matches.add("${relativePath}:${number}: ${pattern}")
+            if (relativePath.endsWith('.rtui')) {
+                matches.add("${relativePath}: legacy LDLib1 .rtui file")
+            } else {
+                scannedFile.eachLine('UTF-8') { line, number ->
+                    patterns.each { pattern ->
+                        if (line.contains(pattern)) {
+                            matches.add("${relativePath}:${number}: ${pattern}")
+                        }
                     }
                 }
             }
