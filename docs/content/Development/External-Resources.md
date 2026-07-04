@@ -21,12 +21,12 @@ as other resources you might find helpful.
     - [MCJty's Modding Wiki](https://www.mcjty.eu/docs/intro)
 
 
-## LDLib
+## LDLib2
 
-LDLib is the main library we're using for GTCEu-Modern.
+LDLib2 is the main library we're using for GTCEu-Modern.
 
-!!! link "LDLib Docs"
-    [:material-github: LDLib-Architectury :material-arrow-right: Wiki](https://github.com/Low-Drag-MC/LDLib-Architectury/wiki)
+!!! link "LDLib2 Docs"
+    [:material-github: LDLib2 :material-arrow-right: Docs](https://low-drag-mc.github.io/LowDragMC-Doc/en/ldlib2/)
 
 
 ## Mixins
