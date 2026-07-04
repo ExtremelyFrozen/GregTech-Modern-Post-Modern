@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.gui.misc.PacketProspecting;
 import com.gregtechceu.gtceu.api.gui.misc.ProspectorMode;
 
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TransformTexture;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.utils.ColorUtils;
@@ -37,7 +36,7 @@ import static com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX_COLOR;
 public class ProspectingTexture extends AbstractTexture {
 
     public static final String SELECTED_ALL = "[all]";
-    private static final ResourceTexture ARROW = GuiTextures.UP.copy().setColor(ColorPattern.RED.color);
+    private static final TransformTexture ARROW = GuiTextures.UP.copy().setColor(ColorPattern.RED.color);
 
     @Getter
     private String selected = SELECTED_ALL;
