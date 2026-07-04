@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.gui.fancy;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.ChatFormatting;
@@ -80,7 +79,7 @@ public class PageSwitcher implements IFancyUIProvider {
 
     @Override
     public IGuiTexture getTabIcon() {
-        return new TextTexture("+").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor());
+        return GuiTextures.text("+").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor());
     }
 
     @Override

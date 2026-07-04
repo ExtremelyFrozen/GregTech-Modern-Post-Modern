@@ -224,7 +224,7 @@ public class ConfiguratorPanel extends WidgetGroup {
                 this.view.addWidget(widget);
                 this.view.addWidget(new ImageWidget(border + 5, border, widget.getSize().width - getTabSize() - 5,
                         getTabSize() - border,
-                        new TextTexture(configurator.getTitle().getString())
+                        GuiTextures.text(configurator.getTitle().getString())
                                 .setType(TextTexture.TextType.LEFT_HIDE)
                                 .setWidth(widget.getSize().width - getTabSize())));
                 this.addWidget(button);

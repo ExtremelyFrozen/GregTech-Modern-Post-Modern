@@ -4,10 +4,13 @@ import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 public class GuiTextures {
@@ -34,6 +37,18 @@ public class GuiTextures {
 
     public static ItemStackTexture itemStack(Item... items) {
         return new ItemStackTexture(items);
+    }
+
+    public static TextTexture text(String text) {
+        return new TextTexture(text);
+    }
+
+    public static TextTexture text(String text, int color) {
+        return new TextTexture(text, color);
+    }
+
+    public static TextTexture text(Supplier<String> text) {
+        return new TextTexture(text);
     }
 
     // GREGTECH

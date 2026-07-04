@@ -49,7 +49,7 @@ public class MachineModeFancyConfigurator implements IFancyUIProvider {
                     () -> new GuiTextureGroup(
                             ResourceBorderTexture.BUTTON_COMMON.copy()
                                     .setColor(machine.getActiveRecipeType() == finalI ? ColorPattern.CYAN.color : -1),
-                            new TextTexture(machine.getRecipeTypes()[finalI].getTranslationKey()).setWidth(136)
+                            GuiTextures.text(machine.getRecipeTypes()[finalI].getTranslationKey()).setWidth(136)
                                     .setType(TextTexture.TextType.ROLL))));
 
         }

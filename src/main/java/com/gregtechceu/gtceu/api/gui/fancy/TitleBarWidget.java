@@ -56,11 +56,11 @@ public class TitleBarWidget extends WidgetGroup {
         addWidget(this.buttonGroup = new WidgetGroup(0, BORDER_SIZE, width, innerHeight));
         buttonGroup.setBackground(GuiTextures.TITLE_BAR_BACKGROUND);
         buttonGroup.addWidget(this.backButton = new ButtonWidget(0, BORDER_SIZE, BTN_WIDTH, HEIGHT - BORDER_SIZE,
-                new TextTexture(" <").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor()), onBackClicked)
+                GuiTextures.text(" <").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor()), onBackClicked)
                 .setHoverTooltips("gtpm.gui.title_bar.back"));
         buttonGroup.addWidget(this.menuButton = new ButtonWidget(width - BTN_WIDTH, BORDER_SIZE, BTN_WIDTH,
                 HEIGHT - BORDER_SIZE,
-                new TextTexture("+").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor()), onMenuClicked)
+                GuiTextures.text("+").setDropShadow(false).setColor(ChatFormatting.BLACK.getColor()), onMenuClicked)
                 .setHoverTooltips("gtpm.gui.title_bar.page_switcher"));
 
         addWidget(this.mainSection = new WidgetGroup(BTN_WIDTH, 0, width, HEIGHT));
@@ -77,7 +77,7 @@ public class TitleBarWidget extends WidgetGroup {
         this.showBackButton = showBackButton;
         this.showMenuButton = showMenuButton;
 
-        titleText = new TextTexture(ChatFormatting.BLACK + currentPage.getTitle().copy().getString())
+        titleText = GuiTextures.text(ChatFormatting.BLACK + currentPage.getTitle().copy().getString())
                 .setDropShadow(false)
                 .setType(TextTexture.TextType.ROLL);
         titleText.setRollSpeed(ROLL_SPEED);
