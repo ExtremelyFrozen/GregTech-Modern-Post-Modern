@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.widget;
 
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 
 import net.minecraft.client.gui.GuiGraphics;

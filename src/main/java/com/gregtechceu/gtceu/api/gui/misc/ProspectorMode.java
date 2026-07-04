@@ -18,7 +18,7 @@ import com.gregtechceu.gtceu.utils.TagUtil;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -268,7 +268,7 @@ public abstract class ProspectorMode<T> {
                 float drawnHeight = (float) ProgressTexture.FillDirection.DOWN_TO_UP.getDrawnHeight(progress);
                 DrawerHelper.drawFluidForGui(graphics, new FluidStack(item.fluid(), item.left),
                         (int) (x + drawnU * width), (int) (y + drawnV * height), ((int) (width * drawnWidth)),
-                        ((int) (height * drawnHeight)));
+                        ((int) (height * drawnHeight)), -1);
             }
         }
     };

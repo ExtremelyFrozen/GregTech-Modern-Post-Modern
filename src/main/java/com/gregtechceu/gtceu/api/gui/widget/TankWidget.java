@@ -20,7 +20,7 @@ import com.lowdragmc.lowdraglib.gui.ingredient.IRecipeIngredientSlot;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib.gui.util.TextFormattingUtil;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.jei.ClickableIngredient;
@@ -339,7 +339,7 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
                 int y = pos.y + 1;
                 DrawerHelper.drawFluidForGui(graphics, renderedFluid,
                         (int) (x + drawnU * width), (int) (y + drawnV * height),
-                        ((int) (width * drawnWidth)), ((int) (height * drawnHeight)));
+                        ((int) (width * drawnWidth)), ((int) (height * drawnHeight)), -1);
             }
 
             if (showAmount && showAmountOverlay && !renderedFluid.isEmpty()) {

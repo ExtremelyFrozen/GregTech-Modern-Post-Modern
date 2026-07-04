@@ -7,7 +7,7 @@ import com.lowdragmc.lowdraglib.gui.editor.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.IConfigurableWidget;
 import com.lowdragmc.lowdraglib.gui.ingredient.IGhostIngredientTarget;
 import com.lowdragmc.lowdraglib.gui.ingredient.Target;
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib.gui.util.TextFormattingUtil;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
@@ -229,7 +229,7 @@ public class PhantomFluidWidget extends TankWidget implements IGhostIngredientTa
             int y = pos.y + 1;
             DrawerHelper.drawFluidForGui(graphics, stack,
                     (int) (x + drawnU * width), (int) (y + drawnV * height), ((int) (width * drawnWidth)),
-                    ((int) (height * drawnHeight)));
+                    ((int) (height * drawnHeight)), -1);
             if (showAmount) {
                 graphics.pose().pushPose();
                 graphics.pose().scale(0.5F, 0.5F, 1);

@@ -7,7 +7,7 @@ import com.gregtechceu.gtceu.api.gui.misc.ProspectorMode;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TransformTexture;
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.utils.ColorUtils;
 
 import net.minecraft.client.gui.GuiGraphics;

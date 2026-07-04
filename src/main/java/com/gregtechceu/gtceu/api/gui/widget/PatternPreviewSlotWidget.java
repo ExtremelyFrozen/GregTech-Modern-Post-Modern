@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.widget;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUIGuiContainer;
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.utils.ColorUtils;
 import com.lowdragmc.lowdraglib.utils.Position;
 
