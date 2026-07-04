@@ -26,7 +26,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
 
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
@@ -363,9 +362,9 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
                 channelsGroup.setVisible(showChannels.isTrue());
                 requestUpdate();
             }).setTexture(
-                    new GuiTextureGroup(GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
+                    GuiTextures.group(GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
                             GuiTextures.BUTTON_LIST),
-                    new GuiTextureGroup(GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0.5, 1, 0.5),
+                    GuiTextures.group(GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0.5, 1, 0.5),
                             GuiTextures.BUTTON_LIST))
                     .setHoverTooltips("cover.ender_fluid_link.tooltip.list_button");
         }
