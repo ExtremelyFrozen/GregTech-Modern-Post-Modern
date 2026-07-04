@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.api.blockentity.IGregtechBlockEntity;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
@@ -16,8 +17,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.utils.GTUtil;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -90,8 +89,9 @@ public class MachineCoverContainer extends MachineTrait
     }
 
     @Override
-    public @Nullable ResourceTexture getGridOverlayIcon(Player player, BlockPos pos, BlockState state,
-                                                        Set<GTToolType> toolTypes, ItemStack held, Direction side) {
+    public @Nullable GridHighlightTexture getGridOverlayIcon(Player player, BlockPos pos, BlockState state,
+                                                             Set<GTToolType> toolTypes, ItemStack held,
+                                                             Direction side) {
         var cover = getCoverAtSide(side);
         if (cover != null) {
             return cover.sideTips(player, pos, state, toolTypes, held, side);

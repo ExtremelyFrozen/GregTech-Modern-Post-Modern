@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.PhantomSlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.datacomponents.LargeItemContent;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.machine.TieredMachine;
@@ -27,7 +28,6 @@ import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.lowdragmc.lowdraglib.gui.editor.Icons;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.core.BlockPos;
@@ -300,8 +300,8 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
     //////////////////////////////////////
 
     @Override
-    public @Nullable ResourceTexture sideTips(Player player, BlockPos pos, BlockState state,
-                                              Set<GTToolType> toolTypes, ItemStack held, Direction side) {
+    public @Nullable GridHighlightTexture sideTips(Player player, BlockPos pos, BlockState state,
+                                                   Set<GTToolType> toolTypes, ItemStack held, Direction side) {
         if (toolTypes.contains(GTToolType.SOFT_MALLET)) {
             if (side == getFrontFacing()) return null;
         }

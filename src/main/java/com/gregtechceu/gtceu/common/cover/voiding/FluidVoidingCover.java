@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.common.cover.PumpCover;
@@ -11,7 +12,6 @@ import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -127,10 +127,10 @@ public class FluidVoidingCover extends PumpCover {
     }
 
     @Override
-    public @Nullable ResourceTexture sideTips(Player player, BlockPos pos, BlockState state, Set<GTToolType> toolTypes,
-                                              ItemStack held, Direction side) {
+    public @Nullable GridHighlightTexture sideTips(Player player, BlockPos pos, BlockState state,
+                                                   Set<GTToolType> toolTypes, ItemStack held, Direction side) {
         if (toolTypes.contains(GTToolType.SOFT_MALLET)) {
-            return isWorkingEnabled() ? GuiTextures.TOOL_START : GuiTextures.TOOL_PAUSE;
+            return isWorkingEnabled() ? GridHighlightTexture.TOOL_START : GridHighlightTexture.TOOL_PAUSE;
         }
         return super.sideTips(player, pos, state, toolTypes, held, side);
     }

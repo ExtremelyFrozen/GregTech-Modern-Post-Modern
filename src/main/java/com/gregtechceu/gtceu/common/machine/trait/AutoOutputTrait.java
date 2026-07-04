@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.common.machine.trait;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.trait.*;
@@ -14,8 +14,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ISubscription;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -299,8 +297,9 @@ public class AutoOutputTrait extends MachineTrait implements IRenderingTrait, II
     }
 
     @Override
-    public @Nullable ResourceTexture getGridOverlayIcon(Player player, BlockPos pos, BlockState state,
-                                                        Set<GTToolType> toolTypes, ItemStack held, Direction side) {
+    public @Nullable GridHighlightTexture getGridOverlayIcon(Player player, BlockPos pos, BlockState state,
+                                                             Set<GTToolType> toolTypes, ItemStack held,
+                                                             Direction side) {
         if (toolTypes.contains(GTToolType.WRENCH)) {
             if (!player.isShiftKeyDown()) {
                 if (!getMachine().hasFrontFacing() || side != getMachine().getFrontFacing()) {
@@ -309,14 +308,14 @@ public class AutoOutputTrait extends MachineTrait implements IRenderingTrait, II
                     var canSwitchFluidOutputToSide = supportsAutoOutputFluids() &&
                             fluidOutputDirectionValidator.test(side) && side != getFluidOutputDirection();
                     if (canSwitchItemOutputToSide || canSwitchFluidOutputToSide)
-                        return GuiTextures.TOOL_IO_FACING_ROTATION;
+                        return GridHighlightTexture.TOOL_IO_FACING_ROTATION;
                 }
             }
         }
         if (toolTypes.contains(GTToolType.SCREWDRIVER)) {
             if (side == getItemOutputDirection() || side == getFluidOutputDirection()) {
-                if (player.isShiftKeyDown()) return GuiTextures.TOOL_ALLOW_INPUT;
-                return GuiTextures.TOOL_AUTO_OUTPUT;
+                if (player.isShiftKeyDown()) return GridHighlightTexture.TOOL_ALLOW_INPUT;
+                return GridHighlightTexture.TOOL_AUTO_OUTPUT;
             }
         }
         return null;
