@@ -57,7 +57,7 @@ public interface IUICover extends IUIHolder {
         DataComponentMap changes = self().getSyncDataHolder().collectServerNetworkChanges(level.registryAccess());
         if (!changes.isEmpty()) {
             PacketDistributor.sendToServer(new CPacketCoverSyncToServer(self().coverHolder.getBlockPos(),
-                    self().attachedSide, changes));
+                    self().attachedSide, self().coverDefinition.getId(), changes));
         }
     }
 }
