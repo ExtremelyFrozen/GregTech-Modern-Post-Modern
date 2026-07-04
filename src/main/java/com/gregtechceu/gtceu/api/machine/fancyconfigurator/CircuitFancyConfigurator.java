@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.data.lang.LangHandler;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -53,10 +52,10 @@ public class CircuitFancyConfigurator implements IFancyConfigurator, IFancyCusto
     @Override
     public IGuiTexture getIcon() {
         if (IntCircuitBehaviour.isIntegratedCircuit(circuitSlot.getStackInSlot(0))) {
-            return new ItemStackTexture(circuitSlot.getStackInSlot(0));
+            return GuiTextures.itemStack(circuitSlot.getStackInSlot(0));
         }
-        return new GuiTextureGroup(new ItemStackTexture(IntCircuitBehaviour.stack(0)),
-                new ItemStackTexture(Items.BARRIER));
+        return new GuiTextureGroup(GuiTextures.itemStack(IntCircuitBehaviour.stack(0)),
+                GuiTextures.itemStack(Items.BARRIER));
     }
 
     @Override
@@ -128,7 +127,7 @@ public class CircuitFancyConfigurator implements IFancyConfigurator, IFancyCusto
                 int finalIdx = idx;
                 group.addWidget(new ButtonWidget(5 + (18 * y), 48 + (18 * x), 18, 18,
                         new GuiTextureGroup(GuiTextures.SLOT,
-                                new ItemStackTexture(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
+                                GuiTextures.itemStack(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
                         clickData -> {
                             if (!clickData.isRemote) {
                                 ItemStack stack = circuitSlot.getStackInSlot(0).copy();
@@ -147,7 +146,7 @@ public class CircuitFancyConfigurator implements IFancyConfigurator, IFancyCusto
             int finalIdx = x + 27;
             group.addWidget(new ButtonWidget(5 + (18 * x), 102, 18, 18,
                     new GuiTextureGroup(GuiTextures.SLOT,
-                            new ItemStackTexture(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
+                            GuiTextures.itemStack(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
                     clickData -> {
                         if (!clickData.isRemote) {
                             ItemStack stack = circuitSlot.getStackInSlot(0).copy();
