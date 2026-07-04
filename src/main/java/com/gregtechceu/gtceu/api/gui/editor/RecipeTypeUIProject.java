@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.editor;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
@@ -35,7 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@LDLRegister(name = "rtui", group = "editor.gtceu")
+@LDLRegister(name = "rtui", group = "editor.gtpm")
 public class RecipeTypeUIProject extends UIProject {
 
     @Nullable
@@ -53,6 +54,11 @@ public class RecipeTypeUIProject extends UIProject {
 
     public RecipeTypeUIProject(CompoundTag tag) {
         super(tag);
+    }
+
+    @Override
+    public String getTranslateKey() {
+        return GTCEu.MOD_ID + ".gui.editor.register.editor.gtpm.rtui";
     }
 
     @Override
@@ -102,7 +108,7 @@ public class RecipeTypeUIProject extends UIProject {
             if (tab == WidgetToolBox.Default.CONTAINER) {
                 continue;
             }
-            editor.getToolPanel().addNewToolBox("ldlib.gui.editor.group." + tab.groupName, tab.icon,
+            editor.getToolPanel().addNewToolBox(GTUIEditor.getToolBoxTranslateKey(tab), tab.icon,
                     tab::createToolBox);
         }
     }

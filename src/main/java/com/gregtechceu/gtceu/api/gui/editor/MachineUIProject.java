@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.editor;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-@LDLRegister(name = "mui", group = "editor.gtceu")
+@LDLRegister(name = "mui", group = "editor.gtpm")
 public class MachineUIProject extends UIProject {
 
     @Nullable
@@ -45,6 +46,11 @@ public class MachineUIProject extends UIProject {
 
     public MachineUIProject(CompoundTag tag) {
         super(tag);
+    }
+
+    @Override
+    public String getTranslateKey() {
+        return GTCEu.MOD_ID + ".gui.editor.register.editor.gtpm.mui";
     }
 
     public void setMachine(@Nullable MachineDefinition machineDefinition) {
@@ -97,7 +103,7 @@ public class MachineUIProject extends UIProject {
             if (tab == WidgetToolBox.Default.CONTAINER) {
                 continue;
             }
-            editor.getToolPanel().addNewToolBox("ldlib.gui.editor.group." + tab.groupName, tab.icon,
+            editor.getToolPanel().addNewToolBox(GTUIEditor.getToolBoxTranslateKey(tab), tab.icon,
                     tab::createToolBox);
         }
     }

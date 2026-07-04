@@ -33,14 +33,20 @@ public class LangHandler {
 
         provider.add("gtpm.gui.editor.tips.citation", "Number of citations");
         provider.add("gtpm.gui.editor.group.recipe_type", "cap");
-        provider.add("ldlib.gui.editor.register.editor.gtpm.rtui", "RecipeType UI Project");
-        provider.add("ldlib.gui.editor.register.editor.gtpm.mui", "Machine UI Project");
-        provider.add("ldlib.gui.editor.register.editor.gtpm.template_tab", "templates");
-        provider.add("ldlib.gui.editor.group.widget.gtm_container", "GTM Container Widgets");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_item_slot", "GTM Item Slot");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_fluid_slot", "GTM Fluid Slot");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_phantom_item_slot", "GTM Phantom Item Slot");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_phantom_fluid_slot", "GTM Phantom Fluid Slot");
+        provider.add("gtpm.gui.editor.group.preview", "Preview");
+        provider.add("gtpm.gui.editor.register.editor.gtpm", "GTPM UI Editor");
+        provider.add("gtpm.gui.editor.register.editor.gtpm.rtui", "RecipeType UI Project");
+        provider.add("gtpm.gui.editor.register.editor.gtpm.mui", "Machine UI Project");
+        provider.add("gtpm.gui.editor.register.editor.gtpm.template_tab", "templates");
+        provider.add("gtpm.gui.editor.group.widget.basic", "Basic Widgets");
+        provider.add("gtpm.gui.editor.group.widget.group", "Group Widgets");
+        provider.add("gtpm.gui.editor.group.widget.container", "Container Widgets");
+        provider.add("gtpm.gui.editor.group.widget.custom", "Custom Widgets");
+        provider.add("gtpm.gui.editor.group.widget.gtm_container", "GTM Container Widgets");
+        provider.add("gtpm.gui.editor.register.widget.container.gtm_item_slot", "GTM Item Slot");
+        provider.add("gtpm.gui.editor.register.widget.container.gtm_fluid_slot", "GTM Fluid Slot");
+        provider.add("gtpm.gui.editor.register.widget.container.gtm_phantom_item_slot", "GTM Phantom Item Slot");
+        provider.add("gtpm.gui.editor.register.widget.container.gtm_phantom_fluid_slot", "GTM Phantom Fluid Slot");
 
         provider.add("curios.identifier.gtpm_magnet", "GTCEu Magnet");
         // capabilities

@@ -76,6 +76,8 @@ import java.util.stream.Stream;
 @Accessors(chain = true)
 public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfigurableWidget {
 
+    private static final String TRANSLATE_KEY = GTCEu.MOD_ID + ".gui.editor.register.widget.container.gtm_fluid_slot";
+
     public final static ResourceBorderTexture FLUID_SLOT_TEXTURE = GuiTextures.FLUID_SLOT;
 
     @Nullable
@@ -118,6 +120,11 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
 
     public TankWidget() {
         this(null, 0, 0, 18, 18, true, true);
+    }
+
+    @Override
+    public String getTranslateKey() {
+        return TRANSLATE_KEY;
     }
 
     @Override
@@ -585,7 +592,7 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
     public void buildConfigurator(ConfiguratorGroup father) {
         var handler = new FluidTank(5000);
         handler.fill(new FluidStack(Fluids.WATER, 3000), IFluidHandler.FluidAction.EXECUTE);
-        father.addConfigurators(new WrapperConfigurator("ldlib.gui.editor.group.preview", new TankWidget() {
+        father.addConfigurators(new WrapperConfigurator(GTCEu.MOD_ID + ".gui.editor.group.preview", new TankWidget() {
 
             @Override
             public void updateScreen() {

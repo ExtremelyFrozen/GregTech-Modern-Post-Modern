@@ -14,7 +14,7 @@ import java.nio.file.Path;
 
 import static com.lowdragmc.lowdraglib.gui.editor.ui.tool.WidgetToolBox.Default.registerTab;
 
-@LDLRegister(name = "editor.gtceu", group = "editor")
+@LDLRegister(name = "editor.gtpm", group = "editor")
 public class GTUIEditor extends UIEditor {
 
     public static final WidgetToolBox.Default GT_CONTAINER = registerTab("widget.gtm_container",
@@ -22,6 +22,18 @@ public class GTUIEditor extends UIEditor {
 
     public GTUIEditor() {
         super(getWorkspace());
+    }
+
+    @Override
+    public String getTranslateKey() {
+        return GTCEu.MOD_ID + ".gui.editor.register.editor.gtpm";
+    }
+
+    public static String getToolBoxTranslateKey(WidgetToolBox.Default tab) {
+        if (tab == GT_CONTAINER) {
+            return GTCEu.MOD_ID + ".gui.editor.group.widget.gtm_container";
+        }
+        return GTCEu.MOD_ID + ".gui.editor.group." + tab.groupName;
     }
 
     public static File getWorkspace() {

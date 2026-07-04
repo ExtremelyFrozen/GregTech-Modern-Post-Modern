@@ -47,8 +47,15 @@ import java.util.stream.Stream;
 @LDLRegister(name = "gtm_item_slot", group = "widget.gtm_container", priority = 50)
 public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
 
+    private static final String TRANSLATE_KEY = GTCEu.MOD_ID + ".gui.editor.register.widget.container.gtm_item_slot";
+
     public SlotWidget() {
         super();
+    }
+
+    @Override
+    public String getTranslateKey() {
+        return TRANSLATE_KEY;
     }
 
     public SlotWidget(Container inventory, int slotIndex, int xPosition, int yPosition, boolean canTakeItems,
@@ -176,7 +183,7 @@ public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
     public void buildConfigurator(ConfiguratorGroup father) {
         var handler = new ItemStackHandler();
         handler.setStackInSlot(0, Blocks.STONE.asItem().getDefaultInstance());
-        father.addConfigurators(new WrapperConfigurator("ldlib.gui.editor.group.preview", new SlotWidget() {
+        father.addConfigurators(new WrapperConfigurator(GTCEu.MOD_ID + ".gui.editor.group.preview", new SlotWidget() {
 
             @Override
             public void updateScreen() {

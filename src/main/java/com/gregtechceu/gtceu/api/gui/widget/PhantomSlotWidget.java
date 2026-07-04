@@ -37,6 +37,9 @@ import java.util.function.Predicate;
 @LDLRegister(name = "gtm_phantom_item_slot", group = "widget.gtm_container", priority = 50)
 public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTarget, IConfigurableWidget {
 
+    private static final String TRANSLATE_KEY = GTCEu.MOD_ID +
+            ".gui.editor.register.widget.container.gtm_phantom_item_slot";
+
     private boolean clearSlotOnRightClick;
 
     @Configurable
@@ -57,6 +60,11 @@ public class PhantomSlotWidget extends SlotWidget implements IGhostIngredientTar
                              Predicate<ItemStack> validator) {
         super(itemHandler, slotIndex, xPosition, yPosition, true, true);
         this.validator = validator;
+    }
+
+    @Override
+    public String getTranslateKey() {
+        return TRANSLATE_KEY;
     }
 
     public PhantomSlotWidget setClearSlotOnRightClick(boolean clearSlotOnRightClick) {
