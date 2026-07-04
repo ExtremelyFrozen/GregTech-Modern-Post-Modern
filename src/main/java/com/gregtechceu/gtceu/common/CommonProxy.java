@@ -20,10 +20,7 @@ import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidDefiniti
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreDefinition;
 import com.gregtechceu.gtceu.api.data.worldgen.generator.IndicatorGenerators;
 import com.gregtechceu.gtceu.api.data.worldgen.generator.VeinGenerators;
-import com.gregtechceu.gtceu.api.gui.factory.CoverUIFactory;
-import com.gregtechceu.gtceu.api.gui.factory.GTHeldItemUIFactory;
-import com.gregtechceu.gtceu.api.gui.factory.GTUIEditorFactory;
-import com.gregtechceu.gtceu.api.gui.factory.MachineUIFactory;
+import com.gregtechceu.gtceu.api.gui.factory.LegacyUIFactoryHelper;
 import com.gregtechceu.gtceu.api.item.IComponentItem;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
@@ -110,8 +107,6 @@ import com.gregtechceu.gtceu.integration.cctweaked.CCTweakedPlugin;
 import com.gregtechceu.gtceu.integration.map.WaypointManager;
 import com.gregtechceu.gtceu.utils.input.SyncedKeyMappings;
 
-import com.lowdragmc.lowdraglib.gui.factory.UIFactory;
-
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -180,10 +175,7 @@ public class CommonProxy {
         NeoForge.EVENT_BUS.addListener(CommonProxy::onServerStarted);
         modBus.addListener(AlloyBlastPropertyAddition::addAlloyBlastProperties);
 
-        UIFactory.register(MachineUIFactory.INSTANCE);
-        UIFactory.register(CoverUIFactory.INSTANCE);
-        UIFactory.register(GTHeldItemUIFactory.INSTANCE);
-        UIFactory.register(GTUIEditorFactory.INSTANCE);
+        LegacyUIFactoryHelper.register();
 
         if (GTCEu.Mods.isAE2Loaded()) {
             MEAutoBuildSources.init();
