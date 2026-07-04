@@ -153,7 +153,7 @@ public class GuiTextures {
     public static final ResourceTexture SWITCH_HORIZONTAL = new ResourceTexture(
             "gtpm:textures/gui/widget/switch_horizontal.png");
     public static final ResourceTexture VANILLA_BUTTON = new ResourceBorderTexture(
-            "ldlib:textures/gui/button_common.png", 198, 18, 1, 1);
+            "ldlib2:textures/gui/button_common.png", 198, 18, 1, 1);
 
     public static final ResourceTexture ENERGY_DETECTOR_COVER_MODE_BUTTON = new ResourceTexture(
             "gtpm:textures/gui/widget/button_detector_cover_energy_mode.png");

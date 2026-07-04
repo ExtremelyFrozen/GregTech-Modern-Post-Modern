@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.widget;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.client.TooltipsHandler;
@@ -73,8 +74,7 @@ import java.util.stream.Stream;
 @Accessors(chain = true)
 public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfigurableWidget {
 
-    public final static ResourceBorderTexture FLUID_SLOT_TEXTURE = new ResourceBorderTexture(
-            "ldlib:textures/gui/fluid_slot.png", 18, 18, 1, 1);
+    public final static ResourceBorderTexture FLUID_SLOT_TEXTURE = GuiTextures.FLUID_SLOT;
 
     @Nullable
     @Getter
