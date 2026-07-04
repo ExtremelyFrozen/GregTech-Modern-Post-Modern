@@ -32,23 +32,28 @@ public class CPacketCoverActionToServer implements CustomPacketPayload {
 
     private final BlockPos pos;
     private final Direction side;
+    private final ResourceLocation coverDefinitionId;
     private final SyncActionData action;
 
-    public CPacketCoverActionToServer(BlockPos pos, Direction side, SyncActionData action) {
+    public CPacketCoverActionToServer(BlockPos pos, Direction side, ResourceLocation coverDefinitionId,
+                                      SyncActionData action) {
         this.pos = pos;
         this.side = side;
+        this.coverDefinitionId = coverDefinitionId;
         this.action = action;
     }
 
     public CPacketCoverActionToServer(RegistryFriendlyByteBuf buf) {
         this.pos = buf.readBlockPos();
         this.side = buf.readEnum(Direction.class);
+        this.coverDefinitionId = buf.readResourceLocation();
         this.action = SyncActionData.STREAM_CODEC.decode(buf);
     }
 
     public void encode(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeEnum(side);
+        buf.writeResourceLocation(coverDefinitionId);
         SyncActionData.STREAM_CODEC.encode(buf, action);
     }
 
@@ -82,6 +87,12 @@ public class CPacketCoverActionToServer implements CustomPacketPayload {
         if (cover == null) {
             GTCEu.LOGGER.warn("Sync action: rejecting cover action {} from {} because side {} has no cover",
                     action.actionId(), player.getGameProfile().getName(), side);
+            return;
+        }
+
+        if (!cover.coverDefinition.getId().equals(coverDefinitionId)) {
+            GTCEu.LOGGER.warn("Sync action: rejecting cover action {} from {} because cover at {} {} changed",
+                    action.actionId(), player.getGameProfile().getName(), pos, side);
             return;
         }
 
