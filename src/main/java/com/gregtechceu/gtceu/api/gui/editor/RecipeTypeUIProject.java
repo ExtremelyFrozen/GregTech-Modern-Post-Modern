@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.editor;
 
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
@@ -135,9 +136,9 @@ public class RecipeTypeUIProject extends UIProject {
                 for (GTRecipeType recipeType : recipeTypes) {
                     IGuiTexture icon;
                     if (recipeType.getIconSupplier() != null) {
-                        icon = new ItemStackTexture(recipeType.getIconSupplier().get());
+                        icon = GuiTextures.itemStack(recipeType.getIconSupplier().get());
                     } else {
-                        icon = new ItemStackTexture(Items.BARRIER);
+                        icon = GuiTextures.itemStack(Items.BARRIER);
                     }
                     m.leaf(icon, recipeType.getTranslationKey(), () -> {
                         root.clearAllWidgets();

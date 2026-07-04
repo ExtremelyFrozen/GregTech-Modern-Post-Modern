@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.editor;
 
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
@@ -12,7 +13,6 @@ import com.lowdragmc.lowdraglib.gui.editor.data.UIProject;
 import com.lowdragmc.lowdraglib.gui.editor.ui.Editor;
 import com.lowdragmc.lowdraglib.gui.editor.ui.tool.WidgetToolBox;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.util.TreeBuilder;
 import com.lowdragmc.lowdraglib.gui.widget.TabButton;
@@ -136,7 +136,7 @@ public class MachineUIProject extends UIProject {
                 for (var definition : definitions) {
                     var editableUI = definition.getEditableUI();
                     if (editableUI != null && addedSet.add(editableUI)) {
-                        m.leaf(new ItemStackTexture(definition.asStack()), definition.getDescriptionId(), () -> {
+                        m.leaf(GuiTextures.itemStack(definition.asStack()), definition.getDescriptionId(), () -> {
                             root.clearAllWidgets();
                             if (editableUI.hasCustomUI()) {
                                 deserializeNBT(GTRegistries.builtinRegistry(), editableUI.getCustomUI());
