@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.client.TooltipsHandler;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidTagList;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
@@ -102,7 +103,7 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
     protected BiConsumer<TankWidget, List<Component>> onAddedTooltips;
     @Setter
     @Getter
-    protected IngredientIO ingredientIO = IngredientIO.RENDER_ONLY;
+    protected IngredientIO ingredientIO = GTXEIHelper.none();
     @Setter
     @Getter
     protected float XEIChance = 1f;

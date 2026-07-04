@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.integration.emi.recipe;
 
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 
 import com.lowdragmc.lowdraglib.emi.ModularEmiRecipe;
@@ -68,7 +69,7 @@ public class GTEmiRecipe extends ModularEmiRecipe<WidgetGroup> {
                     continue;
                 }
                 var io = slot.getIngredientIO();
-                if (io != null && io != IngredientIO.RENDER_ONLY) {
+                if (GTXEIHelper.hasRecipeRole(io)) {
                     // noinspection unchecked
                     var ingredients = EmiIngredient
                             .of((List<? extends EmiIngredient>) (List<?>) slot.getXEIIngredients());
