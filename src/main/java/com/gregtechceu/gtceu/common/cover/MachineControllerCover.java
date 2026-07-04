@@ -18,7 +18,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.cover.data.ControllerMode;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -208,7 +207,7 @@ public class MachineControllerCover extends CoverBehavior implements IUICover {
                 this::getMinRedstoneStrength, this::setMinRedstoneStrength).setMin(1).setMax(15));
 
         modeButton = new ButtonWidget(10, 45, 131, 20,
-                new GuiTextureGroup(GuiTextures.VANILLA_BUTTON),
+                GuiTextures.group(GuiTextures.VANILLA_BUTTON),
                 cd -> selectNextMode());
         group.addWidget(modeButton);
 
@@ -261,7 +260,7 @@ public class MachineControllerCover extends CoverBehavior implements IUICover {
             return;
         }
 
-        modeButton.setButtonTexture(new GuiTextureGroup(
+        modeButton.setButtonTexture(GuiTextures.group(
                 GuiTextures.VANILLA_BUTTON,
                 GuiTextures.text(controllerMode != null ? controllerMode.localeName : ControllerMode.nullLocaleName)));
     }

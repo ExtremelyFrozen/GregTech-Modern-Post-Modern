@@ -27,7 +27,6 @@ import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -440,8 +439,8 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
                             LocalizationUtils.format("cover.conveyor.mode", LocalizationUtils.format(io.tooltip)));
                 })
                 .setTexture(
-                        new GuiTextureGroup(GuiTextures.VANILLA_BUTTON, IO.OUT.icon),
-                        new GuiTextureGroup(GuiTextures.VANILLA_BUTTON, IO.IN.icon))
+                        GuiTextures.group(GuiTextures.VANILLA_BUTTON, IO.OUT.icon),
+                        GuiTextures.group(GuiTextures.VANILLA_BUTTON, IO.IN.icon))
                 .setPressed(io == IO.IN)
                 .setHoverTooltips(
                         LocalizationUtils.format("cover.conveyor.mode", LocalizationUtils.format(io.tooltip)));
