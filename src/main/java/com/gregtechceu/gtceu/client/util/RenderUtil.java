@@ -10,7 +10,7 @@ import com.gregtechceu.gtceu.core.mixins.client.GuiGraphicsAccessor;
 import com.gregtechceu.gtceu.utils.GTMatrixUtils;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.client.shader.LDLibRenderTypes;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -271,6 +271,24 @@ public class RenderUtil {
         consumer.addVertex(pose, x2, y1, z).setColor(r2, g2, b2, a2);
     }
 
+    private static void drawFluidTexture(GuiGraphics graphics, float xCoord, float yCoord,
+                                         TextureAtlasSprite textureSprite, float maskTop, float maskRight,
+                                         float zLevel, int fluidColor) {
+        float uMin = textureSprite.getU0();
+        float uMax = textureSprite.getU1();
+        float vMin = textureSprite.getV0();
+        float vMax = textureSprite.getV1();
+        uMax -= maskRight / 16f * (uMax - uMin);
+        vMax -= maskTop / 16f * (vMax - vMin);
+
+        var buffer = graphics.bufferSource().getBuffer(LDLibRenderTypes.guiTexture(InventoryMenu.BLOCK_ATLAS));
+        var matrix = graphics.pose().last().pose();
+        buffer.addVertex(matrix, xCoord, yCoord + 16, zLevel).setUv(uMin, vMax).setColor(fluidColor);
+        buffer.addVertex(matrix, xCoord + 16 - maskRight, yCoord + 16, zLevel).setUv(uMax, vMax).setColor(fluidColor);
+        buffer.addVertex(matrix, xCoord + 16 - maskRight, yCoord + maskTop, zLevel).setUv(uMax, vMin).setColor(fluidColor);
+        buffer.addVertex(matrix, xCoord, yCoord + maskTop, zLevel).setUv(uMin, vMin).setColor(fluidColor);
+    }
+
     /**
      * Converts an (A)RGB integer color into an array of floats, for use in GL calls
      *
@@ -417,7 +435,7 @@ public class RenderUtil {
                         var texture = RenderUtil.FluidTextureType.STILL.map(clientExt, output);
                         int color = clientExt.getTintColor(output);
 
-                        DrawerHelper.drawFluidTexture(graphics, x, y, texture, 0, 0, z, color);
+                        drawFluidTexture(graphics, x, y, texture, 0, 0, z, color);
                         return true;
                     }
                 }
