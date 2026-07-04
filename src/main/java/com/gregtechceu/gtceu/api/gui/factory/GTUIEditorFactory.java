@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.gui.factory;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.editor.GTUIEditor;
 
-import com.lowdragmc.lowdraglib.LDLib;
 import com.lowdragmc.lowdraglib.gui.factory.UIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
@@ -16,7 +15,7 @@ public class GTUIEditorFactory extends UIFactory<GTUIEditorFactory> implements I
     public static final GTUIEditorFactory INSTANCE = new GTUIEditorFactory();
 
     private GTUIEditorFactory() {
-        super(LDLib.location("gt_ui_editor"));
+        super(GTCEu.id("gt_ui_editor"));
     }
 
     @Override
