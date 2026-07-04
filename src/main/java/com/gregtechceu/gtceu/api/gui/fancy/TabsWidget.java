@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.gui.fancy;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 
 import com.lowdragmc.lowdraglib.gui.editor.Icons;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 
@@ -33,12 +32,12 @@ public class TabsWidget extends Widget {
     @Nullable
     protected IFancyUIProvider selectedTab;
     @Setter
-    protected IGuiTexture leftButtonTexture = new GuiTextureGroup(GuiTextures.BUTTON, Icons.LEFT.copy().scale(0.7f)),
-            leftButtonHoverTexture = new GuiTextureGroup(GuiTextures.BUTTON,
+    protected IGuiTexture leftButtonTexture = GuiTextures.group(GuiTextures.BUTTON, Icons.LEFT.copy().scale(0.7f)),
+            leftButtonHoverTexture = GuiTextures.group(GuiTextures.BUTTON,
                     Icons.LEFT.copy().setColor(0xffaaaaaa).scale(0.7f));
     @Setter
-    protected IGuiTexture rightButtonTexture = new GuiTextureGroup(GuiTextures.BUTTON, Icons.RIGHT.copy().scale(0.7f)),
-            rightButtonHoverTexture = new GuiTextureGroup(GuiTextures.BUTTON,
+    protected IGuiTexture rightButtonTexture = GuiTextures.group(GuiTextures.BUTTON, Icons.RIGHT.copy().scale(0.7f)),
+            rightButtonHoverTexture = GuiTextures.group(GuiTextures.BUTTON,
                     Icons.RIGHT.copy().setColor(0xffaaaaaa).scale(0.7f));
     @Setter
     protected IGuiTexture tabTexture = GuiTextures.resource("gtpm:textures/gui/tab/tabs_top.png").getSubTexture(1 / 3f,

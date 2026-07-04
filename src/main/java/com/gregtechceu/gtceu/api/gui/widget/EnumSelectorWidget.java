@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.CycleButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -39,7 +38,7 @@ public class EnumSelectorWidget<T extends Enum<T> & EnumSelectorWidget.Selectabl
 
     public int selected = 0;
 
-    private BiFunction<T, IGuiTexture, IGuiTexture> textureSupplier = (value, texture) -> new GuiTextureGroup(
+    private BiFunction<T, IGuiTexture, IGuiTexture> textureSupplier = (value, texture) -> GuiTextures.group(
             GuiTextures.VANILLA_BUTTON, texture);
 
     private BiFunction<T, String, List<Component>> tooltipSupplier = (value, key) -> List
