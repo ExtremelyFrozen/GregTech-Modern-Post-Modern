@@ -30,20 +30,24 @@ public class CPacketMachineActionToServer implements CustomPacketPayload {
     private static final double MAX_INTERACTION_DISTANCE = 8.0;
 
     private final BlockPos pos;
+    private final ResourceLocation machineDefinitionId;
     private final SyncActionData action;
 
-    public CPacketMachineActionToServer(BlockPos pos, SyncActionData action) {
+    public CPacketMachineActionToServer(BlockPos pos, ResourceLocation machineDefinitionId, SyncActionData action) {
         this.pos = pos;
+        this.machineDefinitionId = machineDefinitionId;
         this.action = action;
     }
 
     public CPacketMachineActionToServer(RegistryFriendlyByteBuf buf) {
         this.pos = buf.readBlockPos();
+        this.machineDefinitionId = buf.readResourceLocation();
         this.action = SyncActionData.STREAM_CODEC.decode(buf);
     }
 
     public void encode(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
+        buf.writeResourceLocation(machineDefinitionId);
         SyncActionData.STREAM_CODEC.encode(buf, action);
     }
 
@@ -73,10 +77,18 @@ public class CPacketMachineActionToServer implements CustomPacketPayload {
             return;
         }
 
-        if (syncBlockEntity instanceof MetaMachine machine && !MachineOwner.canOpenOwnerMachine(player, machine)) {
-            GTCEu.LOGGER.warn("Sync action: rejecting machine action {} from {} because owner permission failed",
-                    action.actionId(), player.getGameProfile().getName());
-            return;
+        if (syncBlockEntity instanceof MetaMachine machine) {
+            if (!machine.getDefinition().getId().equals(machineDefinitionId)) {
+                GTCEu.LOGGER.warn("Sync action: rejecting machine action {} from {} because machine at {} changed",
+                        action.actionId(), player.getGameProfile().getName(), pos);
+                return;
+            }
+
+            if (!MachineOwner.canOpenOwnerMachine(player, machine)) {
+                GTCEu.LOGGER.warn("Sync action: rejecting machine action {} from {} because owner permission failed",
+                        action.actionId(), player.getGameProfile().getName());
+                return;
+            }
         }
 
         SyncActionDispatchers.server().dispatch(SyncActionContext.machine(player, syncBlockEntity, action, pos));
