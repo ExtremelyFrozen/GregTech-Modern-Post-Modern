@@ -71,26 +71,10 @@ public final class UICoverHolderImpl implements UICoverHolder {
     }
 
     @Nullable
-    @Override
     public ModularUI createUI(Player entityPlayer) {
         if (!(getCover() instanceof IUICover cover)) {
             return null;
         }
         return cover.createUI(entityPlayer);
-    }
-
-    @Override
-    public boolean isInvalid() {
-        return getCover() == null;
-    }
-
-    @Override
-    public boolean isRemote() {
-        return player.level().isClientSide;
-    }
-
-    @Override
-    public void markAsDirty() {
-        // Legacy cover widgets are still created by the cover instance during this bridge phase.
     }
 }

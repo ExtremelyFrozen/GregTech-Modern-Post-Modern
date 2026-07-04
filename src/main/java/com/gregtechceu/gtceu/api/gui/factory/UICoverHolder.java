@@ -2,9 +2,6 @@ package com.gregtechceu.gtceu.api.gui.factory;
 
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 
-import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -15,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
  * Holds the stable cover identity used to open and validate a cover UI.
  *
  * <p>The holder keeps cover screens from depending on a {@link CoverBehavior} instance as the UI factory payload while
- * the widgets still build legacy {@link ModularUI} trees.
+ * the widgets still build the remaining legacy UI trees.
  */
-public interface UICoverHolder extends IUIHolder {
+public interface UICoverHolder {
 
     /**
      * Returns the block position of the coverable holder that owned the cover when the UI opened.
