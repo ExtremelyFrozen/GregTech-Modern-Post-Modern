@@ -14,7 +14,7 @@ import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
-import com.lowdragmc.lowdraglib.client.utils.RenderUtils;
+import com.lowdragmc.lowdraglib2.client.utils.RenderUtils;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
@@ -22,8 +22,8 @@ import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.lowdragmc.lowdraglib.utils.BlockPosFace;
-import com.lowdragmc.lowdraglib.utils.ItemStackKey;
 import com.lowdragmc.lowdraglib.utils.TrackedDummyWorld;
+import com.lowdragmc.lowdraglib2.utils.data.ItemStackKey;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -172,7 +172,7 @@ public class PatternPreviewWidget extends WidgetGroup {
         synchronized (CACHE) {
             this.patterns = CACHE.computeIfAbsent(controllerDefinition, definition -> {
                 HashSet<ItemStackKey> drops = new HashSet<>();
-                drops.add(new ItemStackKey(this.controllerDefinition.asStack()));
+                drops.add(ItemStackKey.of(this.controllerDefinition.asStack()));
                 return controllerDefinition.getMatchingShapes().stream()
                         .map(it -> initializePattern(it, drops))
                         .filter(Objects::nonNull)
@@ -463,7 +463,7 @@ public class PatternPreviewWidget extends WidgetGroup {
                 itemStack = fluid.getBucket().getDefaultInstance();
             }
 
-            ItemStackKey itemStackKey = new ItemStackKey(itemStack);
+            ItemStackKey itemStackKey = ItemStackKey.of(itemStack);
             partsMap.computeIfAbsent(itemStackKey, key -> new PartInfo(key, entry.getValue())).amount++;
         }
         return partsMap;
