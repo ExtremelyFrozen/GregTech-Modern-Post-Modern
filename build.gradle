@@ -74,6 +74,7 @@ apply from: "$rootDir/gradle/scripts/resources.gradle"
 apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/spotless.gradle"
 apply from: "$rootDir/gradle/scripts/docs.gradle"
+apply from: "$rootDir/gradle/scripts/ldlib2-migration.gradle"
 
 tasks.named('compileJava', JavaCompile) {
     dependsOn tasks.named('compileKotlin')

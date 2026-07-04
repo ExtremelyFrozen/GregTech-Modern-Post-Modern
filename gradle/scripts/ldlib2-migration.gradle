@@ -1,0 +1,68 @@
+tasks.register('verifyGradleUserHomeOnE') {
+    group = 'verification'
+    description = 'Verifies Gradle user home is configured on the E: drive.'
+
+    doLast {
+        var gradleUserHome = gradle.gradleUserHomeDir.toPath().toAbsolutePath().normalize().toString()
+        if (!gradleUserHome.replace('\\', '/').startsWith('E:/')) {
+            throw new GradleException("Gradle user home must be on E: drive, but was: ${gradleUserHome}")
+        }
+    }
+}
+
+tasks.register('verifyLdlib2MigrationGuardrails') {
+    group = 'verification'
+    description = 'Reports remaining legacy LDLib references that must be removed before migration completion.'
+
+    doLast {
+        var sourceRoots = [
+                file('src/main/java'),
+                file('src/test/java'),
+                file('src/main/resources'),
+                file('src/main/templates')
+        ]
+        var filesToScan = files(sourceRoots.findAll { it.exists() }).asFileTree.matching {
+            include '**/*.java'
+            include '**/*.kt'
+            include '**/*.json'
+            include '**/*.toml'
+            include '**/*.mcmeta'
+            include '**/*.md'
+            exclude 'src/generated/**'
+        }
+
+        var patterns = [
+                'com.lowdragmc.lowdraglib',
+                'IngredientIO.RENDER_ONLY',
+                'IngredientIO.BOTH',
+                '@RPCMethod',
+                'RPCEmitter',
+                'setOnServerClick',
+                'modId = "ldlib"',
+                '"ldlib."',
+                '"ldlib"',
+                'ldlib:'
+        ]
+
+        var matches = []
+        filesToScan.each { scannedFile ->
+            var relativePath = rootProject.relativePath(scannedFile)
+            scannedFile.eachLine('UTF-8') { line, number ->
+                patterns.each { pattern ->
+                    if (line.contains(pattern)) {
+                        matches.add("${relativePath}:${number}: ${pattern}")
+                    }
+                }
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('Remaining LDLib migration guardrail matches:')
+            matches.take(200).each { logger.lifecycle(" - ${it}") }
+            if (matches.size() > 200) {
+                logger.lifecycle(" - ... ${matches.size() - 200} more")
+            }
+            throw new GradleException("LDLib2 migration guardrails found ${matches.size()} remaining legacy references.")
+        }
+    }
+}
