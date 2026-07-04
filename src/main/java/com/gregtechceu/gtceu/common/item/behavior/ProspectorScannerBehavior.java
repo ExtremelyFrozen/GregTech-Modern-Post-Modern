@@ -13,7 +13,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
 
 import net.minecraft.ChatFormatting;
@@ -94,10 +93,10 @@ public class ProspectorScannerBehavior implements IItemUIFactory, IInteractionIt
                 .widget(new SwitchWidget(-20, 4, 18, 18, (cd, pressed) -> map.setDarkMode(pressed))
                         .setSupplier(map::isDarkMode)
                         .setTexture(
-                                new GuiTextureGroup(GuiTextures.BUTTON,
+                                GuiTextures.group(GuiTextures.BUTTON,
                                         GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(true).copy()
                                                 .getSubTexture(0, 0.5, 1, 0.5).scale(0.8f)),
-                                new GuiTextureGroup(GuiTextures.BUTTON, GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(true)
+                                GuiTextures.group(GuiTextures.BUTTON, GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(true)
                                         .copy().getSubTexture(0, 0, 1, 0.5).scale(0.8f))));
     }
 

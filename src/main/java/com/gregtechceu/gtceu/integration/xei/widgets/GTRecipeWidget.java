@@ -22,7 +22,6 @@ import com.gregtechceu.gtceu.common.recipe.condition.DimensionCondition;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
@@ -180,7 +179,7 @@ public class GTRecipeWidget extends WidgetGroup {
                 voltageTextWidget.setSelfPositionY(getSize().height - recipe.recipeType.getVoltageTextOffset());
             }
             // make it clickable
-            // voltageTextWidget.setBackground(new GuiTextureGroup(GuiTextures.BUTTON));
+            // voltageTextWidget.setBackground(GuiTextures.group(GuiTextures.BUTTON));
             addWidget(new ButtonWidget(voltageTextWidget.getPositionX(), voltageTextWidget.getPositionY(),
                     voltageTextWidget.getSizeWidth(), voltageTextWidget.getSizeHeight(),
                     cd -> setRecipeOC(cd.button, cd.isShiftClick))
@@ -220,7 +219,7 @@ public class GTRecipeWidget extends WidgetGroup {
         int y = getSize().height - 30;
         addWidget(
                 new PredicatedButtonWidget(x, y, 15, 15,
-                        new GuiTextureGroup(GuiTextures.BUTTON, GuiTextures.text("ID")),
+                        GuiTextures.group(GuiTextures.BUTTON, GuiTextures.text("ID")),
                         cd -> Minecraft.getInstance().keyboardHandler.setClipboard(recipe.id.toString()),
                         () -> !FMLLoader.isProduction(), !FMLLoader.isProduction())
                         .setHoverTooltips("click to copy: " + recipe.id));

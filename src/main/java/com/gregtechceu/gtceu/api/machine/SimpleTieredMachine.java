@@ -27,7 +27,6 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -186,10 +185,10 @@ public class SimpleTieredMachine extends WorkableTieredMachine
                                                             BooleanSupplier stateSupplier,
                                                             BiConsumer<ClickData, Boolean> onToggle) {
         var toggle = new IFancyConfiguratorButton.Toggle(
-                new GuiTextureGroup(
+                GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
                         disabledModesTexture),
-                new GuiTextureGroup(
+                GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0.5, 1, 0.5),
                         enabledModesTexture),
                 stateSupplier,

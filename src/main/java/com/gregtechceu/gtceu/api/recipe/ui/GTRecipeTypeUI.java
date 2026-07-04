@@ -22,7 +22,6 @@ import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeJEICategory;
 
 import com.lowdragmc.lowdraglib.gui.editor.configurator.IConfigurableWidget;
 import com.lowdragmc.lowdraglib.gui.editor.data.Resources;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
@@ -390,7 +389,7 @@ public class GTRecipeTypeUI {
         byte overlayKey = (byte) ((isOutput ? 2 : 0) + (capability == FluidRecipeCapability.CAP ? 1 : 0) +
                 (isLast ? 4 : 0));
         if (slotOverlays.containsKey(overlayKey)) {
-            return new GuiTextureGroup(base, slotOverlays.get(overlayKey));
+            return GuiTextures.group(base, slotOverlays.get(overlayKey));
         }
         return base;
     }

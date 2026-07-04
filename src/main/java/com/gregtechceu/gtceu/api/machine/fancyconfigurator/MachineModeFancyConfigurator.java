@@ -46,7 +46,7 @@ public class MachineModeFancyConfigurator implements IFancyUIProvider {
             group.addWidget(new ButtonWidget(2, 2 + i * 20, 136, 20, IGuiTexture.EMPTY,
                     cd -> setActiveRecipeTypeAndUpdateTickSubs(finalI)));
             group.addWidget(new ImageWidget(2, 2 + i * 20, 136, 20,
-                    () -> new GuiTextureGroup(
+                    () -> GuiTextures.group(
                             ResourceBorderTexture.BUTTON_COMMON.copy()
                                     .setColor(machine.getActiveRecipeType() == finalI ? ColorPattern.CYAN.color : -1),
                             GuiTextures.text(machine.getRecipeTypes()[finalI].getTranslationKey()).setWidth(136)
