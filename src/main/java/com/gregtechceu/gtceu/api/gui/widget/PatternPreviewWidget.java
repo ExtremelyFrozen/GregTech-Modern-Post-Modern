@@ -6,6 +6,8 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockPreviewLevel;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
@@ -18,9 +20,7 @@ import com.lowdragmc.lowdraglib2.client.utils.RenderUtils;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.lowdragmc.lowdraglib2.utils.data.BlockPosFace;
-import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 import com.lowdragmc.lowdraglib2.utils.data.ItemStackKey;
 
 import net.minecraft.client.Minecraft;
@@ -60,7 +60,7 @@ import java.util.stream.Stream;
 public class PatternPreviewWidget extends WidgetGroup {
 
     private boolean isLoaded;
-    private static TrackedDummyWorld LEVEL;
+    private static MultiblockPreviewLevel LEVEL;
     private static final int REGION_SIZE = 512;
     private static int LAST_OFFSET_INDEX = 0;
     private static final Map<MultiblockMachineDefinition, MBPattern[]> CACHE = new HashMap<>();
@@ -230,7 +230,7 @@ public class PatternPreviewWidget extends WidgetGroup {
                 GTCEu.LOGGER.error("Try to init pattern previews before level load");
                 throw new IllegalStateException();
             }
-            LEVEL = new TrackedDummyWorld();
+            LEVEL = new MultiblockPreviewLevel();
         }
         return new PatternPreviewWidget(controllerDefinition);
     }
@@ -378,16 +378,16 @@ public class PatternPreviewWidget extends WidgetGroup {
     }
 
     private MBPattern initializePattern(MultiblockShapeInfo shapeInfo, HashSet<ItemStackKey> blockDrops) {
-        Map<BlockPos, BlockInfo> blockMap = new HashMap<>();
+        Map<BlockPos, MultiblockBlockInfo> blockMap = new HashMap<>();
         MultiblockControllerMachine controllerBase = null;
         Set<BlockEntity> blockEntitiesToAdd = new HashSet<>();
         BlockPos multiPos = locateNextRegion();
 
-        BlockInfo[][][] blocks = shapeInfo.getBlocks();
+        MultiblockBlockInfo[][][] blocks = shapeInfo.getBlocks();
         for (int x = 0; x < blocks.length; x++) {
-            BlockInfo[][] aisle = blocks[x];
+            MultiblockBlockInfo[][] aisle = blocks[x];
             for (int y = 0; y < aisle.length; y++) {
-                BlockInfo[] column = aisle[y];
+                MultiblockBlockInfo[] column = aisle[y];
                 for (int z = 0; z < column.length; z++) {
                     BlockState blockState = column[z].getBlockState();
                     BlockPos pos = multiPos.offset(x, y, z);
@@ -397,12 +397,12 @@ public class PatternPreviewWidget extends WidgetGroup {
                         blockEntitiesToAdd.add(controller);
                         controllerBase = controller;
                     }
-                    blockMap.put(pos, BlockInfo.fromBlockState(blockState));
+                    blockMap.put(pos, MultiblockBlockInfo.fromBlockState(blockState));
                 }
             }
         }
 
-        LEVEL.addBlocks(blockMap);
+        blockMap.forEach(LEVEL::addBlock);
         for (BlockEntity blockEntity : blockEntitiesToAdd) {
             LEVEL.setInnerBlockEntity(blockEntity);
         }
@@ -449,9 +449,9 @@ public class PatternPreviewWidget extends WidgetGroup {
         }
     }
 
-    private Map<ItemStackKey, PartInfo> gatherBlockDrops(Map<BlockPos, BlockInfo> blocks) {
+    private Map<ItemStackKey, PartInfo> gatherBlockDrops(Map<BlockPos, MultiblockBlockInfo> blocks) {
         Map<ItemStackKey, PartInfo> partsMap = new Object2ObjectOpenHashMap<>();
-        for (Map.Entry<BlockPos, BlockInfo> entry : blocks.entrySet()) {
+        for (Map.Entry<BlockPos, MultiblockBlockInfo> entry : blocks.entrySet()) {
             BlockPos pos = entry.getKey();
             BlockState blockState = PatternPreviewWidget.LEVEL.getBlockState(pos);
             ItemStack itemStack = blockState.getBlock().getCloneItemStack(PatternPreviewWidget.LEVEL, pos, blockState);
@@ -475,7 +475,7 @@ public class PatternPreviewWidget extends WidgetGroup {
         final int blockId;
         int amount = 0;
 
-        PartInfo(final ItemStackKey itemStackKey, final BlockInfo blockInfo) {
+        PartInfo(final ItemStackKey itemStackKey, final MultiblockBlockInfo blockInfo) {
             this.itemStackKey = itemStackKey;
             this.blockId = Block.getId(blockInfo.getBlockState());
             this.isTile = blockInfo.hasBlockEntity();
@@ -503,12 +503,12 @@ public class PatternPreviewWidget extends WidgetGroup {
         @NotNull
         final Map<BlockPos, TraceabilityPredicate> predicateMap;
         @NotNull
-        final Map<BlockPos, BlockInfo> blockMap;
+        final Map<BlockPos, MultiblockBlockInfo> blockMap;
         @NotNull
         final MultiblockControllerMachine controllerBase;
         final int maxY, minY;
 
-        public MBPattern(@NotNull Map<BlockPos, BlockInfo> blockMap, @NotNull List<List<ItemStack>> parts,
+        public MBPattern(@NotNull Map<BlockPos, MultiblockBlockInfo> blockMap, @NotNull List<List<ItemStack>> parts,
                          @NotNull Map<BlockPos, TraceabilityPredicate> predicateMap,
                          @NotNull MultiblockControllerMachine controllerBase) {
             this.parts = parts;

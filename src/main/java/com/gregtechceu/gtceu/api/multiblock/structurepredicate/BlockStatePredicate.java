@@ -1,8 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -28,8 +27,8 @@ public record BlockStatePredicate(List<BlockState> blockStates) implements Struc
     }
 
     @Override
-    public List<BlockInfo> candidates() {
-        return blockStates.stream().map(BlockInfo::new).toList();
+    public List<MultiblockBlockInfo> candidates() {
+        return blockStates.stream().map(MultiblockBlockInfo::new).toList();
     }
 
     @Override

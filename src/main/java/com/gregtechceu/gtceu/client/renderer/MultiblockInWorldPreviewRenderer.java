@@ -5,11 +5,11 @@ import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockPreviewLevel;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.lowdragmc.lowdraglib2.client.scene.WorldSceneRenderer;
-import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -57,7 +57,7 @@ public class MultiblockInWorldPreviewRenderer {
     @Getter(lazy = true)
     private final static VertexBuffer[] BUFFERS = initBuffers();
     @Nullable
-    private static TrackedDummyWorld LEVEL = null;
+    private static MultiblockPreviewLevel LEVEL = null;
     @Nullable
     private static Thread THREAD = null;
     @Nullable
@@ -111,19 +111,19 @@ public class MultiblockInWorldPreviewRenderer {
         Direction up = controller.getUpwardsFacing();
         MultiblockShapeInfo shapeInfo = controller.getDefinition().getMatchingShapes().get(0);
 
-        Map<BlockPos, BlockInfo> blockMap = new HashMap<>();
+        Map<BlockPos, MultiblockBlockInfo> blockMap = new HashMap<>();
         MultiblockControllerMachine controllerBase = null;
-        LEVEL = new TrackedDummyWorld();
+        LEVEL = new MultiblockPreviewLevel();
 
         var blocks = shapeInfo.getBlocks();
         BlockPos controllerPatternPos = null;
         var maxY = 0;
         // find the pos of controller
         for (int x = 0; x < blocks.length; x++) {
-            BlockInfo[][] aisle = blocks[x];
+            MultiblockBlockInfo[][] aisle = blocks[x];
             maxY = Math.max(maxY, aisle.length);
             for (int y = 0; y < aisle.length; y++) {
-                BlockInfo[] column = aisle[y];
+                MultiblockBlockInfo[] column = aisle[y];
                 for (int z = 0; z < column.length; z++) {
                     var blockState = column[z].getBlockState();
                     // if its controller record its position offset.
@@ -150,9 +150,9 @@ public class MultiblockInWorldPreviewRenderer {
         LAST_POS = pos;
 
         for (int x = 0; x < blocks.length; x++) {
-            BlockInfo[][] aisle = blocks[x];
+            MultiblockBlockInfo[][] aisle = blocks[x];
             for (int y = 0; y < aisle.length; y++) {
-                BlockInfo[] column = aisle[y];
+                MultiblockBlockInfo[] column = aisle[y];
                 if (LAST_LAYER != -1 && LAST_LAYER != y) {
                     continue;
                 }
@@ -199,14 +199,14 @@ public class MultiblockInWorldPreviewRenderer {
                         cont.setLevel(LEVEL);
                         controllerBase = cont;
                     } else {
-                        blockMap.put(realPos, BlockInfo.fromBlockState(blockState));
+                        blockMap.put(realPos, MultiblockBlockInfo.fromBlockState(blockState));
                     }
                     // spotless:on
                 }
             }
         }
 
-        LEVEL.addBlocks(blockMap);
+        blockMap.forEach(LEVEL::addBlock);
         if (controllerBase != null) {
             LEVEL.setInnerBlockEntity(controllerBase.self());
         }
@@ -370,7 +370,7 @@ public class MultiblockInWorldPreviewRenderer {
         }
     }
 
-    private static void prepareBuffers(TrackedDummyWorld level, Collection<BlockPos> renderedBlocks, int duration) {
+    private static void prepareBuffers(MultiblockPreviewLevel level, Collection<BlockPos> renderedBlocks, int duration) {
         if (THREAD != null) {
             THREAD.interrupt();
         }
@@ -428,7 +428,7 @@ public class MultiblockInWorldPreviewRenderer {
         THREAD.start();
     }
 
-    private static void renderBlocks(TrackedDummyWorld level, PoseStack poseStack, BlockRenderDispatcher dispatcher,
+    private static void renderBlocks(MultiblockPreviewLevel level, PoseStack poseStack, BlockRenderDispatcher dispatcher,
                                      RenderType layer, WorldSceneRenderer.VertexConsumerWrapper wrapperBuffer,
                                      Collection<BlockPos> renderedBlocks) {
         for (BlockPos pos : renderedBlocks) {
@@ -467,7 +467,7 @@ public class MultiblockInWorldPreviewRenderer {
     }
 
     private static void renderBlockLayer(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos,
-                                         TrackedDummyWorld level, PoseStack poseStack, VertexConsumer vertexConsumer,
+                                         MultiblockPreviewLevel level, PoseStack poseStack, VertexConsumer vertexConsumer,
                                          RandomSource random, RenderType layer) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         var model = dispatcher.getBlockModel(state);

@@ -5,10 +5,9 @@ import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 
@@ -67,7 +66,7 @@ public record AutoRecipeAbilityPredicate(boolean checkEnergyIn, boolean checkEne
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return List.of();
     }
 

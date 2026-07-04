@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.*;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CombinedDirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.MachineModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
@@ -13,7 +14,6 @@ import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -61,7 +61,7 @@ public interface IFancyUIMachine extends IUIMachine, IFancyUIProvider {
         if (isRemote()) {
             group.addWidget(new ImageWidget((100 - 48) / 2, 60, 48, 16, GuiTextures.SCENE));
             TrackedDummyWorld world = new TrackedDummyWorld();
-            world.addBlock(BlockPos.ZERO, BlockInfo.fromBlockState(self().getBlockState()));
+            world.addBlock(BlockPos.ZERO, MultiblockBlockInfo.fromBlockState(self().getBlockState()));
             SceneWidget sceneWidget = new SceneWidget(0, 0, 100, 100, world) {
 
                 @Override

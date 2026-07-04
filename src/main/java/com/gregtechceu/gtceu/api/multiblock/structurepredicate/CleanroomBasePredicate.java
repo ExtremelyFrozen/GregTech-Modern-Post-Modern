@@ -1,13 +1,12 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.util.Lazy;
@@ -77,7 +76,7 @@ public record CleanroomBasePredicate(boolean allowFloorBlocks, boolean allowDoor
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return predicates(null).stream().flatMap(predicate -> predicate.candidates().stream()).toList();
     }
 

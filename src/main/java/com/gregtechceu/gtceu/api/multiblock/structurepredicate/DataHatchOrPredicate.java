@@ -1,10 +1,9 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.config.ConfigHolder;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.util.Lazy;
@@ -81,7 +80,7 @@ public final class DataHatchOrPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         if (!ConfigHolder.INSTANCE.machines.enableResearch) {
             return alternative.candidates();
         }

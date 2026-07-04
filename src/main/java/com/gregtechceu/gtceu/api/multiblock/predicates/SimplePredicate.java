@@ -1,12 +1,11 @@
 package com.gregtechceu.gtceu.api.multiblock.predicates;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.error.SinglePredicateError;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -34,7 +33,7 @@ import java.util.function.Supplier;
 
 public class SimplePredicate {
 
-    private static final Supplier<BlockInfo> NULL_BLOCK_INFO = () -> null;
+    private static final Supplier<MultiblockBlockInfo> NULL_BLOCK_INFO = () -> null;
 
     public static SimplePredicate ANY = new SimplePredicate(blockWorldState -> true, null, null);
     public static SimplePredicate AIR = new SimplePredicate(blockWorldState -> blockWorldState.getBlockState().isAir(),
@@ -42,7 +41,7 @@ public class SimplePredicate {
 
     @Nullable
     public Supplier<Block[]> candidates;
-    public Supplier<BlockInfo> blockInfo;
+    public Supplier<MultiblockBlockInfo> blockInfo;
     public Predicate<MultiblockState> predicate;
     public List<Component> toolTips;
     public int minCount = -1;
@@ -56,19 +55,19 @@ public class SimplePredicate {
 
     public SimplePredicate() {}
 
-    public SimplePredicate(Predicate<MultiblockState> predicate, Supplier<BlockInfo> blockInfo,
+    public SimplePredicate(Predicate<MultiblockState> predicate, Supplier<MultiblockBlockInfo> blockInfo,
                            @Nullable Supplier<Block[]> candidates) {
         this.predicate = predicate;
         this.blockInfo = blockInfo == null ? NULL_BLOCK_INFO : blockInfo;
         this.candidates = candidates;
     }
 
-    public SimplePredicate(Predicate<MultiblockState> predicate, @Nullable Supplier<BlockInfo[]> candidates) {
+    public SimplePredicate(Predicate<MultiblockState> predicate, @Nullable Supplier<MultiblockBlockInfo[]> candidates) {
         this(predicate, candidates == null ? null : () -> {
-            BlockInfo[] infos = candidates.get();
-            return infos.length == 0 ? BlockInfo.EMPTY : infos[0];
+            MultiblockBlockInfo[] infos = candidates.get();
+            return infos.length == 0 ? MultiblockBlockInfo.EMPTY : infos[0];
         }, candidates == null ? null : () -> Arrays.stream(candidates.get())
-                .map(BlockInfo::getBlockState)
+                .map(MultiblockBlockInfo::getBlockState)
                 .map(BlockState::getBlock)
                 .toArray(Block[]::new));
     }

@@ -3,12 +3,11 @@ package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.pipenet.IPipeNode;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTMaterialBlocks;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -105,9 +104,9 @@ public final class FramePredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return frameBlocks().stream()
-                .map(BlockInfo::fromBlock)
+                .map(MultiblockBlockInfo::fromBlock)
                 .toList();
     }
 

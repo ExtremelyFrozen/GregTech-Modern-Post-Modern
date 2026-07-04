@@ -1,9 +1,8 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -35,10 +34,10 @@ public enum CleanroomDoorPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return List.of(
-                new BlockInfo(Blocks.IRON_DOOR.defaultBlockState()),
-                new BlockInfo(Blocks.IRON_DOOR.defaultBlockState().setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER)));
+                new MultiblockBlockInfo(Blocks.IRON_DOOR.defaultBlockState()),
+                new MultiblockBlockInfo(Blocks.IRON_DOOR.defaultBlockState().setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER)));
     }
 
     @Override

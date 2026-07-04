@@ -14,8 +14,6 @@ import com.gregtechceu.gtceu.api.multiblock.structurepredicate.RestrictedPredica
 import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
 import com.gregtechceu.gtceu.api.multiblock.util.PatternMatchContext;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -415,10 +413,10 @@ public class BlockPattern {
         });
     }
 
-    public BlockInfo[][][] getPreview(int[] repetition) {
+    public MultiblockBlockInfo[][][] getPreview(int[] repetition) {
         Reference2IntOpenHashMap<SimplePredicate> cacheGlobal = new Reference2IntOpenHashMap<>();
-        Long2ObjectOpenHashMap<BlockInfo> blocks = new Long2ObjectOpenHashMap<>(1024, 0.5F);
-        Long2ObjectOpenHashMap<BlockInfo> machines = new Long2ObjectOpenHashMap<>();
+        Long2ObjectOpenHashMap<MultiblockBlockInfo> blocks = new Long2ObjectOpenHashMap<>(1024, 0.5F);
+        Long2ObjectOpenHashMap<MultiblockBlockInfo> machines = new Long2ObjectOpenHashMap<>();
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
         int minZ = Integer.MAX_VALUE;
@@ -440,7 +438,7 @@ public class BlockPattern {
                             if (by == null) continue;
                             TraceabilityPredicate predicate = by[z];
                             if (predicate == null) continue;
-                            BlockInfo info = null;
+                            MultiblockBlockInfo info = null;
                             boolean find = false;
                             for (SimplePredicate limit : predicate.limited) {
                                 // check layer and previewCount
@@ -539,7 +537,7 @@ public class BlockPattern {
                             if (info != null && info.getBlockState().getBlock() != Blocks.AIR) {
                                 Direction direction = predicate.getPreviewDirection();
                                 if (direction != null) {
-                                    info = BlockInfo.fromBlockState(setDirectionalState(info.getBlockState(),
+                                    info = MultiblockBlockInfo.fromBlockState(setDirectionalState(info.getBlockState(),
                                             direction));
                                 }
                                 BlockPos pos = gerPreviewOffset(z, y, x);
@@ -560,8 +558,8 @@ public class BlockPattern {
                 }
             }
         }
-        BlockInfo[][][] result = (BlockInfo[][][]) Array.newInstance(BlockInfo.class, maxX - minX + 1, maxY - minY + 1,
-                maxZ - minZ + 1);
+        MultiblockBlockInfo[][][] result = (MultiblockBlockInfo[][][]) Array.newInstance(MultiblockBlockInfo.class,
+                maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
         int finalMinX = minX;
         int finalMinY = minY;
         int finalMinZ = minZ;

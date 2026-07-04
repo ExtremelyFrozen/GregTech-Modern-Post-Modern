@@ -5,8 +5,6 @@ import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
-
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
@@ -33,18 +31,18 @@ public class TraceabilityPredicate {
 
     public TraceabilityPredicate() {}
 
-    public TraceabilityPredicate(Predicate<MultiblockState> predicate, Supplier<BlockInfo> blockInfo,
+    public TraceabilityPredicate(Predicate<MultiblockState> predicate, Supplier<MultiblockBlockInfo> blockInfo,
                                  @Nullable Supplier<Block[]> candidates) {
         this();
         common.add(new SimplePredicate(predicate, blockInfo, candidates));
     }
 
-    public TraceabilityPredicate(Predicate<MultiblockState> predicate, Supplier<BlockInfo[]> candidates) {
+    public TraceabilityPredicate(Predicate<MultiblockState> predicate, Supplier<MultiblockBlockInfo[]> candidates) {
         this(predicate, () -> {
-            BlockInfo[] infos = candidates.get();
-            return infos.length == 0 ? BlockInfo.EMPTY : infos[0];
+            MultiblockBlockInfo[] infos = candidates.get();
+            return infos.length == 0 ? MultiblockBlockInfo.EMPTY : infos[0];
         }, () -> Arrays.stream(candidates.get())
-                .map(BlockInfo::getBlockState)
+                .map(MultiblockBlockInfo::getBlockState)
                 .map(BlockState::getBlock)
                 .toArray(Block[]::new));
     }

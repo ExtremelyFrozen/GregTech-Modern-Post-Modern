@@ -1,9 +1,8 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -45,7 +44,7 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
     }
 
     @Override
-    public List<BlockInfo> candidates() {
+    public List<MultiblockBlockInfo> candidates() {
         return predicate.candidates();
     }
 

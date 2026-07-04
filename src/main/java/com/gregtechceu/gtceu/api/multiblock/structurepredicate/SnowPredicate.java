@@ -1,9 +1,8 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.utils.GTUtil;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -40,8 +39,8 @@ public enum SnowPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
-        return List.of(BlockInfo.fromBlockState(Blocks.SNOW_BLOCK.defaultBlockState()));
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
+        return List.of(MultiblockBlockInfo.fromBlockState(Blocks.SNOW_BLOCK.defaultBlockState()));
     }
 
     @Override

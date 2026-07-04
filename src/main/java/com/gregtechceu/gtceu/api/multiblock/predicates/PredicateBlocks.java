@@ -1,8 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.predicates;
 
 import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -36,9 +35,9 @@ public class PredicateBlocks extends SimplePredicate {
         blocks = filteredBlocks.toArray(new Block[0]);
         var block = blocks[0];
         if (block instanceof MetaMachineBlock) {
-            blockInfo = () -> BlockInfo.fromBlock(block);
+            blockInfo = () -> MultiblockBlockInfo.fromBlock(block);
         } else {
-            var info = BlockInfo.fromBlock(block);
+            var info = MultiblockBlockInfo.fromBlock(block);
             blockInfo = () -> info;
         }
         predicate = state -> ArrayUtils.contains(blocks, state.getBlockState().getBlock());

@@ -2,11 +2,10 @@ package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.block.ICoilType;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
 import com.gregtechceu.gtceu.common.block.CoilBlock;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 
@@ -47,10 +46,10 @@ public enum HeatingCoilPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return GTCEuAPI.HEATING_COILS.entrySet().stream()
                 .sorted(Comparator.comparingInt(value -> value.getKey().getTier()))
-                .map(coil -> BlockInfo.fromBlockState(coil.getValue().get().defaultBlockState()))
+                .map(coil -> MultiblockBlockInfo.fromBlockState(coil.getValue().get().defaultBlockState()))
                 .toList();
     }
 

@@ -2,10 +2,9 @@ package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.RotorHolderPartMachine;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 
@@ -40,8 +39,8 @@ public record RotorHolderPredicate(int tier) implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
-        return blockCandidates().stream().map(BlockInfo::fromBlock).toList();
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
+        return blockCandidates().stream().map(MultiblockBlockInfo::fromBlock).toList();
     }
 
     @Override

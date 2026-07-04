@@ -1,8 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -38,7 +37,7 @@ public interface StructurePredicate {
     }
 
     @Unmodifiable
-    default List<BlockInfo> candidates() {
+    default List<MultiblockBlockInfo> candidates() {
         return List.of();
     }
 

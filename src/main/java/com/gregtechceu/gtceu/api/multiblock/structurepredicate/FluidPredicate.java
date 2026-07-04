@@ -1,8 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
@@ -29,7 +28,7 @@ public record FluidPredicate(List<Fluid> fluids) implements StructurePredicate {
     }
 
     @Override
-    public List<BlockInfo> candidates() {
+    public List<MultiblockBlockInfo> candidates() {
         return fluids.stream()
                 .map(FluidPredicate::blockInfoFromFluid)
                 .toList();
@@ -53,7 +52,7 @@ public record FluidPredicate(List<Fluid> fluids) implements StructurePredicate {
         return fluid.defaultFluidState().createLegacyBlock();
     }
 
-    static BlockInfo blockInfoFromFluid(Fluid fluid) {
-        return new BlockInfo(blockStateFromFluid(fluid));
+    static MultiblockBlockInfo blockInfoFromFluid(Fluid fluid) {
+        return new MultiblockBlockInfo(blockStateFromFluid(fluid));
     }
 }
