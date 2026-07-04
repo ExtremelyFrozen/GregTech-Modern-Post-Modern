@@ -1,9 +1,9 @@
 package com.gregtechceu.gtceu.common.cover.data;
 
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import lombok.Getter;
 
@@ -21,7 +21,7 @@ public enum BucketMode implements EnumSelectorWidget.SelectableEnum {
 
     BucketMode(String tooltip, String textureName, int multiplier) {
         this.tooltip = tooltip;
-        this.icon = new ResourceTexture(textureName + ".png").scale(16F / 20F);
+        this.icon = GuiTextures.resource(textureName + ".png").scale(16F / 20F);
         this.multiplier = multiplier;
     }
 }

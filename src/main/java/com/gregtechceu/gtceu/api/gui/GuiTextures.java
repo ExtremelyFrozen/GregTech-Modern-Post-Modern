@@ -6,6 +6,10 @@ import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 @SuppressWarnings("unused")
 public class GuiTextures {
 
+    public static ResourceTexture resource(String texture) {
+        return new ResourceTexture(texture);
+    }
+
     // GREGTECH
     public static final ResourceTexture GREGTECH_LOGO = new ResourceTexture(
             "gtpm:textures/gui/icon/gregtech_logo.png");
