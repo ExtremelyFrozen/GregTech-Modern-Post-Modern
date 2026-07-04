@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 import com.gregtechceu.gtceu.config.ConfigHolder;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
@@ -19,7 +20,6 @@ import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
 import com.lowdragmc.lowdraglib.utils.BlockPosFace;
 import com.lowdragmc.lowdraglib.utils.ItemStackKey;
@@ -269,7 +269,7 @@ public class PatternPreviewWidget extends WidgetGroup {
 
             slotWidgets[i] = new PatternPreviewSlotWidget(itemHandler, i, (4 + xOffset + padding), 0, false, false)
                     .setBackgroundTexture(ColorPattern.T_GRAY.rectTexture())
-                    .setIngredientIO(IngredientIO.INPUT);
+                    .setIngredientIO(GTXEIHelper.input());
             xOffset += 18 + (2 * padding);
             scrollableWidgetGroup.addWidget(slotWidgets[i]);
         }
@@ -316,7 +316,7 @@ public class PatternPreviewWidget extends WidgetGroup {
                 int finalI = i;
                 candidates[i] = new SlotWidget(itemHandler, i, 3 + (i / maxCol) * 18, 3 + (i % maxCol) * 18, false,
                         false)
-                        .setIngredientIO(IngredientIO.INPUT)
+                        .setIngredientIO(GTXEIHelper.input())
                         .setBackgroundTexture(new ColorRectTexture(0x4fffffff))
                         .setOnAddedTooltips((slot, list) -> list.addAll(predicateTips.get(finalI)));
                 addWidget(candidates[i]);

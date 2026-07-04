@@ -4,11 +4,11 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 
 import net.minecraft.network.chat.Component;
 
@@ -56,7 +56,7 @@ public class FancyInvConfigurator implements IFancyConfigurator {
             for (int x = 0; x < rowSize; x++) {
                 container.addWidget(new SlotWidget(inventory, index++, 4 + x * 18, 4 + y * 18, true, true)
                         .setBackgroundTexture(GuiTextures.SLOT)
-                        .setIngredientIO(IngredientIO.INPUT));
+                        .setIngredientIO(GTXEIHelper.input()));
             }
         }
 

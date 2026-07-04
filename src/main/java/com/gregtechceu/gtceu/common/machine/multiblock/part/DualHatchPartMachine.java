@@ -9,12 +9,12 @@ import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.common.data.GTMachines;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -161,7 +161,7 @@ public class DualHatchPartMachine extends ItemBusPartMachine {
                 container.addWidget(new SlotWidget(
                         getInventory().storage, index++, 4 + x * 18, 4 + y * 18, true, io.support(IO.IN))
                         .setBackgroundTexture(GuiTextures.SLOT)
-                        .setIngredientIO(this.io == IO.OUT ? IngredientIO.OUTPUT : IngredientIO.INPUT));
+                        .setIngredientIO(this.io == IO.OUT ? GTXEIHelper.output() : GTXEIHelper.input()));
             }
         }
 
