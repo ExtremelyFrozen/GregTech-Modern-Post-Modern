@@ -28,6 +28,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
             include '**/*.toml'
             include '**/*.mcmeta'
             include '**/*.md'
+            include '**/*.xml'
             exclude 'src/generated/**'
         }
         var gradleFilesToScan = files([
@@ -45,6 +46,8 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 '@RPCMethod',
                 'RPCEmitter',
                 'setOnServerClick',
+                'com.lowdragmc.lowdraglib2.syncdata.',
+                'com.lowdragmc.lowdraglib2.gui.sync.',
                 'compileOnly(forge.ldlib)',
                 'api(forge.ldlib)',
                 'jarJar(api(forge.ldlib))',
