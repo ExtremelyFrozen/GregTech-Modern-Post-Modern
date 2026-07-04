@@ -23,7 +23,6 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
 
@@ -334,7 +333,7 @@ public class FisherMachine extends TieredEnergyMachine
     protected static EditableUI<ToggleButtonWidget, FisherMachine> createJunkButton() {
         return new EditableUI<>("junk_button", ToggleButtonWidget.class, () -> {
             var toggleButtonWidget = new ToggleButtonWidget(10, 20, 18, 18,
-                    new ItemStackTexture(Items.NAME_TAG).scale(0.9F), () -> false, b -> {});
+                    GuiTextures.itemStack(Items.NAME_TAG).scale(0.9F), () -> false, b -> {});
             toggleButtonWidget.setShouldUseBaseBackground();
             return toggleButtonWidget;
         }, (toggleButtonWidget, machine) -> {
