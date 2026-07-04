@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCACoolantProviderTrait;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 
 import lombok.Getter;
 
@@ -29,7 +29,7 @@ public class HPCACoolerPartMachine extends HPCAComponentPartMachine {
     }
 
     @Override
-    public ResourceTexture getComponentIcon() {
+    public IGuiTexture getComponentIcon() {
         return advanced ? GuiTextures.HPCA_ICON_ACTIVE_COOLER_COMPONENT : GuiTextures.HPCA_ICON_HEAT_SINK_COMPONENT;
     }
 }

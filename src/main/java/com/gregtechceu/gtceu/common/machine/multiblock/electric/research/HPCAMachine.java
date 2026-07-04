@@ -35,7 +35,6 @@ import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -737,7 +736,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
             }
         }
 
-        public ResourceTexture getComponentTexture(int index) {
+        public IGuiTexture getComponentTexture(int index) {
             if (components.size() <= index) {
                 return GuiTextures.BLANK_TRANSPARENT;
             }

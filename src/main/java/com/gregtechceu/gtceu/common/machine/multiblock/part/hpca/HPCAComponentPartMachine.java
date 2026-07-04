@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.world.InteractionHand;
@@ -35,7 +35,7 @@ public abstract class HPCAComponentPartMachine extends MultiblockPartMachine {
 
     public abstract boolean isAdvanced();
 
-    public abstract ResourceTexture getComponentIcon();
+    public abstract IGuiTexture getComponentIcon();
 
     @Override
     public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
