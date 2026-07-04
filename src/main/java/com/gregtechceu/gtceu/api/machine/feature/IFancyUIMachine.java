@@ -9,7 +9,6 @@ import com.gregtechceu.gtceu.api.machine.fancyconfigurator.MachineModeFancyConfi
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -93,7 +92,7 @@ public interface IFancyUIMachine extends IUIMachine, IFancyUIProvider {
 
     @Override
     default IGuiTexture getTabIcon() {
-        return new ItemStackTexture(self().getDefinition().getItem());
+        return GuiTextures.itemStack(self().getDefinition().getItem());
     }
 
     @Override

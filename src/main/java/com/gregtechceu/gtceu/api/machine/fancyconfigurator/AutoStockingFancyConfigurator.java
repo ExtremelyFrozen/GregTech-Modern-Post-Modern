@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.machine.fancyconfigurator;
 
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
 import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
 import com.gregtechceu.gtceu.common.data.GTItems;
@@ -8,7 +9,6 @@ import com.gregtechceu.gtceu.integration.ae2.machine.MEStockingBusPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.feature.multiblock.IMEStockingPart;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -30,7 +30,7 @@ public class AutoStockingFancyConfigurator implements IFancyConfigurator {
 
     @Override
     public IGuiTexture getIcon() {
-        return new ItemStackTexture(GTItems.TOOL_DATA_STICK.asStack());
+        return GuiTextures.itemStack(GTItems.TOOL_DATA_STICK.asStack());
     }
 
     @Override

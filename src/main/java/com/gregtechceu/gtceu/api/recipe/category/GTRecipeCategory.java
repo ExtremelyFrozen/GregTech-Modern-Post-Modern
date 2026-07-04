@@ -1,13 +1,13 @@
 package com.gregtechceu.gtceu.api.recipe.category;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
@@ -60,8 +60,8 @@ public class GTRecipeCategory {
 
     public IGuiTexture getIcon() {
         if (icon == null) {
-            if (recipeType.getIconSupplier() != null) icon = new ItemStackTexture(recipeType.getIconSupplier().get());
-            else icon = new ItemStackTexture(Items.BARRIER);
+            if (recipeType.getIconSupplier() != null) icon = GuiTextures.itemStack(recipeType.getIconSupplier().get());
+            else icon = GuiTextures.itemStack(Items.BARRIER);
         }
         return icon;
     }

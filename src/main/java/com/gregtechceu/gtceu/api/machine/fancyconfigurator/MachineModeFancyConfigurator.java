@@ -34,7 +34,7 @@ public class MachineModeFancyConfigurator implements IFancyUIProvider {
 
     @Override
     public IGuiTexture getTabIcon() {
-        return new ItemStackTexture(GTItems.ROBOT_ARM_LV.get());
+        return GuiTextures.itemStack(GTItems.ROBOT_ARM_LV.get());
     }
 
     @Override

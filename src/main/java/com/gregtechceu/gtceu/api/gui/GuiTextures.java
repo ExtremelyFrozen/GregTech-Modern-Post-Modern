@@ -1,10 +1,13 @@
 package com.gregtechceu.gtceu.api.gui;
 
 import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
+import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 @SuppressWarnings("unused")
 public class GuiTextures {
@@ -23,6 +26,14 @@ public class GuiTextures {
 
     public static ColorRectTexture colorRect(int color) {
         return new ColorRectTexture(color);
+    }
+
+    public static ItemStackTexture itemStack(ItemStack... itemStacks) {
+        return new ItemStackTexture(itemStacks);
+    }
+
+    public static ItemStackTexture itemStack(Item... items) {
+        return new ItemStackTexture(items);
     }
 
     // GREGTECH

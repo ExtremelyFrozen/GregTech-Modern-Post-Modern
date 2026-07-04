@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
 import com.gregtechceu.gtceu.common.data.GTItems;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
@@ -37,7 +36,7 @@ public class CoverConfigurator implements IFancyConfigurator {
 
     @Override
     public IGuiTexture getIcon() {
-        return new ItemStackTexture(GTItems.ITEM_FILTER.get());
+        return GuiTextures.itemStack(GTItems.ITEM_FILTER.get());
     }
 
     @Override
