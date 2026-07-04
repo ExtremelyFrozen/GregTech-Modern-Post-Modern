@@ -138,6 +138,21 @@ public class SyncActionDispatcherTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncActionDispatcher")
+    public static void dispatcherRejectsDuplicateRegistration(GameTestHelper helper) {
+        SyncActionDispatcherImpl dispatcher = new SyncActionDispatcherImpl();
+        dispatcher.register(new RecordingSyncActionHandler(ACTION_ID, true, true, true));
+
+        try {
+            dispatcher.register(new RecordingSyncActionHandler(ACTION_ID, true, true, true));
+            helper.fail("duplicate action handler registration was accepted");
+        } catch (IllegalArgumentException ignored) {
+            helper.succeed();
+        }
+    }
+
     private static SyncActionDispatcherImpl dispatcherWith(RecordingSyncActionHandler handler) {
         SyncActionDispatcherImpl dispatcher = new SyncActionDispatcherImpl();
         dispatcher.register(handler);
