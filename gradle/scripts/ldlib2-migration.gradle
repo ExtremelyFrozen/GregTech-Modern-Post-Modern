@@ -54,6 +54,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'ldlib_version',
                 'modId = "ldlib"',
                 '"ldlib":',
+                '"ldlib.',
                 'ldlib:'
         ]
 
