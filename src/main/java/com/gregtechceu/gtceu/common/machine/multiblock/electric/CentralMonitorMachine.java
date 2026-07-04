@@ -398,7 +398,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
 
         Consumer<MonitorGroup> addGroupToList = group -> {
             ButtonWidget label = new ButtonWidget(20, groupList.widgets.size() * 15 + 5, 60, 10, null);
-            TextTexture text = new TextTexture(group.getName());
+            TextTexture text = GuiTextures.text(group.getName());
             text.setType(TextTexture.TextType.LEFT);
             label.setButtonTexture(text);
             label.setOnPressCallback(click -> {
@@ -432,10 +432,10 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
         builder.addWidget(groupList);
         main.addWidget(options);
         ButtonWidget removeFromGroupButton = new ButtonWidget(0, 0, 60, 20, null);
-        removeFromGroupButton.setButtonTexture(new TextTexture("gtpm.central_monitor.gui.remove_from_group"));
+        removeFromGroupButton.setButtonTexture(GuiTextures.text("gtpm.central_monitor.gui.remove_from_group"));
         removeFromGroupButton.setVisible(false);
         ButtonWidget setTargetButton = new ButtonWidget(0, 15, 60, 20, null);
-        setTargetButton.setButtonTexture(new TextTexture("gtpm.central_monitor.gui.set_target"));
+        setTargetButton.setButtonTexture(GuiTextures.text("gtpm.central_monitor.gui.set_target"));
         setTargetButton.setVisible(false);
         ButtonWidget createGroupButton = new ButtonWidget(0, 0, 60, 20, null);
         createGroupButton.setOnPressCallback(click -> {
@@ -509,7 +509,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                 rightClickCallbacks.getOrDefault(selectedTargets.get(0).getBlockPos(), () -> {}).run();
             }
         });
-        createGroupButton.setButtonTexture(new TextTexture("gtpm.central_monitor.gui.create_group"));
+        createGroupButton.setButtonTexture(GuiTextures.text("gtpm.central_monitor.gui.create_group"));
         createGroupButton.setVisible(false);
         options.addWidget(removeFromGroupButton);
         options.addWidget(createGroupButton);
