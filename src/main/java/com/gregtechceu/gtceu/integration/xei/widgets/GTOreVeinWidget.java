@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.data.worldgen.GTOreDefinition;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidDefinition;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreDefinition;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
@@ -175,7 +176,7 @@ public class GTOreVeinWidget extends WidgetGroup {
 
     private void setupText(GTOreDefinition ignored) {
         addWidget(new ImageWidget(5, 0, width - 10, 16,
-                new TextTexture(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
+                GuiTextures.text(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
                         .setWidth(width - 10)));
         addWidget(new LabelWidget(5, 40,
                 LocalizationUtils.format("gtpm.jei.ore_vein_diagram.spawn_range")));
@@ -190,7 +191,7 @@ public class GTOreVeinWidget extends WidgetGroup {
 
     private void setupText(BedrockFluidDefinition ignored) {
         addWidget(new ImageWidget(5, 0, width - 10, 16,
-                new TextTexture(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
+                GuiTextures.text(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
                         .setWidth(width - 10)));
         addWidget(new LabelWidget(5, 40,
                 LocalizationUtils.format("gtpm.jei.bedrock_vein_diagram.yield", veinYield)));
@@ -205,7 +206,7 @@ public class GTOreVeinWidget extends WidgetGroup {
 
     private void setupText(BedrockOreDefinition ignored) {
         addWidget(new ImageWidget(5, 0, width - 10, 16,
-                new TextTexture(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
+                GuiTextures.text(translationKey).setType(TextTexture.TextType.LEFT_ROLL)
                         .setWidth(width - 10)));
         addWidget(new LabelWidget(5, 40,
                 LocalizationUtils.format("gtpm.jei.bedrock_vein_diagram.yield", veinYield)));
@@ -241,7 +242,8 @@ public class GTOreVeinWidget extends WidgetGroup {
                 handler.setStackInSlot(i, icon);
                 if (ConfigHolder.INSTANCE.compat.showDimensionTier) {
                     dimSlot.setOverlay(
-                            new TextTexture("T" + (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
+                            GuiTextures.text("T" +
+                                    (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
                                     .scale(0.75F)
                                     .transform(-3F, 5F));
                 }

@@ -24,7 +24,6 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.ChatFormatting;
@@ -220,7 +219,8 @@ public class GTRecipeWidget extends WidgetGroup {
         int x = getSize().width - xOffset - 18;
         int y = getSize().height - 30;
         addWidget(
-                new PredicatedButtonWidget(x, y, 15, 15, new GuiTextureGroup(GuiTextures.BUTTON, new TextTexture("ID")),
+                new PredicatedButtonWidget(x, y, 15, 15,
+                        new GuiTextureGroup(GuiTextures.BUTTON, GuiTextures.text("ID")),
                         cd -> Minecraft.getInstance().keyboardHandler.setClipboard(recipe.id.toString()),
                         () -> !FMLLoader.isProduction(), !FMLLoader.isProduction())
                         .setHoverTooltips("click to copy: " + recipe.id));
