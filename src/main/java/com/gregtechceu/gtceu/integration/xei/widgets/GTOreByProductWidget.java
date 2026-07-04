@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemEntryList;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
@@ -15,7 +16,6 @@ import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
@@ -132,7 +132,7 @@ public class GTOreByProductWidget extends WidgetGroup {
                     ITEM_INPUT_LOCATIONS.getInt(i + 1))
                     .setCanTakeItems(false)
                     .setCanPutItems(false)
-                    .setIngredientIO(IngredientIO.INPUT)
+                    .setIngredientIO(GTXEIHelper.input())
                     .setOnAddedTooltips((slot, tooltips) -> recipeWrapper.getTooltip(finalI / 2, tooltips))
                     .setBackground((IGuiTexture) null));
         }
@@ -157,13 +157,13 @@ public class GTOreByProductWidget extends WidgetGroup {
                     ITEM_OUTPUT_LOCATIONS.getInt(i + 1))
                     .setCanTakeItems(false)
                     .setCanPutItems(false)
-                    .setIngredientIO(IngredientIO.OUTPUT)
+                    .setIngredientIO(GTXEIHelper.output())
                     .setXEIChance(xeiChance)
                     .setOnAddedTooltips(
                             (slot, tooltips) -> recipeWrapper.getTooltip(slotIndex + itemInputs.size(), tooltips));
             outputSlot.setBackground((IGuiTexture) null).setOverlay(overlay);
             if (!FINAL_OUTPUT_INDICES.contains(i)) {
-                itemStackGroup.addWidget(new GTRecipeIngredientSlotWidget(outputSlot, IngredientIO.INPUT));
+                itemStackGroup.addWidget(new GTRecipeIngredientSlotWidget(outputSlot, GTXEIHelper.input()));
             }
             itemStackGroup.addWidget(outputSlot);
             itemOutputExists.add(true);
@@ -177,7 +177,7 @@ public class GTOreByProductWidget extends WidgetGroup {
             if (!fluidInputs.get(slotIndex).isEmpty()) {
                 var tank = new TankWidget(new CustomFluidTank(fluidInputsHandler.getFluidInTank(slotIndex)),
                         FLUID_LOCATIONS.getInt(i), FLUID_LOCATIONS.getInt(i + 1), false, false)
-                        .setIngredientIO(IngredientIO.INPUT)
+                        .setIngredientIO(GTXEIHelper.input())
                         .setBackground(GuiTextures.FLUID_SLOT)
                         .setShowAmount(false);
                 fluidStackGroup.addWidget(tank);

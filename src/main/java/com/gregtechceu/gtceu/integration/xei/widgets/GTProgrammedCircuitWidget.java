@@ -4,10 +4,10 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -28,9 +28,9 @@ public class GTProgrammedCircuitWidget extends WidgetGroup {
                 int circuit = i + j * 8;
                 handler.setStackInSlot(circuit, IntCircuitBehaviour.stack(1 + circuit));
                 var slot = new SlotWidget(handler, circuit, 3 + 18 * i, 18 * j, false, false)
-                        .setIngredientIO(circuit == 31 ? IngredientIO.OUTPUT : IngredientIO.INPUT);
+                        .setIngredientIO(circuit == 31 ? GTXEIHelper.output() : GTXEIHelper.input());
                 if (circuit != 31) {
-                    addWidget(new GTRecipeIngredientSlotWidget(slot, IngredientIO.OUTPUT));
+                    addWidget(new GTRecipeIngredientSlotWidget(slot, GTXEIHelper.output()));
                 }
                 addWidget(slot);
             }

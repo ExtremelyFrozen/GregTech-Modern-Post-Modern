@@ -13,13 +13,13 @@ import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.recipe.condition.DimensionCondition;
 import com.gregtechceu.gtceu.config.ConfigHolder;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.core.Holder;
@@ -141,7 +141,7 @@ public class GTOreVeinWidget extends WidgetGroup {
             int finalIndex = i;
             oreSlot.setOnAddedTooltips((stack, tooltips) -> tooltips.add(
                     Component.translatable("gtpm.jei.ore_vein_diagram.chance", chances.getInt(finalIndex))));
-            oreSlot.setIngredientIO(IngredientIO.OUTPUT);
+            oreSlot.setIngredientIO(GTXEIHelper.output());
             addWidget(oreSlot);
             x += 18;
         }
@@ -151,7 +151,7 @@ public class GTOreVeinWidget extends WidgetGroup {
         Fluid storedFluid = fluid.getStoredFluid();
         TankWidget fluidSlot = new TankWidget(
                 new CustomFluidTank(new FluidStack(storedFluid, 1000)), 51, 18, false, false);
-        fluidSlot.setIngredientIO(IngredientIO.OUTPUT);
+        fluidSlot.setIngredientIO(GTXEIHelper.output());
         addWidget(fluidSlot);
     }
 
@@ -167,7 +167,7 @@ public class GTOreVeinWidget extends WidgetGroup {
             int finalIndex = i;
             oreSlot.setOnAddedTooltips((stack, tooltips) -> tooltips.add(
                     Component.translatable("gtpm.jei.ore_vein_diagram.chance", chances.getInt(finalIndex))));
-            oreSlot.setIngredientIO(IngredientIO.OUTPUT);
+            oreSlot.setIngredientIO(GTXEIHelper.output());
             addWidget(oreSlot);
             x += 18;
         }
@@ -237,7 +237,7 @@ public class GTOreVeinWidget extends WidgetGroup {
                 SlotWidget dimSlot = new SlotWidget(handler, i,
                         5 + (16 + interval) * (i - row * rowSlots),
                         yPosition + 18 * row,
-                        false, false).setIngredientIO(IngredientIO.CATALYST);
+                        false, false).setIngredientIO(GTXEIHelper.catalyst());
                 handler.setStackInSlot(i, icon);
                 if (ConfigHolder.INSTANCE.compat.showDimensionTier) {
                     dimSlot.setOverlay(
