@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.common.recipe.condition;
 
 import com.gregtechceu.gtceu.api.data.DimensionMarker;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -11,8 +12,6 @@ import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTRecipeConditions;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
-
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -75,7 +74,7 @@ public class DimensionCondition extends RecipeCondition<DimensionCondition> {
         handler.setStackInSlot(0, icon);
         if (ConfigHolder.INSTANCE.compat.showDimensionTier) {
             dimSlot.setOverlay(
-                    new TextTexture("T" + (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
+                    GuiTextures.text("T" + (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
                             .scale(0.75f).transform(-3.0f, 5.0f));
         }
         return dimSlot;

@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -83,8 +82,8 @@ public class AETextInputButtonWidget extends WidgetGroup {
                     }
                 })
                 .setTexture(
-                        new GuiTextureGroup(GuiTextures.VANILLA_BUTTON, new TextTexture("✎")),
-                        new GuiTextureGroup(GuiTextures.VANILLA_BUTTON, new TextTexture("✔")))
+                        new GuiTextureGroup(GuiTextures.VANILLA_BUTTON, GuiTextures.text("✎")),
+                        new GuiTextureGroup(GuiTextures.VANILLA_BUTTON, GuiTextures.text("✔")))
                 .setHoverTooltips(hoverTexts));
         this.addWidget(textField);
     }
