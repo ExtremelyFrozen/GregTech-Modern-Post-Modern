@@ -58,6 +58,8 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'com.lowdragmc.ldlib:ldlib-neoforge',
                 'ldlib_version',
                 'modId = "ldlib"',
+                'modrinth = "ldlib"',
+                'curseforge = "ldlib"',
                 '"ldlib":',
                 '"ldlib.',
                 'ldlib:'
