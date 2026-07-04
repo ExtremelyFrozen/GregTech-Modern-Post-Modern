@@ -16,6 +16,10 @@ public class GuiTextures {
         return new ResourceTexture(texture);
     }
 
+    public static ResourceTexture spirit(ResourceLocation texture) {
+        return ResourceTexture.fromSpirit(texture);
+    }
+
     // GREGTECH
     public static final ResourceTexture GREGTECH_LOGO = new ResourceTexture(
             "gtpm:textures/gui/icon/gregtech_logo.png");

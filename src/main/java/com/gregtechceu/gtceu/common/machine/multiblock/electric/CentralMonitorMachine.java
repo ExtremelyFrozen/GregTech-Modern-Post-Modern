@@ -660,7 +660,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
 
     @Override
     public IGuiTexture getComponentIcon() {
-        return ResourceTexture.fromSpirit(GTCEu.id("block/multiblock/network_switch/overlay_front_active"));
+        return GuiTextures.spirit(GTCEu.id("block/multiblock/network_switch/overlay_front_active"));
     }
 
     @Override
