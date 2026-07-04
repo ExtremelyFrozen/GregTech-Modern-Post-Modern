@@ -15,12 +15,12 @@ public final class HeldItemUIHolderImpl implements HeldItemUIHolder {
 
     private final Player player;
     private final InteractionHand hand;
-    private final ItemStack held;
+    private final ItemStack openedStack;
 
     public HeldItemUIHolderImpl(Player player, InteractionHand hand) {
         this.player = player;
         this.hand = hand;
-        this.held = player.getItemInHand(hand);
+        this.openedStack = player.getItemInHand(hand).copy();
     }
 
     @Override
@@ -35,13 +35,13 @@ public final class HeldItemUIHolderImpl implements HeldItemUIHolder {
 
     @Override
     public ItemStack getHeld() {
-        return held;
+        return player.getItemInHand(hand);
     }
 
     @Nullable
     @Override
     public ModularUI createUI(Player player) {
-        if (held.getItem() instanceof HeldItemUIProvider uiProvider) {
+        if (getHeld().getItem() instanceof HeldItemUIProvider uiProvider) {
             return uiProvider.createUI(player, this);
         }
         return null;
@@ -49,7 +49,7 @@ public final class HeldItemUIHolderImpl implements HeldItemUIHolder {
 
     @Override
     public boolean isInvalid() {
-        return !ItemStack.isSameItemSameComponents(player.getItemInHand(hand), held);
+        return !ItemStack.isSameItemSameComponents(player.getItemInHand(hand), openedStack);
     }
 
     @Override
