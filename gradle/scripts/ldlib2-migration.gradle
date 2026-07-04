@@ -28,6 +28,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
             include '**/*.toml'
             include '**/*.mcmeta'
             include '**/*.md'
+            include '**/*.rtui'
             include '**/*.xml'
             exclude 'src/generated/**'
         }
