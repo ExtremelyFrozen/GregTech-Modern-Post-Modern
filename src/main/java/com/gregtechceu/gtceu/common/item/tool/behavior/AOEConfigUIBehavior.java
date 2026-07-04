@@ -46,27 +46,21 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
                 .widget(new LabelWidget(79, 10, "item.gtpm.tool.aoe.layers"))
                 .widget(new ButtonWidget(15, 24, 20, 20, new TextTexture("+"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.increaseColumn().toImmutable());
-                    holder.markAsDirty();
                 }))
                 .widget(new ButtonWidget(15, 44, 20, 20, new TextTexture("-"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.decreaseColumn().toImmutable());
-                    holder.markAsDirty();
                 }))
                 .widget(new ButtonWidget(50, 24, 20, 20, new TextTexture("+"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.increaseRow().toImmutable());
-                    holder.markAsDirty();
                 }))
                 .widget(new ButtonWidget(50, 44, 20, 20, new TextTexture("-"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.decreaseRow().toImmutable());
-                    holder.markAsDirty();
                 }))
                 .widget(new ButtonWidget(85, 24, 20, 20, new TextTexture("+"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.increaseLayer().toImmutable());
-                    holder.markAsDirty();
                 }))
                 .widget(new ButtonWidget(85, 44, 20, 20, new TextTexture("-"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.decreaseLayer().toImmutable());
-                    holder.markAsDirty();
                 }))
                 .widget(new LabelWidget(23, 65,
                         () -> Integer.toString(

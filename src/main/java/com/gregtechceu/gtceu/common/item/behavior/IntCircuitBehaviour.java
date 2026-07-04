@@ -43,7 +43,6 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
 
     public static void setCircuitConfiguration(HeldItemUIFactory.HeldItemHolder holder, int configuration) {
         setCircuitConfiguration(holder.getHeld(), configuration);
-        holder.markAsDirty();
     }
 
     public static void setCircuitConfiguration(ItemStack itemStack, int configuration) {
@@ -64,7 +63,6 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
     @Deprecated
     public static void adjustConfiguration(HeldItemUIFactory.HeldItemHolder holder, int amount) {
         adjustConfiguration(holder.getHeld(), amount);
-        holder.markAsDirty();
     }
 
     // deprecated, not needed (for now)
