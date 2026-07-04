@@ -23,6 +23,7 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
 import com.gregtechceu.gtceu.common.valueprovider.*;
 import com.gregtechceu.gtceu.config.ConfigHolder;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemTagList;
@@ -31,7 +32,6 @@ import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 import com.gregtechceu.gtceu.utils.*;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentPatch;
@@ -446,7 +446,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
             if (storage instanceof IItemHandlerModifiable items) {
                 if (index >= 0 && index < items.getSlots()) {
                     slot.setHandlerSlot(items, index);
-                    slot.setIngredientIO(io == IO.IN ? IngredientIO.INPUT : IngredientIO.OUTPUT);
+                    slot.setIngredientIO(io == IO.IN ? GTXEIHelper.input() : GTXEIHelper.output());
                     slot.setCanTakeItems(!isXEI);
                     slot.setCanPutItems(!isXEI && io.support(IO.IN));
                 }
@@ -467,7 +467,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                             }
                             CycleItemEntryHandler handler = CycleItemEntryHandler.createFromStacks(List.of(dataItems));
                             slot.setHandlerSlot(handler, 0);
-                            slot.setIngredientIO(IngredientIO.CATALYST);
+                            slot.setIngredientIO(GTXEIHelper.catalyst());
                             slot.setCanTakeItems(false);
                             slot.setCanPutItems(false);
                         }
@@ -502,7 +502,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                 });
                 if (io == IO.IN && (content.chance == 0 ||
                         this.of(content.content).getContainedCustom() instanceof IntCircuitIngredient)) {
-                    slot.setIngredientIO(IngredientIO.CATALYST);
+                    slot.setIngredientIO(GTXEIHelper.catalyst());
                 }
             }
         }
