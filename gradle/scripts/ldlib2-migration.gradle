@@ -21,7 +21,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 file('src/main/resources'),
                 file('src/main/templates')
         ]
-        var filesToScan = files(sourceRoots.findAll { it.exists() }).asFileTree.matching {
+        var sourceFilesToScan = files(sourceRoots.findAll { it.exists() }).asFileTree.matching {
             include '**/*.java'
             include '**/*.kt'
             include '**/*.json'
@@ -30,17 +30,30 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
             include '**/*.md'
             exclude 'src/generated/**'
         }
+        var gradleFilesToScan = files([
+                file('dependencies.gradle'),
+                file('gradle/forge.versions.toml'),
+                file('gradle/scripts/resources.gradle')
+        ].findAll { it.exists() })
+        var filesToScan = sourceFilesToScan + gradleFilesToScan
 
         var patterns = [
-                'com.lowdragmc.lowdraglib',
+                'com.lowdragmc.lowdraglib.',
                 'IngredientIO.RENDER_ONLY',
                 'IngredientIO.BOTH',
                 '@RPCMethod',
                 'RPCEmitter',
                 'setOnServerClick',
+                'compileOnly(forge.ldlib)',
+                'api(forge.ldlib)',
+                'jarJar(api(forge.ldlib))',
+                'jarJar(api(forge.ldlib.get()))',
+                'forge.versions.ldlib.get()',
+                'version.ref = "ldlib"',
+                'com.lowdragmc.ldlib:ldlib-neoforge',
+                'ldlib_version',
                 'modId = "ldlib"',
-                '"ldlib."',
-                '"ldlib"',
+                '"ldlib":',
                 'ldlib:'
         ]
 
