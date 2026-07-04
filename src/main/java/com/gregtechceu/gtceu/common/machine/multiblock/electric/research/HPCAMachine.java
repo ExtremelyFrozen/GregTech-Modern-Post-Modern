@@ -271,7 +271,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
         // Create the hover grid
         builder.addWidget(new ExtendedProgressWidget(
                 () -> hpcaHandler.getAllocatedCWUt() > 0 ? progressSupplier.getAsDouble() : 0,
-                74, 57, 47, 47, GuiTextures.HPCA_COMPONENT_OUTLINE)
+                74, 57, 47, 47, GuiTextures.progressBar(GuiTextures.HPCA_COMPONENT_OUTLINE))
                 .setServerTooltipSupplier(hpcaHandler::addInfo)
                 .setFillDirection(ProgressTexture.FillDirection.LEFT_TO_RIGHT));
         int startX = 76;

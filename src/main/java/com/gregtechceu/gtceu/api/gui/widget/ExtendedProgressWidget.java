@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.widget;
 
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,11 +27,6 @@ public class ExtendedProgressWidget extends ProgressWidget {
 
     public ExtendedProgressWidget() {
         super(JEIProgress, 0, 0, 40, 40, new ProgressTexture());
-    }
-
-    public ExtendedProgressWidget(DoubleSupplier progressSupplier, int x, int y, int width, int height,
-                                  ResourceTexture fullImage) {
-        super(progressSupplier, x, y, width, height, fullImage);
     }
 
     public ExtendedProgressWidget(DoubleSupplier progressSupplier, int x, int y, int width, int height,

@@ -29,7 +29,6 @@ import com.gregtechceu.gtceu.utils.ISubscription;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
@@ -165,7 +164,8 @@ public class SimpleTieredMachine extends WorkableTieredMachine
 
     private IFancyConfigurator createAutoOutputFluidConfigurator() {
         return createAutoOutputConfigurator(
-                GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON,
+                GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 1 / 3f, 1, 1 / 3f),
+                GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f),
                 "gtpm.gui.fluid_auto_output",
                 this.autoOutput::isAutoOutputFluids,
                 (cd, nextState) -> this.autoOutput.setAllowAutoOutputFluids(nextState));
@@ -173,23 +173,25 @@ public class SimpleTieredMachine extends WorkableTieredMachine
 
     private IFancyConfigurator createAutoOutputItemConfigurator() {
         return createAutoOutputConfigurator(
-                GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON,
+                GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON.getSubTexture(0, 1 / 3f, 1, 1 / 3f),
+                GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f),
                 "gtpm.gui.item_auto_output",
                 this.autoOutput::isAutoOutputItems,
                 (cd, nextState) -> this.autoOutput.setAllowAutoOutputItems(nextState));
     }
 
-    private IFancyConfigurator createAutoOutputConfigurator(ResourceTexture modesButtonTexture,
+    private IFancyConfigurator createAutoOutputConfigurator(IGuiTexture disabledModesTexture,
+                                                            IGuiTexture enabledModesTexture,
                                                             String tooltipBaseLangKey,
                                                             BooleanSupplier stateSupplier,
                                                             BiConsumer<ClickData, Boolean> onToggle) {
         var toggle = new IFancyConfiguratorButton.Toggle(
                 new GuiTextureGroup(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
-                        modesButtonTexture.getSubTexture(0, 1 / 3f, 1, 1 / 3f)),
+                        disabledModesTexture),
                 new GuiTextureGroup(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0.5, 1, 0.5),
-                        modesButtonTexture.getSubTexture(0, 2 / 3f, 1, 1 / 3f)),
+                        enabledModesTexture),
                 stateSupplier,
                 onToggle);
 

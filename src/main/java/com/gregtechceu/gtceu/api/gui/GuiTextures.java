@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.gui;
 
 import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
+import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
@@ -25,6 +26,15 @@ public class GuiTextures {
 
     public static ResourceTexture spirit(ResourceLocation texture) {
         return ResourceTexture.fromSpirit(texture);
+    }
+
+    public static ProgressTexture progressBar(ResourceTexture texture) {
+        return new ProgressTexture(texture.getSubTexture(0, 0, 1, 0.5),
+                texture.getSubTexture(0, 0.5, 1, 0.5));
+    }
+
+    public static ProgressTexture progressBar(ResourceTexture texture, ProgressTexture.FillDirection moveType) {
+        return progressBar(texture).setFillDirection(moveType);
     }
 
     public static ColorRectTexture colorRect(int color) {
