@@ -5,11 +5,12 @@ import com.lowdragmc.lowdraglib.jei.IngredientIO;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Converts between GTM's XEI role model and the remaining legacy LDLib1 widget contract.
+ * Converts GTM roles only for unmigrated widgets that still expose the LDLib1 widget contract.
+ * LDLib2 UI facade code should use {@link GTXEIIngredientRoleLDLib2Adapter}.
  */
-public final class GTXEIIngredientRoleAdapter {
+public final class GTXEIIngredientRoleLDLib1Adapter {
 
-    private GTXEIIngredientRoleAdapter() {}
+    private GTXEIIngredientRoleLDLib1Adapter() {}
 
     public static IngredientIO toLegacy(GTXEIIngredientRole role) {
         return switch (role) {

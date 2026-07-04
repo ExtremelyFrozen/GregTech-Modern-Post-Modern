@@ -10,7 +10,7 @@ import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidTagList;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
-import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleAdapter;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib1Adapter;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
@@ -105,7 +105,7 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
     protected BiConsumer<TankWidget, List<Component>> onAddedTooltips;
     @Setter
     @Getter
-    protected IngredientIO ingredientIO = GTXEIIngredientRoleAdapter.toLegacy(GTXEIHelper.none());
+    protected IngredientIO ingredientIO = GTXEIIngredientRoleLDLib1Adapter.toLegacy(GTXEIHelper.none());
     @Setter
     @Getter
     protected float XEIChance = 1f;
@@ -214,7 +214,7 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
     }
 
     public TankWidget setIngredientIO(GTXEIIngredientRole ingredientRole) {
-        this.ingredientIO = GTXEIIngredientRoleAdapter.toLegacy(ingredientRole);
+        this.ingredientIO = GTXEIIngredientRoleLDLib1Adapter.toLegacy(ingredientRole);
         return this;
     }
 

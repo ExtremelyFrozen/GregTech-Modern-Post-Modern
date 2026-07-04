@@ -2,7 +2,7 @@ package com.gregtechceu.gtceu.integration.emi.recipe;
 
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
-import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleAdapter;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib1Adapter;
 import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 
 import com.lowdragmc.lowdraglib.emi.ModularEmiRecipe;
@@ -68,7 +68,7 @@ public class GTEmiRecipe extends ModularEmiRecipe<WidgetGroup> {
                     // instead.
                     continue;
                 }
-                var role = GTXEIIngredientRoleAdapter.fromLegacy(slot.getIngredientIO());
+                var role = GTXEIIngredientRoleLDLib1Adapter.fromLegacy(slot.getIngredientIO());
                 if (GTXEIHelper.hasRecipeRole(role)) {
                     // noinspection unchecked
                     var ingredients = EmiIngredient

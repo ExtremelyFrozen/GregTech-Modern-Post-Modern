@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.integration.xei.widgets;
 
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
-import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleAdapter;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib1Adapter;
 
 import com.lowdragmc.lowdraglib.gui.ingredient.IRecipeIngredientSlot;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -49,7 +49,7 @@ public class GTRecipeIngredientSlotWidget extends Widget implements IRecipeIngre
 
     @Override
     public IngredientIO getIngredientIO() {
-        return GTXEIIngredientRoleAdapter.toLegacy(ingredientRole);
+        return GTXEIIngredientRoleLDLib1Adapter.toLegacy(ingredientRole);
     }
 
     @Override

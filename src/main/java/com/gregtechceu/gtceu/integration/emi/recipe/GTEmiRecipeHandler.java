@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.integration.emi.recipe;
 
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
-import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleAdapter;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib1Adapter;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUIContainer;
 import com.lowdragmc.lowdraglib.gui.widget.SlotWidget;
@@ -18,7 +18,7 @@ public class GTEmiRecipeHandler implements StandardRecipeHandler<ModularUIContai
     @Override
     public List<Slot> getInputSources(ModularUIContainer handler) {
         return handler.getModularUI().getSlotMap().values().stream()
-                .filter(e -> GTXEIHelper.isInput(GTXEIIngredientRoleAdapter.fromLegacy(e.getIngredientIO())) ||
+                .filter(e -> GTXEIHelper.isInput(GTXEIIngredientRoleLDLib1Adapter.fromLegacy(e.getIngredientIO())) ||
                         e.isPlayerContainer || e.isPlayerHotBar)
                 .map(SlotWidget::getHandler)
                 .toList();
@@ -27,7 +27,7 @@ public class GTEmiRecipeHandler implements StandardRecipeHandler<ModularUIContai
     @Override
     public List<Slot> getCraftingSlots(ModularUIContainer handler) {
         return handler.getModularUI().getSlotMap().values().stream()
-                .filter(e -> GTXEIHelper.isInput(GTXEIIngredientRoleAdapter.fromLegacy(e.getIngredientIO())))
+                .filter(e -> GTXEIHelper.isInput(GTXEIIngredientRoleLDLib1Adapter.fromLegacy(e.getIngredientIO())))
                 .map(SlotWidget::getHandler)
                 .toList();
     }
