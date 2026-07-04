@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.api.machine.trait.DirectComputationPortTrait;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
@@ -117,9 +116,9 @@ public class CreativeComputationProviderMachine extends MetaMachine
                 .widget(new LabelWidget(7, 54, () -> String.valueOf(lastRequestedCWUt)))
                 .widget(new SwitchWidget(9, 66, 122, 20, (clickData, value) -> setActive(value))
                         .setSupplier(this::isActive)
-                        .setTexture(new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                        .setTexture(GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                 GuiTextures.text("gtpm.creative.activity.off")),
-                                new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                                GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                         GuiTextures.text("gtpm.creative.activity.on"))));
     }
 }

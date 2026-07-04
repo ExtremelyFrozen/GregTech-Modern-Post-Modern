@@ -9,7 +9,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
@@ -94,9 +93,9 @@ public class CreativeChestMachine extends QuantumChestMachine {
         group.addWidget(new LabelWidget(7, 65, "gtpm.creative.chest.tpc"));
         group.addWidget(new SwitchWidget(7, 101, 162, 20, (clickData, value) -> setWorkingEnabled(value))
                 .setTexture(
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                        GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                 GuiTextures.text("gtpm.creative.activity.off")),
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                        GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                 GuiTextures.text("gtpm.creative.activity.on")))
                 .setPressed(isWorkingEnabled()));
 

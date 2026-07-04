@@ -13,7 +13,6 @@ import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
@@ -185,12 +184,12 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
                         }).setNumbersOnly(0L, Long.MAX_VALUE))
                 .widget(new LabelWidget(7, 74, "gtpm.creative.energy.amperage"))
                 .widget(new ButtonWidget(7, 87, 20, 20,
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON, GuiTextures.text("-")),
+                        GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON, GuiTextures.text("-")),
                         cd -> amps = --amps == -1 ? 0 : amps))
                 .widget(new TextFieldWidget(31, 89, 114, 16, () -> String.valueOf(amps),
                         value -> amps = Integer.parseInt(value)).setNumbersOnly(0, Integer.MAX_VALUE))
                 .widget(new ButtonWidget(149, 87, 20, 20,
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON, GuiTextures.text("+")),
+                        GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON, GuiTextures.text("+")),
                         cd -> {
                             if (amps < Integer.MAX_VALUE) {
                                 amps++;
@@ -200,9 +199,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
                         () -> "Average Energy I/O per tick: " + this.lastAverageEnergyIOPerTick))
                 .widget(new SwitchWidget(7, 139, 77, 20, (clickData, value) -> active = value)
                         .setTexture(
-                                new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                                GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                         GuiTextures.text("gtpm.creative.activity.off")),
-                                new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                                GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                         GuiTextures.text("gtpm.creative.activity.on")))
                         .setPressed(active))
                 .widget(new SwitchWidget(85, 139, 77, 20, (clickData, value) -> {
@@ -217,9 +216,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
                         setTier = 14;
                     }
                 }).setTexture(
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                        GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                 GuiTextures.text("gtpm.creative.energy.sink")),
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
+                        GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
                                 GuiTextures.text("gtpm.creative.energy.source")))
                         .setPressed(source))
                 .widget(new SelectorWidget(7, 7, 50, 20, Arrays.stream(GTValues.VNF).toList(), -1)
