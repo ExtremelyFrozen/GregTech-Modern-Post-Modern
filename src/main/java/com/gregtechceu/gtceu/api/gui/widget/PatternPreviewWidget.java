@@ -16,7 +16,6 @@ import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib2.client.utils.RenderUtils;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
@@ -179,13 +178,13 @@ public class PatternPreviewWidget extends WidgetGroup {
             });
         }
 
-        addWidget(new ButtonWidget(138, 30, 18, 18, new GuiTextureGroup(
+        addWidget(new ButtonWidget(138, 30, 18, 18, GuiTextures.group(
                 ColorPattern.T_GRAY.rectTexture(),
                 GuiTextures.text("1").setSupplier(() -> "P:" + index)),
                 (x) -> setPage((index + 1 >= patterns.length) ? 0 : index + 1))
                 .setHoverBorderTexture(1, -1));
 
-        addWidget(new ButtonWidget(138, 50, 18, 18, new GuiTextureGroup(
+        addWidget(new ButtonWidget(138, 50, 18, 18, GuiTextures.group(
                 ColorPattern.T_GRAY.rectTexture(),
                 GuiTextures.text("1").setSupplier(() -> layer >= 0 ? "L:" + layer : "ALL")),
                 cd -> updateLayer())
