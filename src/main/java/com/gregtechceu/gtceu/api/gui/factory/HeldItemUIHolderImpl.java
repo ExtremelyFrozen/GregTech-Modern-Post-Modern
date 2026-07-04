@@ -59,6 +59,6 @@ public final class HeldItemUIHolderImpl implements HeldItemUIHolder {
 
     @Override
     public void markAsDirty() {
-        // Held item UI changes update the opened stack directly.
+        // Required by legacy IUIHolder; GTM item UI state must use automatic sync or action packets.
     }
 }

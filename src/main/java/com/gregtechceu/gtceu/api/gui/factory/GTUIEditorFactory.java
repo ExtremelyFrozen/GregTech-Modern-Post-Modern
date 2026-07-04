@@ -47,5 +47,7 @@ public class GTUIEditorFactory extends UIFactory<GTUIEditorFactory> implements I
     }
 
     @Override
-    public void markAsDirty() {}
+    public void markAsDirty() {
+        // Required by legacy IUIHolder; the editor holder has no synchronized business state.
+    }
 }

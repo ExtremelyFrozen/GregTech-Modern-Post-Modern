@@ -26,7 +26,7 @@ public interface HeldItemUIHolder extends IUIHolder {
     InteractionHand getHand();
 
     /**
-     * Returns the item stack captured when the held item UI was opened.
+     * Returns the current item stack in the hand used to open the UI.
      */
     ItemStack getHeld();
 }
