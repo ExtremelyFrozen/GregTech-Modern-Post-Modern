@@ -18,7 +18,7 @@ public int mySaveInt = 10;
 The `@SyncToClient` annotation defines a field with a value that should be synced to clients.
 
 !!! warning 
-    Client sync fields **do not** automatically detect changes. When changing a client sync field, call `ISyncManaged.getSyncDataHolder().markClientSyncFieldDirty(FIELD_NAME)`
+    Client sync fields are scanned for value changes automatically. Prefer assigning the field directly and let the sync system collect changes during the managed tick.
 ```java
 @SaveField(nbtKey="nbtKeyToSaveTo")
 @SyncToClient
@@ -33,11 +33,9 @@ public void serverTick() {
     long newLongValue = getNewLongValue();
     if (mySaveAndSyncInt != newIntValue) {
         mySaveAndSyncInt = newIntValue;
-        getSyncDataHolder().markClientSyncFieldDirty("mySaveAndSyncInt");
     }
     if (mySyncRerenderLong != newLongValue) {
         mySyncRerenderLong = newLongValue;
-        getSyncDataHolder().markClientSyncFieldDirty("mySyncRerenderLong");
     }
 }
 ```
