@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.gui.factory;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,11 @@ public interface MachineUIHolder {
      * Returns the block position of the machine that owned the UI when it opened.
      */
     BlockPos getPos();
+
+    /**
+     * Returns the machine definition id captured when the UI opened.
+     */
+    ResourceLocation getMachineDefinitionId();
 
     /**
      * Resolves the current machine instance at the opened block position.

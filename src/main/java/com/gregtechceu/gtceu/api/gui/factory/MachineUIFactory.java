@@ -42,11 +42,14 @@ public class MachineUIFactory extends UIFactory<MachineUIHolderImpl> {
         if (minecraft.level == null) return null;
         var player = minecraft.player;
         if (player == null) return null;
-        return new MachineUIHolderImpl(player, syncData.readBlockPos());
+        var pos = syncData.readBlockPos();
+        var machineDefinitionId = syncData.readResourceLocation();
+        return new MachineUIHolderImpl(player, pos, machineDefinitionId);
     }
 
     @Override
     protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, MachineUIHolderImpl holder) {
         syncData.writeBlockPos(holder.getPos());
+        syncData.writeResourceLocation(holder.getMachineDefinitionId());
     }
 }
