@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.lowdragmc.lowdraglib.gui.editor.ui.Editor;
 import com.lowdragmc.lowdraglib.gui.editor.ui.MainPanel;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,7 +23,7 @@ public class UIMainPanel extends MainPanel {
             @OnlyIn(Dist.CLIENT)
             public void draw(GuiGraphics graphics, int mouseX, int mouseY, float x, float y, int width, int height) {
                 if (description != null) {
-                    new TextTexture(description).scale(2.0f).draw(graphics, mouseX, mouseY, x, y,
+                    GuiTextures.text(description).scale(2.0f).draw(graphics, mouseX, mouseY, x, y,
                             width - editor.getConfigPanel().getSize().getWidth(), height);
                 }
                 var border = 4;

@@ -96,9 +96,9 @@ public class RecipeTypeUIProject extends UIProject {
         editor.getResourcePanel().loadResource(getResources(), false);
         editor.getTabPages().addTab(new TabButton(50, 16, 60, 14).setTexture(
                 new GuiTextureGroup(ColorPattern.T_GREEN.rectTexture().setBottomRadius(10).transform(0, 0.4f),
-                        new TextTexture("Main")),
+                        GuiTextures.text("Main")),
                 new GuiTextureGroup(ColorPattern.T_RED.rectTexture().setBottomRadius(10).transform(0, 0.4f),
-                        new TextTexture("Main"))),
+                        GuiTextures.text("Main"))),
                 new UIMainPanel(editor, root, recipeType == null ? null : recipeType.getTranslationKey()));
         for (WidgetToolBox.Default tab : WidgetToolBox.Default.TABS) {
             if (tab == WidgetToolBox.Default.CONTAINER) {
