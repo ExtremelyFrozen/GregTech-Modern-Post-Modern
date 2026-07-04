@@ -85,7 +85,6 @@
 		"emi.FluidEmiStackMixin",
 		"jei.FluidHelperMixin",
 		"ldlib.ButtonWidgetMixin",
-		"ldlib.ItemStackPayloadMixin",
 		"neoforge.ConfiguredModelBuilderAccessor",
 		"neoforge.ConfiguredModelListAccessor",
 		"neoforge.GameDataMixin",
