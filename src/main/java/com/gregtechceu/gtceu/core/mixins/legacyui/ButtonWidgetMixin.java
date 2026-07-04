@@ -1,4 +1,4 @@
-package com.gregtechceu.gtceu.core.mixins.ldlib;
+package com.gregtechceu.gtceu.core.mixins.legacyui;
 
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 
