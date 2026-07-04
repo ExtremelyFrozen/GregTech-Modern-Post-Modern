@@ -6,7 +6,7 @@ import com.lowdragmc.lowdraglib.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.BlockPosFace;
+import com.lowdragmc.lowdraglib2.utils.data.BlockPosFace;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
