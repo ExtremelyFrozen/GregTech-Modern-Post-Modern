@@ -3,10 +3,16 @@ package com.gregtechceu.gtceu.api.gui;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
+import net.minecraft.resources.ResourceLocation;
+
 @SuppressWarnings("unused")
 public class GuiTextures {
 
     public static ResourceTexture resource(String texture) {
+        return new ResourceTexture(texture);
+    }
+
+    public static ResourceTexture resource(ResourceLocation texture) {
         return new ResourceTexture(texture);
     }
 

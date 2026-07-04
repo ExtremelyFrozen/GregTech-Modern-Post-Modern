@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.lowdragmc.lowdraglib.gui.editor.Icons;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -42,10 +41,10 @@ public class TabsWidget extends Widget {
             rightButtonHoverTexture = new GuiTextureGroup(GuiTextures.BUTTON,
                     Icons.RIGHT.copy().setColor(0xffaaaaaa).scale(0.7f));
     @Setter
-    protected IGuiTexture tabTexture = new ResourceTexture("gtpm:textures/gui/tab/tabs_top.png").getSubTexture(1 / 3f,
+    protected IGuiTexture tabTexture = GuiTextures.resource("gtpm:textures/gui/tab/tabs_top.png").getSubTexture(1 / 3f,
             0, 1 / 3f, 0.5f);
     @Setter
-    protected IGuiTexture tabHoverTexture = new ResourceTexture("gtpm:textures/gui/tab/tabs_top.png")
+    protected IGuiTexture tabHoverTexture = GuiTextures.resource("gtpm:textures/gui/tab/tabs_top.png")
             .getSubTexture(1 / 3f, 0.5f, 1 / 3f, 0.5f);
     @Setter
     protected IGuiTexture tabPressedTexture = tabHoverTexture;

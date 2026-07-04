@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.fancy;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.api.distmarker.Dist;
@@ -15,7 +15,7 @@ public class VerticalTabsWidget extends TabsWidget {
 
     public VerticalTabsWidget(Consumer<IFancyUIProvider> onTabClick, int x, int y, int width, int height) {
         super(onTabClick, x, y, width, height);
-        ResourceTexture tabsLeft = new ResourceTexture("gtpm:textures/gui/tab/tabs_left.png");
+        var tabsLeft = GuiTextures.resource("gtpm:textures/gui/tab/tabs_left.png");
         setTabTexture(tabsLeft.getSubTexture(0, 1 / 3f, 0.5f, 1 / 3f));
         setTabHoverTexture(tabsLeft.getSubTexture(0.5f, 1 / 3f, 0.5f, 1 / 3f));
         setTabPressedTexture(tabsLeft.getSubTexture(0.5f, 1 / 3f, 0.5f, 1 / 3f));
