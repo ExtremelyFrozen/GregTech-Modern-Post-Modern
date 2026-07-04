@@ -17,7 +17,6 @@ dependencies {
     jarJar(forge.kotlinforforge.get())
     api(forge.kotlinforforge)
 
-    compileOnly(forge.ldlib)
     jarJar(api(forge.ldlib2.get()))
 
     // Registrate

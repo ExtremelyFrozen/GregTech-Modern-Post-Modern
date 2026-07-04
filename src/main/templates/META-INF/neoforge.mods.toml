@@ -37,10 +37,10 @@ enumExtensions = "META-INF/enum_extensions.json"
     side = "BOTH"
 
 [[dependencies.${mod_id}]]
-    modId = "ldlib"
+    modId = "ldlib2"
     type = "required"
     embedded = true
-    versionRange = "[${ldlib_version},)"
+    versionRange = "[${ldlib2_version},)"
     ordering = "AFTER"
     side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
