@@ -9,7 +9,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTToolBehaviors;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 
@@ -44,22 +43,22 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
                 .widget(new LabelWidget(6, 10, "item.gtpm.tool.aoe.columns"))
                 .widget(new LabelWidget(49, 10, "item.gtpm.tool.aoe.rows"))
                 .widget(new LabelWidget(79, 10, "item.gtpm.tool.aoe.layers"))
-                .widget(new ButtonWidget(15, 24, 20, 20, new TextTexture("+"), (data) -> {
+                .widget(new ButtonWidget(15, 24, 20, 20, GuiTextures.text("+"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.increaseColumn().toImmutable());
                 }))
-                .widget(new ButtonWidget(15, 44, 20, 20, new TextTexture("-"), (data) -> {
+                .widget(new ButtonWidget(15, 44, 20, 20, GuiTextures.text("-"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.decreaseColumn().toImmutable());
                 }))
-                .widget(new ButtonWidget(50, 24, 20, 20, new TextTexture("+"), (data) -> {
+                .widget(new ButtonWidget(50, 24, 20, 20, GuiTextures.text("+"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.increaseRow().toImmutable());
                 }))
-                .widget(new ButtonWidget(50, 44, 20, 20, new TextTexture("-"), (data) -> {
+                .widget(new ButtonWidget(50, 44, 20, 20, GuiTextures.text("-"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.decreaseRow().toImmutable());
                 }))
-                .widget(new ButtonWidget(85, 24, 20, 20, new TextTexture("+"), (data) -> {
+                .widget(new ButtonWidget(85, 24, 20, 20, GuiTextures.text("+"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.increaseLayer().toImmutable());
                 }))
-                .widget(new ButtonWidget(85, 44, 20, 20, new TextTexture("-"), (data) -> {
+                .widget(new ButtonWidget(85, 44, 20, 20, GuiTextures.text("-"), (data) -> {
                     held.set(GTDataComponents.AOE, definition.decreaseLayer().toImmutable());
                 }))
                 .widget(new LabelWidget(23, 65,
