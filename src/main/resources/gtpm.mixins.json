@@ -84,7 +84,6 @@
 		"emi.FillRecipePacketMixin",
 		"emi.FluidEmiStackMixin",
 		"jei.FluidHelperMixin",
-		"legacyui.ButtonWidgetMixin",
 		"neoforge.ConfiguredModelBuilderAccessor",
 		"neoforge.ConfiguredModelListAccessor",
 		"neoforge.GameDataMixin",
