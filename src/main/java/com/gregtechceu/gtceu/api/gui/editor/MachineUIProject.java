@@ -12,7 +12,6 @@ import com.lowdragmc.lowdraglib.gui.editor.data.Resources;
 import com.lowdragmc.lowdraglib.gui.editor.data.UIProject;
 import com.lowdragmc.lowdraglib.gui.editor.ui.Editor;
 import com.lowdragmc.lowdraglib.gui.editor.ui.tool.WidgetToolBox;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.util.TreeBuilder;
 import com.lowdragmc.lowdraglib.gui.widget.TabButton;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -90,9 +89,9 @@ public class MachineUIProject extends UIProject {
     public void onLoad(Editor editor) {
         editor.getResourcePanel().loadResource(getResources(), false);
         editor.getTabPages().addTab(new TabButton(50, 16, 60, 14).setTexture(
-                new GuiTextureGroup(ColorPattern.T_GREEN.rectTexture().setBottomRadius(10).transform(0, 0.4f),
+                GuiTextures.group(ColorPattern.T_GREEN.rectTexture().setBottomRadius(10).transform(0, 0.4f),
                         GuiTextures.text("Main")),
-                new GuiTextureGroup(ColorPattern.T_RED.rectTexture().setBottomRadius(10).transform(0, 0.4f),
+                GuiTextures.group(ColorPattern.T_RED.rectTexture().setBottomRadius(10).transform(0, 0.4f),
                         GuiTextures.text("Main"))),
                 new UIMainPanel(editor, root, machineDefinition == null ? null : machineDefinition.getDescriptionId()));
 
