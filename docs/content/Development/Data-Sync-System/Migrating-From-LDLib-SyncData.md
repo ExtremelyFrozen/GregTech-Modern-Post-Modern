@@ -46,8 +46,6 @@ class CustomMachine extends SimpleTieredMachine {
     
     public void setCustomIntValue(int newValue) {
         this.customIntValue = newValue;
-        ////// IMPORTANT: markClientSyncFieldDirty must be called to update client synced fields.
-        getSyncDataHolder().markClientSyncFieldDirty("customIntValue");
     }
 }
 
@@ -62,12 +60,12 @@ class CustomMachine extends SimpleTieredMachine {
 
 ### LDLib2 UI migration rule
 
-UI migration must not replace LDLib SyncData with LDLib2 syncdata or RPC. UI state changes must continue through GTM's sync system and its automatic synchronization path where available. New LDLib2 UI code must not introduce `@RPCMethod`, `RPCEmitter`, `setOnServerClick`, or new manual dirty-marking calls as the business synchronization path.
+UI migration must not replace LDLib SyncData with LDLib2 syncdata or RPC. UI state changes must continue through GTM's sync system and its automatic synchronization path. New LDLib2 UI code must not introduce `@RPCMethod`, `RPCEmitter`, `setOnServerClick`, or manual dirty-marking calls as the business synchronization path.
 
 ### Annotations
 
-!!! warning
-Client sync fields **do not** automatically detect changes. When changing a client sync field, call `ISyncManaged.syncDataHolder.markClientSyncFieldDirty(FIELD_NAME)`
+!!! note
+Client sync fields are scanned for value changes automatically. Use sync-managed child state or contextual codecs for mutable holders whose internal state changes without replacing the field value.
 
 - `@DescSynced` -> `@SyncToClient`
 - `@RequireRerender` -> `@RerenderOnChanged`
