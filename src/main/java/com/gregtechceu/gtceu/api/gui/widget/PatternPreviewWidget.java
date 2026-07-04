@@ -163,7 +163,7 @@ public class PatternPreviewWidget extends WidgetGroup {
         }
 
         addWidget(new ImageWidget(3, 3, 160, 10,
-                new TextTexture(controllerDefinition.getDescriptionId(), -1)
+                GuiTextures.text(controllerDefinition.getDescriptionId(), -1)
                         .setType(TextTexture.TextType.ROLL)
                         .setWidth(170)
                         .setDropShadow(true)));
@@ -181,13 +181,13 @@ public class PatternPreviewWidget extends WidgetGroup {
 
         addWidget(new ButtonWidget(138, 30, 18, 18, new GuiTextureGroup(
                 ColorPattern.T_GRAY.rectTexture(),
-                new TextTexture("1").setSupplier(() -> "P:" + index)),
+                GuiTextures.text("1").setSupplier(() -> "P:" + index)),
                 (x) -> setPage((index + 1 >= patterns.length) ? 0 : index + 1))
                 .setHoverBorderTexture(1, -1));
 
         addWidget(new ButtonWidget(138, 50, 18, 18, new GuiTextureGroup(
                 ColorPattern.T_GRAY.rectTexture(),
-                new TextTexture("1").setSupplier(() -> layer >= 0 ? "L:" + layer : "ALL")),
+                GuiTextures.text("1").setSupplier(() -> layer >= 0 ? "L:" + layer : "ALL")),
                 cd -> updateLayer())
                 .setHoverBorderTexture(1, -1));
 

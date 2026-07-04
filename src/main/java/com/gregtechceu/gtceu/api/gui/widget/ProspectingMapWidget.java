@@ -131,7 +131,7 @@ public class ProspectingMapWidget extends WidgetGroup implements SearchComponent
             var size = selectableWidgetGroup.getSize();
             selectableWidgetGroup.addWidget(new ImageWidget(0, 0, 15, 15, icon));
             selectableWidgetGroup
-                    .addWidget(new ImageWidget(15, 0, size.width - 15, 15, new TextTexture(renderingName.getString())
+                    .addWidget(new ImageWidget(15, 0, size.width - 15, 15, GuiTextures.text(renderingName.getString())
                             .setWidth(size.width - 15).setType(TextTexture.TextType.LEFT_HIDE)));
             selectableWidgetGroup.setOnSelected(s -> {
                 if (isRemote()) {

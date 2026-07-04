@@ -138,7 +138,7 @@ public abstract class NumberInputWidget<T extends Number> extends WidgetGroup {
     }
 
     private IGuiTexture getButtonTexture(String prefix, int buttonWidth) {
-        var texture = new TextTexture(prefix + "1");
+        var texture = GuiTextures.text(prefix + "1");
 
         if (!GTCEu.isClientThread()) {
             return texture;
