@@ -26,8 +26,6 @@ import net.neoforged.neoforge.network.PacketDistributor
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.jetbrains.annotations.Nullable
 
-import java.util.*
-
 /**
  * A BlockEntity that manages sync and save data via the `ISyncManaged` syncdata system.
  *
@@ -135,7 +133,7 @@ abstract class ManagedSyncBlockEntity :
 			dirty = true
 		}
 		if (dirty) {
-			Objects.requireNonNull(level)!!.sendBlockUpdated(blockPos, blockState, blockState, Block.UPDATE_CLIENTS)
+			level!!.sendBlockUpdated(blockPos, blockState, blockState, Block.UPDATE_CLIENTS)
 			dirty = false
 		}
 	}
