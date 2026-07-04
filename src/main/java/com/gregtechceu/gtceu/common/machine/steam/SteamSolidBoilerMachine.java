@@ -122,9 +122,8 @@ public class SteamSolidBoilerMachine extends SteamBoilerMachine {
                         .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT_STEAM.get(isHighPressure),
                                 GuiTextures.DUST_OVERLAY_STEAM.get(isHighPressure))))
                 .widget(new ProgressWidget(recipeLogic::getProgressPercent, 115, 44, 18, 18)
-                        .setProgressTexture(
-                                GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(isHighPressure).getSubTexture(0, 0, 1, 0.5),
-                                GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(isHighPressure).getSubTexture(0, 0.5, 1, 0.5))
+                        .setProgressTexture(GuiTextures.progressBar(
+                                GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(isHighPressure)))
                         .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP));
     }
 }

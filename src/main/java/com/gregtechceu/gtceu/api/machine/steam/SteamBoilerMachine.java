@@ -303,8 +303,9 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
                 .background(GuiTextures.BACKGROUND_STEAM.get(isHighPressure))
                 .widget(new LabelWidget(6, 6, getBlockState().getBlock().getDescriptionId()))
                 .widget(new ProgressWidget(this::getTemperaturePercent, 96, 26, 10, 54)
-                        .setProgressTexture(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure),
-                                GuiTextures.PROGRESS_BAR_BOILER_HEAT)
+                        .setProgressTexture(GuiTextures.progressBar(
+                                GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure),
+                                GuiTextures.PROGRESS_BAR_BOILER_HEAT))
                         .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP)
                         .setDynamicHoverTips(pct -> I18n.get("gtpm.multiblock.large_boiler.temperature",
                                 currentTemperature + 274, getMaxTemperature() + 274)))

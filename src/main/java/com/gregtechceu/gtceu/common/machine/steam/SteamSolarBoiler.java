@@ -75,10 +75,8 @@ public class SteamSolarBoiler extends SteamBoilerMachine {
                         114,
                         44, 20,
                         20)
-                        .setProgressTexture(
-                                GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(isHighPressure).getSubTexture(0, 0, 1, 0.5),
-                                GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(isHighPressure).getSubTexture(0, 0.5, 1,
-                                        0.5)));
+                        .setProgressTexture(GuiTextures.progressBar(
+                                GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(isHighPressure))));
     }
 
     @Override
