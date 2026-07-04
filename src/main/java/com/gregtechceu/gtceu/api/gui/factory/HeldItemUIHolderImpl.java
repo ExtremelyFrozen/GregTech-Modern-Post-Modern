@@ -49,7 +49,7 @@ public final class HeldItemUIHolderImpl implements HeldItemUIHolder {
 
     @Override
     public boolean isInvalid() {
-        return !ItemStack.isSameItemSameComponents(player.getItemInHand(hand), openedStack);
+        return !ItemStack.matches(player.getItemInHand(hand), openedStack);
     }
 
     @Override
