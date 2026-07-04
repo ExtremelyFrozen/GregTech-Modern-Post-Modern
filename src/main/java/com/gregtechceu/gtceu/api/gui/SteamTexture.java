@@ -1,27 +1,27 @@
 package com.gregtechceu.gtceu.api.gui;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 
 public class SteamTexture {
 
     private static final String BRONZE = "bronze";
     private static final String STEEL = "steel";
 
-    private final ResourceTexture bronzeTexture;
-    private final ResourceTexture steelTexture;
+    private final IGuiTexture bronzeTexture;
+    private final IGuiTexture steelTexture;
 
-    private SteamTexture(ResourceTexture bronzeTexture, ResourceTexture steelTexture) {
+    private SteamTexture(IGuiTexture bronzeTexture, IGuiTexture steelTexture) {
         this.bronzeTexture = bronzeTexture;
         this.steelTexture = steelTexture;
     }
 
     public static SteamTexture fullImage(String path) {
         return new SteamTexture(
-                new ResourceTexture(String.format(path, BRONZE)),
-                new ResourceTexture(String.format(path, STEEL)));
+                GuiTextures.resource(String.format(path, BRONZE)),
+                GuiTextures.resource(String.format(path, STEEL)));
     }
 
-    public ResourceTexture get(boolean isHighPressure) {
+    public IGuiTexture get(boolean isHighPressure) {
         return isHighPressure ? steelTexture : bronzeTexture;
     }
 }
