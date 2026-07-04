@@ -60,6 +60,10 @@ class CustomMachine extends SimpleTieredMachine {
 - Replace `IEnhancedManaged` objects with `ISyncManaged`.
 - Replace `IAsyncAutoSyncBlockEntity`, `IAutoPersistBlockEntity`, `IAutoSyncBlockEntity` and `IManagedBlockEntity` by extending `ManagedSyncBlockEntity`.
 
+### LDLib2 UI migration rule
+
+UI migration must not replace LDLib SyncData with LDLib2 syncdata or RPC. UI state changes must continue through GTM's sync system and its automatic synchronization path where available. New LDLib2 UI code must not introduce `@RPCMethod`, `RPCEmitter`, `setOnServerClick`, or new manual dirty-marking calls as the business synchronization path.
+
 ### Annotations
 
 !!! warning
