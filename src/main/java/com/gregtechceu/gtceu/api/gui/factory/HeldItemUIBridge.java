@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
 import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
+import com.lowdragmc.lowdraglib2.gui.factory.HeldItemUIMenuType;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -18,6 +19,9 @@ public final class HeldItemUIBridge {
      * @return {@code true} when the menu was opened by the current bridge implementation.
      */
     public static boolean open(ServerPlayer player, InteractionHand hand) {
+        if (player.getItemInHand(hand).getItem() instanceof HeldItemUIMenuType.HeldItemUI) {
+            return HeldItemUIMenuType.openUI(player, hand);
+        }
         return HeldItemUIFactory.INSTANCE.openUI(player, hand);
     }
 }
