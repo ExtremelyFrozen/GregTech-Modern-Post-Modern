@@ -537,7 +537,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                         }
 
                         if (!selectedTargets.isEmpty() && selectedTargets.get(0) == component) {
-                            ColorRectTexture rect = new ColorRectTexture(Color.BLUE);
+                            IGuiTexture rect = GuiTextures.colorRect(Color.BLUE);
                             textures.setTextures(rect, texture);
                         } else {
                             textures.setTextures(texture);
@@ -566,7 +566,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                             setTargetButton.setVisible(false);
                         }
                         selectedComponents.add(component);
-                        ColorRectTexture rect = new ColorRectTexture(
+                        IGuiTexture rect = GuiTextures.colorRect(
                                 (selectedTargets.isEmpty() || selectedTargets.get(0) != component) ? Color.RED :
                                         Color.PINK);
                         textures.setTextures(rect, texture);
@@ -588,7 +588,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                         if (selectedTargets.get(0).getBlockPos() == component.getBlockPos()) {
                             selectedTargets.clear();
                             if (selectedComponents.contains(component)) {
-                                ColorRectTexture rect = new ColorRectTexture(Color.RED);
+                                IGuiTexture rect = GuiTextures.colorRect(Color.RED);
                                 textures.setTextures(rect, texture);
                             } else {
                                 textures.setTextures(texture);
@@ -607,11 +607,11 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                         }
                     }
                     selectedTargets.add(component);
-                    ColorRectTexture rect;
+                    IGuiTexture rect;
                     if (selectedComponents.contains(component)) {
-                        rect = new ColorRectTexture(Color.PINK);
+                        rect = GuiTextures.colorRect(Color.PINK);
                     } else {
-                        rect = new ColorRectTexture(Color.BLUE);
+                        rect = GuiTextures.colorRect(Color.BLUE);
                     }
                     textures.setTextures(rect, texture);
                     if (component.getDataItems() != null) {

@@ -16,7 +16,6 @@ import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib2.client.utils.RenderUtils;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
@@ -317,7 +316,7 @@ public class PatternPreviewWidget extends WidgetGroup {
                 candidates[i] = new SlotWidget(itemHandler, i, 3 + (i / maxCol) * 18, 3 + (i % maxCol) * 18, false,
                         false)
                         .setIngredientIO(GTXEIHelper.input())
-                        .setBackgroundTexture(new ColorRectTexture(0x4fffffff))
+                        .setBackgroundTexture(GuiTextures.colorRect(0x4fffffff))
                         .setOnAddedTooltips((slot, list) -> list.addAll(predicateTips.get(finalI)));
                 addWidget(candidates[i]);
             }

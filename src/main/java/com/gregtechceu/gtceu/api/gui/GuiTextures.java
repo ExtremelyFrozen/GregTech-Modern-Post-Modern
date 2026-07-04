@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.gui;
 
+import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
@@ -18,6 +19,10 @@ public class GuiTextures {
 
     public static ResourceTexture spirit(ResourceLocation texture) {
         return ResourceTexture.fromSpirit(texture);
+    }
+
+    public static ColorRectTexture colorRect(int color) {
+        return new ColorRectTexture(color);
     }
 
     // GREGTECH
