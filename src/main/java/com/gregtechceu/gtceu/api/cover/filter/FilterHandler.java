@@ -12,7 +12,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
@@ -60,7 +59,7 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
     public Widget createFilterSlotUI(int xPos, int yPos) {
         return new SlotWidget(getFilterSlot(), 0, xPos, yPos)
                 .setChangeListener(this::updateFilter)
-                .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY));
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY));
     }
 
     public Widget createFilterConfigUI(int xPos, int yPos, int width, int height) {
