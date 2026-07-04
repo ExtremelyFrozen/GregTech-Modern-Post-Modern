@@ -7,9 +7,9 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * Centralizes cover UI opening while GTM migrates cover screens to an LDLib2 holder.
  */
-public final class CoverUIBridge {
+public final class CoverUIHelper {
 
-    private CoverUIBridge() {}
+    private CoverUIHelper() {}
 
     /**
      * Opens the UI for a cover attached to a block face.

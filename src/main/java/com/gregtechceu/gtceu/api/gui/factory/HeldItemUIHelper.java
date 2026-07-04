@@ -9,9 +9,9 @@ import net.minecraft.world.InteractionHand;
 /**
  * Centralizes held item UI opening while GTM migrates item screens from LDLib to LDLib2.
  */
-public final class HeldItemUIBridge {
+public final class HeldItemUIHelper {
 
-    private HeldItemUIBridge() {}
+    private HeldItemUIHelper() {}
 
     /**
      * Opens the UI for the item currently held in {@code hand}.

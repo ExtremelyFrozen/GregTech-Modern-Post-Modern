@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.item.component;
 
-import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIBridge;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 
 import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
@@ -20,7 +20,7 @@ public interface IItemUIFactory extends IInteractionItem {
     default InteractionResultHolder<ItemStack> use(ItemStack item, Level level, Player player,
                                                    InteractionHand usedHand) {
         if (player instanceof ServerPlayer serverPlayer) {
-            HeldItemUIBridge.open(serverPlayer, usedHand);
+            HeldItemUIHelper.open(serverPlayer, usedHand);
         }
         return InteractionResultHolder.sidedSuccess(item, level.isClientSide());
     }

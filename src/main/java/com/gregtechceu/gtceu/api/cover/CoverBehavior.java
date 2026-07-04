@@ -3,7 +3,7 @@ package com.gregtechceu.gtceu.api.cover;
 import com.gregtechceu.gtceu.api.blockentity.ICopyable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.factory.CoverUIBridge;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.IToolGridHighlight;
@@ -149,7 +149,7 @@ public abstract class CoverBehavior implements ISyncManaged, IToolGridHighlight,
     public InteractionResult onScrewdriverClick(ExtendedUseOnContext context) {
         if (this instanceof IUICover) {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                CoverUIBridge.open(this, serverPlayer);
+                CoverUIHelper.open(this, serverPlayer);
             }
             return InteractionResult.sidedSuccess(coverHolder.isRemote());
         }

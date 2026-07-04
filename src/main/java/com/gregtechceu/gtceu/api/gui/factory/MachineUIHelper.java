@@ -9,9 +9,9 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * Centralizes machine UI opening while GTM migrates block-backed screens to LDLib2.
  */
-public final class MachineUIBridge {
+public final class MachineUIHelper {
 
-    private MachineUIBridge() {}
+    private MachineUIHelper() {}
 
     /**
      * Opens the UI for a machine block.

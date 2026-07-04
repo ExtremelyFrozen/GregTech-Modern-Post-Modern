@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.machine.feature;
 
-import com.gregtechceu.gtceu.api.gui.factory.MachineUIBridge;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 
 import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
 
@@ -22,7 +22,7 @@ public interface IUIMachine extends IUIHolder, IMachineFeature {
     default ItemInteractionResult tryToOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
         if (this.shouldOpenUI(player, hand, hit)) {
             if (player instanceof ServerPlayer serverPlayer) {
-                MachineUIBridge.open(self(), serverPlayer);
+                MachineUIHelper.open(self(), serverPlayer);
             }
         } else {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

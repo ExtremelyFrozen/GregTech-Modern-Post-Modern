@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.item.tool.behavior;
 
-import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIBridge;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 
 import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
@@ -21,7 +21,7 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
                                                                          @NotNull InteractionHand hand) {
         var heldItem = player.getItemInHand(hand);
         if (player instanceof ServerPlayer serverPlayer && openUI(serverPlayer, hand)) {
-            HeldItemUIBridge.open(serverPlayer, hand);
+            HeldItemUIHelper.open(serverPlayer, hand);
             return InteractionResultHolder.success(heldItem);
         }
         return InteractionResultHolder.pass(heldItem);
