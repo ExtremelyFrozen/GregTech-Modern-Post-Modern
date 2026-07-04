@@ -104,7 +104,6 @@ public abstract class ConfigWidget extends WidgetGroup {
             if (!areAEStackCountsEqual(nConfig, oConfig) || !areAEStackCountsEqual(nStock, oStock)) {
                 this.changeMap.put(index, newSlot.copy());
                 this.cached[index] = this.config[index].copy();
-                this.gui.holder.markAsDirty();
             }
         }
         if (!this.changeMap.isEmpty()) {

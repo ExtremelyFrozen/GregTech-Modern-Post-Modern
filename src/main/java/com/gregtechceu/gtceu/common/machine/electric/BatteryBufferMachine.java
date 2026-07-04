@@ -331,7 +331,6 @@ public class BatteryBufferMachine extends TieredEnergyMachine
                 }
 
                 if (changed) {
-                    getMachine().markAsDirty();
                     checkOutputSubscription();
                 }
 
@@ -390,7 +389,6 @@ public class BatteryBufferMachine extends TieredEnergyMachine
                 }
 
                 if (changed) {
-                    getMachine().markAsDirty();
                     getMachine().changeState(State.RUNNING);
                     checkOutputSubscription();
                 }
