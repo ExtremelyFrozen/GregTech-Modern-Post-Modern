@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.common.network.packets.SPacketMachineSyncToClient
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.component.DataComponentMap
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
 import net.minecraft.network.Connection
@@ -147,7 +148,9 @@ abstract class ManagedSyncBlockEntity :
 
 		val changes = syncDataHolder.collectServerNetworkChanges(level!!.registryAccess())
 		if (!changes.isEmpty) {
-			PacketDistributor.sendToServer(CPacketMachineSyncToServer(blockPos, changes))
+			PacketDistributor.sendToServer(
+				CPacketMachineSyncToServer(blockPos, BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type), changes),
+			)
 		}
 	}
 }
