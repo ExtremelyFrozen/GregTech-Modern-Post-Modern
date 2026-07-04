@@ -22,7 +22,6 @@ import com.gregtechceu.gtceu.common.data.GTItems;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -349,7 +348,7 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
 
         @Override
         public @NotNull IGuiTexture getIcon() {
-            return new ResourceTexture("gtpm:textures/item/" + name + ".png");
+            return GuiTextures.resource("gtpm:textures/item/" + name + ".png");
         }
 
         @Override
