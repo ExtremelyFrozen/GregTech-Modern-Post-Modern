@@ -14,7 +14,6 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.RegistryAccess;
@@ -152,11 +151,6 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
 
     public GTRecipeType setSlotOverlay(boolean isOutput, boolean isFluid, boolean isLast, IGuiTexture slotOverlay) {
         this.recipeUI.setSlotOverlay(isOutput, isFluid, isLast, slotOverlay);
-        return this;
-    }
-
-    public GTRecipeType setProgressBar(ResourceTexture progressBar, ProgressTexture.FillDirection moveType) {
-        this.recipeUI.setProgressBar(progressBar, moveType);
         return this;
     }
 
