@@ -15,7 +15,6 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 
@@ -98,7 +97,7 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
             for (int y = 0; y <= 8; y++) {
                 int finalIdx = idx;
                 modular.widget(new ButtonWidget(10 + (18 * y), 48 + (18 * x), 18, 18,
-                        new GuiTextureGroup(GuiTextures.SLOT, new ItemStackTexture(stack(finalIdx)).scale(16f / 18)),
+                        new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.itemStack(stack(finalIdx)).scale(16f / 18)),
                         data -> {
                             setCircuitConfiguration(holder, finalIdx);
                             slotwidget.setHandlerSlot(new CustomItemStackHandler(stack(finalIdx)), 0);
@@ -109,7 +108,7 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
         for (int x = 0; x <= 5; x++) {
             int finalIdx = x + 27;
             modular.widget(new ButtonWidget(10 + (18 * x), 102, 18, 18,
-                    new GuiTextureGroup(GuiTextures.SLOT, new ItemStackTexture(stack(finalIdx)).scale(16f / 18)),
+                    new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.itemStack(stack(finalIdx)).scale(16f / 18)),
                     data -> {
                         setCircuitConfiguration(holder, finalIdx);
                         slotwidget.setHandlerSlot(new CustomItemStackHandler(stack(finalIdx)), 0);
