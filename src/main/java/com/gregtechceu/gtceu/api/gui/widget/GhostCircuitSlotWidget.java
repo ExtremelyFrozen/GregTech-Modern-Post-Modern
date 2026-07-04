@@ -6,7 +6,6 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -162,7 +161,7 @@ public class GhostCircuitSlotWidget extends SlotWidget {
                 int finalIdx = idx;
                 group.addWidget(new ButtonWidget(5 + (18 * y), 48 + (18 * x), 18, 18,
                         new GuiTextureGroup(GuiTextures.SLOT,
-                                new ItemStackTexture(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
+                                GuiTextures.itemStack(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
                         clickData -> {
                             if (!clickData.isRemote) {
                                 ItemStack stack = circuitInventory.getStackInSlot(0).copy();
@@ -181,7 +180,7 @@ public class GhostCircuitSlotWidget extends SlotWidget {
             int finalIdx = x + 27;
             group.addWidget(new ButtonWidget(5 + (18 * x), 102, 18, 18,
                     new GuiTextureGroup(GuiTextures.SLOT,
-                            new ItemStackTexture(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
+                            GuiTextures.itemStack(IntCircuitBehaviour.stack(finalIdx)).scale(16f / 18)),
                     clickData -> {
                         if (!clickData.isRemote) {
                             ItemStack stack = circuitInventory.getStackInSlot(0).copy();
