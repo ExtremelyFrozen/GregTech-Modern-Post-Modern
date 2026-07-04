@@ -21,7 +21,6 @@ import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
@@ -134,7 +133,7 @@ public class BatteryBufferMachine extends TieredEnergyMachine
         for (int y = 0; y < colSize; y++) {
             for (int x = 0; x < rowSize; x++) {
                 template.addWidget(new SlotWidget(batteryInventory, index++, 4 + x * 18, 4 + y * 18, true, true)
-                        .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT,
+                        .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT,
                                 chargerMode ? GuiTextures.CHARGER_OVERLAY : GuiTextures.BATTERY_OVERLAY)));
             }
         }

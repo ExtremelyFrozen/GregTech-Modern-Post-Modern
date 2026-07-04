@@ -19,7 +19,6 @@ import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.network.chat.Component;
@@ -352,7 +351,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
             group = new WidgetGroup(0, 0, 8 + 18, 8 + 20 + 18);
         }
         group.addWidget(new SlotWidget(itemStackHandler, 0, group.getSize().width - 4 - 18, 4)
-                .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.DUCT_TAPE_OVERLAY))
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.DUCT_TAPE_OVERLAY))
                 .setHoverTooltips("gtpm.machine.maintenance_hatch_tape_slot.tooltip"));
         group.addWidget(new ButtonWidget(group.getSize().width - 4 - 18, 4 + 20, 18, 18, GuiTextures.MAINTENANCE_BUTTON,
                 data -> fixMaintenanceProblems(group.getGui().entityPlayer))

@@ -26,7 +26,6 @@ import com.gregtechceu.gtceu.utils.GTMath;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 
 import com.lowdragmc.lowdraglib.gui.editor.Icons;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
@@ -243,12 +242,12 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
                         .setTextColor(-1)
                         .setDropShadow(true))
                 .addWidget(new SlotWidget(importItems, 0, 87, 5, false, true)
-                        .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.IN_SLOT_OVERLAY)))
+                        .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.IN_SLOT_OVERLAY)))
                 .addWidget(new SlotWidget(cache, 0, 87, 23, false, false)
                         .setItemHook(s -> s.copyWithCount((int) Math.min(storedAmount, s.getMaxStackSize())))
                         .setBackgroundTexture(GuiTextures.SLOT))
                 .addWidget(new ButtonWidget(87, 42, 18, 18,
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON, Icons.DOWN.scale(0.7f)), cd -> {
+                        GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON, Icons.DOWN.scale(0.7f)), cd -> {
                             if (!cd.isRemote) {
                                 if (!stored.isEmpty()) {
                                     var extracted = cache.extractItem(0,
