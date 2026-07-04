@@ -1,13 +1,13 @@
 package com.gregtechceu.gtceu.common.item.tool.behavior;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.item.datacomponents.AoESymmetrical;
 import com.gregtechceu.gtceu.api.item.tool.behavior.IToolUIBehavior;
 import com.gregtechceu.gtceu.api.item.tool.behavior.ToolBehaviorType;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTToolBehaviors;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
@@ -37,7 +37,7 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
     }
 
     @Override
-    public ModularUI createUI(Player player, HeldItemUIFactory.HeldItemHolder holder) {
+    public ModularUI createUI(Player player, HeldItemUIHolder holder) {
         ItemStack held = holder.getHeld();
         final AoESymmetrical.Mutable definition = getAoEDefinition(held).toMutable();
         return new ModularUI(120, 80, holder, player).background(GuiTextures.BACKGROUND)

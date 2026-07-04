@@ -2,10 +2,11 @@ package com.gregtechceu.gtceu.api.item;
 
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIProvider;
 import com.gregtechceu.gtceu.api.item.capability.ElectricItem;
 import com.gregtechceu.gtceu.api.item.component.*;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib2.client.renderer.IItemRendererProvider;
 import com.lowdragmc.lowdraglib2.client.renderer.IRenderer;
@@ -42,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ComponentItem extends Item
-                           implements HeldItemUIFactory.IHeldItemUIHolder, IItemRendererProvider, IComponentItem {
+                           implements HeldItemUIProvider, IItemRendererProvider, IComponentItem {
 
     @Getter
     protected List<IItemComponent> components;
@@ -294,7 +295,7 @@ public class ComponentItem extends Item
 
     @Override
     @Nullable
-    public ModularUI createUI(Player entityPlayer, HeldItemUIFactory.HeldItemHolder holder) {
+    public ModularUI createUI(Player entityPlayer, HeldItemUIHolder holder) {
         for (IItemComponent component : components) {
             if (component instanceof IItemUIFactory uiFactory) {
                 return uiFactory.createUI(holder, entityPlayer);

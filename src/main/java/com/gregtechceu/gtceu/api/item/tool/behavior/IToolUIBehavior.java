@@ -1,8 +1,8 @@
 package com.gregtechceu.gtceu.api.item.tool.behavior;
 
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -29,5 +29,5 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
 
     boolean openUI(@NotNull Player player, @NotNull InteractionHand hand);
 
-    ModularUI createUI(Player player, HeldItemUIFactory.HeldItemHolder holder);
+    ModularUI createUI(Player player, HeldItemUIHolder holder);
 }

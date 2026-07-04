@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.common.item.behavior;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.item.component.IAddInformation;
 import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
@@ -12,7 +13,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
@@ -41,7 +41,7 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
         return stack;
     }
 
-    public static void setCircuitConfiguration(HeldItemUIFactory.HeldItemHolder holder, int configuration) {
+    public static void setCircuitConfiguration(HeldItemUIHolder holder, int configuration) {
         setCircuitConfiguration(holder.getHeld(), configuration);
     }
 
@@ -61,7 +61,7 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
 
     // deprecated, not needed (for now)
     @Deprecated
-    public static void adjustConfiguration(HeldItemUIFactory.HeldItemHolder holder, int amount) {
+    public static void adjustConfiguration(HeldItemUIHolder holder, int amount) {
         adjustConfiguration(holder.getHeld(), amount);
     }
 
@@ -83,7 +83,7 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
     }
 
     @Override
-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder holder, Player entityPlayer) {
+    public ModularUI createUI(HeldItemUIHolder holder, Player entityPlayer) {
         LabelWidget label = new LabelWidget(9, 8, "Programmed Circuit Configuration");
         label.setDropShadow(false);
         label.setTextColor(0x404040);

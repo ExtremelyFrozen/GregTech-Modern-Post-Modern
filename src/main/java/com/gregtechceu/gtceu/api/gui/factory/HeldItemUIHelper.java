@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib2.gui.factory.HeldItemUIMenuType;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +21,6 @@ public final class HeldItemUIHelper {
         if (player.getItemInHand(hand).getItem() instanceof HeldItemUIMenuType.HeldItemUI) {
             return HeldItemUIMenuType.openUI(player, hand);
         }
-        return HeldItemUIFactory.INSTANCE.openUI(player, hand);
+        return GTHeldItemUIFactory.INSTANCE.openUI(player, hand);
     }
 }

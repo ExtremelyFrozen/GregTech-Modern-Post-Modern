@@ -1,8 +1,8 @@
 package com.gregtechceu.gtceu.api.item.component;
 
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -14,7 +14,7 @@ import net.minecraft.world.level.Level;
 
 public interface IItemUIFactory extends IInteractionItem {
 
-    ModularUI createUI(HeldItemUIFactory.HeldItemHolder holder, Player entityPlayer);
+    ModularUI createUI(HeldItemUIHolder holder, Player entityPlayer);
 
     @Override
     default InteractionResultHolder<ItemStack> use(ItemStack item, Level level, Player player,

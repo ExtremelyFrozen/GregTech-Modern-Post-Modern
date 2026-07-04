@@ -3,9 +3,9 @@ package com.gregtechceu.gtceu.common.item.behavior;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 
@@ -24,7 +24,7 @@ public record ItemFilterBehaviour(Function<ItemStack, ItemFilter> filterCreator)
     }
 
     @Override
-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder holder, Player entityPlayer) {
+    public ModularUI createUI(HeldItemUIHolder holder, Player entityPlayer) {
         var held = holder.getHeld();
         return new ModularUI(176, 157, holder, entityPlayer)
                 .background(GuiTextures.BACKGROUND)
