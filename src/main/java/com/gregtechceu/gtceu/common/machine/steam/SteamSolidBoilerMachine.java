@@ -15,7 +15,6 @@ import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 
@@ -117,10 +116,10 @@ public class SteamSolidBoilerMachine extends SteamBoilerMachine {
     public ModularUI createUI(Player entityPlayer) {
         return super.createUI(entityPlayer)
                 .widget(new SlotWidget(this.fuelHandler.storage, 0, 115, 62)
-                        .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT_STEAM.get(isHighPressure),
+                        .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT_STEAM.get(isHighPressure),
                                 GuiTextures.COAL_OVERLAY_STEAM.get(isHighPressure))))
                 .widget(new SlotWidget(this.ashHandler.storage, 0, 115, 26, true, false)
-                        .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT_STEAM.get(isHighPressure),
+                        .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT_STEAM.get(isHighPressure),
                                 GuiTextures.DUST_OVERLAY_STEAM.get(isHighPressure))))
                 .widget(new ProgressWidget(recipeLogic::getProgressPercent, 115, 44, 18, 18)
                         .setProgressTexture(

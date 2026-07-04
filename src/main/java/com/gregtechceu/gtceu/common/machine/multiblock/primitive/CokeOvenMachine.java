@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
@@ -39,12 +38,12 @@ public class CokeOvenMachine extends PrimitiveWorkableMachine implements IUIMach
                 .widget(new LabelWidget(5, 5, getBlockState().getBlock().getDescriptionId()))
                 .widget(new SlotWidget(importItems.storage, 0, 52, 30, true, true)
                         .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_FURNACE_OVERLAY)))
+                                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_FURNACE_OVERLAY)))
                 .widget(new ProgressWidget(recipeLogic::getProgressPercent, 76, 32, 20, 15,
                         GuiTextures.PRIMITIVE_BLAST_FURNACE_PROGRESS_BAR))
                 .widget(new SlotWidget(exportItems.storage, 0, 103, 30, true, false)
                         .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_FURNACE_OVERLAY)))
+                                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_FURNACE_OVERLAY)))
                 .widget(new TankWidget(exportFluids.getStorages()[0], 134, 13, 20, 58, true, false)
                         .setBackground(GuiTextures.PRIMITIVE_LARGE_FLUID_TANK)
                         .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP)
