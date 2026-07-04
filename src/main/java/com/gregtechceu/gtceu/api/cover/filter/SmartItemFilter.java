@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
@@ -9,7 +10,6 @@ import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.util.StringRepresentable;
@@ -121,7 +121,7 @@ public class SmartItemFilter implements ItemFilter {
 
         @Override
         public IGuiTexture getIcon() {
-            return new ResourceTexture("gtpm:textures/block/machines/" + name + "/overlay_front.png");
+            return GuiTextures.resource("gtpm:textures/block/machines/" + name + "/overlay_front.png");
         }
 
         @Override
