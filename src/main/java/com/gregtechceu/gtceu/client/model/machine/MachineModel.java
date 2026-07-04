@@ -21,8 +21,6 @@ import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.core.mixins.neoforge.BakedModelWrapperAccessor;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.client.model.custommodel.CustomBakedModel;
-
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -463,7 +461,7 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
                                                @Nullable Direction side, RandomSource rand, ModelData modelData,
                                                @Nullable RenderType renderType) {
         BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(appearance);
-        model = unwrapCustomBakedModel(model);
+        model = unwrapWrappedModel(model);
 
         BlockAndTintGetter appearanceLevel = new FacadeBlockAndTintGetter(level, pos, appearance,
                 level.getBlockEntity(pos));
@@ -492,10 +490,9 @@ public final class MachineModel extends BaseBakedModel implements ICoverableRend
         return textureKey.charAt(0) == '#' ? textureKey.substring(1) : textureKey;
     }
 
-    @SuppressWarnings("unchecked")
-    private static BakedModel unwrapCustomBakedModel(BakedModel model) {
-        while (model instanceof CustomBakedModel<?> && model instanceof BakedModelWrapperAccessor<?> accessor) {
-            BakedModel parent = ((BakedModelWrapperAccessor<BakedModel>) accessor).gtceu$getParent();
+    private static BakedModel unwrapWrappedModel(BakedModel model) {
+        while (model instanceof BakedModelWrapperAccessor<?> accessor) {
+            BakedModel parent = accessor.gtceu$getParent();
             if (parent == model) {
                 break;
             }

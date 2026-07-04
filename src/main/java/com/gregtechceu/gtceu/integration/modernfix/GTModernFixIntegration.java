@@ -5,8 +5,6 @@ import com.gregtechceu.gtceu.client.util.AssetEventListener;
 import com.gregtechceu.gtceu.client.util.ModelEventHelper;
 import com.gregtechceu.gtceu.core.mixins.neoforge.BakedModelWrapperAccessor;
 
-import com.lowdragmc.lowdraglib.client.model.custommodel.CustomBakedModel;
-
 import net.minecraft.client.resources.model.*;
 
 import lombok.Getter;
@@ -43,9 +41,9 @@ public class GTModernFixIntegration implements ModernFixClientIntegration {
     public BakedModel onBakedModelLoad(ModelResourceLocation location, UnbakedModel baseModel,
                                        BakedModel model, ModelState state, ModelBakery bakery,
                                        ModelBakery.TextureGetter textureGetter) {
-        if (model instanceof CustomBakedModel<?> ctmModel) {
-            // Unwrap all machine models from LDLib CTM models so we don't need to be as aggressive with mixins
-            if (((BakedModelWrapperAccessor<?>) ctmModel).gtceu$getParent() instanceof MachineModel machineModel) {
+        if (model instanceof BakedModelWrapperAccessor<?> accessor) {
+            // Unwrap machine models from wrapped models so we don't need to be as aggressive with mixins
+            if (accessor.gtceu$getParent() instanceof MachineModel machineModel) {
                 model = machineModel;
             }
         }
