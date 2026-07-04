@@ -1,16 +1,16 @@
 ---
-title: Custom Sounds
+title: 自定义 Sound
 ---
 
 
-## Creating a Custom Sound
+## 创建自定义 Sound
 
-!!! Warning
-    Registering custom sounds is currently only supported in Java, though you can use your sound in kubejs scripts once it's defined.
+!!! Warning "警告"
+    注册自定义 sound 目前仅在 Java 中受支持，不过 sound 定义后可以在 KubeJS 脚本中使用。
 
-To add a new sound, a sounds class is required. 
-This class prepares for registrate to register the sounds. 
-An example of a custom sound can be found below.
+要添加新的 sound，需要一个 sounds class。
+该类会为 registrate 注册 sound 做准备。
+下面是 custom sound 示例。
 
 ```java
 import static com.examplemod.common.registry.ExampleRegistration.REGISTRATE;
@@ -23,13 +23,13 @@ public class ExampleSound {
 }
 ```
 
-Before you run datagen, the sound needs to be prepared for use. For a sound to be registered it must be in .ogg format and be inside `assets/examplemod/sounds`. 
-!!! note "mono vs. stereo audio"
+运行 datagen 前，需要先准备好 sound。要注册 sound，它必须是 .ogg 格式并位于 `assets/examplemod/sounds`。
+!!! note "mono 与 stereo audio"
 
-    Your audio file should be mono, as Minecraft's attentuation logic only works with single-channel audio. Stereo sounds won't fade out (they'll be played at the same volume at any distance from the source) and should only be used for background tracks such as the main menu music. 
+    音频文件应为 mono，因为 Minecraft 的 attenuation logic 只适用于单声道音频。Stereo sounds 不会随距离衰减（无论离声源多远都会以相同音量播放），只应当用于主菜单音乐等背景音轨。
 
-After you make this class, prepare your sound, and initialize it in your main mod class, you want to setup datagen for the sounds.
-It's a bit more complicated than normal datagen, so an example can be found below.
+创建这个类、准备 sound 并在主 mod 类中初始化它之后，需要为 sounds 设置 datagen。
+它比普通 datagen 稍复杂，示例如下。
 
 ```java
 @Mod.EventBusSubscriber(modid = ExampleMod.MOD_ID)

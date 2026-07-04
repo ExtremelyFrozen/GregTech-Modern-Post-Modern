@@ -1,15 +1,15 @@
 ---
-title: "Layers & Dimensions"
+title: "Layers 与 Dimensions"
 ---
 
 
-# Layers and Dimensions
+# Layers 与 Dimensions
 
 
-## Creating a New World Gen Layer
+## 创建新的 World Gen Layer
 
-To create ore veins in another dimension (or just at the location of certain blocks), you need to create a new worldgen layer.  
-You may also need to add a custom stone type for your ores.
+要在其他 Dimension 中（或只在某些方块所在位置）创建 Ore Veins，需要创建新的 worldgen layer。
+你可能还需要为矿石添加自定义 stone type。
 
 ```js title="startup_scripts/world_gen_layers.js"
 GTCEuStartupEvents.registry('gtceu:world_gen_layer', event => {
@@ -19,11 +19,11 @@ GTCEuStartupEvents.registry('gtceu:world_gen_layer', event => {
 })
 ```
 
-1. Accepts tags, blocks and block states.  
-   Also accepts a `RuleTest` or `RuleTestSupplier` in case you need a bit more flexibility.
+1. 接受 tags、blocks 和 block states。
+   如果你需要更高灵活性，也接受 `RuleTest` 或 `RuleTestSupplier`。
 
 
-Once the layer is created, you can refer to it by its name when creating or modifying an ore vein:
+创建 layer 后，你可以在创建或修改 Ore Vein 时通过名称引用它：
 
 ```js title="server_scripts/ores.js"
 GTCEuServerEvents.oreVeins(event => {

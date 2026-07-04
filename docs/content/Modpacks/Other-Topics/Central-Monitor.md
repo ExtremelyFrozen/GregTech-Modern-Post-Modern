@@ -1,11 +1,11 @@
 ---
-title: Central Monitor & Placeholder System
+title: Central Monitor 与 Placeholder 系统
 ---
 
-### Custom monitor modules
-If you want to add a monitor module, simply attach a component that implements `IMonitorModuleItem` to your `ComponentItem`.
-Modules can have a custom UI, can be ticked (in a placeholder or not) and, most importantly, rendered.
-??? example "Example of a custom module in Java"
+### 自定义 monitor module
+如果想添加 monitor module，只需向你的 `ComponentItem` 附加一个实现 `IMonitorModuleItem` 的 component。
+Module 可以拥有自定义 UI，可以被 tick（在 placeholder 中或不在其中），最重要的是可以被渲染。
+??? example "Java 中的自定义 module 示例"
     ```java
     public class ExampleModuleBehaviour implements IMonitorModuleItem {
         @Override
@@ -32,8 +32,8 @@ Modules can have a custom UI, can be ticked (in a placeholder or not) and, most 
         public IMonitorRenderer getRenderer(ItemStack stack) {
             // this is only called on the logical client
             // should return a new instance of the renderer for this module (not null)
-            // for examples of renderer code look in the GTCEu Modern github:
-            // https://github.com/GregTechCEu/GregTech-Modern/tree/1.20.1/src/main/java/com/gregtechceu/gtceu/client/renderer
+            // for examples of renderer code look in the GregTech Post Modern github:
+            // https://github.com/ExtremelyFrozen/GregTech-Post-Modern/tree/1.21/src/main/java/com/gregtechceu/gtceu/client/renderer
             return new MonitorTextRenderer(MultiLineComponent.of("this text is displayed on the monitor"), 1.0);
         }
 
@@ -46,16 +46,16 @@ Modules can have a custom UI, can be ticked (in a placeholder or not) and, most 
     }
     ```
 
-!!! info "For info on the placeholder system itself, see [the gameplay wiki page](../../Gameplay/Central-Monitor.md)"
+!!! info "关于 placeholder 系统本身的信息，请见 [gameplay wiki 页面](../../Gameplay/Central-Monitor.md)"
 
-### Adding custom placeholders
+### 添加自定义 placeholder
 
-Placeholders can be added by calling `PlaceholderHandler.addPlaceholder(...)` at any point during runtime (preferably at mod init time).
-They can take any number of arguments in the form of a `List<MultiLineComponent>`. They also take an instance of `PlaceholderContext` and
-must return a `MultiLineComponent`. Placeholders can also render literally anything, not only text, using `MultiLineComponent.addRenderer()`,
-`GraphicsComponent` and an `IPlaceholderRenderer` (that has to be registered separately using `PlaceholderHandler.addRenderer(...)`)
+可以在运行时任何时候调用 `PlaceholderHandler.addPlaceholder(...)` 添加 placeholder（最好在 mod 初始化时）。
+它们可以接收任意数量的参数，形式为 `List<MultiLineComponent>`。它们还会接收一个 `PlaceholderContext` 实例，
+并且必须返回 `MultiLineComponent`。Placeholder 也可以通过 `MultiLineComponent.addRenderer()`、`GraphicsComponent`
+和 `IPlaceholderRenderer` 渲染几乎任何内容，而不仅是文本（`IPlaceholderRenderer` 必须使用 `PlaceholderHandler.addRenderer(...)` 单独注册）。
 
-??? example "Example of a `sum` placeholder in Java"
+??? example "Java 中的 `sum` placeholder 示例"
     ```java
     public class Example {
         // you should call this function at mod initialization
@@ -76,32 +76,32 @@ must return a `MultiLineComponent`. Placeholders can also render literally anyth
     }
     ```
 
-!!! tip "Placeholder exceptions"
-    Any runtime exception that occurs while processing a placeholder will be caught and even displayed to the player.
-    Instead of relying on runtime exceptions though, you should throw any subclass of `PlaceholderException`, for example
-    `InvalidNumberException` or `MissingItemException`. All the `PlaceholderUtils` methods throw these, so you should use them
-    instead of calling `parseDouble` yourself, for example.
+!!! tip "Placeholder 异常"
+    处理 placeholder 时发生的任何 runtime exception 都会被捕获，甚至会显示给玩家。
+    不过，与其依赖 runtime exception，你应当抛出 `PlaceholderException` 的任意子类，例如
+    `InvalidNumberException` 或 `MissingItemException`。所有 `PlaceholderUtils` 方法都会抛出这些异常，因此例如应该使用它们，
+    而不是自行调用 `parseDouble`。
 
-!!! note "Placeholder data"
-    If your placeholder needs to save any data specific to the placeholder caller, you can use `getData(ctx)` at any point in
-    a placeholder. It will return a `CompoundTag` that is automatically saved, and you're free to modify it in whatever way you want.
+!!! note "Placeholder 数据"
+    如果你的 placeholder 需要保存特定于 placeholder 调用方的数据，可以在 placeholder 中的任何位置使用 `getData(ctx)`。
+    它会返回一个自动保存的 `CompoundTag`，你可以按任意方式修改它。
 
-### Placeholder graphics
+### Placeholder 图形
 
-You may have noticed, that some placeholders output graphics instead of text, for example `rect` or `quad`.
-To achieve that you have to write your own class that implements `IPlaceholderRenderer`, or use an existing one.
-They work similarly to normal renderers, except you can pass a `CompoundTag` into them from your placeholder.
-To register one, call `PlaceholderHandler.addRenderer("put_id_here", new YourRendererClassHere())`.
-After that, you can reference it from any placeholder by calling `output.addGraphics(new GraphicsComponent(x, y, "put_id_here", renderData)`
-on the object that your placeholder will return. `renderData` is the same `CompoundTag` that will be passed into your renderer as an argument.
-This is done to avoid calling rendering code on the server side, as all placeholders are processed server-side only. A neat side effect of that
-is that all players will (almost always) see the same thing on the monitor.
+你可能已经注意到，有些 placeholder 会输出图形而不是文本，例如 `rect` 或 `quad`。
+要实现这一点，你需要编写自己的类来实现 `IPlaceholderRenderer`，或者使用现有实现。
+它们的工作方式类似普通 renderer，但你可以从 placeholder 向它们传入一个 `CompoundTag`。
+要注册 renderer，请调用 `PlaceholderHandler.addRenderer("put_id_here", new YourRendererClassHere())`。
+之后，你可以在 placeholder 将要返回的对象上调用 `output.addGraphics(new GraphicsComponent(x, y, "put_id_here", renderData)`，
+从任意 placeholder 引用该 renderer。`renderData` 就是会作为参数传入 renderer 的同一个 `CompoundTag`。
+这样做是为了避免在服务端调用渲染代码，因为所有 placeholder 都只在服务端处理。这样还有一个很实用的副作用：
+所有玩家在 monitor 上看到的内容（几乎总是）相同。
 
-!!! warning "Graphics do not work on the Computer Monitor Cover"
+!!! warning "图形不适用于 Computer Monitor Cover"
 
-### Placeholder parsing
+### Placeholder 解析
 
-You may want to add something that needs to parse a string containing placeholders. To achieve that, you can use
-`PlaceholderHandler.processPlaceholders(string, context)`. You can also use `PlaceholderHandler.placeholderExists(name)`
-to check if a placeholder exists, or `PlaceholderHandler.getAllPlaceholderNames()` to get all placeholders.
-To get a `PlaceholderContext`, you just have to call its constructor (it takes in basic parameters like `Level`, `BlockPos`, etc., most of which can be `null`).
+你可能想添加某些需要解析包含 placeholder 的字符串的功能。要实现这一点，可以使用
+`PlaceholderHandler.processPlaceholders(string, context)`。也可以使用 `PlaceholderHandler.placeholderExists(name)`
+检查 placeholder 是否存在，或使用 `PlaceholderHandler.getAllPlaceholderNames()` 获取所有 placeholder。
+要获得 `PlaceholderContext`，只需调用它的 constructor（它接收 `Level`、`BlockPos` 等基础参数，其中大多数可以为 `null`）。

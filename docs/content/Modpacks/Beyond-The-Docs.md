@@ -1,39 +1,39 @@
 ---
-title: Beyond the Docs
+title: 文档之外
 ---
 
 
-# Beyond the Docs
+# 文档之外
 
-While we try to keep this documentation up to date and as complete as possible, it may not always contain all of the latest information.
+虽然我们会尽量保持文档最新且完整，但它不一定总是包含所有最新信息。
 
-As an additional resource to these docs, you can also reference our KubeJS integration directly in the source code:  
-[`src/main/java/com/gregtechceu/gtceu/integration/kjs`](https://github.com/GregTechCEu/GregTech-Modern/tree/1.20.1/src/main/java/com/gregtechceu/gtceu/integration/kjs)
+作为文档之外的补充资料，你也可以直接参考源代码中的 KubeJS 集成：
+[`src/main/java/com/gregtechceu/gtceu/integration/kjs`](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/tree/1.21/src/main/java/com/gregtechceu/gtceu/integration/kjs)
 
-Continue reading for a few important places you may want to check.
-
-
-## Builders
-
-!!! link "Builders"
-    [`src/main/java/com/gregtechceu/gtceu/integration/kjs/builders`](https://github.com/GregTechCEu/GregTech-Modern/tree/1.20.1/src/main/java/com/gregtechceu/gtceu/integration/kjs/builders)
-
-If you're not sure what methods and fields are available on one of our builders, you can find all of them in this directory.
+下面列出几个你可能需要查看的重要位置。
 
 
-## Material Builder
+## Builders（构建器）
 
-!!! link "Material Builder"
-    [`src/main/java/com/gregtechceu/gtceu/api/data/chemical/material/Material.java`](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/src/main/java/com/gregtechceu/gtceu/api/data/chemical/material/Material.java)
+!!! link "Builders（构建器）"
+    [`src/main/java/com/gregtechceu/gtceu/integration/kjs/builders`](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/tree/1.21/src/main/java/com/gregtechceu/gtceu/integration/kjs/builders)
 
-The material builder is not located in the KJS integration package.  
-Please reference the nested `Material.Builder` class instead.
+如果你不确定某个 builder 上有哪些可用方法和字段，可以在这个目录中找到它们。
 
 
-## Bindings & Type Wrappers
+## Material Builder（材料构建器）
+
+!!! link "Material Builder（材料构建器）"
+    [`src/main/java/com/gregtechceu/gtceu/api/data/chemical/material/Material.java`](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/src/main/java/com/gregtechceu/gtceu/api/data/chemical/material/Material.java)
+
+material builder 不在 KJS 集成包中。
+请改为参考嵌套的 `Material.Builder` 类。
+
+
+## Bindings 与 Type Wrappers（绑定与类型包装器）
 
 !!! link "GregTechKubeJSPlugin"
-    [`src/main/java/com/gregtechceu/gtceu/integration/kjs/GregTechKubeJSPlugin.java`](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/src/main/java/com/gregtechceu/gtceu/integration/kjs/GregTechKubeJSPlugin.java)
+    [`src/main/java/com/gregtechceu/gtceu/integration/kjs/GregTechKubeJSPlugin.java`](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/src/main/java/com/gregtechceu/gtceu/integration/kjs/GregTechKubeJSPlugin.java)
 
-- For a list of our custom bindings, see `GregTechKubeJSPlugin.registerBindings()`
-- For a list of our type wrappers and their accepted inputs, see `GregTechKubeJSPlugin.registerTypeWrappers()`
+- 自定义 bindings 列表请见 `GregTechKubeJSPlugin.registerBindings()`
+- type wrappers 及其可接受输入列表请见 `GregTechKubeJSPlugin.registerTypeWrappers()`

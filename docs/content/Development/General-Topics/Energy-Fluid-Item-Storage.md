@@ -1,125 +1,118 @@
 ---
-title: Item/Fluid/Energy Storage
+title: Item/Fluid/Energy 存储
 ---
 
 
-# How to add an Item Inventory / Fluid Storage / Energy Container
+# 如何添加 Item Inventory / Fluid Storage / Energy Container
 
 !!! note
 
-    In general, these containers should be created as `final` fields (that's what we need for the
-    [SyncData](../SyncData/index.md) system).  
-    Set their base arguments in the constructor (you can pass args for subclasses to modify).
+    通常，这些容器应创建为 `final` 字段，这是 [Data Sync/Save 系统](../Data-Sync-System/index.md) 所需要的。
+    在构造函数中设置它们的基础参数，也可以将参数传给子类修改。
 
 
-## Implementations for Recipe Processing and adding Capabilities
+## 用于 Recipe Processing 和添加 Capability 的实现
 
-You can create these containers via one of the following classes:
+可以通过以下类创建这些容器：
 
 - `NotifiableItemStackHandler`
 - `NotifiableFluidTank`
 - `NotifiableEnergyContainer`
 
-In general, you should prefer these classes over other implementations if possible, as they notify all listeners
-of internal changes to improve performance.
+通常，只要条件允许，应优先选择这些类而不是其他实现，因为它们会在内部变化时通知所有 listener，以提升性能。
 
-**IO constructor parameters:**
+**IO 构造参数：**
 
-- `handlerIO`: Whether the container is regarded as input or output during recipe processing
-- `capabilityIO`: Whether the player can use hoppers, pipes, cables, etc. to interact with the storage
+- `handlerIO`：在 recipe processing 期间，该容器被视为 input 还是 output
+- `capabilityIO`：玩家是否可以使用 hopper、pipe、cable 等与该存储交互
 
 
-## General-Purpose implementations
+## 通用实现
 
-If you don't need to use the storage for recipe processing and/or providing capabilities, you can just use one of the
-following classes, as they are more lightweight:
+如果不需要将存储用于 recipe processing，也不需要提供 capability，可以直接使用以下更轻量的类：
 
 - `ItemStackTransfer`
 - `FluidStorage`
 
 
-## Custom implementations
+## 自定义实现
 
-In some cases, you might need to create a custom implementation for either of these containers.  
-To do so, use either of the following interfaces:
+某些情况下，你可能需要为这些容器创建自定义实现。
+请使用以下接口：
 
 - `IItemTransfer`
 - `IFluidTransfer`
 - `IEnergyContainer`
 
 
-## Specialized proxy implementations
+## 专用 proxy 实现
 
-In case you have special requirements to your containers, you may be able to use one of these implementations in
-conjunction with one or more regular containers.  
-They generally act as a proxy to the underlying container(s), while also handling these requirements.
+如果容器存在特殊需求，可以将这些实现与一个或多个常规容器组合使用。
+它们通常作为底层容器的 proxy，同时处理这些额外需求。
 
 
-### Proxying multiple containers
+### 代理多个容器
 
 - `ItemTransferList`
 - `FluidTransferList`
 - `EnergyContainerList`
 
 
-### IO-specific container proxies
+### 指定 IO 的容器 proxy
 
-For proxying multiple containers, limited to a specific IO direction.
+用于代理多个容器，但限制在特定 IO 方向。
 
 - `IOItemTransferList`
-- `IOFluidTransferList`  
+- `IOFluidTransferList`
 
 
-### Rate-Limited proxies
+### 限速 proxy
 
-!!! warning inline end "Not merged yet<br>_Branch: `mi-ender-link`_"
+!!! warning inline end "尚未合并<br>_Branch: `mi-ender-link`_"
 
-If you need to proxy any item or fluid container that needs to be rate limited for insertion and extraction, you can
-use either of the following classes:
+如果需要代理 item 或 fluid 容器，并限制其插入和抽取速率，可以使用以下类：
 
 - `LimitingItemTransferProxy`
 - `LimitingFluidTransferProxy`
 
-The transfer limit passed as a constructor parameter will not renew automatically. Your container will therefore stop
-transferring anything once this limit is reached.
+构造参数传入的 transfer limit 不会自动刷新。因此，一旦达到该限制，容器就会停止传输任何内容。
 
-If you want to make this a rate limit instead, you will have to schedule a task that regularly resets the transfer
-limit to the maximum value for your task's interval:
+如果希望它表现为速率限制，需要调度一个任务，定期将 transfer limit 重置为该任务间隔内的最大值：
 
-??? example "Example Usage"
+??? example "用法示例"
 
     ```java
     public class MyCover extends CoverBehavior {
         private LimitingFluidTransferProxy transferProxy;
         private ConditionalSubscriptionHandler rateLimitSubscription;
-        
+
         public MyCover(IFluidTransfer myFluidTransfer) {
             super(/* ... */);
-            
+
             transferProxy = new LimitingFluidTransferProxy(
                     myFluidTransfer,
                     0L // Initial limit of 0, will be updated regularly in isRateLimitRefreshActive()
             );
             rateLimitSubscription = new ConditionalSubscriptionHandler(
                     this,
-                    this::resetTransferRateLimit, 
+                    this::resetTransferRateLimit,
                     this::isRateLimitRefreshActive
             );
         }
-        
+
         @Override
         public void onLoad() {
             super.onLoad();
             rateLimitSubscription.initialize(coverHolder.getLevel());
         }
-        
+
         private void resetTransferRateLimit() {
             if (transferProxy == null)
                 return;
-    
+
             transferProxy.setRemainingTransfer(transferRate.getMilliBuckets() * 20);
         }
-        
+
         private boolean isRateLimitRefreshActive() {
             // ...
         }

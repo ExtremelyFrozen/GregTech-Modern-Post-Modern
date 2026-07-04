@@ -1,64 +1,62 @@
 ---
-title: ChemicalHelper
+title: "ChemicalHelper Class（ChemicalHelper 类）"
 ---
 
 
-# The `ChemicalHelper` Class
+# `ChemicalHelper` Class（ChemicalHelper 类）
 
-It may behoove a packmaker working with GTCEu Modern to learn about the ChemicalHelper class.
+使用 GregTech Post Modern 制作整合包时，了解 ChemicalHelper class 会很有帮助。
 
-This class, available for use in server scripts, contains a number of useful methods that can ease working with GTCEu
-Materials in contexts where it might not be possible, or it might be unsafe, to work with item or block tags.
+此 class 可在 server scripts 中使用，包含许多实用方法；当无法使用物品或方块 tags，
+或直接使用它们不够安全时，这些方法可以简化 GTCEu Materials 的处理。
 
 
-## Useful functions that ChemicalHelper offers
+## ChemicalHelper 提供的实用函数
 
-The following functions are available for use by packmakers:
+整合包作者可以使用以下函数：
 
 
 ### `.getMaterial()`
 
-Can take almost any form of item reference (`Item`, `ItemStack`, `Ingredient` and so on) and will return the
-`Material` entry associated with it. If there is no associated Material, the method returns `null`.
-A `Fluid` may also be passed as input.
+可接受几乎任何形式的物品引用（`Item`、`ItemStack`、`Ingredient` 等），并返回
+与其关联的 `Material` 条目。如果没有关联的 Material，该方法返回 `null`。
+也可以传入 `Fluid` 作为输入。
 
 
 ### `.getPrefix()`
 
-Takes an item reference as input and will return the TagPrefix it is associated with it. If there is
-non associated, the method will return `null`.
+接受一个物品引用作为输入，并返回与其关联的 TagPrefix。如果没有关联，
+该方法返回 `null`。
 
 
 ### `.getIngot()` / `.getDust()`
 
-These two methods take two parameters each as input: a `Material`, and a number representing a material amount,
-and will return an ItemStack representation of the respective Material's dust or ingot form, if it has one.
+这两个方法各接受两个参数作为输入：一个 `Material`，以及一个表示材料数量的数值，
+并在对应形态存在时返回相应 Material 的粉或锭形式的 ItemStack。
 
-The material amount is usually very large; it is generally an integer multiple or fraction of the predefined value
-`GTValues.M`, which is the commonly agreed-upon material amount of one (1) ingot or regular dust.
+材料数量通常很大；它一般是预定义值 `GTValues.M` 的整数倍或分数。
+`GTValues.M` 是通用约定中一（1）个锭或普通粉的材料数量。
 
-Depending on the amount passed, the functions will return different items:
+根据传入数量不同，这些函数会返回不同物品：
 
-- `.getIngot()`, for example, will return an ItemStack representation of a block or nugget of the associated Material if
-  the passed amount is large or small enough.
-- `.getDust()`, in similar fashion, will return regular, small or tiny dust ItemStack representations depending on the
-  material amount passed.
+- 例如 `.getIngot()` 会在传入数量足够大或足够小时，返回关联 Material 的方块或粒形式的 ItemStack。
+- 类似地，`.getDust()` 会根据传入的材料数量返回普通、小堆或小撮粉的 ItemStack 表示。
 
 
 ### `.getTag()` / `.getBlockTag()` / `.getTags()` / `.getBlockTags()`
 
-Takes a `TagPrefix` and a non-`null` `Material` as input and returns the first item or block tag
-(or a Java array of all item or block tags if the plural functions are used) possessed by the item represented by
-that `TagPrefix`-`Material` combination.
+接受一个 `TagPrefix` 和一个非 `null` 的 `Material` 作为输入，并返回由该
+`TagPrefix`-`Material` 组合所代表物品拥有的第一个物品或方块 tag
+（如果使用复数形式函数，则返回所有物品或方块 tags 的 Java array）。
 
 
 ### `.get()`
 
-Takes a `TagPrefix`, a `Material` and optionally an item count that otherwise defaults to 1, and returns an
-ItemStack representing that `TagPrefix`-`Material` combination with the specified item count.
+接受一个 `TagPrefix`、一个 `Material`，以及可选的物品数量（默认值为 1），并返回一个
+表示该 `TagPrefix`-`Material` 组合且具有指定数量的 ItemStack。
 
 
-## Usage Examples
+## 使用示例
 
 ```js title="chemicalhelper_example_script.js"
 var ironMaterial = ChemicalHelper.getMaterial(Item.of("gtceu:double_iron_plate").asItem()) // (1)
@@ -71,8 +69,8 @@ var steelBlock = ChemicalHelper.getIngot(GTMaterials.Steel, GTValues.M * 9)
 var ashSmallDust = ChemicalHelper.getDust(GTMaterials.Ash, GTValues.M / 4) // (5)
 ```
 
-1. `ironMaterial` is now a reference to `GTMaterials.Iron`.
-2. `rawOrePrefix` is now a reference to `TagPrefix.rawOre`.
-3. `cobaltIngotStack` is now an ItemStack representing half a stack of cobalt ingots.
-4. `goldNugget` is now an ItemStack representing one gold nugget.
-5. `ashSmallDust` is now an ItemStack representing a small ash pile.
+1. `ironMaterial` 现在是对 `GTMaterials.Iron` 的引用。
+2. `rawOrePrefix` 现在是对 `TagPrefix.rawOre` 的引用。
+3. `cobaltIngotStack` 现在是表示半组钴锭的 ItemStack。
+4. `goldNugget` 现在是表示一个金粒的 ItemStack。
+5. `ashSmallDust` 现在是表示一小堆灰烬粉的 ItemStack。

@@ -1,8 +1,7 @@
 ---
 icon: "material/frequently-asked-questions"
-title: "FAQ"
+title: "常见问题"
 ---
 
 
-# :material-frequently-asked-questions: Frequently Asked Questions
-
+# :material-frequently-asked-questions: 常见问题

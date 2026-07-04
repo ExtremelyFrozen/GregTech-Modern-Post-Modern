@@ -1,11 +1,11 @@
 ---
-title: Custom Recipe Type
+title: 自定义 Recipe Type
 ---
 
 
-## Creating a Recipe Type
+## 创建 Recipe Type
 
-!!! important "Recipe Types MUST be registered before the machines or multiblocks"
+!!! important "Recipe Type 必须先于 Machine 或 Multiblock 注册"
 
 ```js title="test_recipe_type.js"
 GTCEuStartupEvents.registry('gtceu:recipe_type', event => {
@@ -19,6 +19,6 @@ GTCEuStartupEvents.registry('gtceu:recipe_type', event => {
 })
 ```
 
-1. Max Item Inputs, Max Item Outputs, Max Fluid Inputs, Max Fluid Outputs
-2. A list of available ```GuiTextures``` and ```FillDirection```s can be found in the GTCEu Modern Github, or in the .jar file.
-   
+1. 最大 Item 输入数、最大 Item 输出数、最大 Fluid 输入数、最大 Fluid 输出数
+2. 可用的 ```GuiTextures``` 和 ```FillDirection``` 列表可在 GregTech Post Modern GitHub 或 .jar 文件中找到。
+

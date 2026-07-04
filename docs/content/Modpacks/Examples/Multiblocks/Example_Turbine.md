@@ -1,18 +1,18 @@
 ---
-title: "Example Turbine"
+title: "Turbine 示例"
 ---
 
-### Example Turbine
+### Turbine 示例
 
-Below is an example of a multiblock using the LargeTurbineMachine class for making custom large turbines.
+下面是一个使用 LargeTurbineMachine 类创建自定义大型涡轮的 Multiblock 示例。
 
-### Multiblock
+### Multiblock 结构
 
 === "JavaScript"
     ```js title="hyper_gas_turbine.js"
     // In order to use multiblock logic extending beyond the normal WorkableElectricMultiblockMachine, (This is the multiblock type used by default for kubejs) you need to load a class. LargeTurbineMachines such as the gas, steam, and plasma turbines use this class.
     const $LargeTurbineMachine = Java.loadClass("com.gregtechceu.gtceu.common.machine.multiblock.generator.LargeTurbineMachine")
-    
+
     GTCEuStartupEvents.registry('gtceu:machine', event => {
         event.create('hyper_gas_turbine', 'multiblock')
             .machine((holder) => new $LargeTurbineMachine(holder, GTValues.LuV)) // The value shows one rotor holder tier above the recommended minimum rotor holder. The tier of rotor holder provides a boost based on the efficiency stat.
@@ -75,16 +75,13 @@ Below is an example of a multiblock using the LargeTurbineMachine class for maki
     ```
 
 
-### Lang
+### 语言文件
 
 ```json title="en_us.json"
 {
     "block.gtceu.hyper_gas_turbine": "Hyper Gas Turbine",
 }
 ```
-
-
-
 
 
 

@@ -1,18 +1,18 @@
 ---
-title: Steam Tier
+title: 蒸汽阶段
 ---
 
-# Welcome to Gregtech
+# 欢迎来到 GregTech
 
-Steam is the first of many stages in GregTech. It'll be your first encounter with GT machines and tools.
-Be careful, as _things may get explosive_. 
+Steam（蒸汽）是 GregTech 众多阶段中的第一个阶段。你将在这里第一次接触 GT 机器与工具。
+请小心，因为_事情可能会变得很爆炸_。
 
-It's important that you learn how to make and transport enough steam for your factory.
+学会为你的工厂制造并运输足够的 Steam 非常重要。
 
-## In this tier
+## 这个阶段的目标
 
-Most important material: [**Bronze**](./Bronze.md)
+最重要的材料：[**青铜（Bronze）**](./Bronze.md)
 
-End Goal: **LV machine hull**
+最终目标：**LV Machine Hull（LV 机器外壳）**
 
-Gated by: **Primitive blast furnace**
+前置门槛：**Primitive Blast Furnace（原始高炉）**

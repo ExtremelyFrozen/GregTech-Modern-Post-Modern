@@ -1,65 +1,64 @@
 ---
-title: Recipe Conditions
+title: 配方条件
 ---
 
-Recipe Conditions are recipe properties that can prevent a recipe from starting based on certain criteria, like for example Biome, Weather, Quest Completions, or self-made custom Conditions.
+Recipe Conditions（配方条件）是配方属性，可以基于某些条件阻止配方启动，例如 Biome、Weather、Quest Completions，或你自己制作的自定义 Conditions。
 
-These conditions can be used in both Java and KubeJS recipes. However, custom conditions can only be done in Java addons. If you want to see how to make these, check out the [Custom Recipe Condition](../Examples/Custom-Recipe-Condition.md) example page.              
+这些 conditions 可以同时用于 Java 和 KubeJS 配方。不过，自定义 conditions 只能在 Java addons 中实现。如果你想了解如何制作它们，请查看 [Custom Recipe Condition](../Examples/Custom-Recipe-Condition.md) 示例页面。
 
 !!! Note
-    The condition is run after recipe matching and before recipe execution. If the recipe condition doesn't match, the machine will be suspended and won't be updated again until something in the inputs/outputs changes.
+    condition 会在配方匹配后、配方执行前运行。如果 recipe condition 不匹配，机器会被暂停，并且在输入/输出发生变化前不会再次更新。
 
-### Base Conditons 
+### 基础条件
 
 - Biome: `.biome("namespace:biome_id")`
-    - Locks a recipe behind being inside a certain biome, works with any biome a pack has loaded. 
-    For example, you could use `minecraft:plains`. We also have `biomeTag("minecraft:biome")`.
+    - 将配方限制为只能在特定 biome 中运行，适用于整合包加载的任意 biome。
+    例如可以使用 `minecraft:plains`。我们也有 `biomeTag("minecraft:biome")`。
 - Dimension: `.dimension("namespace:dimension_id")`
-    - Locks a recipe being behind a certain dimension, the gas collector is a good example of this.  
-    - For example, you could do `.dimension("minecraft:the_end")`
+    - 将配方限制为只能在特定 dimension 中运行，gas collector 就是一个很好的例子。
+    - 例如可以使用 `.dimension("minecraft:the_end")`
 - Y Position: `.posY(int min, int max)`
-    - Locks a recipe behind a certain y level in-world.
-    - For example, you could use `.posY(120, 130)` to have a recipe require a machine to be in between y 120 and y 130.
+    - 将配方限制为只能在世界中的特定 y level 运行。
+    - 例如可以使用 `.posY(120, 130)`，要求机器位于 y 120 到 y 130 之间。
 - Rain: `.rain(float level)`
-    - Locks a recipe behind a certain level of rain.
-    - For example, you could use `.rain(1.0)` to make a recipe need full rain. 
+    - 将配方限制为需要一定程度的降雨。
+    - 例如可以使用 `.rain(1.0)`，让配方需要满级降雨。
 - Adjacent Fluids: `.adjacentFluids("namespace:fluid_id", ...)`
-    - You can pass any amount of fluids into the array. Moreover, any fluid passed into the array will make the recipe require a full source block touching the machine.
-    - For example, you could use `.adjacentFluids("minecraft:water", "minecraft:lava")` to make a recipe require BOTH a water source and a lava source next to the machine.
-    - We also have `.adjacentFluidTag("forge:water", "forge:lava")`, which does the same, but allows fluid _tags_ to be used.
+    - 可以向数组传入任意数量的 fluids。此外，数组中传入的任何 fluid 都会要求机器接触一个完整 source block。
+    - 例如可以使用 `.adjacentFluids("minecraft:water", "minecraft:lava")`，让配方同时要求机器旁边有 water source 和 lava source。
+    - 我们也有 `.adjacentFluidTag("forge:water", "forge:lava")`，效果相同，但允许使用 fluid _tags_。
 - Adjacent Blocks: `.adjacentBlocks("namespace:block_id", ...)`
-    - Much like the fluid condition, you can pass blocks into the array that lock the recipe behind needing the machine to touch these blocks.
-    - For example, you could use `.adjacentBlocks("minecraft:stone", "minecraft:iron_block")` to make a recipe require a Stone block and a Block of Iron.
-    - We also have `.adjacentBlockTag("forge:stone", "forge:storage_blocks/iron")`, which does the same, but allows block _tags_ to be used.
+    - 与 fluid condition 类似，可以传入 blocks，让配方要求机器接触这些 blocks。
+    - 例如可以使用 `.adjacentBlocks("minecraft:stone", "minecraft:iron_block")`，让配方需要一个 Stone block 和一个 Block of Iron。
+    - 我们也有 `.adjacentBlockTag("forge:stone", "forge:storage_blocks/iron")`，效果相同，但允许使用 block _tags_。
 - Thunder: `.thunder(float level)`
-    - Locks a recipe behind a certain level of rain.
-    - For example, you could use `.thunder(1.0)` to make a recipe need a strong thunderstorm.
-- Vent: This condition is automatically added to any recipes ran in a single block steam machine. It blocks recipes from running if the machine's vent is obstructed.
+    - 将配方限制为需要一定程度的雷暴。
+    - 例如可以使用 `.thunder(1.0)`，让配方需要强雷暴。
+- Vent: 此 condition 会自动添加到所有在 single block steam machine 中运行的配方上。如果机器 vent 被阻挡，它会阻止配方运行。
 - Cleanroom: `.cleanroom(CleanroomType.CLEANROOM)`
-    - Locks a recipe to being inside a cleanroom. You can also use `STERILE_CLEANROOM` as well as your own custom cleanroom type(s).
+    - 将配方限制为必须位于 cleanroom 内。你也可以使用 `STERILE_CLEANROOM`，以及自己的自定义 cleanroom type。
 - Fusion Start EU: `.fusionStartEU(long eu)`
-    - Locks a recipe behind the amount of stored power in a fusion machine. To use this, the machine must use the FusionReactorMachine class.
-    - For example, you could use `.fusionStartEU(600000)`
+    - 将配方限制为 fusion machine 中必须存有指定数量的电力。要使用它，机器必须使用 FusionReactorMachine 类。
+    - 例如可以使用 `.fusionStartEU(600000)`
 - Station Research: `.stationResearch(b => b.researchStack("namespace:item_id").EUt(long eu).CWUt(int minCWUPerTick, int TotalCWU))`
-    - Locks a recipe behind having a certain research stack. For this condition to be properly seen, you will either need a base machine recipe type with the research ui component, or make your own.
-    - For example, you could do `.stationResearch(b => b.researchStack("gtceu:lv_motor").EUt(131000).CWUt(24, 12000))` which would lock a recipe behind needing a data orb with the lv motor research. It will also generate you a research station recipe.
+    - 将配方限制为必须拥有特定 research stack。为了正确显示此 condition，你需要使用带 research ui component 的基础 machine recipe type，或自行制作。
+    - 例如可以使用 `.stationResearch(b => b.researchStack("gtceu:lv_motor").EUt(131000).CWUt(24, 12000))`，这会让配方需要带 lv motor research 的 data orb，也会为你生成一个 research station 配方。
 - Scanner Research: `.scannerResearch(b => b.researchStack("namespace:item_id").EUt(long eu))`
-    - Much like station research, this condition locks a recipe behind needing a research stack. However, in this case it will default to a data stick.
-    - For example, you could do `.scannerResearch(b => b.researchStack("gtceu:lv_motor").EUt(8192))`, which would make the recipe need a data stick with the lv motor research, and generates a scanner recipe.
+    - 与 station research 类似，此 condition 会将配方限制为需要 research stack。不过在这种情况下，它默认使用 data stick。
+    - 例如可以使用 `.scannerResearch(b => b.researchStack("gtceu:lv_motor").EUt(8192))`，这会让配方需要带 lv motor research 的 data stick，并生成 scanner 配方。
 - Environmental Hazard: `.environmentalHazard("medical_condition_name")`
-    - Locks a recipe into needing a certain environmental hazard to run. For now, `"carbon_monoxide_poisoning"` is the only one that's added to the world (by default). An example of a machine using this condition is the air scrubber.
-    - For example, you could do `.environmentalHazard("carcinogen")` (if you have something that creates radiation, as if you don't, the recipe would never run.)
+    - 将配方限制为需要特定 environmental hazard 才能运行。目前，默认世界中只添加了 `"carbon_monoxide_poisoning"`。使用该 condition 的机器示例是 air scrubber。
+    - 例如可以使用 `.environmentalHazard("carcinogen")`（如果你有会产生 radiation 的东西；否则该配方永远不会运行）。
 - Daytime: `.daytime(boolean isNight)`
-    - Locks recipe behind whether it is day or night.
-    - For example, you could do `.daytime(true)` to make the recipe require nighttime to run.
+    - 根据当前是白天还是夜晚限制配方。
+    - 例如可以使用 `.daytime(true)`，让配方要求夜晚才能运行。
 
-### Mod Dependent Conditions
+### 依赖 Mod 的条件
 - FTB Quests: `.ftbQuest("quest_id")`
-    - Locks a recipe behind the owner of a machine completing a quest with FTB Quests.
-    - An example can't be easily given since every quest book is different.
+    - 将配方限制为机器所有者必须完成 FTB Quests 中的某个 quest。
+    - 由于每个 quest book 都不同，这里很难给出示例。
 - Game Stages: `.gameStage("gamestage_id")`
-    - Locks a recipe behind a certain game stage.  
+    - 将配方限制为需要特定 game stage。
 - Odyssey Quests (Heracles): `.heraclesQuest("quest_id")`
-    - Locks a recipe behind the owner of a machine completing a quest with Heracles.
-    - An example can't be easily given since every quest book is different.
-
+    - 将配方限制为机器所有者必须完成 Heracles 中的某个 quest。
+    - 由于每个 quest book 都不同，这里很难给出示例。

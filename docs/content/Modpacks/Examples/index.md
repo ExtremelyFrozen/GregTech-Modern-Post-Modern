@@ -1,8 +1,8 @@
 ---
-title: "Examples"
+title: "示例"
 ---
 
 
-# Examples
+# 示例
 
-This sections contains several examples you can use and adapt for your own modpack.
+本节包含多个可直接参考并改写到你自己的整合包中的示例。

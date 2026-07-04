@@ -1,11 +1,11 @@
 ---
-title: "Ore Processing Plant"
+title: "矿石处理厂"
 ---
 
 
-# Ore Processing Plant Multiblock (by trulyno)
+# 矿石处理厂 Multiblock（作者：trulyno）
 
-## Recipe Type
+## 配方类型
 
 === "JavaScript"
     ```js title="ore_processing_plant.js"
@@ -27,7 +27,7 @@ title: "Ore Processing Plant"
     ```
 
 
-## Multiblock
+## Multiblock 结构
 === "JavaScript"
     ```js title="ore_processing_plant.js"
     GTCEuStartupEvents.registry('gtceu:machine', event => {
@@ -95,7 +95,7 @@ title: "Ore Processing Plant"
     ```
 
 
-## Lang
+## 语言文件
 
 ```json title="en_us.json"
 {

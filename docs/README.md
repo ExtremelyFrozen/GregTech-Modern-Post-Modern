@@ -1,4 +1,4 @@
-# GregTech Modern Documentation
+# GregTech Post Modern Documentation
 
 This documentation project is built using [MkDocs](https://www.mkdocs.org/#).  
 For an automatically updating live preview in your browser, run `mkdocs serve`
@@ -14,7 +14,7 @@ If you want to contribute to the docs without setting up a dedicated code enviro
 
 ![image](https://github.com/user-attachments/assets/27458f12-15af-475e-9e79-f45b890d4707)
 
-Then, click `Codespaces` and create a new codespace on `1.20.1`
+Then, click `Codespaces` and create a new codespace on `1.21`
 
 ![image](https://github.com/user-attachments/assets/42b23f92-5277-4825-8a61-a44855f4e33c)
 
@@ -81,6 +81,6 @@ The following plugins for MkDocs are being used:
 - https://github.com/lukasgeiter/mkdocs-awesome-pages-plugin
 
 ## Deployment
-The hosted documentation is found on the `gh-pages` branch of the repository. [Mike](https://github.com/jimporter/mike) is used to deploy both the 1.20.1 and 1.21.1 documentation on the same site through Github Actions.
+The hosted documentation is published to the `gh-pages` branch by GitHub Actions from the documentation changes in the branch being deployed.
 
 When working on the docs locally, the plain `mkdocs` commands should be used to view the changes made to the version of the docs you are currently working on, like the previously mentioned `mkdocs serve`.

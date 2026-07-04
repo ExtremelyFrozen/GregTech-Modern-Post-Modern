@@ -1,6 +1,6 @@
 nav:
-  - Recipe-Logic.md
-  - Recipe-Searching.md
-  - Recipe-Execution.md
-  - Custom-Ingredient.md
+  - 配方逻辑: Recipe-Logic.md
+  - 配方搜索: Recipe-Searching.md
+  - 配方执行: Recipe-Execution.md
+  - 自定义 Ingredient: Custom-Ingredient.md
   - ...

@@ -1,10 +1,10 @@
 ---
-title: Adding Copy & Paste support to covers and machines
+title: 为 Cover 和 Machine 添加 Copy & Paste 支持
 ---
 
-The Machine Memory Card item allows for machine settings and covers to be copied to other machines.
+Machine Memory Card 物品允许将 Machine 设置和 Cover 复制到其他 Machine。
 
-To add extra fields to copy, override the following methods on a machine or cover:
+要添加需要额外复制的字段，请在 Machine 或 Cover 上重写以下方法：
 ```java
 /// Copies the current machine/cover config to a CompoundTag.
 public CompoundTag copyConfig(CompoundTag tag);

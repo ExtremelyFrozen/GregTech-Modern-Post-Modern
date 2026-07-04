@@ -1,24 +1,24 @@
 ---
-title: "Usage"
+title: "用法"
 ---
 
-## Usage
+## 用法
 
-### Registering classes with the sync system
+### 将类注册到 sync system
 
-At the core of the system is the interface `ISyncManaged`, which represents a class that to be synchronised with the client or saved.
-All block entities which should be synchronised or saved must extend the abstract class `ManagedSyncBlockEntity`.
+系统的核心是 `ISyncManaged` 接口，它表示一个需要同步到 client 或需要保存的类。
+所有需要同步或保存的 block entity 都必须继承抽象类 `ManagedSyncBlockEntity`。
 
-!!! warning 
-  Block entities that inherit `ManagedSyncBlockEntity` must call `ManagedSyncBlockEntity::updateTick`***every tick*** within their ticker, or they will not be saved.
+!!! warning
+  继承 `ManagedSyncBlockEntity` 的 block entity 必须在 ticker 中***每 tick*** 调用 `ManagedSyncBlockEntity::updateTick`，否则不会保存。
 
 ```java
 class MySyncObject implements ISyncManaged {
     // Any class that directly implements ISyncManaged must have the following:
      @Getter
      protected final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
-    
-    
+
+
     /**
      * Function called when the SyncDataHolder requests a rerender
      */
@@ -31,15 +31,22 @@ class MySyncObject implements ISyncManaged {
 }
 ```
 
-### Registering fields to be managed by the system
-See [Annotations](Annotations.md)
+### 选择保存后端
 
-### Type compatibility
-The following field types are supported by default:
-- Any class implementing `ISyncManaged`
-- Any class implementing `INBTSerializable<Tag>`
-- All primitive types
-- If `T`, `K` are supported types:
+普通 BlockEntity 的保存和 client 同步应使用 `ManagedSyncBlockEntity`。`ManagedSavedData` 只适合真正需要以 `SavedData` 作为后端的全局或跨区块持久数据，不应作为普通 BlockEntity 保存字段的替代方案。
+
+默认 sync save key 是 `${GTCEu.MOD_ID}_sync_data`。当前 mod id 为 `gtpm`，所以默认写入 `CompoundTag` 的 key 是 `gtpm_sync_data`。如果一个 `SavedData` 子类需要独立后端，应由该子类设置专用 key。
+
+### 注册由系统管理的字段
+参阅 [Annotations](Annotations.md)。
+
+### 类型兼容性
+默认支持以下字段类型：
+
+- 任何实现 `ISyncManaged` 的类
+- 任何实现 `INBTSerializable<Tag>` 的类
+- 所有 primitive type
+- 如果 `T`、`K` 是受支持类型：
    - `T[]`
    - `Set<T>`
    - `List<T>`,
@@ -56,13 +63,13 @@ The following field types are supported by default:
 - `Material`
 - `Component`
 
-### Adding support for additional types
+### 为额外类型添加支持
 
-The `ValueTransformer<T>` abstract class defines how a value of type `T` should be serialized.
+`ValueTransformer<T>` 抽象类定义了 `T` 类型值应如何序列化。
 
-To add support for an additional type, call `ValueTransformers.registerTransformer(Class<T> cls, ValueTransformer<T> transformer)` or `ValueTransformers.registerTransformerSupplier(Class<T> cls, Supplier<ValueTransformer<T>> func)`
+要为额外类型添加支持，请调用 `ValueTransformers.registerTransformer(Class<T> cls, ValueTransformer<T> transformer)` 或 `ValueTransformers.registerTransformerSupplier(Class<T> cls, Supplier<ValueTransformer<T>> func)`。
 
-Additionally, fields can be explicitly directed to use a specific value transformer:
+此外，也可以显式指定某个字段使用特定的 value transformer：
 ```java
 /**
  * Example from HullMachine.java. This example shows serialization of an AE2 class which may or may not be loaded at runtime.

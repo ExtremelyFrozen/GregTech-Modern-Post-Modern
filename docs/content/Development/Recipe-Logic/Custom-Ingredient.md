@@ -1,25 +1,29 @@
 ---
-title: "Custom Ingredient"
+title: "自定义 Ingredient"
 ---
 
 !!! Note
-    Before reading / following this document, it is heavily recommended to have read [Recipe Logic](./Recipe-Logic.md), [Recipe Searching](./Recipe-Searching.md) and [Recipe Execution](./Recipe-Execution.md) first. 
+    在阅读或实践本文之前，强烈建议先阅读 [配方逻辑](./Recipe-Logic.md)、[配方搜索](./Recipe-Searching.md) 和 [配方执行](./Recipe-Execution.md)。
 
-If you want to make a custom ingredient, you need to do the following things
+!!! Note
+    最近的配方迁移已经把 definition recipe 和 runtime recipe 分离。展示、序列化和索引阶段使用 `GTRecipeDefinition`，运行时执行阶段使用 `GTRecipe`。自定义 ingredient 需要同时覆盖这两端：`RecipeCapability` / serializer 需要能把内容写入 `ContentListMap`，`MapIngredient` 需要服务于 `GTRecipeDefinition` 的搜索索引，实际 I/O 则由 `RecipeHandlerGroup` / `RecipeHandlerList` 中的 handler 处理。处理失败时不要吞掉原因，应该让上层通过 `ActionResult` 得到明确失败结果。
 
-1. Create the Ingredient itself
-2. Create a MapIngredient to hold/check the Ingredient
-3. Create a RecipeCapability to process the Ingredient 
-4. Create the NotifiableHatch to keep track of the Ingredient in the machine
-5. Create a MultiPart that lets you interact with the ingredient in-game
-6. Create the PartAbility for the MultiPart
-7. Create a RecipeType so we can test with it
-8. Register all these things
+如果你想创建一个自定义 ingredient，需要完成下面这些事情：
 
-## Creating the Ingredient
-For our example, we will be using a simple ingredient called Bonk that simply holds how often you right clicked the hatch with a hard hammer.
+1. 创建 Ingredient 本身
+2. 创建用于持有/检查 Ingredient 的 MapIngredient
+3. 创建用于处理 Ingredient 的 RecipeCapability
+4. 创建用于在机器中跟踪 Ingredient 的 NotifiableHatch
+5. 创建一个允许玩家在游戏内和该 ingredient 交互的 MultiPart
+6. 为这个 MultiPart 创建 PartAbility
+7. 创建一个 RecipeType，便于测试
+8. 注册以上所有内容
 
-For our first step, we will be creating the ingredient:
+## 创建 Ingredient
+
+本文示例会使用一个简单的 ingredient，名为 Bonk。它只记录你用 hard hammer 右键 hatch 的次数。
+
+第一步，创建这个 ingredient：
 
 ```java title="BonkIngredient.java"
 public class BonkIngredient {
@@ -40,7 +44,7 @@ public class BonkIngredient {
     public BonkIngredient copy(){
         return new BonkIngredient(bonk);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if(!(obj instanceof BonkIngredient other)) return false;
@@ -88,10 +92,10 @@ public class BonkIngredient {
 }
 ```
 
-This is mostly just a wrapper around an integer, but the methods are there in case your ingredient would need to hold more data or have more complicated (de)serialization. For more information on Codecs, read [the forge docs](https://docs.minecraftforge.net/en/latest/datastorage/codecs/).
+这基本只是一个整数包装器，但这些方法可以让你的 ingredient 在需要持有更多数据，或需要更复杂的序列化/反序列化时继续扩展。关于 Codec 的更多信息，请阅读 [Forge 文档](https://docs.minecraftforge.net/en/latest/datastorage/codecs/)。
 
 
-## Creating the MapIngredient
+## 创建 MapIngredient
 
 ```java title="MapBonkIngredient"
 public class MapBonkIngredient extends AbstractMapIngredient {
@@ -125,7 +129,8 @@ public class MapBonkIngredient extends AbstractMapIngredient {
 ```
 
 
-## Creating the RecipeCapability
+## 创建 RecipeCapability
+
 ```java title="BonkRecipeCapability"
 public class BonkRecipeCapability extends RecipeCapability<BonkIngredient> {
 
@@ -175,7 +180,8 @@ public class BonkRecipeCapability extends RecipeCapability<BonkIngredient> {
 }
 ```
 
-## Creating the NotifiableHatch
+## 创建 NotifiableHatch
+
 ```java title="NotifiableBonkHandler"
 public class NotifiableBonkHandler extends NotifiableRecipeHandlerTrait<BonkIngredient>
         implements ICapabilityTrait {
@@ -249,10 +255,11 @@ public class NotifiableBonkHandler extends NotifiableRecipeHandlerTrait<BonkIngr
 }
 ```
 
-## Creating the MultiPart
+## 创建 MultiPart
+
 ```java title="BonkHatchPartMachine"
 public class BonkHatchPartMachine extends TieredIOPartMachine {
-    
+
     @Persisted
     public NotifiableBonkHandler bonkHandler;
 
@@ -274,7 +281,7 @@ public class BonkHatchPartMachine extends TieredIOPartMachine {
 }
 ```
 
-We will register the actual part, as well as a "Large Bonk Reactor" which is an LCR that can use our part ability:
+接下来注册实际的 part，以及一个可以使用此 part ability 的 "Large Bonk Reactor"。这里的 "Large Bonk Reactor" 是一个 LCR：
 
 ```java title="BonkMachines.java"
 public class BonkMachines {
@@ -323,14 +330,16 @@ public class BonkMachines {
 }
 ```
 
-## Creating the PartAbility
+## 创建 PartAbility
+
 ```java title="BonkPartAbilities.java"
 public class BonkPartAbilities {
     public static final PartAbility BONK_HATCH = new PartAbility("bonk_hatch");
 }
 ```
 
-## Creating the RecipeType
+## 创建 RecipeType
+
 ```java title="BonkRecipeTypes.java"
 public class BonkRecipeTypes {
     public static final GTRecipeType LARGE_BONK_RECIPES = register("large_bonk_reactor", MULTIBLOCK)
@@ -339,7 +348,7 @@ public class BonkRecipeTypes {
             .setEUIO(IO.IN);
 
     public static void init() {}
-    
+
     public static GTRecipeType register(String name, String group, RecipeType<?>... proxyRecipes) {
         var recipeType = new GTRecipeType(GTCEu.id(name), group, proxyRecipes);
         GTRegistries.register(BuiltInRegistries.RECIPE_TYPE, recipeType.registryName, recipeType);
@@ -350,7 +359,8 @@ public class BonkRecipeTypes {
 }
 ```
 
-## Making a Recipe
+## 创建配方
+
 ```java title="BonkRecipes.java"
 public class BonkRecipes {
 
@@ -367,7 +377,7 @@ public class BonkRecipes {
 }
 ```
 
-## Registering Everything
+## 注册所有内容
 
 ```java title="BonkRecipeCapabilities.java"
 public class BonkRecipeCapabilities {
@@ -379,7 +389,9 @@ public class BonkRecipeCapabilities {
     }
 }
 ```
-The following parts, you would do in your main java class and your main GTAddon class, assuming you are working off of the [Addon Template](https://github.com/JuiceyBeans/GregTech-Addon-Template):
+
+下面这些内容需要放在你的主 Java 类和主 GTAddon 类中。这里假设你基于 [Addon Template](https://github.com/JuiceyBeans/GregTech-Addon-Template) 开发：
+
 ```java title="Bonk.java"
 @Mod(Bonk.MOD_ID)
 public class Bonk {

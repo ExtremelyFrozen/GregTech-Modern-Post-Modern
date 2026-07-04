@@ -1,25 +1,25 @@
 ---
-title: Tool Creation
+title: "工具创建"
 ---
 
-Tools can be made out of materials you create by calling toolStats inside the material's code.
+你可以在 Material 的代码中调用 toolStats，用自己创建的 Materials 制作工具。
 
-toolStats has the following arguments:
+toolStats 接受以下参数：
 
 `.toolStats(float harvestSpeed, float attackDamage, int durability, int harvestLevel, GTToolType[] types)`
 
-- `harvestSpeed: float` is how fast the tool actually breaks blocks in world.
-- `attackDamage: float` is the amount of damage per hit you deal to mobs/players.
-- `durability: int` is the number of times the tool can be used before it breaks.
-    - This applies to both crafting use and in-world use.
-      Crafting generally consumes 2 points of durability per use.
-- `harvestLevel: int` is the tier of block it can break. 
-    - Can take an integer between 0-6 with 0 being wood, 6 being neutronium.
-- `types: GTToolType[]` is an array of tools in an object.
-    - Must pass these as an array, using the [] notation.  
-      This argument can be left out if you want your material to apply to all tool types.
+- `harvestSpeed: float` 是工具在世界中实际破坏方块的速度。
+- `attackDamage: float` 是每次命中对生物/玩家造成的伤害量。
+- `durability: int` 是工具在损坏前可以使用的次数。
+    - 这同时适用于合成使用和世界中使用。
+      合成通常每次使用消耗 2 点耐久。
+- `harvestLevel: int` 是它能破坏的方块等级。
+    - 可以取 0-6 之间的整数，其中 0 表示木，6 表示 neutronium。
+- `types: GTToolType[]` 是对象中的工具数组。
+    - 必须使用 [] 记法将它们作为数组传入。
+      如果希望你的 Material 应用于所有工具类型，可以省略此参数。
 
-An example of this being used is included below.
+下面包含一个使用示例。
 === "JavaScript"
     ```js title="example_tool_material.js"
     // When working with tools in kubejs you will need to load these classes at the top of your file.
@@ -47,26 +47,26 @@ An example of this being used is included below.
                         new GTToolType[] { GTToolType.DRILL_LV, GTToolType.MINING_HAMMER }))
                 .buildAndRegister();
     ```
-Using the ToolProperties.Builder, you can also add further arguments onto your tools.
-The builder has the same arguments as the constructor, and can have chained methods such as:
+使用 ToolProperties.Builder 时，也可以为工具添加更多参数。
+builder 拥有与构造器相同的参数，并且可以链式调用以下方法：
 
 - `.unbreakable()`
-    - Makes electric tools bypass durability effectively making them never break.
+    - 使电动工具实际上绕过耐久，从而永不损坏。
 - `.magnetic()`
-    - Makes mined blocks and mob drops teleport to player inventory.
+    - 使挖掘出的方块和生物掉落物传送到玩家物品栏。
 - `attackSpeed(float attackSpeed)`
-    - Set the attack speed of a tool made from this Material (animation time).
+    - 设置由此 Material 制成工具的攻击速度（动画时间）。
 - `ignoreCraftingTools()`
-    - Disable crafting tools being made from this Material.
+    - 禁用由此 Material 制作合成工具。
 
 - `.enchantment(Enchantment enchantment, int level)`
-    - Enchantment is the default enchantment applied on tool creation.  
-      Level is the level of said enchantment.
+    - Enchantment 是工具创建时应用的默认附魔。
+      Level 是该附魔的等级。
 - `enchantability(int enchantability)`
-    - Set the base enchantability of a tool made from this Material.  
-      Iron is 14, Diamond is 10, Stone is 5.
+    - 设置由此 Material 制成工具的基础附魔能力。
+      Iron 为 14，Diamond 为 10，Stone 为 5。
 
-Here is an example of using the builder in a material:
+下面是在 Material 中使用 builder 的示例：
 === "JavaScript"
     ```js title="example_tool_material.js"
     GTCEuStartupEvents.registry('gtceu:material', event => {
@@ -84,7 +84,7 @@ Here is an example of using the builder in a material:
                 .unbreakable()
                 .enchantment(SILK_TOUCH, 1)
                 .build()
-            ) 
+            )
     });
     ```
 === "Java"
@@ -105,14 +105,14 @@ Here is an example of using the builder in a material:
                 .buildAndRegister();
     ```
 
-You can also change the tool property of a GT material that already has a tool property. You do, however, have to remove the current tool property as it is immutable.
+你也可以修改已经拥有 tool property 的 GT Material 的工具属性。不过，由于当前 tool property 是不可变的，你必须先移除它。
 === "JavaScript"
     ```js title="tool_replacement.js"
     GTCEuStartupEvents.materialModification(event => {
         if (GTMaterials.TungstenCarbide.hasProperty(PropertyKey.TOOL)) {
             GTMaterials.TungstenCarbide.removeProperty(PropertyKey.TOOL);
         }
-        GTMaterials.TungstenCarbide.setProperty(PropertyKey.TOOL, 
+        GTMaterials.TungstenCarbide.setProperty(PropertyKey.TOOL,
             ToolProperty.Builder.of(180, 5.9, 2147483647, 6,
             [
                 GTToolType.SOFT_MALLET,
@@ -131,10 +131,10 @@ You can also change the tool property of a GT material that already has a tool p
                 (ToolProperty.Builder.of(180, 5.9, 2147483647, 6, GTToolType.SOFT_MALLET, GTToolType.DRILL_LV)
                         .build()));
     }
-    
+
     ```
 
-Here is a list of all the GtToolTypes.
+以下是所有 GtToolTypes 的列表。
 
 - SWORD
 - PICKAXE

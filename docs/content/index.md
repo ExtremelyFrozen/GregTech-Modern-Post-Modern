@@ -2,24 +2,24 @@
 hide:
   - navigation
   - toc
-title: Home
+title: 首页
 ---
 
-# Welcome to GregTech CEu Modern's Documentation for 1.21.1!
+# 欢迎阅读 GregTech Post Modern 1.21.1 文档！
 
-GregTech CEu Modern is a port of [GregTech Community Edition Unofficial](https://github.com/GregTechCEu/GregTech)
-to modern Minecraft versions.
+GregTech Post Modern 是 [GregTech Community Edition Unofficial](https://github.com/GregTechCEu/GregTech)
+面向现代 Minecraft 版本的移植版。
 
-!!! danger "Work in Progress"
-    Please note that this documentation is currently heavily work-in-progress and therefore still missing a lot of content.
-    
-    If you can't find what you're looking for, feel free to ask us on [our Discord](https://discord.gg/bWSWuYvURP).
+!!! danger "施工中"
+    请注意，这份文档目前仍处于大量施工阶段，因此还有许多内容缺失。
 
-
-## Download
-You can download an offline version of this wiki here:  
-[Download Zip](https://github.com/GregTechCEu/gtceu-modern-docs/archive/refs/heads/gh-pages.zip)
+    如果你找不到需要的内容，欢迎在 [我们的 Discord](https://discord.gg/bWSWuYvURP) 提问。
 
 
-## Want to Contribute?
-If you want to contribute to this documentation site, feel free to read [the instructions](https://github.com/GregTechCEu/GregTech-Modern/blob/1.20.1/docs/CONTRIBUTING.md) and open a pull request on the [GitHub repository](https://github.com/GregTechCEu/GregTech-Modern).
+## 下载
+你可以在这里下载此 wiki 的离线版本：
+[下载 Zip](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/archive/refs/heads/gh-pages.zip)
+
+
+## 想参与贡献？
+如果你想为这个文档站点做贡献，欢迎阅读 [贡献说明](https://github.com/ExtremelyFrozen/GregTech-Post-Modern/blob/1.21/docs/CONTRIBUTING.md)，并在 [GitHub 仓库](https://github.com/ExtremelyFrozen/GregTech-Post-Modern) 中发起 pull request。

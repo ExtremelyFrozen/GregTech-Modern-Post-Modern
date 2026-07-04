@@ -1,14 +1,14 @@
 ---
-title: "Materials & Elements"
+title: "材料与元素"
 ---
 
 
-# Materials & Elements
+# 材料与元素
 
-GregTech has its own material system based on chemical elements.
+GregTech 拥有自己的基于化学元素的材料系统。
 
-Materials are composed of chemical elements and/or other materials.  
-Each material can have different items (and blocks), such as ingots, dusts, plates, wires, ores, etc.
+Materials 由化学元素和/或其他 materials 组成。
+每种 material 可以拥有不同的物品（和方块），例如 ingots、dusts、plates、wires、ores 等。
 
-## A note about registration
-Order matters when you are registering a new material. If you reference a material by `.components()`, you must make sure the other material(s) have been created before the current one.
+## 关于注册的说明
+注册新 material 时顺序很重要。如果你通过 `.components()` 引用某个 material，必须确保其他 material 已经在当前 material 之前创建。

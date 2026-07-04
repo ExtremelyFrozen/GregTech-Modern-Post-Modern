@@ -1,45 +1,45 @@
 ---
-Title: Generating Steam
+Title: 生成蒸汽
 ---
 
-# Generating Steam
+# 生成蒸汽
 
-## Early game
+## 游戏前期
 
-For early game steam generation you have two options:
+游戏前期生成 Steam 有两个选择：
 
-### Boilers
- * Liquid - allowing you to use hot liquids like lava. To heat up water and get steam.
- * Solid - uses coal to heat up the water.
-### Solar Boilers
- * generate steam from solar boilers _doesn't work at night_.
+### 锅炉（Boilers）
+ * Liquid Boiler（流体锅炉）- 允许你使用 Lava（岩浆）等热流体加热水并获得 Steam。
+ * Solid Boiler（固体锅炉）- 使用 Coal（煤）加热水。
+### 太阳能锅炉（Solar Boilers）
+ * 通过 Solar Boiler 生成 Steam，_夜晚无法工作_。
 
-For water, you can use a **primitive pump**
-![Primitive water pump](./assets/primitive_water_pump.png)
+供水方面，你可以使用 **Primitive Pump（原始泵）**
+![Primitive Water Pump（原始水泵）](./assets/primitive_water_pump.png)
 
-or use a water connection from any other mod.
+或者使用其他 mod 提供的供水连接。
 
-## After Steel
+## 解锁 Steel（钢）后
 
-After unlocking steel (using a primitive blast furnace) you will get access to the high pressure versions of the boilers and allow you to produce more steam.
+使用 Primitive Blast Furnace（原始高炉）解锁 Steel 后，你会获得高压版本的 Boiler，从而能够生产更多 Steam。
 
-## Large Boilers 
+## 大型锅炉（Large Boilers）
 
-Large boilers allow you to create massive amount of steam in the blink of an eye. A boiler can be constructed of many different GT materials, that will allow for different steam generation rates (_consult the table below_).
+Large boilers 可以在短时间内制造大量 Steam。Boiler 可以使用多种不同的 GT 材料建造，不同材料会带来不同的 Steam 生成速率（_见下表_）。
 
-## Base Generation Rates 
+## 基础生成速率
 
-### Single Block
+### 单方块
 
-| Boiler type | Low pressure | High pressure |
+| Boiler 类型 | 低压         | 高压          |
 | ----------- |--------------| ------------- |
 | Solar       | 6 mB/t       | 18 mB/t       |
 | Liquid      | 12 mB/t      | 30 mB/t       |
 | Solid       | 6 mB/t       | 15 mB/t       |
 
-### Multiblock 
+### 多方块
 
-| Boiler        | Generation | Boil up | Max temp |
+| Boiler        | 生成速率   | 升温时间 | 最高温度 |
 | ------------- | ---------- | ------- | -------- |
 | Bronze        | 800 mB/t   | 40s     | 1074K    |
 | Steel         | 1800 mB/t  | 90s     | 2074K    |

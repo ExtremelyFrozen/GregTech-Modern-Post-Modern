@@ -1,11 +1,11 @@
 ---
-title: "Custom Parallel Hatch"
+title: "自定义并行仓"
 ---
 
 
-# Custom Parallel Hatch Multi-Part (By Sparked)
+# 自定义并行仓 Multi-Part（作者：Sparked）
 
-## Parallel Hatch
+## 并行仓
 
 ```js title="extra_parallel_hatch.js"
 
@@ -27,10 +27,10 @@ GTCEuStartupEvents.registry('gtceu:machine', event => { // (2)
 })
 ```
 
-1. Loading the java class that is required to build the parallel hatch multi part
-2. Using the GT registry event to register the multi part, which is part of machine registry
-3. The ID for the new parallel hatch
-4. The tier used for the parallel hatch
-5. Specifying the multipart to use parallel hatch ability
-6. The texture to use for the multipart, this example just uses the t4 texture as a placeholder
-	You can look at gtm's assets to see the animations and textures to edit
+1. 加载构建并行仓 multi part 所需的 Java 类
+2. 使用 GT 注册事件注册 multi part，它属于机器注册表的一部分
+3. 新并行仓的 ID
+4. 并行仓使用的 tier
+5. 指定该 multipart 使用并行仓能力
+6. 该 multipart 使用的纹理；本示例仅使用 t4 纹理作为占位
+	你可以查看 gtm 的 assets，了解可编辑的动画和纹理

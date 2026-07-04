@@ -1,41 +1,38 @@
 ---
-title: Global Caches / Data
+title: 全局缓存 / 数据
 ---
 
 
-# Storing Data Globally
+# 全局存储数据
 
-In certain cases (e.g. in a cache that holds all currently loaded instances of a machine), you might need to store data
-in a global (static and mutable) variable.
+在某些情况下，例如用于保存当前已加载的所有 machine 实例的缓存，你可能需要把数据存入全局的 static mutable 变量中。
 
-When doing so, you need to ensure that remote and serverside instances don't get mixed up.
+这样做时，必须确保 remote 实例和 server side 实例不会混在一起。
 
 
-## Using `SideLocal<T>`
+## 使用 `SideLocal<T>`
 
-!!! warning inline end "Not yet merged<br>_Branch: `mi-ender-link`_"
+!!! warning inline end "尚未合并<br>_Branch: `mi-ender-link`_"
 
-To make working with this requirement easier, You can use `SideLocal<T>` to store your global data.
-It is similar to Java's `ThreadLocal`, but operates on the game's sides instead.
+为了更容易满足这个要求，可以使用 `SideLocal<T>` 存储全局数据。
+它类似 Java 的 `ThreadLocal`，但作用范围是游戏的 side。
 
-If you are currently on the remote side (`GTCEuAPI.isClientThread()` / on the client's `main` thread), it will return the
-remote side's instance of your data. Otherwise, you will get the server side's instance.
+如果当前处于 remote side，也就是 `GTCEuAPI.isClientThread()` 或 client 的 `main` thread，它会返回数据的 remote side 实例。否则会返回 server side 实例。
 
-??? example "Example Usage"
-    
+??? example "用法示例"
+
     ```java
     public class MyCache {
         private static SideLocal<Map<UUID, MyData>> cache = new SideLocal<>(HashMap::new);
-    
+
         public static void cacheData(UUID id, MyData data) {
             cache.get().put(id, data);
         }
-    
+
         public static MyData getData(UUID id) {
             return cache.get().get(id);
         }
     }
     ```
-    
-    Alternatively to passing an initializer for both instances to `SideLocal`'s constructor, you can also supply
-    separate instances for the remote and server side.
+
+    除了向 `SideLocal` 构造函数传入两个实例的 initializer，也可以分别提供 remote side 和 server side 的实例。

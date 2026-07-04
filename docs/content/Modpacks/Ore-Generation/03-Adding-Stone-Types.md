@@ -1,19 +1,19 @@
 ---
-title: "Adding Stone Types"
+title: "添加 Stone Types"
 ---
 
 
-# Adding Stone Types for Ore Blocks
+# 为矿石方块添加 Stone Types
 
-In a modpack, you may want to add your own stone types in order to integrate GT's ore generation with blocks from other mods.
+在整合包中，你可能想添加自己的 stone types，以便将 GT 的 Ore Generation 与其他 mod 的方块整合。
 
-To do so, you need to register a tag prefix for your ore, add a language key, as well as allowing your ores to actually generate.
+为此，你需要为矿石注册 tag prefix、添加语言键，并允许你的矿石实际生成。
 
 
-## Files
+## 文件
 
-For example purposes, this guide uses the block "Blockium" (ID: `my_mod:blockium`).  
-Replace this with the block you want to add ores for.
+出于示例目的，本指南使用方块 “Blockium”（ID：`my_mod:blockium`）。
+请将它替换为你想添加矿石的方块。
 
 ```js title="startup_scripts/ore_types.js"
 GTCEuStartupEvents.registry('gtceu:tag_prefix', event => {
@@ -26,9 +26,9 @@ GTCEuStartupEvents.registry('gtceu:tag_prefix', event => {
 })
 ```
 
-1. The first parameter for `create()` is the name that corresponds to your stone type. The second parameter is **always** `'ore'`!
-2. For `Block.getBlock()` you must use the stone type's block ID as a parameter.
-3. This is the `ResourceLocation` of the base stone type's model. If the base block uses custom rendering, you may need to create your own model.
+1. `create()` 的第一个参数是与你的 stone type 对应的名称。第二个参数**始终**是 `'ore'`！
+2. 对于 `Block.getBlock()`，必须使用该 stone type 的方块 ID 作为参数。
+3. 这是基础 stone type 模型的 `ResourceLocation`。如果基础方块使用自定义渲染，你可能需要创建自己的模型。
 
 
 ```json title="assets/gtceu/lang/en_us.json"
@@ -38,31 +38,32 @@ GTCEuStartupEvents.registry('gtceu:tag_prefix', event => {
 ```
 
 
-## Generating the Ores
-
-To make your ores actually generate in the world, you have several options.
-If you just want to stick to ore generation in the default dimensions, the easiest way to achieve this is adding your new ore base blocks to one of the following block tags:
+## 生成矿石
 
 
-- **Overworld:** `minecraft:stone_ore_replaceables` or `minecraft:deepslate_ore_replaceables`
-- **Nether:** `minecraft:nether_carver_replaceables`
-- **The End:** `forge:end_stone_ore_replaceables` on forge / `c:end_stone_ore_replaceables` on fabric
+要让你的矿石实际生成在世界中，有几种选择。
+如果只想在默认 Dimensions 中进行 Ore Generation，最简单的方式是将新的矿石基底方块加入以下 block tags 之一：
 
-??? example "Adding blocks to a tag"
+
+- **Overworld：** `minecraft:stone_ore_replaceables` 或 `minecraft:deepslate_ore_replaceables`
+- **Nether：** `minecraft:nether_carver_replaceables`
+- **The End：** forge 上使用 `forge:end_stone_ore_replaceables` / fabric 上使用 `c:end_stone_ore_replaceables`
+
+??? example "将方块添加到 tag"
     ```js title="server_scripts/ore_type_tags.js"
     ServerEvents.tags('block', event => {
         event.add('minecraft:stone_ore_replaceables', 'my_mod:blockium')
     })
     ```
 
-You can also add ores in other dimensions, but to do so you will have to create a custom World Generation Layer.    
-You'll learn how to do so in [Layers & Dimensions](./04-Layers-and-Dimensions.md)
+你也可以在其他 Dimensions 中添加矿石，但为此需要创建自定义 World Generation Layer。
+你将在 [Layers & Dimensions](./04-Layers-and-Dimensions.md) 中学习如何操作。
 
 
-## Non-Default BlockStates
+## 非默认 BlockStates
 
-Some mods may generate blocks with `BlockState`s that differ from their `defaultBlockState`.  
-In this case you have to specify the actually generated block state in your ore stone type's `stateSupplier`:
+某些 mod 可能会生成与其 `defaultBlockState` 不同的 `BlockState` 方块。
+在这种情况下，你必须在矿石 stone type 的 `stateSupplier` 中指定实际生成的 block state：
 
 ```js
 let UtilsJS = Java.loadClass("dev.latvian.mods.kubejs.util.UtilsJS")

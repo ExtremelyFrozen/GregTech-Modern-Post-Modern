@@ -1,14 +1,14 @@
 ---
-title: Custom Machine Behavior
+title: 自定义 Machine Behavior
 ---
 
-!!! Warning
-    Custom Machine Behavior is currently only supported in Java.
+!!! Warning "警告"
+    Custom Machine Behavior 目前仅在 Java 中受支持。
 
-Sometimes, you want to do something in a machine that's not possible via Recipe Conditions or Recipe Modifiers. For this, Custom Machine Behavior might be the correct tool.
+有时，你会想在 Machine 中执行一些无法通过 Recipe Conditions 或 Recipe Modifiers 实现的操作。这时，Custom Machine Behavior 可能就是合适的工具。
 
-It works by registering a custom TickableSubscription, which gets called every tick.
-Here, we want to make a greenhouse that, while running, also turns all the dirt above it into grass.
+它通过注册一个自定义 `TickableSubscription` 工作，该 subscription 会在每个 tick 被调用。
+这里我们要制作一个 greenhouse，它在运行时还会把自身上方的所有 dirt 变成 grass。
 ```java
 
 public class Greenhouse extends WorkableElectricMultiblockMachine {
@@ -31,7 +31,7 @@ public class Greenhouse extends WorkableElectricMultiblockMachine {
             tickSubscription = null;
         }
     }
-    
+
     private void turnGreenery(){
         if(!getRecipeLogic().isActive()) return;
         BlockPos currentPosition = getRecipeLogic().getMachine().getHolder().getCurrentPos();
@@ -42,11 +42,11 @@ public class Greenhouse extends WorkableElectricMultiblockMachine {
     }
 }
 ```
-The `tickSubscription` field is a reference to the current subscription that should be called every tick. When this subscription is created, we tell the server to run `this.turnGreenery()` every tick.  
+`tickSubscription` 字段是当前应当每 tick 调用一次的 subscription 引用。创建该 subscription 时，我们会告诉服务端每 tick 运行一次 `this.turnGreenery()`。
 
-In there, we simply check if the recipe logic is active, and if so, we turn the block above the machine into grass if it was already dirt.  
+在该方法中，我们只需检查 recipe logic 是否处于活动状态；如果是，并且 Machine 上方的 Block 已经是 dirt，就将它变成 grass。
 
-To use it, you would do:
+要使用它，可以这样写：
 ```java
     public static final MultiblockMachineDefinition GREENHOUSE = REGISTRATE
         .multiblock("green_house", Greenhouse::new)

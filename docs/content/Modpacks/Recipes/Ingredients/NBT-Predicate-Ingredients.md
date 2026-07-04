@@ -1,30 +1,30 @@
 ---
-title: "NBT Predicate Ingredients"
+title: "NBT Predicate Ingredients（NBT 谓词原料）"
 ---
 
-For some use-cases, using Partial or Strict NBT Ingredients does not give enough control. For this, we have NBT Predicate Ingredients.
-This system allows you to query NBT contents during recipe matching to validate more advanced queries on ItemStacks.
+在某些使用场景中，Partial 或 Strict NBT Ingredients 提供的控制力不够。这时可以使用 NBT Predicate Ingredients。
+该系统允许你在配方匹配期间查询 NBT 内容，以对 ItemStacks 执行更高级的查询验证。
 
 !!! note
-    To test your items in-game, you can use the give and ftblibrary commands, e.g. `/give @p dirt{"attributes": {"strength":16, "sound":"crunch.wav" } }` to give yourself an item with custom NBT or `/ftblibrary nbtedit hand` for a graphical editor
-## Usage
-### Equals
-For JavaScript, custom overloads were made:
+    要在游戏内测试你的物品，可以使用 give 和 ftblibrary 命令，例如 `/give @p dirt{"attributes": {"strength":16, "sound":"crunch.wav" } }` 给自己一个带自定义 NBT 的物品，或使用 `/ftblibrary nbtedit hand` 打开图形编辑器。
+## 用法
+### 相等判断
+为 JavaScript 制作了自定义重载：
 
-- `.eqString(key, value)`  
-- `.eqInt(key, value)`  
-- `.eqFloat(key, value)`  
-- `.eqByte(key, value)`  
-- `.eqDouble(key, value)`  
-- `.eqTag(key, value)`  
+- `.eqString(key, value)`
+- `.eqInt(key, value)`
+- `.eqFloat(key, value)`
+- `.eqByte(key, value)`
+- `.eqDouble(key, value)`
+- `.eqTag(key, value)`
 
-All of these also have an `.neq[...](key, value)` function.  
-In Java, these are also available, as well as simpler `.[n]eq(key, [type] value)` overloads.  
+这些也都有对应的 `.neq[...](key, value)` 函数。
+在 Java 中，这些同样可用，也可以使用更简单的 `.[n]eq(key, [type] value)` 重载。
 
 
 === "JavaScript"
     ```js title="gt_recipes.js"
-    
+
     ServerEvents.recipes(event => {
         event.recipes.gtceu.assembler('test_nbt')
             .inputItemNbtPredicate('minecraft:dirt', NBTPredicates.eqString("charge", "23"))
@@ -32,7 +32,7 @@ In Java, these are also available, as well as simpler `.[n]eq(key, [type] value)
             .duration(100)
             .EUt(30)
     })
-    
+
     ```
 
 === "Java"
@@ -49,13 +49,13 @@ In Java, these are also available, as well as simpler `.[n]eq(key, [type] value)
 
     ```
 
-### Number Comparison
-The following number comparison operators exist:
+### 数字比较
+存在以下数字比较运算符：
 
-- `.lte(key, number)`: Less Than or Equal to  
-- `.lt(key, number)`: Less Than  
-- `.gte(key, number)`: Greater Than or Equal to  
-- `.gt(key, number)`: Greater Than  
+- `.lte(key, number)`: 小于等于
+- `.lt(key, number)`: 小于
+- `.gte(key, number)`: 大于等于
+- `.gt(key, number)`: 大于
 
 === "JavaScript"
     ```js title="gt_recipes.js"
@@ -67,7 +67,7 @@ The following number comparison operators exist:
             .duration(100)
             .EUt(30)
     })
-    
+
     ```
 
 === "Java"
@@ -85,8 +85,8 @@ The following number comparison operators exist:
     ```
 
 
-### Any/All
-The following list operators exist: 
+### 任一/全部
+存在以下列表运算符：
 
 - `.all(NBTPredicate...)`
 - `.any(NBTPredicate...)`
@@ -96,7 +96,7 @@ The following list operators exist:
 
     ServerEvents.recipes(event => {
         event.recipes.gtceu.assembler('test_nbt')
-            .inputItemNbtPredicate('minecraft:dirt', 
+            .inputItemNbtPredicate('minecraft:dirt',
                 NBTPredicates.all([
                     NBTPredicates.lt("charge", 23),
                     NBTPredicates.eqString("color", "blue")
@@ -105,7 +105,7 @@ The following list operators exist:
             .duration(100)
             .EUt(30)
     })
-    
+
     ```
 
 === "Java"
@@ -127,8 +127,8 @@ The following list operators exist:
     ```
 
 
-### Not
-The negation operators exists: 
+### 取反
+存在以下取反运算符：
 
 - `.not(NBTPredicate)`
 
@@ -150,7 +150,7 @@ The negation operators exists:
             .duration(100)
             .EUt(30)
     })
-    
+
     ```
 
 === "Java"
@@ -175,17 +175,17 @@ The negation operators exists:
     ```
 
 
-### Key Navigation
-You can use `.` to navigate nested tags, and `[i]` to index into lists. so
+### Key 路径导航
+可以使用 `.` 导航嵌套 tags，并使用 `[i]` 索引列表。因此：
 ```
-{ "machine": 
-    { "states" : 
-       [ 
+{ "machine":
+    { "states" :
+       [
           {"color": "green"},
           {"color": "red"},
        ]
     }
 }
 ```
-would match
+会匹配：
 `.eq("machine.states[0].color", "green")`
