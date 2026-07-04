@@ -8,9 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Instructs the sync system to sync any changes to this field with clients.
  * <p>
- * Changes are not detected automatically -
- * {@code getSyncDataHolder().markClientSyncFieldDirty(FIELD_NAME)} must be called to include the field in the next sync
- * update
+ * Immutable value changes are detected by the automatic sync scan. Mutable holders with internal state should expose
+ * their own contextual codec or sync-managed child state.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

@@ -127,12 +127,10 @@ public class FisherMachine extends TieredEnergyMachine
 
     public void setWorkingEnabled(boolean enabled) {
         isWorkingEnabled = enabled;
-        syncDataHolder.markClientSyncFieldDirty("isWorkingEnabled");
     }
 
     public void setJunkEnabled(boolean enabled) {
         junkEnabled = enabled;
-        syncDataHolder.markClientSyncFieldDirty("junkEnabled");
     }
 
     @Override
