@@ -32,7 +32,9 @@ import com.gregtechceu.gtceu.data.pattern.StructurePatternKey;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 
-import com.lowdragmc.lowdraglib.gui.texture.*;
+import com.lowdragmc.lowdraglib.gui.texture.ColorBorderTexture;
+import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -520,7 +522,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             imageButtons.add(new ArrayList<>());
             for (int col = 0; col <= leftDist + rightDist; col++) {
                 IGuiTexture texture = getComponentTexture(row, col);
-                GuiTextureGroup textures = new GuiTextureGroup(texture, new ColorBorderTexture(2, 0xFFFFFF));
+                IGuiTexture textures = GuiTextures.group(texture, new ColorBorderTexture(2, 0xFFFFFF));
                 IMonitorComponent component = getComponent(row, col);
                 if (component == null) {
                     imageButtons.getLast().add(it -> {});
@@ -538,9 +540,9 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
 
                         if (!selectedTargets.isEmpty() && selectedTargets.get(0) == component) {
                             IGuiTexture rect = GuiTextures.colorRect(Color.BLUE);
-                            textures.setTextures(rect, texture);
+                            img.setButtonTexture(GuiTextures.group(rect, texture));
                         } else {
-                            textures.setTextures(texture);
+                            img.setButtonTexture(texture);
                         }
 
                         createGroupButton.setVisible(selectedComponents.stream().noneMatch(this::isInAnyGroup));
@@ -569,7 +571,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                         IGuiTexture rect = GuiTextures.colorRect(
                                 (selectedTargets.isEmpty() || selectedTargets.get(0) != component) ? Color.RED :
                                         Color.PINK);
-                        textures.setTextures(rect, texture);
+                        img.setButtonTexture(GuiTextures.group(rect, texture));
                     }
                     if (isInAnyGroup(component)) {
                         monitorGroups.forEach(group -> {
@@ -589,9 +591,9 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                             selectedTargets.clear();
                             if (selectedComponents.contains(component)) {
                                 IGuiTexture rect = GuiTextures.colorRect(Color.RED);
-                                textures.setTextures(rect, texture);
+                                img.setButtonTexture(GuiTextures.group(rect, texture));
                             } else {
-                                textures.setTextures(texture);
+                                img.setButtonTexture(texture);
                             }
                             dataSlotInput.setVisible(false);
                             return;
@@ -613,7 +615,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                     } else {
                         rect = GuiTextures.colorRect(Color.BLUE);
                     }
-                    textures.setTextures(rect, texture);
+                    img.setButtonTexture(GuiTextures.group(rect, texture));
                     if (component.getDataItems() != null) {
                         IItemHandler dataItems = component.getDataItems();
                         MonitorGroup selectedGroup = null;
