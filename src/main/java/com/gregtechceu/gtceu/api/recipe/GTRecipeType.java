@@ -160,6 +160,11 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
         return this;
     }
 
+    public GTRecipeType setProgressBar(ProgressTexture progressBar) {
+        this.recipeUI.setProgressBar(progressBar);
+        return this;
+    }
+
     public GTRecipeType setSteamProgressBar(SteamTexture progressBar, ProgressTexture.FillDirection moveType) {
         this.recipeUI.setSteamProgressBarTexture(progressBar);
         this.recipeUI.setSteamMoveType(moveType);

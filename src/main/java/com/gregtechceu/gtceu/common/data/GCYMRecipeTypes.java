@@ -30,7 +30,8 @@ public class GCYMRecipeTypes {
     public final static GTRecipeType ALLOY_BLAST_RECIPES = register("alloy_blast_smelter", MULTIBLOCK)
             .setMaxIOSize(9, 0, 3, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
+            .setProgressBar(
+                    GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT))
             .setSlotOverlay(false, false, false, GuiTextures.FURNACE_OVERLAY_1)
             .setSlotOverlay(false, false, true, GuiTextures.FURNACE_OVERLAY_1)
             .setSlotOverlay(false, true, false, GuiTextures.FURNACE_OVERLAY_2)

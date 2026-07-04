@@ -421,8 +421,11 @@ public class GTRecipeTypeUI {
     }
 
     public GTRecipeTypeUI setProgressBar(ResourceTexture progressBar, ProgressTexture.FillDirection moveType) {
-        this.progressBarTexture = new ProgressTexture(progressBar.getSubTexture(0, 0, 1, 0.5),
-                progressBar.getSubTexture(0, 0.5, 1, 0.5)).setFillDirection(moveType);
+        return setProgressBar(GuiTextures.progressBar(progressBar, moveType));
+    }
+
+    public GTRecipeTypeUI setProgressBar(ProgressTexture progressBar) {
+        this.progressBarTexture = progressBar;
         return this;
     }
 }
