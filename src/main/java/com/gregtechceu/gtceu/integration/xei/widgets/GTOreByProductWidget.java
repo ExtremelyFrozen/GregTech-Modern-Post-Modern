@@ -153,15 +153,19 @@ public class GTOreByProductWidget extends WidgetGroup {
                 continue;
             }
 
-            itemStackGroup.addWidget(new SlotWidget(itemOutputsHandler, slotIndex, ITEM_OUTPUT_LOCATIONS.getInt(i),
+            SlotWidget outputSlot = new SlotWidget(itemOutputsHandler, slotIndex, ITEM_OUTPUT_LOCATIONS.getInt(i),
                     ITEM_OUTPUT_LOCATIONS.getInt(i + 1))
                     .setCanTakeItems(false)
                     .setCanPutItems(false)
-                    .setIngredientIO(FINAL_OUTPUT_INDICES.contains(i) ? IngredientIO.OUTPUT : IngredientIO.BOTH)
+                    .setIngredientIO(IngredientIO.OUTPUT)
                     .setXEIChance(xeiChance)
                     .setOnAddedTooltips(
-                            (slot, tooltips) -> recipeWrapper.getTooltip(slotIndex + itemInputs.size(), tooltips))
-                    .setBackground((IGuiTexture) null).setOverlay(overlay));
+                            (slot, tooltips) -> recipeWrapper.getTooltip(slotIndex + itemInputs.size(), tooltips));
+            outputSlot.setBackground((IGuiTexture) null).setOverlay(overlay);
+            if (!FINAL_OUTPUT_INDICES.contains(i)) {
+                itemStackGroup.addWidget(new GTRecipeIngredientSlotWidget(outputSlot, IngredientIO.INPUT));
+            }
+            itemStackGroup.addWidget(outputSlot);
             itemOutputExists.add(true);
         }
 

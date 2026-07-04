@@ -161,8 +161,7 @@ public class DualHatchPartMachine extends ItemBusPartMachine {
                 container.addWidget(new SlotWidget(
                         getInventory().storage, index++, 4 + x * 18, 4 + y * 18, true, io.support(IO.IN))
                         .setBackgroundTexture(GuiTextures.SLOT)
-                        .setIngredientIO(this.io == IO.IN ? IngredientIO.INPUT :
-                                this.io == IO.OUT ? IngredientIO.OUTPUT : IngredientIO.BOTH));
+                        .setIngredientIO(this.io == IO.OUT ? IngredientIO.OUTPUT : IngredientIO.INPUT));
             }
         }
 

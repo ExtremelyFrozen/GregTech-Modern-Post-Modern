@@ -25,9 +25,14 @@ public class GTProgrammedCircuitWidget extends WidgetGroup {
         ItemStackHandler handler = new CustomItemStackHandler(32);
         for (int j = 0; j < 4; j++) {
             for (int i = 0; i < 8; i++) {
-                handler.setStackInSlot((i + j * 8), IntCircuitBehaviour.stack(1 + (i + j * 8)));
-                addWidget(new SlotWidget(handler, (i + j * 8), 3 + 18 * i, 18 * j, false, false)
-                        .setIngredientIO((i + j * 8 == 31 ? IngredientIO.OUTPUT : IngredientIO.BOTH)));
+                int circuit = i + j * 8;
+                handler.setStackInSlot(circuit, IntCircuitBehaviour.stack(1 + circuit));
+                var slot = new SlotWidget(handler, circuit, 3 + 18 * i, 18 * j, false, false)
+                        .setIngredientIO(circuit == 31 ? IngredientIO.OUTPUT : IngredientIO.INPUT);
+                if (circuit != 31) {
+                    addWidget(new GTRecipeIngredientSlotWidget(slot, IngredientIO.OUTPUT));
+                }
+                addWidget(slot);
             }
         }
     }
