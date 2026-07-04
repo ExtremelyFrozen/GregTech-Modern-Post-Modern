@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.gui;
 
 import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
+import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
@@ -35,6 +36,13 @@ public class GuiTextures {
 
     public static ProgressTexture progressBar(ResourceTexture texture, ProgressTexture.FillDirection moveType) {
         return progressBar(texture).setFillDirection(moveType);
+    }
+
+    public static IGuiTexture buttonState(IGuiTexture texture, boolean pressed) {
+        if (texture instanceof ResourceTexture resourceTexture) {
+            return resourceTexture.getSubTexture(0, pressed ? 0.5 : 0, 1, 0.5);
+        }
+        return texture;
     }
 
     public static ColorRectTexture colorRect(int color) {

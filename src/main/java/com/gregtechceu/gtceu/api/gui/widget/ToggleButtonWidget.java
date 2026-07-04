@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.data.lang.LangHandler;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
 
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
@@ -29,11 +28,7 @@ public class ToggleButtonWidget extends SwitchWidget {
         super(xPosition, yPosition, width, height,
                 (clickData, aBoolean) -> setPressedExecutor.accept(aBoolean.booleanValue()));
         texture = buttonTexture;
-        if (buttonTexture instanceof ResourceTexture resourceTexture) {
-            setTexture(resourceTexture.getSubTexture(0, 0, 1, 0.5), resourceTexture.getSubTexture(0, 0.5, 1, 0.5));
-        } else {
-            setTexture(buttonTexture, buttonTexture);
-        }
+        setTexture(GuiTextures.buttonState(buttonTexture, false), GuiTextures.buttonState(buttonTexture, true));
 
         setSupplier(isPressedCondition::getAsBoolean);
     }
