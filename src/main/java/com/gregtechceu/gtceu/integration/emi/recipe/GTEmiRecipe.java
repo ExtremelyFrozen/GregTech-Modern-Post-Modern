@@ -61,7 +61,7 @@ public class GTEmiRecipe extends ModularEmiRecipe<WidgetGroup> {
             CACHE_OPENED.add(modular);
         }
         List<Widget> slots = new ArrayList<>();
-        for (com.lowdragmc.lowdraglib.gui.widget.Widget w : getFlatWidgetCollection(widget)) {
+        for (var w : getFlatWidgetCollection(widget)) {
             if (w instanceof IRecipeIngredientSlot slot) {
                 if (w.getParent() instanceof DraggableScrollableWidgetGroup draggable && draggable.isUseScissor()) {
                     // don't add the EMI widget at all if we have a draggable group, let the draggable widget handle it
