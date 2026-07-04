@@ -19,7 +19,6 @@ import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.cover.data.ControllerMode;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -264,7 +263,7 @@ public class MachineControllerCover extends CoverBehavior implements IUICover {
 
         modeButton.setButtonTexture(new GuiTextureGroup(
                 GuiTextures.VANILLA_BUTTON,
-                new TextTexture(controllerMode != null ? controllerMode.localeName : ControllerMode.nullLocaleName)));
+                GuiTextures.text(controllerMode != null ? controllerMode.localeName : ControllerMode.nullLocaleName)));
     }
 
     private void updateCoverSlot() {

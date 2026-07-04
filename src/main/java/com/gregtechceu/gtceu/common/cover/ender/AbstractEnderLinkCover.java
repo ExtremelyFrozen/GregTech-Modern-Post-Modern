@@ -464,7 +464,7 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
             channelGroup.addWidget(textBoxWidget);
             currentX += availableWidth + MARGIN;
             if (!des.isEmpty()) {
-                var desText = new TextTexture(ChatFormatting.DARK_GRAY + des).setDropShadow(false);
+                var desText = GuiTextures.text(ChatFormatting.DARK_GRAY + des).setDropShadow(false);
                 desText.setType(TextTexture.TextType.ROLL).setRollSpeed(0.7f);
                 channelGroup.addWidget(new ImageWidget(BUTTON_SIZE + MARGIN, 10, availableWidth, 8, desText));
             }
