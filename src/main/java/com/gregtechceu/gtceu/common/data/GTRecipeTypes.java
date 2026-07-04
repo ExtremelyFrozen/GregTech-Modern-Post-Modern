@@ -64,7 +64,7 @@ public class GTRecipeTypes {
     //////////////////////////////////////
     public final static GTRecipeType STEAM_BOILER_RECIPES = register("steam_boiler", STEAM)
             .setMaxIOSize(1, 0, 1, 1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(true), DOWN_TO_UP)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(true), DOWN_TO_UP))
             .setMaxTooltips(1)
             .onRecipeBuild((builder, provider) -> {
                 // all LBB recipes' duration is 1/4 the small boiler recipe's duration
@@ -82,21 +82,21 @@ public class GTRecipeTypes {
             .setMaxIOSize(1, 1, 0, 0).setEUIO(IO.IN)
             .prepareBuilder(recipeBuilder -> recipeBuilder.EUt(4))
             .setSlotOverlay(false, false, GuiTextures.FURNACE_OVERLAY_1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT))
             .setSteamProgressBar(GuiTextures.PROGRESS_BAR_ARROW_STEAM, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.FURNACE);
 
     public final static GTRecipeType ALLOY_SMELTER_RECIPES = register("alloy_smelter", ELECTRIC)
             .setMaxIOSize(2, 1, 0, 0).setEUIO(IO.IN)
             .setSlotOverlay(false, false, GuiTextures.FURNACE_OVERLAY_1)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ARROW, LEFT_TO_RIGHT))
             .setIconSupplier(() -> GTMachines.ALLOY_SMELTER[GTValues.LV].asStack())
             .setSteamProgressBar(GuiTextures.PROGRESS_BAR_ARROW_STEAM, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.FURNACE);
 
     public final static GTRecipeType ARC_FURNACE_RECIPES = register("arc_furnace", ELECTRIC).setMaxIOSize(1, 4, 1, 1)
             .setEUIO(IO.IN)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARC_FURNACE, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ARC_FURNACE, LEFT_TO_RIGHT))
             .setSound(GTSoundEntries.ARC)
             .onRecipeBuild((recipeBuilder, provider) -> {
                 if (recipeBuilder.input.getOrDefault(FluidRecipeCapability.CAP, Collections.emptyList()).isEmpty() &&
@@ -110,28 +110,28 @@ public class GTRecipeTypes {
     public final static GTRecipeType ASSEMBLER_RECIPES = register("assembler", ELECTRIC).setMaxIOSize(9, 1, 1, 0)
             .setEUIO(IO.IN)
             .setSlotOverlay(false, false, GuiTextures.SLOT)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ASSEMBLER, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ASSEMBLER, LEFT_TO_RIGHT))
             .setSound(GTSoundEntries.ASSEMBLER);
 
     public final static GTRecipeType AUTOCLAVE_RECIPES = register("autoclave", ELECTRIC).setMaxIOSize(2, 2, 1, 1)
             .setEUIO(IO.IN)
             .setSlotOverlay(false, false, GuiTextures.DUST_OVERLAY)
             .setSlotOverlay(true, false, GuiTextures.CRYSTAL_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_CRYSTALLIZATION, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_CRYSTALLIZATION, LEFT_TO_RIGHT))
             .setSound(GTSoundEntries.FURNACE);
 
     public final static GTRecipeType BENDER_RECIPES = register("bender", ELECTRIC).setMaxIOSize(2, 1, 0, 0)
             .setEUIO(IO.IN)
             .setSlotOverlay(false, false, false, GuiTextures.BENDER_OVERLAY)
             .setSlotOverlay(false, false, true, GuiTextures.INT_CIRCUIT_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_BENDING, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_BENDING, LEFT_TO_RIGHT))
             .setSound(GTSoundEntries.MOTOR);
 
     public final static GTRecipeType BREWING_RECIPES = register("brewery", ELECTRIC).setMaxIOSize(1, 0, 1, 1)
             .setEUIO(IO.IN)
             .prepareBuilder(recipeBuilder -> recipeBuilder.duration(128).EUt(4))
             .setSlotOverlay(false, false, GuiTextures.BREWER_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT))
             .addCustomRecipeLogic(BreweryLogic.INSTANCE)
             .setSound(GTSoundEntries.CHEMICAL);
 
@@ -140,7 +140,7 @@ public class GTRecipeTypes {
             .prepareBuilder(recipeBuilder -> recipeBuilder.duration(150).EUt(2))
             .setSlotOverlay(false, false, GuiTextures.CRUSHED_ORE_OVERLAY)
             .setSlotOverlay(true, false, GuiTextures.DUST_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_MACERATE, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_MACERATE, LEFT_TO_RIGHT))
             .setIconSupplier(() -> GTMachines.MACERATOR[GTValues.LV].asStack())
             .setSteamProgressBar(GuiTextures.PROGRESS_BAR_MACERATE_STEAM, LEFT_TO_RIGHT)
             .addCustomRecipeLogic(MaceratorLogic.INSTANCE)
@@ -154,7 +154,7 @@ public class GTRecipeTypes {
             .setSlotOverlay(true, false, GuiTextures.CANISTER_OVERLAY)
             .setSlotOverlay(false, true, GuiTextures.DARK_CANISTER_OVERLAY)
             .setSlotOverlay(true, true, GuiTextures.DARK_CANISTER_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_CANNER, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_CANNER, LEFT_TO_RIGHT))
             .addCustomRecipeLogic(CannerLogic.INSTANCE)
             .setSound(GTSoundEntries.BATH);
 
@@ -164,7 +164,7 @@ public class GTRecipeTypes {
             .setSlotOverlay(false, false, false, GuiTextures.EXTRACTOR_OVERLAY)
             .setSlotOverlay(false, false, true, GuiTextures.CANISTER_OVERLAY)
             .setSlotOverlay(false, true, true, GuiTextures.CENTRIFUGE_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_EXTRACT, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_EXTRACT, LEFT_TO_RIGHT))
             .setSound(GTSoundEntries.CENTRIFUGE);
 
     public final static GTRecipeType CHEMICAL_BATH_RECIPES = register("chemical_bath", ELECTRIC)
@@ -173,7 +173,7 @@ public class GTRecipeTypes {
             .setSlotOverlay(false, false, true, GuiTextures.BREWER_OVERLAY)
             .setSlotOverlay(true, false, false, GuiTextures.DUST_OVERLAY)
             .setSlotOverlay(true, false, true, GuiTextures.DUST_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_MIXER, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_MIXER, LEFT_TO_RIGHT))
             .setSound(GTSoundEntries.BATH);
 
     public final static GTRecipeType CHEMICAL_RECIPES = register("chemical_reactor", ELECTRIC).setMaxIOSize(2, 2, 3, 2)
@@ -185,7 +185,7 @@ public class GTRecipeTypes {
             .setSlotOverlay(false, true, true, GuiTextures.MOLECULAR_OVERLAY_4)
             .setSlotOverlay(true, false, GuiTextures.VIAL_OVERLAY_1)
             .setSlotOverlay(true, true, GuiTextures.VIAL_OVERLAY_2)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT))
             .setSound(GTValues.FOOLS.getAsBoolean() ? GTSoundEntries.SCIENCE : GTSoundEntries.CHEMICAL)
             .onRecipeBuild((recipeBuilder, provider) -> GTRecipeTypes.LARGE_CHEMICAL_RECIPES.copyFrom(recipeBuilder)
                     .save(provider));
@@ -194,7 +194,7 @@ public class GTRecipeTypes {
             .setEUIO(IO.IN)
             .prepareBuilder(recipeBuilder -> recipeBuilder.duration(200).EUt(2))
             .setSlotOverlay(false, false, GuiTextures.COMPRESSOR_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_COMPRESS, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_COMPRESS, LEFT_TO_RIGHT))
             .setIconSupplier(() -> GTMachines.COMPRESSOR[GTValues.LV].asStack())
             .setSteamProgressBar(GuiTextures.PROGRESS_BAR_COMPRESS_STEAM, LEFT_TO_RIGHT)
             .setSound(GTSoundEntries.COMPRESSOR);
@@ -204,7 +204,7 @@ public class GTRecipeTypes {
             .setSlotOverlay(false, false, GuiTextures.SAWBLADE_OVERLAY)
             .setSlotOverlay(true, false, false, GuiTextures.CUTTER_OVERLAY)
             .setSlotOverlay(true, false, true, GuiTextures.DUST_OVERLAY)
-            .setProgressBar(GuiTextures.PROGRESS_BAR_SLICE, LEFT_TO_RIGHT)
+            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_SLICE, LEFT_TO_RIGHT))
             .setSound(GTSoundEntries.CUT)
             .onRecipeBuild((recipeBuilder, provider) -> {
                 if (recipeBuilder.input.getOrDefault(FluidRecipeCapability.CAP, Collections.emptyList()).isEmpty() &&
