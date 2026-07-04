@@ -1,47 +1,40 @@
 package com.gregtechceu.gtceu.integration.xei;
 
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
-
 import org.jetbrains.annotations.Nullable;
 
 public final class GTXEIHelper {
 
-    private static final IngredientIO INPUT = IngredientIO.INPUT;
-    private static final IngredientIO OUTPUT = IngredientIO.OUTPUT;
-    private static final IngredientIO CATALYST = IngredientIO.CATALYST;
-    private static final IngredientIO NONE = IngredientIO.valueOf("RENDER_ONLY");
-
     private GTXEIHelper() {}
 
-    public static IngredientIO input() {
-        return INPUT;
+    public static GTXEIIngredientRole input() {
+        return GTXEIIngredientRole.INPUT;
     }
 
-    public static IngredientIO output() {
-        return OUTPUT;
+    public static GTXEIIngredientRole output() {
+        return GTXEIIngredientRole.OUTPUT;
     }
 
-    public static IngredientIO catalyst() {
-        return CATALYST;
+    public static GTXEIIngredientRole catalyst() {
+        return GTXEIIngredientRole.CATALYST;
     }
 
-    public static IngredientIO none() {
-        return NONE;
+    public static GTXEIIngredientRole none() {
+        return GTXEIIngredientRole.NONE;
     }
 
-    public static boolean hasRecipeRole(@Nullable IngredientIO ingredientIO) {
-        return ingredientIO != null && ingredientIO != NONE;
+    public static boolean hasRecipeRole(@Nullable GTXEIIngredientRole role) {
+        return role != null && role != GTXEIIngredientRole.NONE;
     }
 
-    public static boolean isInput(@Nullable IngredientIO ingredientIO) {
-        return ingredientIO == INPUT;
+    public static boolean isInput(@Nullable GTXEIIngredientRole role) {
+        return role == GTXEIIngredientRole.INPUT;
     }
 
-    public static boolean isOutput(@Nullable IngredientIO ingredientIO) {
-        return ingredientIO == OUTPUT;
+    public static boolean isOutput(@Nullable GTXEIIngredientRole role) {
+        return role == GTXEIIngredientRole.OUTPUT;
     }
 
-    public static boolean isCatalyst(@Nullable IngredientIO ingredientIO) {
-        return ingredientIO == CATALYST;
+    public static boolean isCatalyst(@Nullable GTXEIIngredientRole role) {
+        return role == GTXEIIngredientRole.CATALYST;
     }
 }

@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.integration.emi.recipe;
 
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleAdapter;
 import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 
 import com.lowdragmc.lowdraglib.emi.ModularEmiRecipe;
@@ -67,8 +68,8 @@ public class GTEmiRecipe extends ModularEmiRecipe<WidgetGroup> {
                     // instead.
                     continue;
                 }
-                var io = slot.getIngredientIO();
-                if (GTXEIHelper.hasRecipeRole(io)) {
+                var role = GTXEIIngredientRoleAdapter.fromLegacy(slot.getIngredientIO());
+                if (GTXEIHelper.hasRecipeRole(role)) {
                     // noinspection unchecked
                     var ingredients = EmiIngredient
                             .of((List<? extends EmiIngredient>) (List<?>) slot.getXEIIngredients());
@@ -93,9 +94,9 @@ public class GTEmiRecipe extends ModularEmiRecipe<WidgetGroup> {
                             .customBackground(null, w.getPosition().x, w.getPosition().y, w.getSize().width,
                                     w.getSize().height)
                             .drawBack(false);
-                    if (GTXEIHelper.isCatalyst(io)) {
+                    if (GTXEIHelper.isCatalyst(role)) {
                         slotWidget.catalyst(true);
-                    } else if (GTXEIHelper.isOutput(io)) {
+                    } else if (GTXEIHelper.isOutput(role)) {
                         slotWidget.recipeContext(this);
                     }
                     for (Component component : w.getTooltipTexts()) {

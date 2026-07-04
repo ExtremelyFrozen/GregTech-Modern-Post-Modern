@@ -2,6 +2,8 @@ package com.gregtechceu.gtceu.api.gui.widget;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleAdapter;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemTagList;
@@ -63,7 +65,7 @@ public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
         this.setActive(true);
         this.drawHoverOverlay = true;
         this.drawHoverTips = true;
-        this.ingredientIO = GTXEIHelper.none();
+        this.ingredientIO = GTXEIIngredientRoleAdapter.toLegacy(GTXEIHelper.none());
         this.XEIChance = 1.0f;
         this.setBackgroundTexture(ITEM_SLOT_TEXTURE);
         this.canTakeItems = canTakeItems;
@@ -138,6 +140,11 @@ public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
     @Override
     public SlotWidget setIngredientIO(IngredientIO ingredientIO) {
         super.setIngredientIO(ingredientIO);
+        return this;
+    }
+
+    public SlotWidget setIngredientIO(GTXEIIngredientRole ingredientRole) {
+        super.setIngredientIO(GTXEIIngredientRoleAdapter.toLegacy(ingredientRole));
         return this;
     }
 
