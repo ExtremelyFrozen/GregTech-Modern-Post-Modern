@@ -7,8 +7,8 @@ import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 
-import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.lowdragmc.lowdraglib2.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.client.Camera;
@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
@@ -29,6 +30,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -447,8 +449,7 @@ public class MultiblockInWorldPreviewRenderer {
                 poseStack.translate(-0.5, -0.5, -0.5);
 
                 level.setRenderFilter(p -> p.equals(pos));
-                WorldSceneRenderer.renderBlocksForge(dispatcher, state, pos, level, poseStack, wrapperBuffer,
-                        GTValues.RNG, layer);
+                renderBlockLayer(dispatcher, state, pos, level, poseStack, wrapperBuffer, GTValues.RNG, layer);
                 level.setRenderFilter(p -> true);
                 poseStack.popPose();
             }
@@ -463,5 +464,15 @@ public class MultiblockInWorldPreviewRenderer {
             wrapperBuffer.clearOffset();
             wrapperBuffer.clearColor();
         }
+    }
+
+    private static void renderBlockLayer(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos,
+                                         TrackedDummyWorld level, PoseStack poseStack, VertexConsumer vertexConsumer,
+                                         RandomSource random, RenderType layer) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        var model = dispatcher.getBlockModel(state);
+        ModelData baseData = blockEntity == null ? ModelData.EMPTY : blockEntity.getModelData();
+        ModelData modelData = model.getModelData(level, pos, state, baseData);
+        dispatcher.renderBatched(state, pos, level, poseStack, vertexConsumer, false, random, modelData, layer);
     }
 }
