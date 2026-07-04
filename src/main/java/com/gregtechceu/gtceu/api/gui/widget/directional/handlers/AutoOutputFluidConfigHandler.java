@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.api.gui.widget.directional.IDirectionalConfigHandle
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.*;
@@ -24,13 +23,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 public class AutoOutputFluidConfigHandler implements IDirectionalConfigHandler {
 
-    private static final IGuiTexture TEXTURE_OFF = new GuiTextureGroup(
+    private static final IGuiTexture TEXTURE_OFF = GuiTextures.group(
             GuiTextures.VANILLA_BUTTON,
             GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 0, 1, 1 / 3f));
-    private static final IGuiTexture TEXTURE_OUTPUT = new GuiTextureGroup(
+    private static final IGuiTexture TEXTURE_OUTPUT = GuiTextures.group(
             GuiTextures.VANILLA_BUTTON,
             GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 1 / 3f, 1, 1 / 3f));
-    private static final IGuiTexture TEXTURE_AUTO = new GuiTextureGroup(
+    private static final IGuiTexture TEXTURE_AUTO = GuiTextures.group(
             GuiTextures.VANILLA_BUTTON,
             GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f));
 

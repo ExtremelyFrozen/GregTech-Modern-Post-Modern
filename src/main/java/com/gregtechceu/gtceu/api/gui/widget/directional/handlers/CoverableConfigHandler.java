@@ -15,7 +15,6 @@ import com.gregtechceu.gtceu.api.item.component.IItemComponent;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.item.behavior.CoverPlaceBehavior;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
@@ -32,7 +31,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class CoverableConfigHandler implements IDirectionalConfigHandler {
 
-    private static final IGuiTexture CONFIG_BTN_TEXTURE = new GuiTextureGroup(GuiTextures.IO_CONFIG_COVER_SETTINGS);
+    private static final IGuiTexture CONFIG_BTN_TEXTURE = GuiTextures.group(GuiTextures.IO_CONFIG_COVER_SETTINGS);
 
     private final ICoverable machine;
     private CustomItemStackHandler handler;
@@ -83,7 +82,7 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
             }
         }
                 .setChangeListener(this::coverItemChanged)
-                .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.IO_CONFIG_COVER_SLOT_OVERLAY)));
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.IO_CONFIG_COVER_SLOT_OVERLAY)));
         group.addWidget(new PredicatedButtonWidget(0, 0, 18, 18, CONFIG_BTN_TEXTURE, this::toggleConfigTab,
                 () -> side != null && coverBehavior != null && machine.getCoverAtSide(side) instanceof IUICover));
 
