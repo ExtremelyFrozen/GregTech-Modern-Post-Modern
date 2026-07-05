@@ -6,8 +6,8 @@ import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.client.scene.ISceneBlockRenderHook;
-import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
+import com.lowdragmc.lowdraglib2.client.scene.ISceneBlockRenderHook;
+import com.lowdragmc.lowdraglib2.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
@@ -88,7 +88,7 @@ public class CombinedDirectionalConfigurator extends WidgetGroup {
 
                         @Override
                         @OnlyIn(Dist.CLIENT)
-                        public void apply(boolean isTESR, RenderType layer) {
+                        public void apply(RenderType layer) {
                             RenderSystem.enableBlend();
                             RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE);
                         }
