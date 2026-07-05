@@ -22,6 +22,7 @@ import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.FusionReactorMachine;
 import com.gregtechceu.gtceu.common.recipe.condition.DimensionCondition;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
+import com.gregtechceu.gtceu.integration.xei.GTLDLib2RecipeUI;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib.gui.widget.*;
@@ -35,7 +36,6 @@ import net.neoforged.fml.loading.FMLLoader;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -354,74 +354,7 @@ public class GTRecipeWidget extends WidgetGroup {
     public void collectStorage(Table<IO, RecipeCapability<?>, Object> extraTable,
                                Table<IO, RecipeCapability<?>, List<Content>> extraContents,
                                GTRecipeDefinition recipe) {
-        for (var entry : recipe.inputs.entrySet()) {
-            RecipeCapability<?> cap = entry.getKey();
-            List<Content> contents = entry.getValue();
-
-            extraContents.put(IO.IN, cap, contents);
-        }
-        for (var entry : recipe.tickInputs.entrySet()) {
-            RecipeCapability<?> cap = entry.getKey();
-            List<Content> contents = entry.getValue();
-
-            if (extraContents.get(IO.IN, cap) == null) {
-                extraContents.put(IO.IN, cap, contents);
-            } else {
-                ArrayList<Content> fullContents = new ArrayList<>(extraContents.get(IO.IN, cap));
-                fullContents.addAll(contents);
-                extraContents.put(IO.IN, cap, fullContents);
-            }
-        }
-        if (extraContents.containsRow(IO.IN)) {
-            Map<RecipeCapability<?>, List<Object>> inputCapabilities = new Object2ObjectLinkedOpenHashMap<>();
-            for (var entry : extraContents.row(IO.IN).entrySet()) {
-                RecipeCapability<?> cap = entry.getKey();
-                inputCapabilities.put(cap, cap.createXEIContainerContents(entry.getValue(), recipe, IO.IN));
-            }
-
-            for (var entry : inputCapabilities.entrySet()) {
-                while (entry.getValue().size() < recipe.recipeType.getMaxInputs(entry.getKey()))
-                    entry.getValue().add(null);
-                var container = entry.getKey().createXEIContainer(entry.getValue());
-                if (container != null) {
-                    extraTable.put(IO.IN, entry.getKey(), container);
-                }
-            }
-        }
-
-        for (var entry : recipe.outputs.entrySet()) {
-            RecipeCapability<?> cap = entry.getKey();
-            List<Content> contents = entry.getValue();
-
-            extraContents.put(IO.OUT, cap, contents);
-        }
-        for (var entry : recipe.tickOutputs.entrySet()) {
-            RecipeCapability<?> cap = entry.getKey();
-            List<Content> contents = entry.getValue();
-
-            if (extraContents.get(IO.OUT, cap) == null) {
-                extraContents.put(IO.OUT, cap, contents);
-            } else {
-                ArrayList<Content> fullContents = new ArrayList<>(extraContents.get(IO.OUT, cap));
-                fullContents.addAll(contents);
-                extraContents.put(IO.OUT, cap, fullContents);
-            }
-        }
-        if (extraContents.containsRow(IO.OUT)) {
-            Map<RecipeCapability<?>, List<Object>> outputCapabilities = new Object2ObjectLinkedOpenHashMap<>();
-            for (var entry : extraContents.row(IO.OUT).entrySet()) {
-                RecipeCapability<?> cap = entry.getKey();
-                outputCapabilities.put(cap, cap.createXEIContainerContents(entry.getValue(), recipe, IO.OUT));
-            }
-            for (var entry : outputCapabilities.entrySet()) {
-                while (entry.getValue().size() < recipe.recipeType.getMaxOutputs(entry.getKey()))
-                    entry.getValue().add(null);
-                var container = entry.getKey().createXEIContainer(entry.getValue());
-                if (container != null) {
-                    extraTable.put(IO.OUT, entry.getKey(), container);
-                }
-            }
-        }
+        GTLDLib2RecipeUI.collectStorage(extraTable, extraContents, recipe);
     }
 
     public void addSlots(Table<IO, RecipeCapability<?>, List<Content>> contentTable, WidgetGroup group,
