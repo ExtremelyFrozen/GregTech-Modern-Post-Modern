@@ -29,7 +29,7 @@ import com.gregtechceu.gtceu.integration.xei.entry.item.ItemEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemTagList;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
-import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
+import com.gregtechceu.gtceu.integration.xei.GTRecipeXEIHelper;
 import com.gregtechceu.gtceu.utils.*;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -493,7 +493,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                         .getBoostedChance(content, recipeTier, chanceTier) / content.maxChance;
                 slot.setXEIChance(chance);
                 slot.setOnAddedTooltips((w, tooltips) -> {
-                    GTRecipeWidget.setConsumedChance(content,
+                    GTRecipeXEIHelper.setConsumedChance(content,
                             recipe.getChanceLogicForCapability(this, io, isTickSlot(index, io, recipe)),
                             tooltips, recipeTier, chanceTier, recipeType.getChanceFunction());
                     // spotless:off
@@ -558,7 +558,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                     slot.setIngredientIO(GTXEIHelper.catalyst());
                 }
                 slot.setOnAddedTooltips((w, tooltips) -> {
-                    GTRecipeWidget.setConsumedChance(content,
+                    GTRecipeXEIHelper.setConsumedChance(content,
                             recipe.getChanceLogicForCapability(this, io, isTickSlot(index, io, recipe)),
                             tooltips, recipeTier, chanceTier, recipeType.getChanceFunction());
                     appendCountRangeTooltip(ingredient, tooltips);

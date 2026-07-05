@@ -794,7 +794,7 @@ public class GTRecipeTypeUI {
      */
     public int getPropertyHeightShift() {
         int maxPropertyCount = maxTooltips + recipeType.getDataInfos().size() + recipeType.getMinRecipeConditions();
-        return maxPropertyCount * 10; // GTRecipeWidget#LINE_HEIGHT
+        return maxPropertyCount * 10; // GTRecipeXEIHelper#LINE_HEIGHT
     }
 
     public void appendJEIUI(GTRecipeDefinition recipe, WidgetGroup widgetGroup) {

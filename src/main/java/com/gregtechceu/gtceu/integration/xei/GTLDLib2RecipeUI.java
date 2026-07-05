@@ -25,7 +25,6 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.FusionReactorMac
 import com.gregtechceu.gtceu.common.recipe.condition.DimensionCondition;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
-import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
@@ -64,7 +63,7 @@ import org.lwjgl.glfw.GLFW;
 public final class GTLDLib2RecipeUI {
 
     private static final int TEXT_X = 3;
-    private static final int LINE_HEIGHT = GTRecipeWidget.LINE_HEIGHT;
+    private static final int LINE_HEIGHT = GTRecipeXEIHelper.LINE_HEIGHT;
 
     private GTLDLib2RecipeUI() {
     }
@@ -179,7 +178,7 @@ public final class GTLDLib2RecipeUI {
         private void addRecipeParameterTexts() {
             int textsY = templateSize.height() + 5 - LINE_HEIGHT;
             long eu = RecipeHelper.getRealEUtWithIO(recipe);
-            for (Component text : GTRecipeWidget.getRecipeParaText(recipe, recipe.duration, eu)) {
+            for (Component text : GTRecipeXEIHelper.getRecipeParaText(recipe, recipe.duration, eu)) {
                 textsY += LINE_HEIGHT;
                 Label label = createLabel(text, TEXT_X, textsY, rootSize.width() - 2 * TEXT_X, true);
                 root.addChild(label);
@@ -262,7 +261,7 @@ public final class GTLDLib2RecipeUI {
 
         private void updateRecipeOverclockPreview() {
             OverclockPreview preview = calculateOverclockPreview();
-            List<Component> texts = GTRecipeWidget.getRecipeParaText(recipe, preview.duration(), preview.eut());
+            List<Component> texts = GTRecipeXEIHelper.getRecipeParaText(recipe, preview.duration(), preview.eut());
             for (int i = 0; i < texts.size() && i < recipeParaTexts.size(); i++) {
                 recipeParaTexts.get(i).setValue(texts.get(i));
             }
