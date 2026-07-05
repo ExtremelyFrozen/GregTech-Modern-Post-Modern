@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.SteamTexture;
 import com.gregtechceu.gtceu.api.gui.WidgetUtils;
 import com.gregtechceu.gtceu.api.gui.editor.IEditableUI;
+import com.gregtechceu.gtceu.api.gui.element.GTDualProgressElement;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
@@ -480,6 +481,8 @@ public class GTRecipeTypeUI {
     private void setupLDLib2UI(UIElement root, RecipeHolder recipeHolder) {
         var isXEI = recipeHolder.progressSupplier == XEI_PROGRESS;
         root.selectId("progress", GTProgressBarElement.class)
+                .forEach(progress -> progress.setProgressSupplier(recipeHolder.progressSupplier));
+        root.selectId("progress", GTDualProgressElement.class)
                 .forEach(progress -> progress.setProgressSupplier(recipeHolder.progressSupplier));
 
         for (var capabilityEntry : recipeHolder.storages.rowMap().entrySet()) {

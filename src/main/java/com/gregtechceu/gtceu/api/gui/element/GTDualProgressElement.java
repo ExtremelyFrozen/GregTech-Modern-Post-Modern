@@ -12,6 +12,7 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import org.w3c.dom.Element;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.function.DoubleSupplier;
 
 /**
  * LDLib2 container for GTM recipe progress groups converted from legacy dual progress widgets.
@@ -22,10 +23,17 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class GTDualProgressElement extends UIElement {
 
     private IGuiTexture background = IGuiTexture.EMPTY;
-    private float splitPoint;
+    private float splitPoint = 0.5f;
+    private DoubleSupplier progressSupplier;
 
     public float getSplitPoint() {
         return splitPoint;
+    }
+
+    public GTDualProgressElement setProgressSupplier(DoubleSupplier progressSupplier) {
+        this.progressSupplier = progressSupplier;
+        bindProgressChildren();
+        return this;
     }
 
     @Override
@@ -37,6 +45,7 @@ public class GTDualProgressElement extends UIElement {
             background = GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-background"));
         }
         super.loadXml(element);
+        bindProgressChildren();
     }
 
     @Override
@@ -47,10 +56,42 @@ public class GTDualProgressElement extends UIElement {
 
     private float parseSplitPoint(String value) {
         try {
-            return Float.parseFloat(value);
+            float parsed = Float.parseFloat(value);
+            if (!Float.isFinite(parsed) || parsed <= 0 || parsed >= 1) {
+                GTCEu.LOGGER.error("GTM dual progress split point must be between 0 and 1, got '{}'", value);
+                throw new IllegalArgumentException("Invalid dual progress split point: " + value);
+            }
+            return parsed;
         } catch (NumberFormatException e) {
             GTCEu.LOGGER.error("Invalid GTM dual progress split point '{}'", value, e);
             throw e;
         }
+    }
+
+    private void bindProgressChildren() {
+        if (progressSupplier == null) {
+            return;
+        }
+        var progressBars = getChildren().stream()
+                .filter(GTProgressBarElement.class::isInstance)
+                .map(GTProgressBarElement.class::cast)
+                .toList();
+        if (progressBars.size() != 2) {
+            GTCEu.LOGGER.error("GTM dual progress element must have exactly 2 progress children, got {}",
+                    progressBars.size());
+            throw new IllegalStateException("Invalid GTM dual progress child count: " + progressBars.size());
+        }
+        progressBars.get(0).setProgressSupplier(this::firstProgress);
+        progressBars.get(1).setProgressSupplier(this::secondProgress);
+    }
+
+    private double firstProgress() {
+        double progress = progressSupplier.getAsDouble();
+        return progress >= splitPoint ? 1 : progress / splitPoint;
+    }
+
+    private double secondProgress() {
+        double progress = progressSupplier.getAsDouble();
+        return progress >= splitPoint ? (progress - splitPoint) / (1 - splitPoint) : 0;
     }
 }
