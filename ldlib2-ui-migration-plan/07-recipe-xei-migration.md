@@ -148,17 +148,30 @@ Recipe progress 有两类：
 
 `GTRecipeTypeUI` 当前会加载 `ui/recipe_type/*.rtui`。
 
-迁移选项：
+已确认决策：
 
-- 暂不支持 `.rtui`，全部 fallback 到自动布局。
-- 写一次性 `.rtui` 转 LDLib2 UI/LSS 的转换器。
-- 重建编辑器和运行期 loader。
+- 不长期保留 LDLib1 `.rtui` runtime loader。
+- 5 个内置 `.rtui` 必须一次性转换为真实 LDLib2 XML。
+- 转换器必须读取 Minecraft NBT；当前仓库内置资源为 raw binary NBT，但应同时兼容历史 gzip NBT。
+- 不能把 `.rtui` 改后缀后当作 XML。
 
-推荐：
+转换入口：
 
-- 第一轮先 fallback 到自动布局。
-- 单独统计 `.rtui` 数量和使用场景。
-- 第二轮再决定转换或重建。
+- `assembly_line`
+- `distillation_tower`
+- `forge_hammer`
+- `lathe`
+- `research_station`
+
+转换后的 XML 需要保留现有 id 绑定语义：
+
+- `progress`
+- `item_in_#`
+- `item_out_#`
+- `fluid_in_#`
+- `fluid_out_#`
+
+转换后 `GTRecipeTypeUI` 应加载 `ui/recipe_type/*.xml` 并构建 LDLib2 UI tree；旧 `.rtui` 资源在验证通过后移除。
 
 ## JEI/EMI/REI 集成
 

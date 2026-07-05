@@ -97,7 +97,7 @@
 5. JEI。
 6. EMI。
 7. REI。
-8. `.rtui` 后置。
+8. `.rtui` NBT 到 LDLib2 XML 的一次性转换与旧资源删除。
 
 验收：
 
@@ -163,6 +163,7 @@
 - 搜索旧 `ModularUI` 引用。
 - 搜索旧 `WidgetGroup` 引用。
 - 搜索旧 `IngredientIO.RENDER_ONLY`。
+- 搜索旧 `.rtui` 资源。
 - 搜索 LDLib2 RPC 注解或 RPC 调用，必须为 0。
 
 构建检查：
@@ -201,6 +202,7 @@
 - `compileOnly(forge.ldlib)` 可以移除或不再被源码需要。
 - 旧 `lowdraglib.gui` 引用清零或仅剩明确兼容层。
 - 机器、Cover、Item、Recipe UI 都基于 LDLib2 UI。
+- 内置 recipe custom UI 已转换为真实 LDLib2 XML，不再保留 `.rtui` runtime 资源。
 - 客户端到服务端交互全部走 GT sync。
 - 动作型交互全部走 GT action。
 - 不存在 LDLib2 RPC。
