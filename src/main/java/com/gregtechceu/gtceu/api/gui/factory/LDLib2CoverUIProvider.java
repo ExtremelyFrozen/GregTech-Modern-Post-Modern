@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
-import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.world.entity.player.Player;
 
@@ -13,11 +13,11 @@ import net.minecraft.world.entity.player.Player;
 public interface LDLib2CoverUIProvider {
 
     /**
-     * Builds the LDLib2 cover UI for the provided player and opened cover identity.
+     * Builds the LDLib2 cover UI tree for the provided player and opened cover identity.
      *
      * @param player player building the UI in the current runtime.
      * @param holder GTM holder that exposes the opened cover position, side, definition id, and current cover lookup.
      * @return non-null LDLib2 UI tree.
      */
-    ModularUI createLDLib2UI(Player player, UICoverHolder holder);
+    UI createLDLib2UI(Player player, UICoverHolder holder);
 }

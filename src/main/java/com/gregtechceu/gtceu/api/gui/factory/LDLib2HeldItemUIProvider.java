@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.gui.factory;
 
 import com.lowdragmc.lowdraglib2.gui.factory.HeldItemUIMenuType;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.world.entity.player.Player;
 
@@ -19,16 +20,17 @@ public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI 
     @Override
     default ModularUI createUI(HeldItemUIMenuType.HeldItemUIHolder holder) {
         HeldItemUIHolderContext gtmHolder = new HeldItemUIHolderContext(holder.player, holder.hand, holder.itemStack);
-        return Objects.requireNonNull(createLDLib2UI(holder.player, gtmHolder),
+        UI ui = Objects.requireNonNull(createLDLib2UI(holder.player, gtmHolder),
                 "LDLib2 held item UI provider returned null");
+        return ModularUI.of(ui, holder.player);
     }
 
     /**
-     * Builds the LDLib2 held item UI for the provided player and opened item identity.
+     * Builds the LDLib2 held item UI tree for the provided player and opened item identity.
      *
      * @param player player building the UI in the current runtime.
      * @param holder GTM holder that exposes the player, hand, current stack, and opened stack snapshot.
      * @return non-null LDLib2 UI tree.
      */
-    ModularUI createLDLib2UI(Player player, HeldItemUIHolder holder);
+    UI createLDLib2UI(Player player, HeldItemUIHolder holder);
 }

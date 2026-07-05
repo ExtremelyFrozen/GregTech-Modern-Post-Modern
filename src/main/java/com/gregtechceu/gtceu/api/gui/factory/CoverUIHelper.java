@@ -39,8 +39,8 @@ public final class CoverUIHelper {
     public static ModularUI createLDLib2UI(CoverBehavior cover, Player player) {
         if (cover instanceof LDLib2CoverUIProvider uiProvider) {
             UICoverHolderContext holder = new UICoverHolderContext(player, cover);
-            return Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
-                    "LDLib2 cover UI provider returned null");
+            return ModularUI.of(Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
+                    "LDLib2 cover UI provider returned null"), player);
         }
         return null;
     }

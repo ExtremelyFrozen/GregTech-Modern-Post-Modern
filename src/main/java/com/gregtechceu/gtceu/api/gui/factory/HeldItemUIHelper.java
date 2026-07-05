@@ -43,8 +43,8 @@ public final class HeldItemUIHelper {
     public static ModularUI createLDLib2UI(Player player, InteractionHand hand) {
         if (player.getItemInHand(hand).getItem() instanceof LDLib2HeldItemUIProvider uiProvider) {
             HeldItemUIHolderContext holder = new HeldItemUIHolderContext(player, hand);
-            return Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
-                    "LDLib2 held item UI provider returned null");
+            return ModularUI.of(Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
+                    "LDLib2 held item UI provider returned null"), player);
         }
         return null;
     }

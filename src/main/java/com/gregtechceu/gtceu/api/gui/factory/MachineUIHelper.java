@@ -43,8 +43,8 @@ public final class MachineUIHelper {
     public static ModularUI createLDLib2UI(MetaMachine machine, Player player) {
         if (machine instanceof LDLib2MachineUIProvider uiProvider) {
             MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
-            return Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
-                    "LDLib2 machine UI provider returned null");
+            return ModularUI.of(Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
+                    "LDLib2 machine UI provider returned null"), player);
         }
         return null;
     }
