@@ -21,6 +21,7 @@ import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
+import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI.LDLib2RecipeUISize;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.client.bloom.BloomRenderTicket;
@@ -30,10 +31,15 @@ import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.Block;
 
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2IntAVLTreeMap;
@@ -301,6 +307,14 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         addEUToStartLabel(group, euToStart, recipeTier);
     }
 
+    public static void addLDLib2EUToStartLabel(GTRecipeDefinition recipe, UIElement root,
+                                               LDLib2RecipeUISize rootSize) {
+        long euToStart = RecipeData.getLong(recipe.data, "eu_to_start");
+        if (euToStart <= 0) return;
+        int recipeTier = RecipeHelper.getPreOCRecipeEuTier(recipe);
+        addLDLib2EUToStartLabel(root, euToStart, recipeTier, rootSize);
+    }
+
     private static void addEUToStartLabel(WidgetGroup group, long euToStart, int recipeTier) {
         int fusionTier = findCeilingTier(euToStart);
         int tier = Math.max(MINIMUM_TIER, Math.max(recipeTier, fusionTier));
@@ -308,6 +322,25 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
                 LocalizationUtils.format("gtpm.recipe.eu_to_start",
                         FormattingUtil.formatNumberReadable2F(euToStart, false),
                         FUSION_NAMES.get(tier))));
+    }
+
+    private static void addLDLib2EUToStartLabel(UIElement root, long euToStart, int recipeTier,
+                                                LDLib2RecipeUISize rootSize) {
+        int fusionTier = findCeilingTier(euToStart);
+        int tier = Math.max(MINIMUM_TIER, Math.max(recipeTier, fusionTier));
+        Label label = new Label();
+        label.setValue(Component.translatable("gtpm.recipe.eu_to_start",
+                FormattingUtil.formatNumberReadable2F(euToStart, false),
+                FUSION_NAMES.get(tier)));
+        label.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(-8);
+            layout.top(rootSize.height() - 10);
+            layout.width(rootSize.width() + 8);
+            layout.height(10);
+        });
+        label.textStyle(textStyle -> textStyle.textWrap(TextWrap.NONE));
+        root.addChild(label);
     }
 
     //////////////////////////////////////
@@ -335,7 +368,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         return energyInputAmount * (long) Math.pow(2, tier - LuV) * 10000000L;
     }
 
-    public static net.minecraft.world.level.block.Block getCasingState(int tier) {
+    public static Block getCasingState(int tier) {
         return switch (tier) {
             case LuV -> FUSION_CASING.get();
             case ZPM -> FUSION_CASING_MK2.get();

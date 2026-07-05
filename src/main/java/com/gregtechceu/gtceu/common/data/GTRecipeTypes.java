@@ -8,12 +8,15 @@ import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.recipe.*;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.ingredient.SizedIngredientExtensions;
+import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI.LDLib2RecipeUISize;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.sound.ExistingSoundEntry;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.FusionReactorMachine;
@@ -22,6 +25,7 @@ import com.gregtechceu.gtceu.common.recipe.condition.AdjacentFluidCondition;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidHolderSetList;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
@@ -29,6 +33,7 @@ import com.gregtechceu.gtceu.utils.GTMath;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.HolderSet;
@@ -47,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import dev.vfyjxf.taffy.style.TaffyPosition;
 
 import static com.gregtechceu.gtceu.api.gui.texture.ProgressTexture.FillDirection.*;
 
@@ -446,6 +453,7 @@ public class GTRecipeTypes {
                     yOffset = 20 * (i / 3);
                 }
             })
+            .setLDLib2UiBuilder(GTRecipeTypes::addLDLib2RockBreakerFluidSlots)
             .setSound(GTSoundEntries.FIRE);
 
     public static final GTRecipeType SCANNER_RECIPES = register("scanner", ELECTRIC)
@@ -529,6 +537,8 @@ public class GTRecipeTypes {
                 widgetGroup.addWidget(new SlotWidget(CycleItemEntryHandler.createFromStacks(items), 0,
                         widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 32, false, false));
             })
+            .setLDLib2UiBuilder((recipe, root, rootSize) ->
+                    addLDLib2HeatingCoilSlot(recipe, root, rootSize, 32))
             .setSound(GTSoundEntries.FURNACE);
 
     public final static GTRecipeType DISTILLATION_RECIPES = register("distillation_tower", MULTIBLOCK)
@@ -661,10 +671,77 @@ public class GTRecipeTypes {
             .setSound(GTSoundEntries.ARC)
             .setOffsetVoltageText(true)
             .setMaxTooltips(4)
-            .setUiBuilder(FusionReactorMachine::addEUToStartLabel);
+            .setUiBuilder(FusionReactorMachine::addEUToStartLabel)
+            .setLDLib2UiBuilder(FusionReactorMachine::addLDLib2EUToStartLabel);
 
     public static final GTRecipeType DUMMY_RECIPES = register("dummy", DUMMY)
             .setXEIVisible(false);
+
+    private static void addLDLib2RockBreakerFluidSlots(GTRecipeDefinition recipe, UIElement root,
+                                                       LDLib2RecipeUISize rootSize) {
+        List<HolderSet<Fluid>> fluids = new ArrayList<>();
+        for (RecipeCondition condition : recipe.conditions) {
+            if (condition instanceof AdjacentFluidCondition adjacentFluid) {
+                fluids.addAll(adjacentFluid.getOrInitFluids(recipe.data));
+            }
+        }
+        if (fluids.isEmpty()) {
+            return;
+        }
+
+        int xOffset = 35;
+        int yOffset = 0;
+        int i = 0;
+        for (HolderSet<Fluid> set : fluids) {
+            if (set.size() == 0) {
+                continue;
+            }
+            List<FluidEntryList> slots = Collections.singletonList(FluidHolderSetList.of(set, 1000));
+            CycleFluidEntryHandler handler = new CycleFluidEntryHandler(slots);
+            GTFluidSlotElement tank = new GTFluidSlotElement()
+                    .setFluidTank(handler, 0)
+                    .setBackgroundTexture(GuiTextures.FLUID_SLOT)
+                    .setShowAmount(false)
+                    .setAllowClickFilled(false)
+                    .setAllowClickDrained(false)
+                    .setIngredientIO(GTXEIHelper.input())
+                    .setXEIRecipeSlot();
+            layoutLDLib2Element(tank, rootSize.width() - 30 - xOffset, rootSize.height() - 30 + yOffset, 18, 18);
+            root.addChild(tank);
+
+            i++;
+            xOffset = 20 * (2 - (i % 3)) - 5;
+            yOffset = 20 * (i / 3);
+        }
+    }
+
+    static void addLDLib2HeatingCoilSlot(GTRecipeDefinition recipe, UIElement root,
+                                         LDLib2RecipeUISize rootSize, int yOffset) {
+        int temp = RecipeData.getInt(recipe.data, "ebf_temp");
+        List<List<ItemStack>> items = new ArrayList<>();
+        items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
+                .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
+                .map(coil -> new ItemStack(coil.getValue().get())).toList());
+        CycleItemEntryHandler handler = CycleItemEntryHandler.createFromStacks(items);
+        GTItemSlotElement slot = new GTItemSlotElement(handler, 0)
+                .setCanPutItems(false)
+                .setCanTakeItems(false)
+                .setIngredientIO(GTXEIHelper.catalyst())
+                .setBackgroundTexture(GuiTextures.SLOT)
+                .xeiRecipeSlot();
+        layoutLDLib2Element(slot, rootSize.width() - 25, rootSize.height() - yOffset, 18, 18);
+        root.addChild(slot);
+    }
+
+    private static void layoutLDLib2Element(UIElement element, int x, int y, int width, int height) {
+        element.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(x);
+            layout.top(y);
+            layout.width(width);
+            layout.height(height);
+        });
+    }
 
     protected static GTRecipeType register(String name, String group, RecipeType<?>... proxyRecipes) {
         return register(GTCEu.id(name), group, proxyRecipes);

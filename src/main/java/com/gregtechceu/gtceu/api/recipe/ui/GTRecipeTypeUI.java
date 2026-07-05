@@ -100,6 +100,9 @@ public class GTRecipeTypeUI {
     @Nullable
     protected BiConsumer<GTRecipeDefinition, WidgetGroup> uiBuilder;
     @Setter
+    @Nullable
+    protected LDLib2UiBuilder ldLib2UiBuilder;
+    @Setter
     @Getter
     protected int maxTooltips = 3;
 
@@ -250,6 +253,12 @@ public class GTRecipeTypeUI {
                                boolean isHighPressure) {}
 
     public record LDLib2RecipeUISize(int width, int height) {}
+
+    @FunctionalInterface
+    public interface LDLib2UiBuilder {
+
+        void accept(GTRecipeDefinition recipe, UIElement root, LDLib2RecipeUISize rootSize);
+    }
 
     /**
      * Auto layout UI template for recipes.
@@ -791,6 +800,16 @@ public class GTRecipeTypeUI {
     public void appendJEIUI(GTRecipeDefinition recipe, WidgetGroup widgetGroup) {
         if (uiBuilder != null) {
             uiBuilder.accept(recipe, widgetGroup);
+        }
+    }
+
+    public void appendLDLib2XEIUI(GTRecipeDefinition recipe, UIElement root) {
+        appendLDLib2XEIUI(recipe, root, getLDLib2XEIRecipeUISize());
+    }
+
+    public void appendLDLib2XEIUI(GTRecipeDefinition recipe, UIElement root, LDLib2RecipeUISize rootSize) {
+        if (ldLib2UiBuilder != null) {
+            ldLib2UiBuilder.accept(recipe, root, rootSize);
         }
     }
 

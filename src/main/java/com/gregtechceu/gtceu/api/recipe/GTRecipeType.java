@@ -15,6 +15,7 @@ import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
@@ -167,6 +168,16 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
 
     public GTRecipeType setUiBuilder(BiConsumer<GTRecipeDefinition, WidgetGroup> uiBuilder) {
         this.recipeUI.setUiBuilder(uiBuilder);
+        return this;
+    }
+
+    public GTRecipeType setLDLib2UiBuilder(BiConsumer<GTRecipeDefinition, UIElement> uiBuilder) {
+        this.recipeUI.setLdLib2UiBuilder((recipe, root, rootSize) -> uiBuilder.accept(recipe, root));
+        return this;
+    }
+
+    public GTRecipeType setLDLib2UiBuilder(GTRecipeTypeUI.LDLib2UiBuilder uiBuilder) {
+        this.recipeUI.setLdLib2UiBuilder(uiBuilder);
         return this;
     }
 

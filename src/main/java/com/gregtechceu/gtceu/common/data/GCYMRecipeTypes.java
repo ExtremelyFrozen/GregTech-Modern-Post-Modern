@@ -61,6 +61,8 @@ public class GCYMRecipeTypes {
                 widgetGroup.addWidget(new SlotWidget(CycleItemEntryHandler.createFromStacks(items), 0,
                         widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 40, false, false));
             })
+            .setLDLib2UiBuilder((recipe, root, rootSize) ->
+                    GTRecipeTypes.addLDLib2HeatingCoilSlot(recipe, root, rootSize, 40))
             .setSound(GTSoundEntries.ARC);
 
     public static void init() {}

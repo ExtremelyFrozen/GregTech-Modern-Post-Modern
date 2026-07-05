@@ -304,9 +304,6 @@ public class GTItemSlotElement extends ItemSlot {
         if (LDLib2.isJeiLoaded()) {
             JEISupport.recipeIngredient(this, io, allPossibleItems);
         }
-        if (LDLib2.isReiLoaded()) {
-            REISupport.recipeIngredient(this, io, allPossibleItems);
-        }
         if (LDLib2.isEmiLoaded()) {
             EMISupport.recipeIngredient(this, io, allPossibleItems);
         }
@@ -316,9 +313,6 @@ public class GTItemSlotElement extends ItemSlot {
                                   Supplier<Stream<ItemStack>> allPossibleItems) {
         if (LDLib2.isJeiLoaded()) {
             JEISupport.recipeSlot(this, allPossibleItems);
-        }
-        if (LDLib2.isReiLoaded()) {
-            REISupport.recipeSlot(this, io, allPossibleItems);
         }
         if (LDLib2.isEmiLoaded()) {
             EMISupport.recipeSlot(this, chance, amount, allPossibleItems);

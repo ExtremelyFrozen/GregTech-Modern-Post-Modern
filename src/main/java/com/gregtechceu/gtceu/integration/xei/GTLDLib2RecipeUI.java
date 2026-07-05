@@ -45,7 +45,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.fml.loading.FMLLoader;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
@@ -174,6 +173,7 @@ public final class GTLDLib2RecipeUI {
             addCWUInfo(root, rootSize, recipe, recipe.tickOutputs.get(CWURecipeCapability.CAP), true, cwuYOffset);
 
             addConditionAndDataInfos(root, rootSize, recipe, yOffset);
+            recipeUI.appendLDLib2XEIUI(recipe, root, rootSize);
         }
 
         private void addRecipeParameterTexts() {
@@ -422,7 +422,7 @@ public final class GTLDLib2RecipeUI {
     }
 
     private static void addRecipeIdButton(UIElement root, GTRecipeDefinition recipe, LDLib2RecipeUISize rootSize) {
-        if (FMLLoader.isProduction()) {
+        if (GTCEu.isProd()) {
             return;
         }
         String recipeId = String.valueOf(recipe.id);
