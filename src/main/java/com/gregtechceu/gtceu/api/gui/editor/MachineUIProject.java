@@ -68,7 +68,9 @@ public class MachineUIProject extends UIProject {
             if (tag != null) {
                 return new MachineUIProject(tag);
             }
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            GTCEu.LOGGER.warn("Failed to load machine UI project from {}", file, e);
+        }
         return null;
     }
 

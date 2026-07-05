@@ -105,18 +105,19 @@ public class GTRecipeTypeUI {
             if (resourceManager == null) {
                 this.customUICache = new CompoundTag();
             } else {
-                try {
-                    var resource = resourceManager
-                            .getResourceOrThrow(
-                                    ResourceLocation.fromNamespaceAndPath(recipeType.registryName.getNamespace(),
-                                            "ui/recipe_type/%s.rtui".formatted(recipeType.registryName.getPath())));
-                    try (InputStream inputStream = resource.open()) {
-                        try (DataInputStream dataInputStream = new DataInputStream(inputStream)) {
-                            this.customUICache = NbtIo.read(dataInputStream, NbtAccounter.unlimitedHeap());
-                        }
-                    }
-                } catch (Exception e) {
+                var location = ResourceLocation.fromNamespaceAndPath(recipeType.registryName.getNamespace(),
+                        "ui/recipe_type/%s.rtui".formatted(recipeType.registryName.getPath()));
+                var resource = resourceManager.getResource(location);
+                if (resource.isEmpty()) {
                     this.customUICache = new CompoundTag();
+                } else {
+                    try (InputStream inputStream = resource.get().open();
+                         DataInputStream dataInputStream = new DataInputStream(inputStream)) {
+                        this.customUICache = NbtIo.read(dataInputStream, NbtAccounter.unlimitedHeap());
+                    } catch (Exception e) {
+                        GTCEu.LOGGER.warn("Failed to load recipe type UI from {}", location, e);
+                        this.customUICache = new CompoundTag();
+                    }
                 }
                 if (this.customUICache == null) {
                     this.customUICache = new CompoundTag();

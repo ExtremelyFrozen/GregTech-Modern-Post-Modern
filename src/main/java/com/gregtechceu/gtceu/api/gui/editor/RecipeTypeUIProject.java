@@ -73,7 +73,9 @@ public class RecipeTypeUIProject extends UIProject {
             if (tag != null) {
                 return new RecipeTypeUIProject(tag);
             }
-        } catch (IOException ignored) {}
+        } catch (IOException e) {
+            GTCEu.LOGGER.warn("Failed to load recipe type UI project from {}", file, e);
+        }
         return null;
     }
 

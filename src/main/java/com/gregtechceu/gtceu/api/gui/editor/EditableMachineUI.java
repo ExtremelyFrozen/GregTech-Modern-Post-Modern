@@ -79,17 +79,19 @@ public class EditableMachineUI implements IEditableUI<WidgetGroup, MetaMachine> 
             if (resourceManager == null) {
                 this.customUICache = new CompoundTag();
             } else {
-                try {
-                    var resource = resourceManager
-                            .getResourceOrThrow(ResourceLocation.fromNamespaceAndPath(uiPath.getNamespace(),
-                                    "ui/machine/%s.mui".formatted(uiPath.getPath())));
-                    try (InputStream inputStream = resource.open()) {
-                        try (DataInputStream dataInputStream = new DataInputStream(inputStream);) {
-                            this.customUICache = NbtIo.read(dataInputStream, NbtAccounter.unlimitedHeap());
-                        }
-                    }
-                } catch (Exception e) {
+                var location = ResourceLocation.fromNamespaceAndPath(uiPath.getNamespace(),
+                        "ui/machine/%s.mui".formatted(uiPath.getPath()));
+                var resource = resourceManager.getResource(location);
+                if (resource.isEmpty()) {
                     this.customUICache = new CompoundTag();
+                } else {
+                    try (InputStream inputStream = resource.get().open();
+                         DataInputStream dataInputStream = new DataInputStream(inputStream)) {
+                        this.customUICache = NbtIo.read(dataInputStream, NbtAccounter.unlimitedHeap());
+                    } catch (Exception e) {
+                        GTCEu.LOGGER.warn("Failed to load machine UI from {}", location, e);
+                        this.customUICache = new CompoundTag();
+                    }
                 }
                 if (this.customUICache == null) {
                     this.customUICache = new CompoundTag();
