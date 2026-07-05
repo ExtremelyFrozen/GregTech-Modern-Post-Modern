@@ -20,6 +20,7 @@ import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.integration.emi.recipe.GTRecipeEMICategory;
+import com.gregtechceu.gtceu.integration.jei.GTJEIPlugin;
 import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeJEICategory;
 
 import com.lowdragmc.lowdraglib.gui.editor.configurator.IConfigurableWidget;
@@ -28,7 +29,6 @@ import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.jei.JEIPlugin;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
 
@@ -248,7 +248,7 @@ public class GTRecipeTypeUI {
                                         EmiApi.displayRecipeCategory(
                                                 GTRecipeEMICategory.machineCategory(recipeType.getCategory()));
                                     } else if (GTCEu.Mods.isJEILoaded()) {
-                                        JEIPlugin.jeiRuntime.getRecipesGui().showTypes(
+                                        GTJEIPlugin.jeiRuntime.getRecipesGui().showTypes(
                                                 recipeType.getCategories().stream()
                                                         .filter(GTRecipeCategory::isXEIVisible)
                                                         .map(GTRecipeJEICategory::machineType)

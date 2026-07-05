@@ -32,6 +32,7 @@ import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.helpers.IPlatformFluidHelper;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.registration.*;
+import mezz.jei.api.runtime.IJeiRuntime;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,9 +42,16 @@ import java.util.List;
 @JeiPlugin
 public class GTJEIPlugin implements IModPlugin {
 
+    public static IJeiRuntime jeiRuntime;
+
     @Override
     public @NotNull ResourceLocation getPluginUid() {
         return GTCEu.id("jei_plugin");
+    }
+
+    @Override
+    public void onRuntimeAvailable(@NotNull IJeiRuntime jeiRuntime) {
+        GTJEIPlugin.jeiRuntime = jeiRuntime;
     }
 
     @Override
