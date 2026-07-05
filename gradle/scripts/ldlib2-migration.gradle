@@ -39,6 +39,8 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         ].findAll { it.exists() })
         var filesToScan = sourceFilesToScan + gradleFilesToScan
         var ownImplementationSuffixDeclaration = ~/.*\b(class|interface|enum|record)\s+[A-Za-z0-9_]+Impl\b.*/
+        var ldlib2RpcCall = ~/.*\baddRPCEvent\s*\(.*/
+        var ldlib2FluidClickAttribute = ~/.*(?<!legacy-)allow-click-(filled|drained)=.*/
 
         var patterns = [
                 'com.lowdragmc.lowdraglib.',
@@ -47,6 +49,9 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'IngredientIO.BOTH',
                 '@RPCMethod',
                 'RPCEmitter',
+                'RPCEventBuilder',
+                'PacketUIRPCEvent',
+                'PacketUIRPCEventReturn',
                 'setOnServerClick',
                 'markAsDirty(',
                 'com.lowdragmc.lowdraglib2.syncdata.',
@@ -86,6 +91,12 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                     }
                     if (gtmJavaSource && ownImplementationSuffixDeclaration.matches(line)) {
                         matches.add("${relativePath}:${number}: GTM source type must not use Impl suffix")
+                    }
+                    if (ldlib2RpcCall.matches(line)) {
+                        matches.add("${relativePath}:${number}: LDLib2 RPC must not be used for GTM business UI actions")
+                    }
+                    if (ldlib2FluidClickAttribute.matches(line)) {
+                        matches.add("${relativePath}:${number}: LDLib2 fluid click attributes must stay legacy metadata")
                     }
                 }
             }
