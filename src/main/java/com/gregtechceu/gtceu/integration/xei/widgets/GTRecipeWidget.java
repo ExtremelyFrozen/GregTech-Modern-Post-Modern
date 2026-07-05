@@ -17,6 +17,7 @@ import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.chance.boost.ChanceBoostFunction;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
+import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.FusionReactorMachine;
 import com.gregtechceu.gtceu.common.recipe.condition.DimensionCondition;
@@ -89,7 +90,7 @@ public class GTRecipeWidget extends WidgetGroup {
                 LinkedHashMap<RecipeCapability<?>, List<Content>>::new);
         collectStorage(storages, contents, recipe);
 
-        WidgetGroup group = recipe.recipeType.getRecipeUI().createUITemplate(ProgressWidget.JEIProgress, storages,
+        WidgetGroup group = recipe.recipeType.getRecipeUI().createUITemplate(GTRecipeTypeUI.XEI_PROGRESS, storages,
                 DataComponentMap.EMPTY, recipe.conditions);
         addSlots(contents, group, recipe);
 

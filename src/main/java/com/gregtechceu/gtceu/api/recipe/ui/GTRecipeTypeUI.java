@@ -76,6 +76,9 @@ import dev.vfyjxf.taffy.style.TaffyPosition;
 @SuppressWarnings("UnusedReturnValue")
 public class GTRecipeTypeUI {
 
+    public static final DoubleSupplier XEI_PROGRESS =
+            () -> Math.abs(System.currentTimeMillis() % 2000) / 2000.0;
+
     @Getter
     @Setter
     private Byte2ObjectMap<IGuiTexture> slotOverlays = new Byte2ObjectArrayMap<>();
@@ -245,7 +248,7 @@ public class GTRecipeTypeUI {
     /**
      * Auto layout UI template for recipes.
      *
-     * @param progressSupplier progress. To create a JEI / REI UI, use the para {@link ProgressWidget#JEIProgress}.
+     * @param progressSupplier progress. To create an XEI UI, use {@link #XEI_PROGRESS}.
      */
     public WidgetGroup createUITemplate(DoubleSupplier progressSupplier,
                                         Table<IO, RecipeCapability<?>, Object> storages,
@@ -318,7 +321,7 @@ public class GTRecipeTypeUI {
             group.addWidget(inputs);
             group.addWidget(outputs);
 
-            var progressWidget = new ProgressWidget(ProgressWidget.JEIProgress, maxWidth + 10, size.height / 2 - 10, 20,
+            var progressWidget = new ProgressWidget(XEI_PROGRESS, maxWidth + 10, size.height / 2 - 10, 20,
                     20, progressBarTexture);
             progressWidget.setId("progress");
             group.addWidget(progressWidget);
@@ -331,7 +334,7 @@ public class GTRecipeTypeUI {
 
             return group;
         }, (template, recipeHolder) -> {
-            var isJEI = recipeHolder.progressSupplier == ProgressWidget.JEIProgress;
+            var isJEI = recipeHolder.progressSupplier == XEI_PROGRESS;
 
             // bind progress
             List<Widget> progress = new ArrayList<>();
@@ -428,7 +431,7 @@ public class GTRecipeTypeUI {
     }
 
     private void setupLDLib2UI(UIElement root, RecipeHolder recipeHolder) {
-        var isXEI = recipeHolder.progressSupplier == ProgressWidget.JEIProgress;
+        var isXEI = recipeHolder.progressSupplier == XEI_PROGRESS;
         root.selectId("progress", GTProgressBarElement.class)
                 .forEach(progress -> progress.setProgressSupplier(recipeHolder.progressSupplier));
 
