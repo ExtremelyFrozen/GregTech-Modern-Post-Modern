@@ -1,10 +1,11 @@
 package com.gregtechceu.gtceu.integration.emi.orevein;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreDefinition;
-import com.gregtechceu.gtceu.integration.xei.widgets.GTOreVeinWidget;
+import com.gregtechceu.gtceu.integration.xei.widgets.GTBedrockOreWidget;
 
-import com.lowdragmc.lowdraglib.emi.ModularEmiRecipe;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.integration.xei.emi.ModularUIEMIRecipe;
 
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
@@ -12,12 +13,14 @@ import net.minecraft.resources.ResourceLocation;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import org.jetbrains.annotations.Nullable;
 
-public class GTBedrockOre extends ModularEmiRecipe<WidgetGroup> {
+import java.util.Objects;
+
+public class GTBedrockOre extends ModularUIEMIRecipe {
 
     private final Holder<BedrockOreDefinition> bedrockOre;
 
     public GTBedrockOre(Holder<BedrockOreDefinition> bedrockOre) {
-        super(() -> new GTOreVeinWidget(bedrockOre, null));
+        super(GTBedrockOre::createModularUI);
         this.bedrockOre = bedrockOre;
     }
 
@@ -28,6 +31,26 @@ public class GTBedrockOre extends ModularEmiRecipe<WidgetGroup> {
 
     @Override
     public @Nullable ResourceLocation getId() {
-        return bedrockOre.getKey().location().withPrefix("/bedrock_ore_diagram/");
+        return Objects.requireNonNull(bedrockOre.getKey(), "Bedrock ore holder is missing a key")
+                .location()
+                .withPrefix("/bedrock_ore_diagram/");
+    }
+
+    @Override
+    public int getDisplayWidth() {
+        return GTBedrockOreWidget.WIDTH;
+    }
+
+    @Override
+    public int getDisplayHeight() {
+        return GTBedrockOreWidget.HEIGHT;
+    }
+
+    private static ModularUI createModularUI(ModularUIEMIRecipe recipe) {
+        if (recipe instanceof GTBedrockOre bedrockOre) {
+            return GTBedrockOreWidget.createModularUI(bedrockOre.bedrockOre, GTBedrockOreWidget.HEIGHT);
+        }
+        GTCEu.LOGGER.error("Expected GTBedrockOre, got {}", recipe.getClass().getName());
+        throw new IllegalArgumentException("Expected GTBedrockOre, got " + recipe.getClass().getName());
     }
 }

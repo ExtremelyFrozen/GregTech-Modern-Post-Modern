@@ -4,42 +4,44 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreDefinition;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTItems;
-import com.gregtechceu.gtceu.integration.xei.widgets.GTOreVeinWidget;
+import com.gregtechceu.gtceu.integration.xei.widgets.GTBedrockOreWidget;
 
-import com.lowdragmc.lowdraglib.jei.ModularUIRecipeCategory;
+import com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Items;
 
-import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<BedrockOreDefinition>> {
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public final static RecipeType<Holder<BedrockOreDefinition>> RECIPE_TYPE = new RecipeType(
             GTCEu.id("bedrock_ore_diagram"), Holder.class);
     private final int width;
     private final int height;
-    private final mezz.jei.api.gui.drawable.IDrawable icon;
+    private final IDrawable icon;
 
     public GTBedrockOreInfoCategory(IJeiHelpers helpers) {
-        super(GTBedrockOreInfoWrapper::new);
-        IGuiHelper guiHelper = helpers.getGuiHelper();
-        this.width = GTOreVeinWidget.width;
-        this.height = 120;
+        super(ore -> GTBedrockOreWidget.createModularUI(ore, GTBedrockOreWidget.JEI_HEIGHT));
+        this.width = GTBedrockOreWidget.WIDTH;
+        this.height = GTBedrockOreWidget.JEI_HEIGHT;
         this.icon = helpers.getGuiHelper().createDrawableItemStack(Items.RAW_IRON.getDefaultInstance());
     }
 
     public static void registerRecipes(IRecipeRegistration registry) {
-        var bedrockOres = Minecraft.getInstance().level.registryAccess()
+        var level = Objects.requireNonNull(Minecraft.getInstance().level, "Client level is missing");
+        var bedrockOres = level.registryAccess()
                 .registryOrThrow(GTRegistries.BEDROCK_ORE_REGISTRY);
         registry.addRecipes(RECIPE_TYPE, bedrockOres.holders()
                 .filter(ore -> ore.value().canGenerate())
@@ -60,7 +62,7 @@ public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<Bed
 
     @NotNull
     @Override
-    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+    public IDrawable getIcon() {
         return icon;
     }
 
@@ -75,7 +77,7 @@ public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<Bed
     }
 
     @Override
-    public Component getTitle() {
+    public @NotNull Component getTitle() {
         return Component.translatable("gtpm.jei.bedrock_ore_diagram");
     }
 }
