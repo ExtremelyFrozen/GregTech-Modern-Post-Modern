@@ -2,7 +2,7 @@ package com.gregtechceu.gtceu.api.gui.widget.directional;
 
 import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
 
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
+import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
