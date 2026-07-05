@@ -28,7 +28,7 @@ public final class HeldItemUIHelper {
      * @return {@code true} when the menu was opened by the current bridge implementation.
      */
     public static boolean open(ServerPlayer player, InteractionHand hand) {
-        if (player.getItemInHand(hand).getItem() instanceof HeldItemUIMenuType.HeldItemUI) {
+        if (player.getItemInHand(hand).getItem() instanceof LDLib2HeldItemUIProvider) {
             return HeldItemUIMenuType.openUI(player, hand);
         }
         return GTHeldItemUIFactory.INSTANCE.openUI(player, hand);
