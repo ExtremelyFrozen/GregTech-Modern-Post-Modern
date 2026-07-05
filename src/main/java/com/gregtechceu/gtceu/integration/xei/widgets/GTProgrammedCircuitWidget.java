@@ -1,39 +1,96 @@
 package com.gregtechceu.gtceu.integration.xei.widgets;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
-import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraft.world.item.ItemStack;
 
-public class GTProgrammedCircuitWidget extends WidgetGroup {
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-    public GTProgrammedCircuitWidget() {
-        super(0, 0, 150, 80);
-        setClientSideWidget();
-        setRecipe();
+import dev.vfyjxf.taffy.style.TaffyPosition;
+
+public class GTProgrammedCircuitWidget {
+
+    public static final int WIDTH = 150;
+    public static final int HEIGHT = 80;
+
+    private static final int SLOT_SIZE = 18;
+    private static final int BACKGROUND_X = 39;
+    private static final int BACKGROUND_Y = 0;
+    private static final int BACKGROUND_SIZE = 36;
+    private static final int SLOT_COLUMNS = 8;
+    private static final int SLOT_ROWS = 4;
+    private static final int CIRCUIT_COUNT = SLOT_COLUMNS * SLOT_ROWS;
+
+    public ModularUI createModularUI() {
+        return ModularUI.of(createUI());
     }
 
-    public void setRecipe() {
-        addWidget(new ImageWidget(39, 0, 36, 36, GuiTextures.SLOT));
+    public UI createUI() {
+        UIElement root = new UIElement();
+        root.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.width(WIDTH);
+            layout.height(HEIGHT);
+        });
 
-        ItemStackHandler handler = new CustomItemStackHandler(32);
-        for (int j = 0; j < 4; j++) {
-            for (int i = 0; i < 8; i++) {
-                int circuit = i + j * 8;
+        root.addChild(createBackgroundElement());
+
+        CustomItemStackHandler handler = new CustomItemStackHandler(CIRCUIT_COUNT);
+        for (int j = 0; j < SLOT_ROWS; j++) {
+            for (int i = 0; i < SLOT_COLUMNS; i++) {
+                int circuit = i + j * SLOT_COLUMNS;
                 handler.setStackInSlot(circuit, IntCircuitBehaviour.stack(1 + circuit));
-                var slot = new SlotWidget(handler, circuit, 3 + 18 * i, 18 * j, false, false)
-                        .setIngredientIO(circuit == 31 ? GTXEIHelper.output() : GTXEIHelper.input());
-                if (circuit != 31) {
-                    addWidget(new GTRecipeIngredientSlotWidget(slot, GTXEIHelper.output()));
-                }
-                addWidget(slot);
+                root.addChild(createCircuitSlot(handler, circuit, i, j));
             }
         }
+
+        return UI.of(root);
+    }
+
+    private static UIElement createBackgroundElement() {
+        UIElement element = new UIElement();
+        element.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(BACKGROUND_X);
+            layout.top(BACKGROUND_Y);
+            layout.width(BACKGROUND_SIZE);
+            layout.height(BACKGROUND_SIZE);
+        });
+        element.getStyle().backgroundTexture(GuiTextures.SLOT);
+        return element;
+    }
+
+    private static GTItemSlotElement createCircuitSlot(CustomItemStackHandler handler, int circuit,
+                                                       int column, int row) {
+        IngredientIO primaryRole = circuit == CIRCUIT_COUNT - 1 ? IngredientIO.OUTPUT : IngredientIO.INPUT;
+        Supplier<Stream<ItemStack>> stackSupplier = () -> Stream.of(IntCircuitBehaviour.stack(circuit + 1));
+
+        GTItemSlotElement slot = new GTItemSlotElement(handler, circuit);
+        slot.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(3 + SLOT_SIZE * column);
+            layout.top(SLOT_SIZE * row);
+            layout.width(SLOT_SIZE);
+            layout.height(SLOT_SIZE);
+        });
+        slot.setBackgroundTexture(GuiTextures.SLOT);
+        slot.setCanTakeItems(false);
+        slot.setCanPutItems(false);
+        slot.xeiRecipeSlot(primaryRole, 1.0f, 1, stackSupplier);
+        slot.xeiRecipeIngredient(primaryRole, stackSupplier);
+        if (primaryRole == IngredientIO.INPUT) {
+            slot.xeiRecipeIngredient(IngredientIO.OUTPUT, stackSupplier);
+        }
+        slot.setIngredientIO(primaryRole);
+        return slot;
     }
 }

@@ -4,11 +4,11 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.integration.xei.widgets.GTProgrammedCircuitWidget;
 
-import com.lowdragmc.lowdraglib.jei.ModularUIRecipeCategory;
-import com.lowdragmc.lowdraglib.jei.ModularWrapper;
+import com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory;
 
 import net.minecraft.network.chat.Component;
 
+import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +19,12 @@ public class GTProgrammedCircuitCategory extends ModularUIRecipeCategory<GTProgr
             GTCEu.id("programmed_circuit"), GTProgrammedCircuitWidget.class);
     private final int width;
     private final int height;
-    private final mezz.jei.api.gui.drawable.IDrawable icon;
+    private final IDrawable icon;
 
     public GTProgrammedCircuitCategory(IJeiHelpers helpers) {
-        super(GTProgrammedCircuitWrapper::new);
-        width = 150;
-        height = 80;
+        super(GTProgrammedCircuitWidget::createModularUI);
+        width = GTProgrammedCircuitWidget.WIDTH;
+        height = GTProgrammedCircuitWidget.HEIGHT;
         icon = helpers.getGuiHelper().createDrawableItemStack(GTItems.PROGRAMMED_CIRCUIT.asStack());
     }
 
@@ -34,7 +34,7 @@ public class GTProgrammedCircuitCategory extends ModularUIRecipeCategory<GTProgr
     }
 
     @Override
-    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+    public IDrawable getIcon() {
         return icon;
     }
 
@@ -51,12 +51,5 @@ public class GTProgrammedCircuitCategory extends ModularUIRecipeCategory<GTProgr
     @Override
     public @NotNull Component getTitle() {
         return Component.translatable("gtpm.jei.programmed_circuit");
-    }
-
-    public static class GTProgrammedCircuitWrapper extends ModularWrapper<GTProgrammedCircuitWidget> {
-
-        public GTProgrammedCircuitWrapper(GTProgrammedCircuitWidget widget) {
-            super(widget);
-        }
     }
 }

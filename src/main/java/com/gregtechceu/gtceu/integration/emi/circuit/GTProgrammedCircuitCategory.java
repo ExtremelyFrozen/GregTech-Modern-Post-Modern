@@ -5,7 +5,8 @@ import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.integration.xei.widgets.GTProgrammedCircuitWidget;
 
-import com.lowdragmc.lowdraglib.emi.ModularEmiRecipe;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.integration.xei.emi.ModularUIEMIRecipe;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -13,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.stack.EmiStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -35,10 +37,12 @@ public class GTProgrammedCircuitCategory extends EmiRecipeCategory {
         return Component.translatable("gtpm.jei.programmed_circuit");
     }
 
-    public static class GTProgrammedCircuitWrapper extends ModularEmiRecipe<GTProgrammedCircuitWidget> {
+    public static class GTProgrammedCircuitWrapper extends ModularUIEMIRecipe {
+
+        private final GTProgrammedCircuitWidget widget = new GTProgrammedCircuitWidget();
 
         public GTProgrammedCircuitWrapper() {
-            super(GTProgrammedCircuitWidget::new);
+            super(GTProgrammedCircuitWrapper::createModularUI);
         }
 
         @Override
@@ -48,7 +52,12 @@ public class GTProgrammedCircuitCategory extends EmiRecipeCategory {
 
         @Override
         public int getDisplayWidth() {
-            return super.getDisplayWidth();
+            return GTProgrammedCircuitWidget.WIDTH;
+        }
+
+        @Override
+        public int getDisplayHeight() {
+            return GTProgrammedCircuitWidget.HEIGHT;
         }
 
         @Override
@@ -57,7 +66,7 @@ public class GTProgrammedCircuitCategory extends EmiRecipeCategory {
         }
 
         @Override
-        public List<EmiStack> getOutputs() {
+        public @NotNull List<EmiStack> getOutputs() {
             return IntStream.range(0, 33)
                     .mapToObj(IntCircuitBehaviour::stack)
                     .map(EmiStack::of)
@@ -72,6 +81,15 @@ public class GTProgrammedCircuitCategory extends EmiRecipeCategory {
         @Override
         public boolean hideCraftable() {
             return true;
+        }
+
+        private static ModularUI createModularUI(ModularUIEMIRecipe recipe) {
+            if (recipe instanceof GTProgrammedCircuitWrapper circuitRecipe) {
+                return circuitRecipe.widget.createModularUI();
+            }
+            GTCEu.LOGGER.error("Expected GTProgrammedCircuitWrapper, got {}", recipe.getClass().getName());
+            throw new IllegalArgumentException("Expected GTProgrammedCircuitWrapper, got " +
+                    recipe.getClass().getName());
         }
     }
 }
