@@ -20,7 +20,7 @@ import com.gregtechceu.gtceu.integration.emi.orevein.GTOreVeinEmiCategory;
 import com.gregtechceu.gtceu.integration.emi.recipe.GTEmiRecipeHandler;
 import com.gregtechceu.gtceu.integration.emi.recipe.GTRecipeEMICategory;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUIContainer;
+import com.lowdragmc.lowdraglib2.gui.factory.LDMenuTypes;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -64,7 +64,8 @@ public class GTEMIPlugin implements EmiPlugin {
                 registry.addCategory(GTRecipeEMICategory.CATEGORIES.apply(category));
             }
         }
-        registry.addRecipeHandler(ModularUIContainer.MENUTYPE, new GTEmiRecipeHandler());
+        registry.addRecipeHandler(LDMenuTypes.BLOCK_UI.get(), new GTEmiRecipeHandler());
+        registry.addRecipeHandler(LDMenuTypes.HELD_ITEM_UI.get(), new GTEmiRecipeHandler());
         registry.addCategory(GTProgrammedCircuitCategory.CATEGORY);
 
         // Recipes
