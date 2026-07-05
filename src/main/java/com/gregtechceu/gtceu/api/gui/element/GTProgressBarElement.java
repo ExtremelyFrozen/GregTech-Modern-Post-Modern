@@ -12,6 +12,8 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import org.w3c.dom.Element;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 /**
  * LDLib2 progress bar element that preserves GTM recipe texture metadata.
@@ -21,9 +23,25 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @LDLRegister(name = "gtm-progress-bar", group = "gtm", registry = "ldlib2:ui_element")
 public class GTProgressBarElement extends ProgressBar {
 
+    private DoubleSupplier progressSupplier;
+
     public GTProgressBarElement() {
         barContainer.layout(layout -> layout.paddingAll(0));
         barContainer.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+    }
+
+    public GTProgressBarElement(DoubleSupplier progressSupplier) {
+        this();
+        setProgressSupplier(progressSupplier);
+    }
+
+    public GTProgressBarElement setProgressSupplier(DoubleSupplier progressSupplier) {
+        this.progressSupplier = progressSupplier;
+        return this;
+    }
+
+    public GTProgressBarElement setProgressSupplier(Supplier<Double> progressSupplier) {
+        return setProgressSupplier(() -> progressSupplier.get());
     }
 
     @Override
@@ -42,6 +60,14 @@ public class GTProgressBarElement extends ProgressBar {
         }
     }
 
+    @Override
+    public void screenTick() {
+        if (progressSupplier != null) {
+            setProgress(clampProgress(progressSupplier.getAsDouble()));
+        }
+        super.screenTick();
+    }
+
     private void setFillDirection(String value) {
         try {
             progressBarStyle(style -> style.fillDirection(FillDirection.valueOf(value)));
@@ -49,5 +75,13 @@ public class GTProgressBarElement extends ProgressBar {
             GTCEu.LOGGER.error("Invalid GTM progress bar fill direction '{}'", value, e);
             throw e;
         }
+    }
+
+    private float clampProgress(double progress) {
+        if (Double.isNaN(progress)) {
+            GTCEu.LOGGER.error("Invalid GTM progress supplier value '{}'", progress);
+            throw new IllegalArgumentException("Invalid progress supplier value: " + progress);
+        }
+        return (float) Math.max(0, Math.min(1, progress));
     }
 }

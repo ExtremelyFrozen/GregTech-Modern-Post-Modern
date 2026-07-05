@@ -2,6 +2,15 @@ package com.gregtechceu.gtceu.api.gui.element;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.texture.GuiTextureMetadata;
+import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
+import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.client.TooltipsHandler;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib2Adapter;
+import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
+import com.gregtechceu.gtceu.utils.FormattingUtil;
+
+import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -15,22 +24,37 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.gui.util.TextFormattingUtil;
+import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
+import com.lowdragmc.lowdraglib2.integration.xei.emi.LDLibEMIPlugin;
+import com.lowdragmc.lowdraglib2.integration.xei.jei.LDLibJEIPlugin;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
-import com.lowdragmc.lowdraglib2.utils.FluidHelper;
 import com.lowdragmc.lowdraglib2.utils.XmlUtils;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.TooltipFlag;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.stack.ListEmiIngredient;
+import mezz.jei.api.ingredients.ITypedIngredient;
+import mezz.jei.api.neoforge.NeoForgeTypes;
 import org.w3c.dom.Element;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * LDLib2 fluid slot element for GTM recipe XML metadata without LDLib2 RPC bucket clicks.
+ * LDLib2 fluid slot element for GTM recipe XML metadata with GTM-controlled bucket interactions.
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
@@ -48,6 +72,14 @@ public class GTFluidSlotElement extends UIElement {
     private boolean showFluidTooltips = true;
     private boolean allowClickFilled = true;
     private boolean allowClickDrained = true;
+    private IngredientIO ingredientIO = IngredientIO.NONE;
+    private float xeiChance = 1.0f;
+    private int xeiAmount = 1;
+    private Supplier<Stream<FluidStack>> xeiFluids = () -> Stream.of(getFluid());
+    private IFluidHandler fluidHandler;
+    private int tankIndex;
+    private Runnable changeListener;
+    private BiConsumer<GTFluidSlotElement, List<Component>> onAddedTooltips;
 
     public GTFluidSlotElement() {
         getLayout().width(18);
@@ -65,6 +97,34 @@ public class GTFluidSlotElement extends UIElement {
         amountLabel.setVisible(false);
         addChild(amountLabel);
         internalSetup();
+    }
+
+    public GTFluidSlotElement setFluidTank(IFluidHandler fluidHandler, int tankIndex) {
+        if (fluidHandler instanceof NotifiableFluidTank notifiable) {
+            if (tankIndex < 0 || tankIndex >= notifiable.getStorages().length) {
+                throw new IllegalArgumentException("Invalid fluid tank index: " + tankIndex);
+            }
+            this.fluidHandler = notifiable.getStorages()[tankIndex];
+            this.tankIndex = 0;
+        } else {
+            validateTankIndex(fluidHandler, tankIndex);
+            this.fluidHandler = fluidHandler;
+            this.tankIndex = tankIndex;
+        }
+        if (fluidHandler instanceof CycleFluidEntryHandler handler) {
+            setCycleFluidDisplay(handler, tankIndex);
+        }
+        refreshFluidTank();
+        return this;
+    }
+
+    public GTFluidSlotElement setCycleFluidDisplay(CycleFluidEntryHandler handler, int tankIndex) {
+        validateTankIndex(handler, tankIndex);
+        xeiFluids = () -> {
+            var entry = handler.getEntry(tankIndex);
+            return entry == null ? Stream.empty() : entry.getStacks().stream();
+        };
+        return this;
     }
 
     public GTFluidSlotElement setFluid(FluidStack fluid) {
@@ -87,12 +147,83 @@ public class GTFluidSlotElement extends UIElement {
         return capacity;
     }
 
+    public GTFluidSlotElement setShowAmount(boolean showAmount) {
+        this.showAmount = showAmount;
+        amountLabel.setVisible(showAmount);
+        updateAmountLabel();
+        return this;
+    }
+
+    public GTFluidSlotElement setAllowClickFilled(boolean allowClickFilled) {
+        this.allowClickFilled = allowClickFilled;
+        return this;
+    }
+
+    public GTFluidSlotElement setAllowClickDrained(boolean allowClickDrained) {
+        this.allowClickDrained = allowClickDrained;
+        return this;
+    }
+
     public boolean isAllowClickFilled() {
         return allowClickFilled;
     }
 
     public boolean isAllowClickDrained() {
         return allowClickDrained;
+    }
+
+    public GTFluidSlotElement setChangeListener(Runnable changeListener) {
+        this.changeListener = changeListener;
+        return this;
+    }
+
+    public GTFluidSlotElement setIngredientIO(GTXEIIngredientRole role) {
+        return setIngredientIO(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role));
+    }
+
+    public GTFluidSlotElement setIngredientIO(IngredientIO ingredientIO) {
+        this.ingredientIO = ingredientIO;
+        return this;
+    }
+
+    public GTFluidSlotElement setXEIChance(float xeiChance) {
+        this.xeiChance = xeiChance;
+        return this;
+    }
+
+    public GTFluidSlotElement setXEIAmount(int xeiAmount) {
+        this.xeiAmount = xeiAmount;
+        return this;
+    }
+
+    public GTFluidSlotElement setXEIPossibleFluids(Supplier<Stream<FluidStack>> xeiFluids) {
+        this.xeiFluids = xeiFluids;
+        return this;
+    }
+
+    public GTFluidSlotElement setXEIRecipeSlot() {
+        addXEIRecipeSlot(ingredientIO, () -> xeiChance, () -> xeiAmount, xeiFluids);
+        return this;
+    }
+
+    public GTFluidSlotElement setXEIRecipeSlot(IngredientIO ingredientIO, float xeiChance, int xeiAmount,
+                                               Supplier<Stream<FluidStack>> xeiFluids) {
+        return setIngredientIO(ingredientIO)
+                .setXEIChance(xeiChance)
+                .setXEIAmount(xeiAmount)
+                .setXEIPossibleFluids(xeiFluids)
+                .setXEIRecipeSlot();
+    }
+
+    public GTFluidSlotElement setOnAddedTooltips(
+                                                 BiConsumer<GTFluidSlotElement, List<Component>> onAddedTooltips) {
+        this.onAddedTooltips = onAddedTooltips;
+        return this;
+    }
+
+    public GTFluidSlotElement setBackgroundTexture(IGuiTexture background) {
+        this.background = background;
+        return this;
     }
 
     @Override
@@ -110,8 +241,7 @@ public class GTFluidSlotElement extends UIElement {
             showFluidTooltips = XmlUtils.getAsBoolean(element, "draw-hover-tips", true);
         }
         if (element.hasAttribute("show-amount")) {
-            showAmount = XmlUtils.getAsBoolean(element, "show-amount", false);
-            amountLabel.setVisible(showAmount);
+            setShowAmount(XmlUtils.getAsBoolean(element, "show-amount", false));
         }
         if (element.hasAttribute("legacy-allow-click-filled")) {
             allowClickFilled = XmlUtils.getAsBoolean(element, "legacy-allow-click-filled", true);
@@ -127,7 +257,14 @@ public class GTFluidSlotElement extends UIElement {
     }
 
     @Override
+    public void screenTick() {
+        refreshFluidTank();
+        super.screenTick();
+    }
+
+    @Override
     public void drawBackgroundAdditional(GUIContext guiContext) {
+        refreshFluidTank();
         super.drawBackgroundAdditional(guiContext);
         background.draw(guiContext, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
 
@@ -174,16 +311,23 @@ public class GTFluidSlotElement extends UIElement {
         var tooltips = new ArrayList<Component>();
         var tooltipCapacity = Math.max(capacity, fluid.getAmount());
         if (!fluid.isEmpty()) {
-            tooltips.add(FluidHelper.getDisplayName(fluid));
-            tooltips.add(Component.translatable("ldlib.fluid.amount", fluid.getAmount(), tooltipCapacity)
-                    .append(" " + FluidHelper.getUnit()));
-            tooltips.add(Component.translatable("ldlib.fluid.temperature", FluidHelper.getTemperature(fluid)));
-            tooltips.add(Component.translatable(FluidHelper.isLighterThanAir(fluid) ?
-                    "ldlib.fluid.state_gas" : "ldlib.fluid.state_liquid"));
+            tooltips.add(fluid.getHoverName());
+            if (showAmount) {
+                tooltips.add(Component.translatable("gtpm.fluid.amount",
+                        FormattingUtil.formatNumbers(fluid.getAmount()),
+                        FormattingUtil.formatNumbers(tooltipCapacity)));
+            }
+            TooltipsHandler.appendFluidTooltips(fluid, tooltips::add,
+                    TooltipFlag.NORMAL, Item.TooltipContext.of(GTRegistries.builtinRegistry()));
         } else {
-            tooltips.add(Component.translatable("ldlib.fluid.empty"));
-            tooltips.add(Component.translatable("ldlib.fluid.amount", 0, tooltipCapacity)
-                    .append(" " + FluidHelper.getUnit()));
+            tooltips.add(Component.translatable("gtpm.fluid.empty"));
+            if (showAmount) {
+                tooltips.add(Component.translatable("gtpm.fluid.amount", 0,
+                        FormattingUtil.formatNumbers(tooltipCapacity)));
+            }
+        }
+        if (onAddedTooltips != null) {
+            onAddedTooltips.accept(this, tooltips);
         }
         tooltips.addAll(getStyle().tooltips().asList());
         return tooltips;
@@ -198,12 +342,63 @@ public class GTFluidSlotElement extends UIElement {
                 TextFormattingUtil.formatLongToCompactStringBuckets(fluid.getAmount(), 3) + "B"));
     }
 
+    private void refreshFluidTank() {
+        if (fluidHandler == null) {
+            return;
+        }
+        var refreshedFluid = fluidHandler.getFluidInTank(tankIndex);
+        var refreshedCapacity = fluidHandler.getTankCapacity(tankIndex);
+        var changed = capacity != refreshedCapacity ||
+                !FluidStack.isSameFluidSameComponents(refreshedFluid, fluid) ||
+                refreshedFluid.getAmount() != fluid.getAmount();
+        setCapacity(refreshedCapacity);
+        setFluid(refreshedFluid.copy());
+        if (changed && changeListener != null) {
+            changeListener.run();
+        }
+    }
+
+    private void addXEIRecipeSlot(IngredientIO io, Supplier<Float> chance, IntSupplier amount,
+                                  Supplier<Stream<FluidStack>> allPossibleFluids) {
+        if (LDLib2.isJeiLoaded()) {
+            LDLibJEIPlugin.recipeSlot(this,
+                    () -> createJEIFluidIngredient(getFluid()),
+                    () -> allPossibleFluids.get()
+                            .map(this::createJEIFluidIngredient)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList()));
+        }
+        if (LDLib2.isEmiLoaded()) {
+            LDLibEMIPlugin.recipeSlot(this, () ->
+                    new ListEmiIngredient(
+                            allPossibleFluids.get()
+                                    .map(fluid -> EmiStack.of(fluid.getFluid(),
+                                            fluid.getComponentsPatch(), fluid.getAmount()))
+                                    .map(stack -> stack.setChance(chance.get()))
+                                    .collect(Collectors.toList()), amount.getAsInt())
+                            .setChance(chance.get()));
+        }
+    }
+
+    private ITypedIngredient<?> createJEIFluidIngredient(FluidStack fluidStack) {
+        if (fluidStack.isEmpty()) {
+            return null;
+        }
+        return LDLibJEIPlugin.createTypedIngredient(NeoForgeTypes.FLUID_STACK, fluidStack).orElse(null);
+    }
+
     private FillDirection parseFillDirection(String value) {
         try {
             return FillDirection.valueOf(value);
         } catch (IllegalArgumentException e) {
             GTCEu.LOGGER.error("Invalid GTM fluid slot fill direction '{}'", value, e);
             throw e;
+        }
+    }
+
+    private static void validateTankIndex(IFluidHandler fluidHandler, int tankIndex) {
+        if (tankIndex < 0 || tankIndex >= fluidHandler.getTanks()) {
+            throw new IllegalArgumentException("Invalid fluid tank index: " + tankIndex);
         }
     }
 }
