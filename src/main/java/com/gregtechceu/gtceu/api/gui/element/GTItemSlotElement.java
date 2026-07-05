@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler
 import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.gui.slot.ItemHandlerSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
+import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib2.utils.XmlUtils;
@@ -48,6 +49,7 @@ public class GTItemSlotElement extends ItemSlot {
     private float xeiChance = 1.0f;
     private int xeiAmount = 1;
     private Supplier<Stream<ItemStack>> xeiStacks = this::getCurrentItemStream;
+    private IGuiTexture contentOverlay = IGuiTexture.EMPTY;
     @Nullable
     private Runnable changeListener;
     @Nullable
@@ -176,6 +178,11 @@ public class GTItemSlotElement extends ItemSlot {
         return this;
     }
 
+    public GTItemSlotElement setContentOverlay(IGuiTexture contentOverlay) {
+        this.contentOverlay = contentOverlay;
+        return this;
+    }
+
     public GTItemSlotElement xeiRecipeIngredient() {
         return xeiRecipeIngredient(ingredientIO);
     }
@@ -244,6 +251,12 @@ public class GTItemSlotElement extends ItemSlot {
             onAddedTooltips.accept(this, tooltips);
         }
         return tooltips;
+    }
+
+    @Override
+    public void drawBackgroundAdditional(GUIContext guiContext) {
+        super.drawBackgroundAdditional(guiContext);
+        contentOverlay.draw(guiContext, getContentX(), getContentY(), getContentWidth(), getContentHeight());
     }
 
     @Override

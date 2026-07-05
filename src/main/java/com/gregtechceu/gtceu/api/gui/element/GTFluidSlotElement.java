@@ -64,6 +64,7 @@ public class GTFluidSlotElement extends UIElement {
     private final Label amountLabel = new Label();
     private IGuiTexture background = IGuiTexture.EMPTY;
     private IGuiTexture overlay = IGuiTexture.EMPTY;
+    private IGuiTexture contentOverlay = IGuiTexture.EMPTY;
     private IGuiTexture hoverOverlay = new ColorRectTexture(0x80FFFFFF);
     private FluidStack fluid = FluidStack.EMPTY;
     private FillDirection fillDirection = FillDirection.DOWN_TO_UP;
@@ -226,6 +227,11 @@ public class GTFluidSlotElement extends UIElement {
         return this;
     }
 
+    public GTFluidSlotElement setContentOverlay(IGuiTexture overlay) {
+        this.contentOverlay = overlay;
+        return this;
+    }
+
     @Override
     public void loadXml(Element element) {
         if (element.hasAttribute("legacy-background")) {
@@ -277,6 +283,7 @@ public class GTFluidSlotElement extends UIElement {
             drawFluid(guiContext, contentX, contentY, contentWidth, contentHeight);
         }
         overlay.draw(guiContext, contentX, contentY, contentWidth, contentHeight);
+        contentOverlay.draw(guiContext, contentX, contentY, contentWidth, contentHeight);
         if (isHover() || isSelfOrChildHover()) {
             hoverOverlay.draw(guiContext, contentX, contentY, contentWidth, contentHeight);
         }

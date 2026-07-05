@@ -21,6 +21,7 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
+import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.integration.emi.recipe.GTRecipeEMICategory;
 import com.gregtechceu.gtceu.integration.jei.GTJEIPlugin;
@@ -453,6 +454,46 @@ public class GTRecipeTypeUI {
         }
     }
 
+    public void applyLDLib2RecipeContent(UI ui,
+                                         Table<IO, RecipeCapability<?>, List<Content>> contentTable,
+                                         GTRecipeDefinition recipe,
+                                         int recipeTier,
+                                         int chanceTier) {
+        applyLDLib2RecipeContent(ui.rootElement, contentTable, recipe, recipeTier, chanceTier);
+    }
+
+    public void applyLDLib2RecipeContent(UIElement root,
+                                         Table<IO, RecipeCapability<?>, List<Content>> contentTable,
+                                         GTRecipeDefinition recipe,
+                                         int recipeTier,
+                                         int chanceTier) {
+        for (var capabilityEntry : contentTable.rowMap().entrySet()) {
+            IO io = capabilityEntry.getKey();
+            for (var contentsEntry : capabilityEntry.getValue().entrySet()) {
+                RecipeCapability<?> cap = contentsEntry.getKey();
+                var elementClass = cap.getLDLib2ElementClass();
+                if (elementClass == null) {
+                    continue;
+                }
+                List<Content> contents = contentsEntry.getValue();
+                int nonTickCount = (io == IO.IN ? recipe.getInputContents(cap) : recipe.getOutputContents(cap))
+                        .size();
+                root.selectRegex("^%s_[0-9]+$".formatted(cap.slotName(io)), elementClass)
+                        .forEach(element -> {
+                            int index = ldLib2ElementIdIndex(element);
+                            if (index >= 0 && index < contents.size()) {
+                                Content content = contents.get(index);
+                                cap.applyLDLib2ElementInfo(element, index, true, io, null, recipe.getType(), recipe,
+                                        content, null, recipeTier, chanceTier);
+                                setLDLib2ContentOverlay(element,
+                                        content.createOverlay(index >= nonTickCount, recipeTier, chanceTier,
+                                                recipe.getType().getChanceFunction()));
+                            }
+                        });
+            }
+        }
+    }
+
     private LDLib2ElementGroup addLDLib2InventorySlotGroup(boolean isOutputs, boolean isSteam,
                                                            boolean isHighPressure) {
         int maxCount = 0;
@@ -542,6 +583,18 @@ public class GTRecipeTypeUI {
             tank.setBackgroundTexture(texture);
         } else {
             element.getStyle().backgroundTexture(texture);
+        }
+    }
+
+    private static void setLDLib2ContentOverlay(UIElement element, IGuiTexture texture) {
+        if (element instanceof GTItemSlotElement slot) {
+            slot.setContentOverlay(texture);
+        } else if (element instanceof GTFluidSlotElement tank) {
+            tank.setContentOverlay(texture);
+        } else {
+            GTCEu.LOGGER.error("LDLib2 recipe element {} does not support content overlays",
+                    element.getClass().getName());
+            throw new IllegalArgumentException("Unsupported LDLib2 recipe element: " + element.getClass().getName());
         }
     }
 
