@@ -36,7 +36,6 @@ import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
-import com.lowdragmc.lowdraglib.utils.Size;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
@@ -110,9 +109,6 @@ public class GTRecipeTypeUI {
     private CompoundTag customUICache;
     private String customLDLib2UICache;
     private boolean customLDLib2UICacheLoaded;
-    private Size xeiSize;
-    @Getter
-    private int originalWidth;
 
     /**
      * @param recipeType the recipemap corresponding to this ui
@@ -232,18 +228,6 @@ public class GTRecipeTypeUI {
         this.customUICache = null;
         this.customLDLib2UICache = null;
         this.customLDLib2UICacheLoaded = false;
-        this.xeiSize = null;
-    }
-
-    public Size getJEISize() {
-        Size size = this.xeiSize;
-        if (size == null) {
-            var originalSize = createEditableUITemplate(false, false).createDefault().getSize();
-            this.originalWidth = originalSize.width;
-            this.xeiSize = size = new Size(Math.max(originalWidth, 150),
-                    getPropertyHeightShift() + 5 + originalSize.height);
-        }
-        return size;
     }
 
     public record RecipeHolder(DoubleSupplier progressSupplier,
