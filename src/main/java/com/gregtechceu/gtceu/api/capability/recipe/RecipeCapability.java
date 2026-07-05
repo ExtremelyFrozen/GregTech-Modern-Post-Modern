@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.utils.codec.DispatchedMapCodec;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.Holder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -211,6 +212,30 @@ public abstract class RecipeCapability<T> {
                                 @Nullable("null when content == null") GTRecipeDefinition recipe,
                                 @Nullable Content content,
                                 @Nullable Object storage, int recipeTier, int chanceTier) {}
+
+    @Nullable("null when this capability does not have a LDLib2 recipe element")
+    public UIElement createLDLib2Element() {
+        return null;
+    }
+
+    /**
+     * Return the class of the supported LDLib2 element that should be used to display this capability.
+     */
+    @Nullable
+    public Class<? extends UIElement> getLDLib2ElementClass() {
+        return null;
+    }
+
+    public void applyLDLib2ElementInfo(@NotNull UIElement element,
+                                       int index,
+                                       boolean isXEI,
+                                       IO io,
+                                       @Nullable("null when storage == null")
+                                       GTRecipeTypeUI.RecipeHolder recipeHolder,
+                                       @NotNull GTRecipeType recipeType,
+                                       @Nullable("null when content == null") GTRecipeDefinition recipe,
+                                       @Nullable Content content,
+                                       @Nullable Object storage, int recipeTier, int chanceTier) {}
 
     /**
      * Create a cache map for chanced outputs

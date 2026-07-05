@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.capability.recipe;
 
+import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
@@ -29,6 +30,7 @@ import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 import com.gregtechceu.gtceu.utils.GTMath;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentPatch;
@@ -377,6 +379,18 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
         return TankWidget.class;
     }
 
+    @NotNull
+    @Override
+    public GTFluidSlotElement createLDLib2Element() {
+        return new GTFluidSlotElement().setShowAmount(true);
+    }
+
+    @NotNull
+    @Override
+    public Class<? extends UIElement> getLDLib2ElementClass() {
+        return GTFluidSlotElement.class;
+    }
+
     @Override
     public void applyWidgetInfo(@NotNull Widget widget,
                                 int index,
@@ -424,6 +438,68 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                 }
             }
         }
+    }
+
+    @Override
+    public void applyLDLib2ElementInfo(@NotNull UIElement element,
+                                       int index,
+                                       boolean isXEI,
+                                       IO io,
+                                       GTRecipeTypeUI.@UnknownNullability("null when storage == null")
+                                       RecipeHolder recipeHolder,
+                                       @NotNull GTRecipeType recipeType,
+                                       @UnknownNullability("null when content == null")
+                                       GTRecipeDefinition recipe,
+                                       @Nullable Content content,
+                                       @Nullable Object storage, int recipeTier, int chanceTier) {
+        if (element instanceof GTFluidSlotElement tank) {
+            if (storage instanceof IFluidHandler fluidHandler) {
+                tank.setFluidTank(fluidHandler, index);
+            }
+            tank.setIngredientIO(io == IO.IN ? GTXEIHelper.input() : GTXEIHelper.output());
+            tank.setAllowClickFilled(!isXEI);
+            tank.setAllowClickDrained(!isXEI && io.support(IO.IN));
+            if (isXEI) {
+                tank.setShowAmount(false);
+            }
+            if (content != null) {
+                SizedFluidIngredient ingredient = FluidRecipeCapability.CAP.of(content.content);
+                float chance = (float) recipeType.getChanceFunction()
+                        .getBoostedChance(content, recipeTier, chanceTier) / content.maxChance;
+                tank.setXEIChance(chance);
+                tank.setXEIAmount(getXEIAmount(ingredient));
+                tank.setXEIPossibleFluids(() -> mapFluid(ingredient).getStacks().stream());
+                if (io == IO.IN && content.chance == 0) {
+                    tank.setIngredientIO(GTXEIHelper.catalyst());
+                }
+                tank.setOnAddedTooltips((w, tooltips) -> {
+                    if (!isXEI && ingredient.getFluids().length > 0) {
+                        FluidStack stack = ingredient.getFluids()[0];
+                        TooltipsHandler.appendFluidTooltips(stack, tooltips::add,
+                                TooltipFlag.NORMAL, Item.TooltipContext.of(GTRegistries.builtinRegistry()));
+                    }
+                    if (ingredient.ingredient() instanceof IntProviderFluidIngredient provider) {
+                        IntProvider countProvider = provider.getCountProvider();
+                        tooltips.add(Component.translatable("gtpm.gui.content.fluid_range",
+                                countProvider.getMinValue(), countProvider.getMaxValue())
+                                .withStyle(ChatFormatting.GOLD));
+                    }
+                    GTRecipeWidget.setConsumedChance(content,
+                            recipe.getChanceLogicForCapability(this, io, isTickSlot(index, io, recipe)),
+                            tooltips, recipeTier, chanceTier, recipeType.getChanceFunction());
+                    if (isTickSlot(index, io, recipe)) {
+                        tooltips.add(Component.translatable("gtpm.gui.content.per_tick"));
+                    }
+                });
+                if (isXEI) {
+                    tank.setXEIRecipeSlot();
+                }
+            }
+        }
+    }
+
+    private int getXEIAmount(SizedFluidIngredient ingredient) {
+        return ingredient.ingredient() instanceof IntProviderFluidIngredient ? 1 : Math.max(ingredient.amount(), 1);
     }
 
     // Maps ingredients to an FluidEntryList for XEI: either an FluidTagList or a FluidStackList

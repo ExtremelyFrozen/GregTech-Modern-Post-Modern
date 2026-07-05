@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.capability.recipe;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
@@ -32,6 +33,7 @@ import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 import com.gregtechceu.gtceu.utils.*;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentPatch;
@@ -432,6 +434,18 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
         return SlotWidget.class;
     }
 
+    @NotNull
+    @Override
+    public GTItemSlotElement createLDLib2Element() {
+        return new GTItemSlotElement();
+    }
+
+    @NotNull
+    @Override
+    public Class<? extends UIElement> getLDLib2ElementClass() {
+        return GTItemSlotElement.class;
+    }
+
     @Override
     public void applyWidgetInfo(@NotNull Widget widget,
                                 int index,
@@ -506,6 +520,102 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                 }
             }
         }
+    }
+
+    @Override
+    public void applyLDLib2ElementInfo(@NotNull UIElement element,
+                                       int index,
+                                       boolean isXEI,
+                                       IO io,
+                                       GTRecipeTypeUI.@UnknownNullability("null when storage == null")
+                                       RecipeHolder recipeHolder,
+                                       @NotNull GTRecipeType recipeType,
+                                       @UnknownNullability("null when content == null")
+                                       GTRecipeDefinition recipe,
+                                       @Nullable Content content,
+                                       @Nullable Object storage, int recipeTier, int chanceTier) {
+        if (element instanceof GTItemSlotElement slot) {
+            if (storage instanceof IItemHandlerModifiable items) {
+                if (index >= 0 && index < items.getSlots()) {
+                    slot.setHandlerSlot(items, index);
+                    slot.setIngredientIO(io == IO.IN ? GTXEIHelper.input() : GTXEIHelper.output());
+                    slot.setCanTakeItems(!isXEI);
+                    slot.setCanPutItems(!isXEI && io.support(IO.IN));
+                }
+                if (isXEI && recipeType.isHasResearchSlot() && index == items.getSlots()) {
+                    applyLDLib2ResearchSlot(slot, recipeHolder, recipeType);
+                }
+            }
+            if (content != null) {
+                SizedIngredient ingredient = this.of(content.content);
+                float chance = (float) recipeType.getChanceFunction()
+                        .getBoostedChance(content, recipeTier, chanceTier) / content.maxChance;
+                slot.setXEIChance(chance);
+                slot.setXEIAmount(getXEIAmount(ingredient));
+                slot.setXEIPossibleItems(() -> mapItem(ingredient).getStacks().stream());
+                if (io == IO.IN && (content.chance == 0 ||
+                        ingredient.getContainedCustom() instanceof IntCircuitIngredient)) {
+                    slot.setIngredientIO(GTXEIHelper.catalyst());
+                }
+                slot.setOnAddedTooltips((w, tooltips) -> {
+                    GTRecipeWidget.setConsumedChance(content,
+                            recipe.getChanceLogicForCapability(this, io, isTickSlot(index, io, recipe)),
+                            tooltips, recipeTier, chanceTier, recipeType.getChanceFunction());
+                    appendCountRangeTooltip(ingredient, tooltips);
+                    if (isTickSlot(index, io, recipe)) {
+                        tooltips.add(Component.translatable("gtpm.gui.content.per_tick"));
+                    }
+                });
+                if (isXEI) {
+                    slot.xeiRecipeSlot();
+                }
+            }
+        }
+    }
+
+    private void applyLDLib2ResearchSlot(GTItemSlotElement slot,
+                                         GTRecipeTypeUI.@UnknownNullability("null when storage == null")
+                                         RecipeHolder recipeHolder,
+                                         GTRecipeType recipeType) {
+        if (!ConfigHolder.INSTANCE.machines.enableResearch) {
+            return;
+        }
+        ResearchCondition condition = recipeHolder.conditions().stream()
+                .filter(ResearchCondition.class::isInstance).findAny()
+                .map(ResearchCondition.class::cast).orElse(null);
+        if (condition == null) {
+            return;
+        }
+        List<ItemStack> dataItems = new ArrayList<>();
+        for (ResearchData.ResearchEntry entry : condition.data) {
+            ItemStack dataStick = entry.dataItem().copy();
+            dataStick.set(GTDataComponents.RESEARCH_ITEM,
+                    new ResearchManager.ResearchItem(entry.researchId(), recipeType));
+            dataItems.add(dataStick);
+        }
+        CycleItemEntryHandler handler = CycleItemEntryHandler.createFromStacks(List.of(dataItems));
+        slot.setHandlerSlot(handler, 0);
+        slot.setIngredientIO(GTXEIHelper.catalyst());
+        slot.setCanTakeItems(false);
+        slot.setCanPutItems(false);
+        slot.setXEIAmount(1);
+        slot.xeiRecipeSlot();
+    }
+
+    private void appendCountRangeTooltip(SizedIngredient ingredient, List<Component> tooltips) {
+        if (ingredient.getContainedCustom() instanceof IntProviderIngredient provider) {
+            appendCountRangeTooltip(provider.getCountProvider(), tooltips);
+        }
+    }
+
+    private void appendCountRangeTooltip(IntProvider countProvider, List<Component> tooltips) {
+        tooltips.add(Component.translatable("gtpm.gui.content.count_range",
+                        countProvider.getMinValue(), countProvider.getMaxValue())
+                .withStyle(ChatFormatting.GOLD));
+    }
+
+    private int getXEIAmount(SizedIngredient ingredient) {
+        return ingredient.getContainedCustom() instanceof IntProviderIngredient ? 1 : Math.max(ingredient.count(), 1);
     }
 
     // Maps ingredients to an ItemEntryList for XEI: either an ItemTagList or an ItemStackList
