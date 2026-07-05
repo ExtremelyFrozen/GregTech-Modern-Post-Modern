@@ -9,6 +9,8 @@ import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandler;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 import com.gregtechceu.gtceu.api.gui.widget.ColorBlockWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ConfirmTextInputWidget;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
@@ -26,8 +28,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
 
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.ChatFormatting;

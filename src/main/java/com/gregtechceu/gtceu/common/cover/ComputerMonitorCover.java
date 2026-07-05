@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.IUICover;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceBorderTexture;
 import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
@@ -24,7 +25,6 @@ import com.gregtechceu.gtceu.integration.create.GTCreateIntegration;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
