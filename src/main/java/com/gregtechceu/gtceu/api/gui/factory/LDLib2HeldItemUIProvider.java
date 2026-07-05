@@ -1,16 +1,27 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
+import com.lowdragmc.lowdraglib2.gui.factory.HeldItemUIMenuType;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Objects;
+
 /**
  * Creates an LDLib2 held item UI through GTM's stable held item holder contract.
  *
- * <p>This provider lets item business code depend on {@link HeldItemUIHolder} instead of an LDLib2 menu holder. It
- * exists so LDLib2 screens can migrate in parallel while the legacy runtime remains active.
+ * <p>Implementing this provider automatically opts the item into LDLib2's {@link HeldItemUIMenuType} held item menu.
+ * The bridge still adapts LDLib2's native holder into GTM's {@link HeldItemUIHolder}, so item business code continues
+ * to receive the GTM holder contract.
  */
-public interface LDLib2HeldItemUIProvider {
+public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI {
+
+    @Override
+    default ModularUI createUI(HeldItemUIMenuType.HeldItemUIHolder holder) {
+        HeldItemUIHolderContext gtmHolder = new HeldItemUIHolderContext(holder.player, holder.hand, holder.itemStack);
+        return Objects.requireNonNull(createLDLib2UI(holder.player, gtmHolder),
+                "LDLib2 held item UI provider returned null");
+    }
 
     /**
      * Builds the LDLib2 held item UI for the provided player and opened item identity.
