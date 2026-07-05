@@ -1,22 +1,15 @@
 package com.gregtechceu.gtceu.common.data;
 
-import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.block.ICoilType;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.RecipeData;
-import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.world.item.ItemStack;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.MULTIBLOCK;
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.register;
@@ -51,15 +44,6 @@ public class GCYMRecipeTypes {
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = RecipeData.getInt(recipe.data, "ebf_temp");
-                List<List<ItemStack>> items = new ArrayList<>();
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
-                        .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
-                        .map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(CycleItemEntryHandler.createFromStacks(items), 0,
-                        widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 40, false, false));
             })
             .setLDLib2UiBuilder((recipe, root, rootSize) ->
                     GTRecipeTypes.addLDLib2HeatingCoilSlot(recipe, root, rootSize, 40))

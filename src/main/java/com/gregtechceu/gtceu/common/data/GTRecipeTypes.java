@@ -10,8 +10,6 @@ import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
-import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.recipe.*;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
@@ -423,36 +421,6 @@ public class GTRecipeTypes {
             .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_MACERATE, LEFT_TO_RIGHT))
             .setIconSupplier(() -> GTMachines.ROCK_CRUSHER[GTValues.LV].asStack())
             .setSteamProgressBar(GuiTextures.PROGRESS_BAR_MACERATE_STEAM, LEFT_TO_RIGHT)
-            .setUiBuilder((recipe, widgetGroup) -> {
-                List<HolderSet<Fluid>> fluids = new ArrayList<>();
-                for (RecipeCondition condition : recipe.conditions) {
-                    if (condition instanceof AdjacentFluidCondition adjacentFluid) {
-                        fluids.addAll(adjacentFluid.getOrInitFluids(recipe.data));
-                    }
-                }
-                if (fluids.isEmpty()) {
-                    return;
-                }
-
-                int xOffset = 35;
-                int yOffset = 0;
-                int i = 0;
-                for (HolderSet<Fluid> set : fluids) {
-                    if (set.size() == 0) {
-                        continue;
-                    }
-                    List<FluidEntryList> slots = Collections.singletonList(FluidHolderSetList.of(set, 1000));
-                    TankWidget tank = new TankWidget(new CycleFluidEntryHandler(slots),
-                            widgetGroup.getSize().width - 30 - xOffset, widgetGroup.getSize().height - 30 + yOffset,
-                            false, false)
-                            .setBackground(GuiTextures.FLUID_SLOT).setShowAmount(false);
-                    widgetGroup.addWidget(tank);
-
-                    i++;
-                    xOffset = 20 * (2 - (i % 3)) - 5;
-                    yOffset = 20 * (i / 3);
-                }
-            })
             .setLDLib2UiBuilder(GTRecipeTypes::addLDLib2RockBreakerFluidSlots)
             .setSound(GTSoundEntries.FIRE);
 
@@ -527,15 +495,6 @@ public class GTRecipeTypes {
                             I18n.get(requiredCoil.getMaterial().getUnlocalizedName()));
                 }
                 return "";
-            })
-            .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = RecipeData.getInt(recipe.data, "ebf_temp");
-                List<List<ItemStack>> items = new ArrayList<>();
-                items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
-                        .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
-                        .map(coil -> new ItemStack(coil.getValue().get())).toList());
-                widgetGroup.addWidget(new SlotWidget(CycleItemEntryHandler.createFromStacks(items), 0,
-                        widgetGroup.getSize().width - 25, widgetGroup.getSize().height - 32, false, false));
             })
             .setLDLib2UiBuilder((recipe, root, rootSize) ->
                     addLDLib2HeatingCoilSlot(recipe, root, rootSize, 32))
@@ -671,7 +630,6 @@ public class GTRecipeTypes {
             .setSound(GTSoundEntries.ARC)
             .setOffsetVoltageText(true)
             .setMaxTooltips(4)
-            .setUiBuilder(FusionReactorMachine::addEUToStartLabel)
             .setLDLib2UiBuilder(FusionReactorMachine::addLDLib2EUToStartLabel);
 
     public static final GTRecipeType DUMMY_RECIPES = register("dummy", DUMMY)

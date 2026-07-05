@@ -29,12 +29,9 @@ import com.gregtechceu.gtceu.common.block.FusionCasingBlock;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
@@ -293,35 +290,12 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         }
     }
 
-    public static void addEUToStartLabel(GTRecipe recipe, WidgetGroup group) {
-        long euToStart = RecipeData.getLong(recipe.data, "eu_to_start");
-        if (euToStart <= 0) return;
-        int recipeTier = RecipeHelper.getPreOCRecipeEuTier(recipe);
-        addEUToStartLabel(group, euToStart, recipeTier);
-    }
-
-    public static void addEUToStartLabel(GTRecipeDefinition recipe, WidgetGroup group) {
-        long euToStart = RecipeData.getLong(recipe.data, "eu_to_start");
-        if (euToStart <= 0) return;
-        int recipeTier = RecipeHelper.getPreOCRecipeEuTier(recipe);
-        addEUToStartLabel(group, euToStart, recipeTier);
-    }
-
     public static void addLDLib2EUToStartLabel(GTRecipeDefinition recipe, UIElement root,
                                                LDLib2RecipeUISize rootSize) {
         long euToStart = RecipeData.getLong(recipe.data, "eu_to_start");
         if (euToStart <= 0) return;
         int recipeTier = RecipeHelper.getPreOCRecipeEuTier(recipe);
         addLDLib2EUToStartLabel(root, euToStart, recipeTier, rootSize);
-    }
-
-    private static void addEUToStartLabel(WidgetGroup group, long euToStart, int recipeTier) {
-        int fusionTier = findCeilingTier(euToStart);
-        int tier = Math.max(MINIMUM_TIER, Math.max(recipeTier, fusionTier));
-        group.addWidget(new LabelWidget(-8, group.getSizeHeight() - 10,
-                LocalizationUtils.format("gtpm.recipe.eu_to_start",
-                        FormattingUtil.formatNumberReadable2F(euToStart, false),
-                        FUSION_NAMES.get(tier))));
     }
 
     private static void addLDLib2EUToStartLabel(UIElement root, long euToStart, int recipeTier,
@@ -376,7 +350,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         };
     }
 
-    public static net.minecraft.world.level.block.Block getCoilState(int tier) {
+    public static Block getCoilState(int tier) {
         if (tier == GTValues.LuV)
             return SUPERCONDUCTING_COIL.get();
 

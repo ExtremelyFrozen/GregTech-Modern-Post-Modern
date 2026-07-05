@@ -73,7 +73,6 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Collectors;
 import javax.xml.XMLConstants;
@@ -101,9 +100,6 @@ public class GTRecipeTypeUI {
     private SteamTexture steamProgressBarTexture = null;
     @Setter
     private ProgressTexture.FillDirection steamMoveType = ProgressTexture.FillDirection.LEFT_TO_RIGHT;
-    @Setter
-    @Nullable
-    protected BiConsumer<GTRecipeDefinition, WidgetGroup> uiBuilder;
     @Setter
     @Nullable
     protected LDLib2UiBuilder ldLib2UiBuilder;
@@ -845,12 +841,6 @@ public class GTRecipeTypeUI {
     public int getPropertyHeightShift() {
         int maxPropertyCount = maxTooltips + recipeType.getDataInfos().size() + recipeType.getMinRecipeConditions();
         return maxPropertyCount * 10; // GTRecipeXEIHelper#LINE_HEIGHT
-    }
-
-    public void appendJEIUI(GTRecipeDefinition recipe, WidgetGroup widgetGroup) {
-        if (uiBuilder != null) {
-            uiBuilder.accept(recipe, widgetGroup);
-        }
     }
 
     public void appendLDLib2XEIUI(GTRecipeDefinition recipe, UIElement root) {

@@ -14,7 +14,6 @@ import com.gregtechceu.gtceu.api.sound.SoundEntry;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.RegistryAccess;
@@ -163,11 +162,6 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
     public GTRecipeType setSteamProgressBar(SteamTexture progressBar, ProgressTexture.FillDirection moveType) {
         this.recipeUI.setSteamProgressBarTexture(progressBar);
         this.recipeUI.setSteamMoveType(moveType);
-        return this;
-    }
-
-    public GTRecipeType setUiBuilder(BiConsumer<GTRecipeDefinition, WidgetGroup> uiBuilder) {
-        this.recipeUI.setUiBuilder(uiBuilder);
         return this;
     }
 
