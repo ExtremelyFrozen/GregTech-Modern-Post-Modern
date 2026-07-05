@@ -4,8 +4,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.misc.PacketProspecting;
 import com.gregtechceu.gtceu.api.gui.misc.ProspectorMode;
 
-import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.texture.TransformTexture;
+import com.lowdragmc.lowdraglib2.gui.ColorPattern;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.utils.ColorUtils;
 

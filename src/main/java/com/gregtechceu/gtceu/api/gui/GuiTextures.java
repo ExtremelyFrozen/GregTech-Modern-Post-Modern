@@ -1,13 +1,13 @@
 package com.gregtechceu.gtceu.api.gui;
 
-import com.lowdragmc.lowdraglib.gui.texture.ColorRectTexture;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ColorRectTexture;
+import com.gregtechceu.gtceu.api.gui.texture.GuiTextureGroup;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ItemStackTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceBorderTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceTexture;
+import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
