@@ -171,7 +171,7 @@ public final class GTLDLib2RecipeUI {
             addCWUInfo(root, rootSize, recipe, recipe.outputs.get(CWURecipeCapability.CAP), false, cwuYOffset);
             addCWUInfo(root, rootSize, recipe, recipe.tickOutputs.get(CWURecipeCapability.CAP), true, cwuYOffset);
 
-            addConditionAndDataInfos(root, rootSize, recipe, yOffset);
+            addConditionAndDataInfos(root, rootSize, recipe, cwuYOffset[0]);
             recipeUI.appendLDLib2XEIUI(recipe, root, rootSize);
         }
 
