@@ -85,22 +85,22 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
     protected IFluidHandler fluidTank;
     @Getter
     protected int tank;
-    @Configurable(name = "ldlib.gui.editor.name.showAmount")
+    @Configurable(name = "gtpm.gui.editor.name.showAmount")
     @Setter
     protected boolean showAmount;
-    @Configurable(name = "ldlib.gui.editor.name.allowClickFilled")
+    @Configurable(name = "gtpm.gui.editor.name.allowClickFilled")
     @Setter
     protected boolean allowClickFilled;
-    @Configurable(name = "ldlib.gui.editor.name.allowClickDrained")
+    @Configurable(name = "gtpm.gui.editor.name.allowClickDrained")
     @Setter
     protected boolean allowClickDrained;
-    @Configurable(name = "ldlib.gui.editor.name.drawHoverOverlay")
+    @Configurable(name = "gtpm.gui.editor.name.drawHoverOverlay")
     @Setter
     public boolean drawHoverOverlay = true;
-    @Configurable(name = "ldlib.gui.editor.name.drawHoverTips")
+    @Configurable(name = "gtpm.gui.editor.name.drawHoverTips")
     @Setter
     protected boolean drawHoverTips;
-    @Configurable(name = "ldlib.gui.editor.name.fillDirection")
+    @Configurable(name = "gtpm.gui.editor.name.fillDirection")
     @Setter
     protected ProgressTexture.FillDirection fillDirection = ProgressTexture.FillDirection.ALWAYS_FULL;
     @Setter

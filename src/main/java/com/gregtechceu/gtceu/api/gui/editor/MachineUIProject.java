@@ -112,10 +112,10 @@ public class MachineUIProject extends UIProject {
     public void attachMenu(Editor editor, String name, TreeBuilder.Menu menu) {
         if (name.equals("file")) {
             if (machineDefinition == null || machineDefinition.getEditableUI() == null) {
-                menu.remove("ldlib.gui.editor.menu.save");
+                menu.remove("gtpm.gui.editor.menu.save");
             } else {
-                menu.remove("ldlib.gui.editor.menu.save");
-                menu.leaf(Icons.SAVE, "ldlib.gui.editor.menu.save", () -> {
+                menu.remove("gtpm.gui.editor.menu.save");
+                menu.leaf(Icons.SAVE, "gtpm.gui.editor.menu.save", () -> {
                     var editableUI = machineDefinition.getEditableUI();
                     GTUIEditor.createWorkspaceDirectory(
                             "assets/%s/ui/machine".formatted(editableUI.getUiPath().getNamespace()));

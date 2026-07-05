@@ -33,6 +33,13 @@ public class LangHandler {
 
         provider.add("gtpm.gui.editor.tips.citation", "Number of citations");
         provider.add("gtpm.gui.editor.group.recipe_type", "cap");
+        provider.add("gtpm.gui.editor.menu.save", "Save");
+        provider.add("gtpm.gui.editor.name.showAmount", "Show Amount");
+        provider.add("gtpm.gui.editor.name.allowClickFilled", "Allow Click Filled");
+        provider.add("gtpm.gui.editor.name.allowClickDrained", "Allow Click Drained");
+        provider.add("gtpm.gui.editor.name.drawHoverOverlay", "Draw Hover Overlay");
+        provider.add("gtpm.gui.editor.name.drawHoverTips", "Draw Hover Tips");
+        provider.add("gtpm.gui.editor.name.fillDirection", "Fill Direction");
         provider.add("gtpm.gui.editor.group.preview", "Preview");
         provider.add("gtpm.gui.editor.register.editor.gtpm", "GTPM UI Editor");
         provider.add("gtpm.gui.editor.register.editor.gtpm.rtui", "RecipeType UI Project");

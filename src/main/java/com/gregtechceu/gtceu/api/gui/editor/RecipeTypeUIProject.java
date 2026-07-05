@@ -117,10 +117,10 @@ public class RecipeTypeUIProject extends UIProject {
     public void attachMenu(Editor editor, String name, TreeBuilder.Menu menu) {
         if (name.equals("file")) {
             if (recipeType == null) {
-                menu.remove("ldlib.gui.editor.menu.save");
+                menu.remove("gtpm.gui.editor.menu.save");
             } else {
-                menu.remove("ldlib.gui.editor.menu.save");
-                menu.leaf(Icons.SAVE, "ldlib.gui.editor.menu.save", () -> {
+                menu.remove("gtpm.gui.editor.menu.save");
+                menu.leaf(Icons.SAVE, "gtpm.gui.editor.menu.save", () -> {
                     GTUIEditor.createWorkspaceDirectory(
                             "assets/%s/ui/recipe_type".formatted(recipeType.registryName.getNamespace()));
                     saveProject(Path.of(recipeType.registryName.getPath(), ".", this.getRegisterUI().name()));
