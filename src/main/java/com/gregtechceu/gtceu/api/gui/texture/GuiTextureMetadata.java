@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class GuiTextureMetadata {
 
     private static final String RESOURCE_TEXTURE_PREFIX = "resource_texture:";
+    private static final String BORDER_TEXTURE_PREFIX = "border_texture:";
     private static final String SUB_TEXTURE_SEPARATOR = "@";
 
     private GuiTextureMetadata() {}
@@ -25,6 +26,9 @@ public final class GuiTextureMetadata {
         if (value.startsWith(RESOURCE_TEXTURE_PREFIX)) {
             return parseResourceTexture(value.substring(RESOURCE_TEXTURE_PREFIX.length()), metadata);
         }
+        if (value.startsWith(BORDER_TEXTURE_PREFIX)) {
+            return parseBorderTexture(value.substring(BORDER_TEXTURE_PREFIX.length()), metadata);
+        }
         GTCEu.LOGGER.error("Unsupported GTM image texture metadata '{}'", metadata);
         throw new IllegalArgumentException("Unsupported GTM image texture metadata: " + metadata);
     }
@@ -37,6 +41,14 @@ public final class GuiTextureMetadata {
         var location = parseResourceLocation(value.substring(0, areaStart), metadata);
         var area = parseArea(value.substring(areaStart + SUB_TEXTURE_SEPARATOR.length()), metadata);
         return new ResourceTexture(location, area[0], area[1], area[2], area[3]);
+    }
+
+    private static ResourceBorderTexture parseBorderTexture(String value, String metadata) {
+        var location = parseResourceLocation(value, metadata);
+        if (location.getPath().endsWith("slot.png") || location.getPath().endsWith("fluid_slot.png")) {
+            return new ResourceBorderTexture(location.toString(), 18, 18, 1, 1);
+        }
+        return new ResourceBorderTexture(location.toString(), 16, 16, 4, 4);
     }
 
     private static ResourceLocation parseResourceLocation(String value, String metadata) {
