@@ -12,8 +12,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /**
  * Centralizes cover UI opening while GTM migrates cover screens to an LDLib2 holder.
  */
@@ -39,8 +37,7 @@ public final class CoverUIHelper {
     public static ModularUI createLDLib2UI(CoverBehavior cover, Player player) {
         if (cover instanceof LDLib2CoverUIProvider uiProvider) {
             UICoverHolderContext holder = new UICoverHolderContext(player, cover);
-            return ModularUI.of(Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
-                    "LDLib2 cover UI provider returned null"), player);
+            return ModularUI.of(uiProvider.createLDLib2UI(player, holder), player);
         }
         return null;
     }

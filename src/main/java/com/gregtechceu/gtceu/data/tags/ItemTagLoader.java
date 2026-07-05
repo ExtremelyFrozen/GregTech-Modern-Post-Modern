@@ -17,8 +17,6 @@ import net.neoforged.neoforge.common.Tags;
 
 import com.tterrag.registrate.providers.RegistrateItemTagsProvider;
 
-import java.util.Objects;
-
 import static com.gregtechceu.gtceu.api.data.tag.TagPrefix.*;
 import static com.gregtechceu.gtceu.common.data.GTMaterials.*;
 
@@ -202,7 +200,6 @@ public class ItemTagLoader {
 
     private static IntrinsicHolderTagsProvider.IntrinsicTagAppender<Item> addTag(RegistrateItemTagsProvider provider,
                                                                                  TagPrefix prefix, Material material) {
-        return provider.addTag(Objects.requireNonNull(ChemicalHelper.getTag(prefix, material),
-                "%s/%s doesn't have any tags!".formatted(prefix, material)));
+        return provider.addTag(ChemicalHelper.getTag(prefix, material));
     }
 }

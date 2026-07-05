@@ -64,8 +64,10 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     public List<MultiblockShapeInfo> getMatchingShapes() {
         var designs = shapes.get();
         if (!designs.isEmpty()) return designs;
-        var structurePattern = Objects.requireNonNull(getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE),
-                () -> "Missing main structure pattern for " + getId());
+        var structurePattern = getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
+        if (structurePattern == null) {
+            throw new IllegalStateException("Missing main structure pattern for " + getId());
+        }
         int[][] aisleRepetitions = structurePattern.aisleRepetitions;
         return repetitionDFS(structurePattern, new ArrayList<>(), aisleRepetitions, new IntArrayList());
     }
@@ -73,7 +75,7 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     public void setPatternFactory(@NotNull String structureName,
                                   @NotNull Function<MultiblockMachineDefinition, BlockPattern> patternFactory) {
         structureName = validateStructureName(structureName);
-        this.patternFactories.put(structureName, Objects.requireNonNull(patternFactory));
+        this.patternFactories.put(structureName, patternFactory);
         StructurePatternRegistry.registerJavaDefinition(this, structureName);
     }
 
@@ -116,7 +118,6 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     }
 
     private static String validateStructureName(String structureName) {
-        Objects.requireNonNull(structureName, "structureName");
         if (structureName.isBlank()) {
             throw new IllegalArgumentException("structureName must not be blank");
         }

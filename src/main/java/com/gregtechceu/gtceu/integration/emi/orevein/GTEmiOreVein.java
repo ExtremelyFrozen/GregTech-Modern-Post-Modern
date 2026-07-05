@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public class GTEmiOreVein extends ModularUIEMIRecipe {
 
@@ -34,7 +33,7 @@ public class GTEmiOreVein extends ModularUIEMIRecipe {
 
     @Override
     public @Nullable ResourceLocation getId() {
-        return Objects.requireNonNull(oreDefinition.getKey(), "Ore vein holder is missing a key")
+        return oreDefinition.getKey()
                 .location()
                 .withPrefix("/ore_vein_diagram/");
     }

@@ -28,8 +28,13 @@ public interface StructurePredicate {
                             DataResult.error(() -> "Unknown structure predicate type: " + id) :
                             DataResult.success(type);
                 },
-                type -> Objects.requireNonNull(StructurePredicateType.id(type),
-                        "Unregistered structure predicate type"));
+                type -> {
+                    ResourceLocation id = StructurePredicateType.id(type);
+                    if (id == null) {
+                        throw new IllegalStateException("Unregistered structure predicate type");
+                    }
+                    return id;
+                });
     }
 
     private static MapCodec<? extends StructurePredicate> dispatchCodec(StructurePredicateType<?> type) {

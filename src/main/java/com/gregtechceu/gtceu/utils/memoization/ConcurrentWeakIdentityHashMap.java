@@ -116,7 +116,10 @@ public class ConcurrentWeakIdentityHashMap<K, V> extends AbstractMap<K, V> imple
 
         Key(T t, @Nullable ReferenceQueue<T> queue) {
             super(t, queue);
-            hash = System.identityHashCode(Objects.requireNonNull(t));
+            if (t == null) {
+                throw new NullPointerException("key");
+            }
+            hash = System.identityHashCode(t);
         }
 
         @Override

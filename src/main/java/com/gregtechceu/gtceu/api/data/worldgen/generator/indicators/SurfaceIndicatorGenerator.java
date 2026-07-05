@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -148,7 +147,7 @@ public class SurfaceIndicatorGenerator extends IndicatorGenerator {
 
             for (BlockPos pos : positions) {
                 // This is necessary because the heightmap can't be determined at the time of creating the placers
-                var section = Objects.requireNonNull(access.getSection(pos));
+                var section = access.getSection(pos);
 
                 int sectionX = SectionPos.sectionRelative(pos.getX());
                 int sectionY = SectionPos.sectionRelative(pos.getY());

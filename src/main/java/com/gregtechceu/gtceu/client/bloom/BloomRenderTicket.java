@@ -4,7 +4,6 @@ import net.minecraft.world.level.Level;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -28,7 +27,10 @@ public final class BloomRenderTicket {
                       @Nullable Predicate<BloomRenderTicket> validityChecker,
                       @Nullable Supplier<@Nullable Level> worldContext) {
         this.renderSetup = renderSetup;
-        this.render = Objects.requireNonNull(render, "render == null");
+        if (render == null) {
+            throw new NullPointerException("render == null");
+        }
+        this.render = render;
         this.validityChecker = validityChecker;
         this.worldContext = worldContext;
     }

@@ -6,8 +6,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.world.entity.player.Player;
 
-import java.util.Objects;
-
 /**
  * Creates an LDLib2 held item UI through GTM's stable held item holder contract.
  *
@@ -20,8 +18,7 @@ public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI 
     @Override
     default ModularUI createUI(HeldItemUIMenuType.HeldItemUIHolder holder) {
         HeldItemUIHolderContext gtmHolder = new HeldItemUIHolderContext(holder.player, holder.hand, holder.itemStack);
-        UI ui = Objects.requireNonNull(createLDLib2UI(holder.player, gtmHolder),
-                "LDLib2 held item UI provider returned null");
+        UI ui = createLDLib2UI(holder.player, gtmHolder);
         return ModularUI.of(ui, holder.player);
     }
 

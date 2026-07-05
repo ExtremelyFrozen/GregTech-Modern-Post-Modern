@@ -20,7 +20,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.gregtechceu.gtceu.api.multiblock.structurepredicate.Util.oneOrMore;
 
@@ -77,7 +76,6 @@ public final class FramePredicate implements StructurePredicate {
     private final Lazy<List<Block>> frameBlocks;
 
     public FramePredicate(List<ResourceLocation> materialIds) {
-        Objects.requireNonNull(materialIds, "materials");
         if (materialIds.isEmpty()) {
             throw new IllegalArgumentException("Frame predicate requires at least one material");
         }

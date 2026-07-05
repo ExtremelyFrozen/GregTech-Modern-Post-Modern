@@ -17,8 +17,6 @@ import net.minecraft.world.entity.player.Player;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
@@ -49,7 +47,7 @@ public class SteamSolarBoiler extends SteamBoilerMachine {
 
     @Override
     protected void updateCurrentTemperature() {
-        if (GTUtil.canSeeSunClearly(Objects.requireNonNull(getLevel()), getBlockPos())) {
+        if (GTUtil.canSeeSunClearly(getLevel(), getBlockPos())) {
             getWorkLogic().setStatus(WorkLogic.Status.WORKING);
         } else {
             getWorkLogic().setStatus(WorkLogic.Status.IDLE);
@@ -71,7 +69,7 @@ public class SteamSolarBoiler extends SteamBoilerMachine {
     public ModularUI createUI(Player entityPlayer) {
         return super.createUI(entityPlayer)
                 .widget(new ProgressWidget(
-                        () -> GTUtil.canSeeSunClearly(Objects.requireNonNull(getLevel()), getBlockPos()) ? 1.0 : 0.0,
+                        () -> GTUtil.canSeeSunClearly(getLevel(), getBlockPos()) ? 1.0 : 0.0,
                         114,
                         44, 20,
                         20)

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -76,8 +75,10 @@ public record AutoRecipeAbilityPredicate(boolean checkEnergyIn, boolean checkEne
     }
 
     private List<StructurePredicate> collectPredicates(MultiblockState multiblockState) {
-        MultiblockControllerMachine controller = Objects.requireNonNull(multiblockState.getController(),
-                "Auto recipe ability predicates require a multiblock controller");
+        MultiblockControllerMachine controller = multiblockState.getController();
+        if (controller == null) {
+            throw new IllegalStateException("Auto recipe ability predicates require a multiblock controller");
+        }
         GTRecipeType[] recipeTypes = controller.getDefinition().getRecipeTypes();
         List<StructurePredicate> predicates = new ArrayList<>();
         addRecipePredicate(predicates, checkEnergyIn, recipeTypes,

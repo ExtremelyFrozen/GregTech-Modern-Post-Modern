@@ -27,7 +27,6 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Objects;
 
 public class SteamLiquidBoilerMachine extends SteamBoilerMachine {
 
@@ -75,7 +74,7 @@ public class SteamLiquidBoilerMachine extends SteamBoilerMachine {
     protected void randomDisplayTick(RandomSource random, float x, float y, float z) {
         super.randomDisplayTick(random, x, y, z);
         if (random.nextFloat() < 0.3F) {
-            Objects.requireNonNull(getLevel()).addParticle(ParticleTypes.LAVA, x + random.nextFloat(), y,
+            getLevel().addParticle(ParticleTypes.LAVA, x + random.nextFloat(), y,
                     z + random.nextFloat(), 0.0F, 0.0F,
                     0.0F);
         }

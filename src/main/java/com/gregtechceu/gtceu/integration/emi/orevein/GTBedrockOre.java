@@ -13,8 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 public class GTBedrockOre extends ModularUIEMIRecipe {
 
     private final Holder<BedrockOreDefinition> bedrockOre;
@@ -31,7 +29,7 @@ public class GTBedrockOre extends ModularUIEMIRecipe {
 
     @Override
     public @Nullable ResourceLocation getId() {
-        return Objects.requireNonNull(bedrockOre.getKey(), "Bedrock ore holder is missing a key")
+        return bedrockOre.getKey()
                 .location()
                 .withPrefix("/bedrock_ore_diagram/");
     }

@@ -604,7 +604,7 @@ public class MinerLogic extends RecipeLogic implements IRecipeCapabilityHolder {
      * @return the mean tick time
      */
     private static double getMeanTickTime(@NotNull Level world) {
-        return mean(Objects.requireNonNull(world.getServer()).getTickTimesNanos()) * 1.0E-6D;
+        return mean(world.getServer().getTickTimesNanos()) * 1.0E-6D;
     }
 
     /**

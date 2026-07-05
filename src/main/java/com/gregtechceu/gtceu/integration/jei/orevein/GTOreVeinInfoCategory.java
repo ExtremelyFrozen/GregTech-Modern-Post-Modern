@@ -25,7 +25,6 @@ import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 public class GTOreVeinInfoCategory extends ModularUIRecipeCategory<Holder<GTOreDefinition>> {
@@ -46,7 +45,7 @@ public class GTOreVeinInfoCategory extends ModularUIRecipeCategory<Holder<GTOreD
     }
 
     public static void registerRecipes(IRecipeRegistration registry) {
-        var level = Objects.requireNonNull(Minecraft.getInstance().level, "Client level is missing");
+        var level = Minecraft.getInstance().level;
         var ores = level.registryAccess()
                 .registryOrThrow(GTRegistries.ORE_VEIN_REGISTRY);
         registry.addRecipes(RECIPE_TYPE, ores.holders()

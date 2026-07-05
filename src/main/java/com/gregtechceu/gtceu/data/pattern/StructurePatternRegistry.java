@@ -9,7 +9,6 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,9 +36,6 @@ public final class StructurePatternRegistry {
 
     public static BlockPattern resolvePattern(StructurePatternKey key, MultiblockMachineDefinition definition,
                                               BlockPattern javaPattern) {
-        Objects.requireNonNull(key);
-        Objects.requireNonNull(definition);
-        Objects.requireNonNull(javaPattern);
         return StructureCache.resolvePattern(key, definition, javaPattern);
     }
 
@@ -55,7 +51,6 @@ public final class StructurePatternRegistry {
 
     @ApiStatus.Internal
     public static CompletableFuture<Integer> reloadTypePatternsAsync(StructureDefinitionType type) {
-        Objects.requireNonNull(type);
         return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), (ResourceLocation) null);
     }
 
@@ -66,21 +61,17 @@ public final class StructurePatternRegistry {
 
     @ApiStatus.Internal
     public static CompletableFuture<Integer> reloadPatternAsync(StructurePatternKey key) {
-        Objects.requireNonNull(key);
         return runReloadTasksAsync(null, key);
     }
 
     @ApiStatus.Internal
     public static CompletableFuture<Integer> reloadPatternAsync(StructureDefinitionType type,
                                                                 ResourceLocation machineId) {
-        Objects.requireNonNull(type);
         return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), machineId);
     }
 
     @ApiStatus.Internal
     public static CompletableFuture<Integer> reloadPatternAsync(StructureDefinitionType type, StructurePatternKey key) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(key);
         return runReloadTasksAsync(StructureDefinitionSource.fromDefinitionType(type), key);
     }
 

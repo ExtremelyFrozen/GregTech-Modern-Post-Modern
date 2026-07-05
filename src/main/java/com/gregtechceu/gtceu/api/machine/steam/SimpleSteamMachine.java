@@ -75,7 +75,7 @@ public class SimpleSteamMachine extends SteamWorkableMachine implements IUIMachi
     @Override
     public void onLoad() {
         super.onLoad();
-        exhaustVentTrait.setVentingDirection(Objects.requireNonNull(getOutputFacing()));
+        exhaustVentTrait.setVentingDirection(getOutputFacing());
         // Simulate an EU machine via a SteamEnergyHandler
         this.addHandlerList(RecipeHandlerList.of(IO.IN, new SteamEnergyRecipeHandler(steamTank, getConversionRate())));
     }

@@ -79,7 +79,7 @@ public class GTPlaceholders {
         int count = 0;
         for (int i = 0; i < fluidHandler.getTanks(); i++) {
             FluidStack fluidStack = fluidHandler.getFluidInTank(i);
-            String fluidId = Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(fluidStack.getFluid())).toString();
+            String fluidId = BuiltInRegistries.FLUID.getKey(fluidStack.getFluid()).toString();
 
             if (id == null || fluidId.equals(id)) {
                 count += fluidStack.getAmount();

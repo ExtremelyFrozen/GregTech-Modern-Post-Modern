@@ -34,7 +34,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -235,7 +234,7 @@ public class GTOreVeinWidget {
     }
 
     public static String getOreName(Holder<GTOreDefinition> ore) {
-        return Objects.requireNonNull(ore.getKey(), "Ore vein holder is missing a key")
+        return ore.getKey()
                 .location()
                 .toLanguageKey("ore_vein");
     }

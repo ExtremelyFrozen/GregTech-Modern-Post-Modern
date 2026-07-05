@@ -13,8 +13,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /**
  * Centralizes machine UI opening while GTM migrates block-backed screens to LDLib2.
  */
@@ -43,8 +41,7 @@ public final class MachineUIHelper {
     public static ModularUI createLDLib2UI(MetaMachine machine, Player player) {
         if (machine instanceof LDLib2MachineUIProvider uiProvider) {
             MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
-            return ModularUI.of(Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
-                    "LDLib2 machine UI provider returned null"), player);
+            return ModularUI.of(uiProvider.createLDLib2UI(player, holder), player);
         }
         return null;
     }

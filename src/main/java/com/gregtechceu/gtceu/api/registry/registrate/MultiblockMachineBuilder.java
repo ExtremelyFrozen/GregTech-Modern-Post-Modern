@@ -67,7 +67,7 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
     }
 
     public TYPE pattern(String structureName, Function<MultiblockMachineDefinition, BlockPattern> pattern) {
-        this.patternFactories.put(Objects.requireNonNull(structureName), Objects.requireNonNull(pattern));
+        this.patternFactories.put(structureName, pattern);
         return getThis();
     }
 

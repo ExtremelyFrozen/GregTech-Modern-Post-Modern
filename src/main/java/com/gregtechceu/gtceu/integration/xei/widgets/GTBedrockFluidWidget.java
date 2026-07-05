@@ -30,7 +30,6 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -199,7 +198,7 @@ public class GTBedrockFluidWidget {
     }
 
     private static String getFluidName(Holder<BedrockFluidDefinition> fluid) {
-        return Objects.requireNonNull(fluid.getKey(), "Bedrock fluid holder is missing a key")
+        return fluid.getKey()
                 .location()
                 .toLanguageKey("bedrock_fluid");
     }

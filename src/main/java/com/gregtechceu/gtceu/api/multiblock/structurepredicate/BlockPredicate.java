@@ -33,8 +33,7 @@ public final class BlockPredicate implements StructurePredicate {
     }
 
     public BlockPredicate(Supplier<List<ResourceLocation>> blockIds) {
-        this.blockIds = Lazy.of(() -> List.copyOf(Objects.requireNonNull(blockIds.get(),
-                "Structure block predicate id supplier returned null")));
+        this.blockIds = Lazy.of(() -> List.copyOf(blockIds.get()));
         this.blocks = Lazy.of(() -> blockIds().stream()
                 .map(BlockPredicate::resolveBlock)
                 .toList());
@@ -69,8 +68,7 @@ public final class BlockPredicate implements StructurePredicate {
     }
 
     private static Supplier<List<ResourceLocation>> constantBlockIds(List<ResourceLocation> blockIds) {
-        List<ResourceLocation> copy = List.copyOf(Objects.requireNonNull(blockIds,
-                "Structure block predicate id list cannot be null"));
+        List<ResourceLocation> copy = List.copyOf(blockIds);
         return () -> copy;
     }
 

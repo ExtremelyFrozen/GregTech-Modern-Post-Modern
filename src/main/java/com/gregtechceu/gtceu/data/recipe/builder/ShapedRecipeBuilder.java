@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Accessors(chain = true, fluent = true)
 public class ShapedRecipeBuilder {
@@ -95,14 +94,14 @@ public class ShapedRecipeBuilder {
         ShapedRecipe recipe;
         if (isStrict) {
             recipe = new StrictShapedRecipe(
-                    Objects.requireNonNullElse(this.group, ""),
+                    this.group == null ? "" : this.group,
                     RecipeBuilder.determineBookCategory(this.category),
                     ShapedRecipePattern.of(key, rows),
                     this.output,
                     false);
         } else {
             recipe = new ShapedRecipe(
-                    Objects.requireNonNullElse(this.group, ""),
+                    this.group == null ? "" : this.group,
                     RecipeBuilder.determineBookCategory(this.category),
                     ShapedRecipePattern.of(key, rows),
                     this.output,

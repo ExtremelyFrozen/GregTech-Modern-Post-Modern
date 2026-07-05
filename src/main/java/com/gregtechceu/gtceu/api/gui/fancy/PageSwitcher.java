@@ -12,7 +12,6 @@ import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -41,8 +40,10 @@ public class PageSwitcher implements IFancyUIProvider {
         scrollableGroup.setYBarStyle(GuiTextures.SLIDER_BACKGROUND_VERTICAL, GuiTextures.BUTTON);
         container.addWidget(scrollableGroup);
 
-        var groupedPages = pages.stream().collect(Collectors.groupingBy(
-                page -> Objects.requireNonNullElse(page.getPageGroupingData(), new PageGroupingData(null, -1))));
+        var groupedPages = pages.stream().collect(Collectors.groupingBy(page -> {
+            PageGroupingData groupingData = page.getPageGroupingData();
+            return groupingData == null ? new PageGroupingData(null, -1) : groupingData;
+        }));
 
         final MutableInt currentY = new MutableInt(0);
         groupedPages.keySet().stream()

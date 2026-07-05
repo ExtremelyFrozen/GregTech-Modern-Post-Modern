@@ -17,8 +17,6 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 @Accessors(chain = true, fluent = true)
 public class ShapelessRecipeBuilder {
 
@@ -74,7 +72,7 @@ public class ShapelessRecipeBuilder {
     }
 
     public ShapelessRecipe build() {
-        return new ShapelessRecipe(Objects.requireNonNullElse(this.group, ""), this.category,
+        return new ShapelessRecipe(this.group == null ? "" : this.group, this.category,
                 this.output, this.ingredients);
     }
 

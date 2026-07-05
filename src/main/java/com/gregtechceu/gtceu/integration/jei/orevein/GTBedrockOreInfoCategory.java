@@ -20,7 +20,6 @@ import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<BedrockOreDefinition>> {
@@ -40,7 +39,7 @@ public class GTBedrockOreInfoCategory extends ModularUIRecipeCategory<Holder<Bed
     }
 
     public static void registerRecipes(IRecipeRegistration registry) {
-        var level = Objects.requireNonNull(Minecraft.getInstance().level, "Client level is missing");
+        var level = Minecraft.getInstance().level;
         var bedrockOres = level.registryAccess()
                 .registryOrThrow(GTRegistries.BEDROCK_ORE_REGISTRY);
         registry.addRecipes(RECIPE_TYPE, bedrockOres.holders()

@@ -6,8 +6,6 @@ import net.minecraft.resources.ResourceLocation;
 
 import org.jspecify.annotations.NonNull;
 
-import java.util.Objects;
-
 /**
  * Identifies one named structure pattern belonging to a multiblock machine.
  *
@@ -19,8 +17,6 @@ public record StructurePatternKey(ResourceLocation machineId, String structureNa
     public static final String DEFAULT_STRUCTURE_NAME = MultiblockControllerMachine.DEFAULT_STRUCTURE;
 
     public StructurePatternKey {
-        Objects.requireNonNull(machineId, "machineId");
-        Objects.requireNonNull(structureName, "structureName");
         if (structureName.isBlank()) {
             throw new IllegalArgumentException("Structure pattern name must not be blank for " + machineId);
         }

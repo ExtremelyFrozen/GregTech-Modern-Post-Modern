@@ -13,8 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 public class GTBedrockFluid extends ModularUIEMIRecipe {
 
     private final Holder<BedrockFluidDefinition> fluid;
@@ -31,7 +29,7 @@ public class GTBedrockFluid extends ModularUIEMIRecipe {
 
     @Override
     public @Nullable ResourceLocation getId() {
-        return Objects.requireNonNull(fluid.getKey(), "Bedrock fluid holder is missing a key")
+        return fluid.getKey()
                 .location()
                 .withPrefix("/bedrock_fluid_diagram/");
     }

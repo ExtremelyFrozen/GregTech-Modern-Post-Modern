@@ -57,7 +57,9 @@ public class BloomHandler {
      */
     public static BloomRenderTicket registerBloomRender(@Nullable IRenderSetup setup, IBloomEffect render,
                                                         BlockEntity blockEntity) {
-        Objects.requireNonNull(blockEntity, "blockEntity == null");
+        if (blockEntity == null) {
+            throw new NullPointerException("blockEntity == null");
+        }
         return registerBloomRender(setup,
                 new IBloomEffect() {
 
@@ -94,7 +96,9 @@ public class BloomHandler {
      */
     public static BloomRenderTicket registerBloomRender(@Nullable IRenderSetup setup, IBloomEffect render,
                                                         GTParticle particle) {
-        Objects.requireNonNull(particle, "particle == null");
+        if (particle == null) {
+            throw new NullPointerException("particle == null");
+        }
         return registerBloomRender(setup, render, t -> particle.isAlive());
     }
 
@@ -162,7 +166,9 @@ public class BloomHandler {
      * @param level the level that was unloaded
      */
     static void invalidateLevelData(LevelAccessor level) {
-        Objects.requireNonNull(level, "level == null");
+        if (level == null) {
+            throw new NullPointerException("level == null");
+        }
         BLOOM_RENDER_LOCK.readLock().lock();
         try {
             for (BloomRenderTicket ticket : BloomHandler.SCHEDULED_BLOOM_RENDERS) {

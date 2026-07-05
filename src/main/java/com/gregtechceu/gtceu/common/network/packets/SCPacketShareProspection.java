@@ -23,7 +23,6 @@ import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -68,8 +67,7 @@ public class SCPacketShareProspection implements CustomPacketPayload {
     public void execute(IPayloadContext context) {
         if (context.flow() == PacketFlow.CLIENTBOUND) {
             if (first) {
-                PlayerInfo senderInfo = Objects.requireNonNull(Minecraft.getInstance().getConnection())
-                        .getPlayerInfo(sender);
+                PlayerInfo senderInfo = Minecraft.getInstance().getConnection().getPlayerInfo(sender);
                 if (senderInfo == null) {
                     return;
                 }

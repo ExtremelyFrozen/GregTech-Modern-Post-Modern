@@ -32,7 +32,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -217,7 +216,7 @@ public class GTBedrockOreWidget {
     }
 
     private static String getBedrockOreName(Holder<BedrockOreDefinition> bedrockOre) {
-        return Objects.requireNonNull(bedrockOre.getKey(), "Bedrock ore holder is missing a key")
+        return bedrockOre.getKey()
                 .location()
                 .toLanguageKey("bedrock_ore");
     }

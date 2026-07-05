@@ -13,7 +13,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -51,7 +50,7 @@ public final class DataHatchOrPredicate implements StructurePredicate {
     private final Lazy<RestrictedPredicate> dataHatches;
 
     public DataHatchOrPredicate(StructurePredicate alternative) {
-        this.alternative = Objects.requireNonNull(alternative, "alternative");
+        this.alternative = alternative;
         this.dataHatches = Lazy.of(DataHatchOrPredicate::createDataHatches);
     }
 

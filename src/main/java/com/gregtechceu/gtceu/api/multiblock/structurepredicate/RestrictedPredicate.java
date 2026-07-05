@@ -122,7 +122,7 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
         }
 
         public RestrictedPredicate build() {
-            return new RestrictedPredicate(Objects.requireNonNull(base), Optional.ofNullable(minCount),
+            return new RestrictedPredicate(base, Optional.ofNullable(minCount),
                     Optional.ofNullable(maxCount), Optional.ofNullable(minCountByLayer),
                     Optional.ofNullable(maxCountByLayer), Optional.ofNullable(previewCount),
                     Optional.ofNullable(tooltips));
