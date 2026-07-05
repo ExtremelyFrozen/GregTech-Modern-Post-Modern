@@ -38,6 +38,11 @@ public final class HeldItemUIHolderContext implements HeldItemUIHolder {
         return player.getItemInHand(hand);
     }
 
+    @Override
+    public ItemStack getOpenedStack() {
+        return openedStack;
+    }
+
     @Nullable
     @Override
     public ModularUI createUI(Player player) {

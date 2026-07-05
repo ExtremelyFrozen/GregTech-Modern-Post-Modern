@@ -1,9 +1,12 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
+import com.gregtechceu.gtceu.common.network.packets.CPacketItemActionToServer;
 import com.lowdragmc.lowdraglib2.gui.factory.HeldItemUIMenuType;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Centralizes held item UI opening while GTM migrates item screens from LDLib to LDLib2.
@@ -22,5 +25,12 @@ public final class HeldItemUIHelper {
             return HeldItemUIMenuType.openUI(player, hand);
         }
         return GTHeldItemUIFactory.INSTANCE.openUI(player, hand);
+    }
+
+    /**
+     * Sends a held item UI sync action to the server.
+     */
+    public static void sendAction(HeldItemUIHolder holder, SyncActionData action) {
+        PacketDistributor.sendToServer(new CPacketItemActionToServer(holder.getHand(), holder.getOpenedStack(), action));
     }
 }
