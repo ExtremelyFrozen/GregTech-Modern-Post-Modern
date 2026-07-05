@@ -9,7 +9,7 @@
             <progress-bar legacy-type="progress" style="position: absolute; left: 47; top: 3; width: 10; height: 16;" legacy-progress-texture="new 4"/>
         </gtm-dual-progress>
         <element legacy-type="group" style="position: absolute; left: 0; top: 0; width: 105; height: 60;">
-            <gtm-image legacy-type="image" style="position: absolute; left: 0; top: 0; width: 84; height: 60;" legacy-background="new 3"/>
+            <gtm-image legacy-type="image" style="position: absolute; left: 0; top: 0; width: 84; height: 60;" legacy-background="resource_texture:gtpm:textures/gui/progress_bar/progress_bar_research_station_base.png"/>
             <gtm-item-slot id="item_in_0" legacy-type="gtm_item_slot" style="position: absolute; left: 87; top: 21; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true" legacy-background="new 10"/>
             <gtm-item-slot id="item_in_1" legacy-type="gtm_item_slot" style="position: absolute; left: 33; top: 21; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true" legacy-background="new 8"/>
         </element>
