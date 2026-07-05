@@ -13,7 +13,6 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.utils.codec.DispatchedMapCodec;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.Holder;
@@ -27,7 +26,6 @@ import com.mojang.serialization.DataResult;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -176,9 +174,6 @@ public abstract class RecipeCapability<T> {
     public boolean doAddGuiSlots() {
         return isRecipeSearchFilter();
     }
-
-    public void addXEIInfo(WidgetGroup group, int xOffset, GTRecipeDefinition recipe, List<Content> contents,
-                           boolean perTick, boolean isInput, MutableInt yOffset) {}
 
     @NotNull
     public List<Object> createXEIContainerContents(List<Content> contents, GTRecipeDefinition recipe, IO io) {
