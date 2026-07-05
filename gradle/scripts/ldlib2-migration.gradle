@@ -48,6 +48,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 '@RPCMethod',
                 'RPCEmitter',
                 'setOnServerClick',
+                'markAsDirty(',
                 'com.lowdragmc.lowdraglib2.syncdata.',
                 'com.lowdragmc.lowdraglib2.gui.sync.',
                 'compileOnly(forge.ldlib)',
