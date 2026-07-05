@@ -32,9 +32,9 @@ import com.gregtechceu.gtceu.data.pattern.StructurePatternKey;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 
-import com.lowdragmc.lowdraglib.gui.texture.ColorBorderTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ColorBorderTexture;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
+import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
