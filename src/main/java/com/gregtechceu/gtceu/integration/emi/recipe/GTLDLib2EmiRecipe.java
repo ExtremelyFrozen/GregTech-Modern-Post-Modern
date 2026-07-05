@@ -15,7 +15,7 @@ import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Parallel LDLib2 EMI recipe wrapper kept unregistered until the recipe viewer runtime path is migrated.
+ * LDLib2-backed EMI recipe display for GT recipes.
  */
 public class GTLDLib2EmiRecipe extends ModularUIEMIRecipe {
 

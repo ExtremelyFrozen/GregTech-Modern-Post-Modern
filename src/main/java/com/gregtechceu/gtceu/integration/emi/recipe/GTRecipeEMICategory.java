@@ -48,7 +48,7 @@ public class GTRecipeEMICategory extends EmiRecipeCategory {
             }
             EmiRecipeCategory emiCategory = CATEGORIES.apply(category);
             type.getRecipesInCategory(category).stream()
-                    .map(recipe -> new GTEmiRecipe(recipe, emiCategory))
+                    .map(recipe -> new GTLDLib2EmiRecipe(recipe, emiCategory))
                     .forEach(registry::addRecipe);
         }
         // run subcategories
@@ -57,7 +57,7 @@ public class GTRecipeEMICategory extends EmiRecipeCategory {
             var type = subCategory.getRecipeType();
             EmiRecipeCategory emiCategory = CATEGORIES.apply(subCategory);
             type.getRecipesInCategory(subCategory).stream()
-                    .map(recipe -> new GTEmiRecipe(recipe, emiCategory))
+                    .map(recipe -> new GTLDLib2EmiRecipe(recipe, emiCategory))
                     .forEach(registry::addRecipe);
         }
     }

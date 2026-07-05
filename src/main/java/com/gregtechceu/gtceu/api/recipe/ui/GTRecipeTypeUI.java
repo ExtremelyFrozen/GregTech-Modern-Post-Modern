@@ -26,7 +26,7 @@ import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.integration.emi.recipe.GTRecipeEMICategory;
 import com.gregtechceu.gtceu.integration.jei.GTJEIPlugin;
-import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeJEICategory;
+import com.gregtechceu.gtceu.integration.jei.recipe.GTLDLib2RecipeJEICategory;
 
 import com.lowdragmc.lowdraglib.gui.editor.configurator.IConfigurableWidget;
 import com.lowdragmc.lowdraglib.gui.editor.data.Resources;
@@ -409,7 +409,7 @@ public class GTRecipeTypeUI {
                                         GTJEIPlugin.jeiRuntime.getRecipesGui().showTypes(
                                                 recipeType.getCategories().stream()
                                                         .filter(GTRecipeCategory::isXEIVisible)
-                                                        .map(GTRecipeJEICategory::machineType)
+                                                        .map(GTLDLib2RecipeJEICategory::machineType)
                                                         .collect(Collectors.toList()));
                                     }
                                 }

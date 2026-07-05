@@ -34,6 +34,6 @@ public class GTEmiRecipeHandler implements StandardRecipeHandler<ModularUIContai
 
     @Override
     public boolean supportsRecipe(EmiRecipe recipe) {
-        return recipe instanceof GTEmiRecipe;
+        return recipe instanceof GTLDLib2EmiRecipe;
     }
 }
