@@ -11,19 +11,25 @@ import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.gui.slot.ItemHandlerSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
+import com.lowdragmc.lowdraglib2.utils.ColorUtils;
 import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib2.utils.XmlUtils;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.FontContext;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
+import org.lwjgl.opengl.GL11;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
@@ -32,6 +38,7 @@ import java.util.function.BiConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 /**
@@ -49,6 +56,7 @@ public class GTItemSlotElement extends ItemSlot {
     private float xeiChance = 1.0f;
     private int xeiAmount = 1;
     private Supplier<Stream<ItemStack>> xeiStacks = this::getCurrentItemStream;
+    private ToIntFunction<ItemStack> itemCountDecorationXOffset = stack -> 0;
     private IGuiTexture contentOverlay = IGuiTexture.EMPTY;
     @Nullable
     private Runnable changeListener;
@@ -183,6 +191,11 @@ public class GTItemSlotElement extends ItemSlot {
         return this;
     }
 
+    public GTItemSlotElement setItemCountDecorationXOffset(ToIntFunction<ItemStack> offset) {
+        itemCountDecorationXOffset = offset;
+        return this;
+    }
+
     public GTItemSlotElement xeiRecipeIngredient() {
         return xeiRecipeIngredient(ingredientIO);
     }
@@ -257,6 +270,46 @@ public class GTItemSlotElement extends ItemSlot {
     public void drawBackgroundAdditional(GUIContext guiContext) {
         super.drawBackgroundAdditional(guiContext);
         contentOverlay.draw(guiContext, getContentX(), getContentY(), getContentWidth(), getContentHeight());
+    }
+
+    @Override
+    protected void drawItemStack(GUIContext guiContext, ItemStack itemStack) {
+        int decorationXOffset = itemCountDecorationXOffset.applyAsInt(itemStack);
+        if (decorationXOffset == 0) {
+            super.drawItemStack(guiContext, itemStack);
+            return;
+        }
+        drawItemStack(guiContext, itemStack, decorationXOffset);
+    }
+
+    private void drawItemStack(GUIContext guiContext, ItemStack itemStack, int decorationXOffset) {
+        if (itemStack.isEmpty()) {
+            return;
+        }
+        var alpha = ColorUtils.alpha(guiContext.elementColor);
+        var red = ColorUtils.red(guiContext.elementColor);
+        var green = ColorUtils.green(guiContext.elementColor);
+        var blue = ColorUtils.blue(guiContext.elementColor);
+        RenderSystem.setShaderColor(red, green, blue, alpha);
+
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
+
+        var graphics = guiContext.graphics;
+        var minecraft = Minecraft.getInstance();
+        var font = IClientItemExtensions.of(itemStack).getFont(itemStack, FontContext.ITEM_COUNT);
+
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, 0, 232);
+        graphics.renderItem(itemStack, 0, 0);
+        graphics.renderItemDecorations(font == null ? minecraft.font : font, itemStack, decorationXOffset, 0);
+        graphics.pose().popPose();
+
+        RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
+        RenderSystem.depthMask(false);
+        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        RenderSystem.enableBlend();
+        RenderSystem.disableDepthTest();
     }
 
     @Override
