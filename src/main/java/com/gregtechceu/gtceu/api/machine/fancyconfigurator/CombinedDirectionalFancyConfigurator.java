@@ -14,7 +14,7 @@ import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.math.Size;
 
 import net.minecraft.network.chat.Component;
 

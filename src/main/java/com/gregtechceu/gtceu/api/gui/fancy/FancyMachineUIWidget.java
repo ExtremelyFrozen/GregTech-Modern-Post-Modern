@@ -5,12 +5,12 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
+import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.gui.widget.custom.PlayerInventoryWidget;
-import com.lowdragmc.lowdraglib.utils.Position;
-import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.math.Position;
+import com.lowdragmc.lowdraglib2.math.Size;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -62,7 +62,7 @@ public class FancyMachineUIWidget extends WidgetGroup {
 
         if (mainPage.hasPlayerInventory()) {
             addWidget(this.playerInventory = new PlayerInventoryWidget());
-            this.playerInventory.setSelfPosition(new Position(2, height - 86));
+            this.playerInventory.setSelfPosition(Position.of(2, height - 86));
             this.playerInventory.setBackground((IGuiTexture) null);
         } else {
             playerInventory = null;
@@ -196,16 +196,16 @@ public class FancyMachineUIWidget extends WidgetGroup {
         var page = getOrCreatePage(fancyUI);
 
         // layout
-        var size = new Size(Math.max(172, page.getSize().width + border * 2),
+        var size = Size.of(Math.max(172, page.getSize().width + border * 2),
                 Math.max(86, page.getSize().height + border * 2));
-        setSize(new Size(size.width,
+        setSize(Size.of(size.width,
                 size.height + (!showInventory || playerInventory == null ? 0 : playerInventory.getSize().height)));
         if (GTCEu.isClientSide() && getGui() != null) {
             getGui().setSize(getSize().width, getSize().height);
         }
-        this.sideTabsWidget.setSize(new Size(24, size.height));
+        this.sideTabsWidget.setSize(Size.of(24, size.height));
         this.pageContainer.setSize(size);
-        this.tooltipsPanel.setSelfPosition(new Position(size.width + 2, 2));
+        this.tooltipsPanel.setSelfPosition(Position.of(size.width + 2, 2));
 
         setupInventoryPosition(showInventory, size);
 
@@ -214,22 +214,22 @@ public class FancyMachineUIWidget extends WidgetGroup {
             widget.setVisible(widget == page);
             widget.setActive(widget == page);
         });
-        page.setSelfPosition(new Position(
+        page.setSelfPosition(Position.of(
                 (pageContainer.getSize().width - page.getSize().width) / 2,
                 (pageContainer.getSize().height - page.getSize().height) / 2));
         fancyUI.attachConfigurators(configuratorPanel);
         configuratorPanel
-                .setSelfPosition(new Position(-24 - 2, getGui().getHeight() - configuratorPanel.getSize().height - 4));
+                .setSelfPosition(Position.of(-24 - 2, getGui().getHeight() - configuratorPanel.getSize().height - 4));
         fancyUI.attachTooltips(tooltipsPanel);
 
-        titleBar.setSize(new Size(this.getSize().width, titleBar.getSize().height));
+        titleBar.setSize(Size.of(this.getSize().width, titleBar.getSize().height));
     }
 
     private void setupInventoryPosition(boolean showInventory, Size parentSize) {
         if (this.playerInventory == null)
             return;
 
-        this.playerInventory.setSelfPosition(new Position(
+        this.playerInventory.setSelfPosition(Position.of(
                 (parentSize.width - playerInventory.getSize().width) / 2,
                 parentSize.height));
 

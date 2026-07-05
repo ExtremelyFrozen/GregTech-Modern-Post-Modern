@@ -4,13 +4,13 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
+import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
-import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.math.Position;
+import com.lowdragmc.lowdraglib2.math.Size;
 
 import net.minecraft.ChatFormatting;
 
@@ -103,14 +103,14 @@ public class TitleBarWidget extends WidgetGroup {
         if (showMenuButton) hiddenButtons--;
 
         int buttonGroupWidth = this.width - (BTN_WIDTH * hiddenButtons);
-        buttonGroup.setSize(new Size(buttonGroupWidth, innerHeight));
-        buttonGroup.setSelfPosition(new Position(showBackButton ? 0 : BTN_WIDTH, BORDER_SIZE));
-        menuButton.setSelfPosition(new Position(buttonGroupWidth - BTN_WIDTH, BORDER_SIZE));
+        buttonGroup.setSize(Size.of(buttonGroupWidth, innerHeight));
+        buttonGroup.setSelfPosition(Position.of(showBackButton ? 0 : BTN_WIDTH, BORDER_SIZE));
+        menuButton.setSelfPosition(Position.of(buttonGroupWidth - BTN_WIDTH, BORDER_SIZE));
 
         int mainSectionWidth = this.width - (BTN_WIDTH * 2);
         int titleWidth = mainSectionWidth - (2 * BORDER_SIZE) - innerHeight;
-        mainSection.setSize(new Size(mainSectionWidth, HEIGHT));
+        mainSection.setSize(Size.of(mainSectionWidth, HEIGHT));
         titleText.setWidth(titleWidth);
-        tabTitle.setSize(new Size(titleWidth, HEIGHT - BORDER_SIZE));
+        tabTitle.setSize(Size.of(titleWidth, HEIGHT - BORDER_SIZE));
     }
 }
