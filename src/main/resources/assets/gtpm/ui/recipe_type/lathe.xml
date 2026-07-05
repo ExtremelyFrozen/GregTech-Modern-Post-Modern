@@ -5,13 +5,13 @@
     <stylesheet location="ldlib2:lss/mc.lss"/>
     <root source-format="legacy-nbt-ui" style="position: relative; width: 110; height: 26;">
         <element legacy-type="group" style="position: absolute; left: 0; top: 0; width: 26; height: 26;">
-            <gtm-item-slot id="item_in_0" legacy-type="gtm_item_slot" style="position: absolute; left: 4; top: 4; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true"/>
+            <gtm-item-slot id="item_in_0" legacy-type="gtm_item_slot" style="position: absolute; left: 4; top: 4; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true" legacy-background="border_texture:gtpm:textures/gui/base/slot.png" legacy-overlay="resource_texture:gtpm:textures/gui/overlay/pipe_overlay_1.png"/>
         </element>
         <element legacy-type="group" style="position: absolute; left: 66; top: 0; width: 44; height: 26;">
-            <gtm-item-slot id="item_out_0" legacy-type="gtm_item_slot" style="position: absolute; left: 4; top: 4; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true"/>
-            <gtm-item-slot id="item_out_1" legacy-type="gtm_item_slot" style="position: absolute; left: 22; top: 4; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true"/>
+            <gtm-item-slot id="item_out_0" legacy-type="gtm_item_slot" style="position: absolute; left: 4; top: 4; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true" legacy-background="border_texture:gtpm:textures/gui/base/slot.png" legacy-overlay="resource_texture:gtpm:textures/gui/overlay/pipe_overlay_2.png"/>
+            <gtm-item-slot id="item_out_1" legacy-type="gtm_item_slot" style="position: absolute; left: 22; top: 4; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true" legacy-background="border_texture:gtpm:textures/gui/base/slot.png" legacy-overlay="resource_texture:gtpm:textures/gui/overlay/dust_overlay.png"/>
         </element>
-        <gtm-progress-bar id="progress" legacy-type="progress" style="position: absolute; left: 36; top: 3; width: 20; height: 20;"/>
+        <gtm-progress-bar id="progress" legacy-type="progress" style="position: absolute; left: 36; top: 3; width: 20; height: 20;" fill-direction="LEFT_TO_RIGHT" legacy-empty-bar="resource_texture:gtpm:textures/gui/progress_bar/progress_bar_lathe.png@0.0,0.0,1.0,0.5" legacy-filled-bar="resource_texture:gtpm:textures/gui/progress_bar/progress_bar_lathe.png@0.0,0.5,1.0,0.5"/>
         <gtm-image legacy-type="image" style="position: absolute; left: 54; top: 4; width: 5; height: 18;" legacy-background="resource_texture:gtpm:textures/gui/progress_bar/progress_bar_lathe_base.png"/>
     </root>
 </ldlib2-ui>

@@ -30,6 +30,11 @@ TAG_LIST = 9
 TAG_COMPOUND = 10
 TAG_INT_ARRAY = 11
 TAG_LONG_ARRAY = 12
+TEXTURE_GROUP = "ldlib.gui.editor.group.textures"
+LDLIB_TEXTURE_REPLACEMENTS = {
+    "ldlib:textures/gui/slot.png": "gtpm:textures/gui/base/slot.png",
+    "ldlib:textures/gui/fluid_slot.png": "gtpm:textures/gui/base/fluid_slot.png",
+}
 
 
 @dataclass(frozen=True)
@@ -185,7 +190,19 @@ def bool_property(data: dict[str, Any], property_name: str) -> str | None:
     return None
 
 
-def texture_key(value: Any) -> str | None:
+def texture_value(value: Any, resources: dict[str, Any]) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    if value.get("type") == "ui_resource":
+        key = value.get("key")
+        if isinstance(key, str):
+            return texture_value(resources.get(key), resources)
+        return None
+    return value
+
+
+def texture_key(value: Any, resources: dict[str, Any]) -> str | None:
+    value = texture_value(value, resources)
     if not isinstance(value, dict):
         return None
     key = value.get("key")
@@ -195,9 +212,69 @@ def texture_key(value: Any) -> str | None:
     texture_type = value.get("type")
     if isinstance(data, dict) and isinstance(texture_type, str):
         location = data.get("imageLocation") or data.get("location") or data.get("texture")
-        if isinstance(location, str) and not location.startswith("ldlib:"):
+        if isinstance(location, str):
+            location = LDLIB_TEXTURE_REPLACEMENTS.get(location, location)
+            if location.startswith("ldlib:"):
+                return None
+            if texture_type == "resource_texture":
+                area = texture_area(data)
+                return f"{texture_type}:{location}{area}"
             return f"{texture_type}:{location}"
     return None
+
+
+def texture_area(data: dict[str, Any]) -> str:
+    offset_x = data.get("offsetX", 0)
+    offset_y = data.get("offsetY", 0)
+    width = data.get("imageWidth", 1)
+    height = data.get("imageHeight", 1)
+    if offset_x == 0 and offset_y == 0 and width == 1 and height == 1:
+        return ""
+    return f"@{offset_x},{offset_y},{width},{height}"
+
+
+def texture_attrs(attribute: str, value: Any, resources: dict[str, Any]) -> dict[str, str | None]:
+    value = texture_value(value, resources)
+    if not isinstance(value, dict):
+        return {}
+    if value.get("type") == "group_texture":
+        parts = []
+        data = value.get("data")
+        if isinstance(data, dict):
+            for entry in nbt_list_items(data.get("textures")):
+                if isinstance(entry, dict):
+                    texture = texture_key(entry.get("p"), resources)
+                    if texture:
+                        parts.append(texture)
+        if len(parts) == 2 and attribute == "legacy-background":
+            return {
+                "legacy-background": parts[0],
+                "legacy-overlay": parts[1],
+            }
+        return {}
+    texture = texture_key(value, resources)
+    return {attribute: texture} if texture else {}
+
+
+def progress_attrs(value: Any, resources: dict[str, Any]) -> dict[str, str | None]:
+    value = texture_value(value, resources)
+    if not isinstance(value, dict):
+        return {}
+    if value.get("key") == "empty":
+        return {
+            "legacy-empty-bar": "empty",
+            "legacy-filled-bar": "empty",
+        }
+    if value.get("type") != "progress_texture":
+        return {}
+    data = value.get("data")
+    if not isinstance(data, dict):
+        return {}
+    return {
+        "fill-direction": data.get("fillDirection"),
+        "legacy-empty-bar": texture_key(data.get("emptyBarArea"), resources),
+        "legacy-filled-bar": texture_key(data.get("filledBarArea"), resources),
+    }
 
 
 def tag_for(legacy_type: str | None) -> str:
@@ -205,7 +282,7 @@ def tag_for(legacy_type: str | None) -> str:
         "gtm_item_slot": "gtm-item-slot",
         "gtm_fluid_slot": "gtm-fluid-slot",
         "dual_progress": "gtm-dual-progress",
-        "progress": "progress-bar",
+        "progress": "gtm-progress-bar",
         "image": "gtm-image",
         "group": "element",
         None: "element",
@@ -230,7 +307,7 @@ def unwrap_widget(widget: Any) -> tuple[str | None, dict[str, Any] | None]:
     return None, widget
 
 
-def append_widget(lines: list[str], widget: Any, depth: int, root: bool = False) -> None:
+def append_widget(lines: list[str], widget: Any, depth: int, resources: dict[str, Any], root: bool = False) -> None:
     legacy_type, data = (None, widget) if root else unwrap_widget(widget)
     if not isinstance(data, dict):
         return
@@ -260,11 +337,11 @@ def append_widget(lines: list[str], widget: Any, depth: int, root: bool = False)
         "legacy-allow-click-drained": bool_property(data, "allowClickDrained"),
         "fill-direction": data.get("fillDirection"),
         "split-point": data.get("splitPoint"),
-        "legacy-background": texture_key(data.get("backgroundTexture")),
-        "legacy-overlay": texture_key(data.get("overlay")),
-        "legacy-progress-texture": texture_key(data.get("progressTexture")),
-        "legacy-texture-1": texture_key(data.get("texture1")),
-        "legacy-texture-2": texture_key(data.get("texture2")),
+        **texture_attrs("legacy-background", data.get("backgroundTexture"), resources),
+        **texture_attrs("legacy-overlay", data.get("overlay"), resources),
+        **progress_attrs(data.get("progressTexture"), resources),
+        **texture_attrs("legacy-texture-1", data.get("texture1"), resources),
+        **texture_attrs("legacy-texture-2", data.get("texture2"), resources),
     }
     children = nbt_list_items(data.get("children"))
     if not children:
@@ -272,14 +349,18 @@ def append_widget(lines: list[str], widget: Any, depth: int, root: bool = False)
         return
     lines.append(f"{indent}<{tag}{attr_text(attrs)}>")
     for child in children:
-        append_widget(lines, child, depth + 1)
+        append_widget(lines, child, depth + 1, resources)
     lines.append(f"{indent}</{tag}>")
 
 
 def convert_file(source: Path) -> str:
-    root = read_nbt(source).get("root")
+    nbt = read_nbt(source)
+    root = nbt.get("root")
     if not isinstance(root, dict):
         raise ValueError(f"{source} does not contain a root UI tag")
+    resources = nbt.get("resources", {}).get(TEXTURE_GROUP, {})
+    if not isinstance(resources, dict):
+        resources = {}
     lines = [
         '<?xml version="1.0" encoding="UTF-8" ?>',
         '<ldlib2-ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
@@ -287,7 +368,7 @@ def convert_file(source: Path) -> str:
         f"    <!-- Generated from legacy recipe NBT UI asset {escape(source.name)}. -->",
         '    <stylesheet location="ldlib2:lss/mc.lss"/>',
     ]
-    append_widget(lines, root, 1, root=True)
+    append_widget(lines, root, 1, resources, root=True)
     lines.append("</ldlib2-ui>")
     return "\n".join(lines) + "\n"
 
