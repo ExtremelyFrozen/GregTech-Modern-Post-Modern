@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.widget;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 
 import net.minecraft.client.gui.GuiGraphics;

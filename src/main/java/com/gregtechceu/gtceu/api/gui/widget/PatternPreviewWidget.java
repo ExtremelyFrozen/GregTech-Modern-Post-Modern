@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.api.multiblock.MultiblockPreviewLevel;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
@@ -18,7 +19,6 @@ import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler
 import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib2.client.utils.RenderUtils;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 import com.lowdragmc.lowdraglib2.utils.data.BlockPosFace;
 import com.lowdragmc.lowdraglib2.utils.data.ItemStackKey;
