@@ -9,6 +9,9 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.SteamTexture;
 import com.gregtechceu.gtceu.api.gui.WidgetUtils;
 import com.gregtechceu.gtceu.api.gui.editor.IEditableUI;
+import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.api.gui.widget.DualProgressWidget;
@@ -32,6 +35,8 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponentMap;
@@ -65,6 +70,8 @@ import java.util.function.DoubleSupplier;
 import java.util.stream.Collectors;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import dev.vfyjxf.taffy.style.TaffyPosition;
 
 @SuppressWarnings("UnusedReturnValue")
 public class GTRecipeTypeUI {
@@ -260,6 +267,26 @@ public class GTRecipeTypeUI {
         return createUITemplate(progressSupplier, storages, data, conditions, false, false);
     }
 
+    public UI createLDLib2UITemplate(DoubleSupplier progressSupplier,
+                                     Table<IO, RecipeCapability<?>, Object> storages,
+                                     DataComponentMap data,
+                                     List<RecipeCondition<?>> conditions,
+                                     boolean isSteam,
+                                     boolean isHighPressure) {
+        UI ui = !isSteam && hasCustomLDLib2UI() ? createCustomLDLib2UI() :
+                createDefaultLDLib2UI(isSteam, isHighPressure);
+        setupLDLib2UI(ui.rootElement,
+                new RecipeHolder(progressSupplier, storages, data, conditions, isSteam, isHighPressure));
+        return ui;
+    }
+
+    public UI createLDLib2UITemplate(DoubleSupplier progressSupplier,
+                                     Table<IO, RecipeCapability<?>, Object> storages,
+                                     DataComponentMap data,
+                                     List<RecipeCondition<?>> conditions) {
+        return createLDLib2UITemplate(progressSupplier, storages, data, conditions, false, false);
+    }
+
     /**
      * Auto layout UI template for recipes.
      */
@@ -360,6 +387,177 @@ public class GTRecipeTypeUI {
             }
         });
     }
+
+    private UI createDefaultLDLib2UI(boolean isSteam, boolean isHighPressure) {
+        var inputs = addLDLib2InventorySlotGroup(false, isSteam, isHighPressure);
+        var outputs = addLDLib2InventorySlotGroup(true, isSteam, isHighPressure);
+        var maxWidth = Math.max(inputs.width(), outputs.width());
+        var width = 2 * maxWidth + 40;
+        var height = Math.max(inputs.height(), outputs.height());
+        var root = new UIElement();
+        root.layout(layout -> {
+            layout.width(width);
+            layout.height(height);
+            layout.positionType(TaffyPosition.ABSOLUTE);
+        });
+
+        inputs.element().layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left((maxWidth - inputs.width()) / 2f);
+            layout.top((height - inputs.height()) / 2f);
+        });
+        outputs.element().layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(maxWidth + 40 + (maxWidth - outputs.width()) / 2f);
+            layout.top((height - outputs.height()) / 2f);
+        });
+        root.addChildren(inputs.element(), outputs.element());
+
+        var progress = new GTProgressBarElement();
+        progress.setId("progress");
+        progress.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(maxWidth + 10);
+            layout.top(height / 2f - 10);
+            layout.width(20);
+            layout.height(20);
+        });
+        configureLDLib2ProgressTexture(progress, isSteam, isHighPressure);
+        root.addChild(progress);
+        return UI.of(root);
+    }
+
+    private void setupLDLib2UI(UIElement root, RecipeHolder recipeHolder) {
+        var isXEI = recipeHolder.progressSupplier == ProgressWidget.JEIProgress;
+        root.selectId("progress", GTProgressBarElement.class)
+                .forEach(progress -> progress.setProgressSupplier(recipeHolder.progressSupplier));
+
+        for (var capabilityEntry : recipeHolder.storages.rowMap().entrySet()) {
+            IO io = capabilityEntry.getKey();
+            for (var storagesEntry : capabilityEntry.getValue().entrySet()) {
+                RecipeCapability<?> cap = storagesEntry.getKey();
+                Object storage = storagesEntry.getValue();
+                var elementClass = cap.getLDLib2ElementClass();
+                if (elementClass != null) {
+                    root.selectRegex("^%s_[0-9]+$".formatted(cap.slotName(io)), elementClass)
+                            .forEach(element -> {
+                                var index = ldLib2ElementIdIndex(element);
+                                cap.applyLDLib2ElementInfo(element, index, isXEI, io, recipeHolder, recipeType, null,
+                                        null, storage, 0, 0);
+                            });
+                }
+            }
+        }
+    }
+
+    private LDLib2ElementGroup addLDLib2InventorySlotGroup(boolean isOutputs, boolean isSteam,
+                                                           boolean isHighPressure) {
+        int maxCount = 0;
+        int totalR = 0;
+        Object2IntSortedMap<RecipeCapability<?>> map = new Object2IntAVLTreeMap<>(RecipeCapability.COMPARATOR);
+        if (isOutputs) {
+            for (var value : recipeType.maxOutputs.object2IntEntrySet()) {
+                if (value.getKey().doRenderSlot) {
+                    int val = value.getIntValue();
+                    if (val > maxCount) {
+                        maxCount = Math.min(val, 3);
+                    }
+                    totalR += (val + 2) / 3;
+                    map.put(value.getKey(), val);
+                }
+            }
+        } else {
+            for (var value : recipeType.maxInputs.object2IntEntrySet()) {
+                if (value.getKey().doRenderSlot) {
+                    int val = value.getIntValue();
+                    if (val > maxCount) {
+                        maxCount = Math.min(val, 3);
+                    }
+                    totalR += (val + 2) / 3;
+                    map.put(value.getKey(), val);
+                }
+            }
+        }
+        int width = maxCount * 18 + 8;
+        int height = totalR * 18 + 8;
+        UIElement group = new UIElement();
+        group.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.width(width);
+            layout.height(height);
+        });
+        int index = 0;
+        for (var entry : map.object2IntEntrySet()) {
+            RecipeCapability<?> cap = entry.getKey();
+            int capCount = entry.getIntValue();
+            for (int slotIndex = 0; slotIndex < capCount; slotIndex++) {
+                var slot = cap.createLDLib2Element();
+                if (slot == null) {
+                    continue;
+                }
+                int slotX = (index % 3) * 18 + 4;
+                int slotY = (index / 3) * 18 + 4;
+                slot.layout(layout -> {
+                    layout.positionType(TaffyPosition.ABSOLUTE);
+                    layout.left(slotX);
+                    layout.top(slotY);
+                    layout.width(18);
+                    layout.height(18);
+                });
+                setLDLib2SlotBackground(slot,
+                        getOverlaysForSlot(isOutputs, cap, slotIndex == capCount - 1, isSteam, isHighPressure));
+                slot.setId(cap.slotName(isOutputs ? IO.OUT : IO.IN, slotIndex));
+                group.addChild(slot);
+                index++;
+            }
+            index += (3 - (index % 3)) % 3;
+        }
+        return new LDLib2ElementGroup(group, width, height);
+    }
+
+    private void configureLDLib2ProgressTexture(GTProgressBarElement progress, boolean isSteam,
+                                                boolean isHighPressure) {
+        ProgressTexture texture = progressBarTexture;
+        progress.barBackground.style(style -> style.backgroundTexture(texture.getEmptyBarArea()));
+        progress.bar.style(style -> style.backgroundTexture(texture.getFilledBarArea()));
+        progress.progressBarStyle(style -> style.fillDirection(toLDLib2FillDirection(texture.getFillDirection())));
+    }
+
+    private static FillDirection toLDLib2FillDirection(ProgressTexture.FillDirection fillDirection) {
+        return switch (fillDirection) {
+            case RIGHT_TO_LEFT -> FillDirection.RIGHT_TO_LEFT;
+            case UP_TO_DOWN -> FillDirection.UP_TO_DOWN;
+            case DOWN_TO_UP -> FillDirection.DOWN_TO_UP;
+            case LEFT_TO_RIGHT, ALWAYS_FULL -> FillDirection.LEFT_TO_RIGHT;
+        };
+    }
+
+    private static void setLDLib2SlotBackground(UIElement element, IGuiTexture texture) {
+        if (element instanceof GTItemSlotElement slot) {
+            slot.setBackgroundTexture(texture);
+        } else if (element instanceof GTFluidSlotElement tank) {
+            tank.setBackgroundTexture(texture);
+        } else {
+            element.getStyle().backgroundTexture(texture);
+        }
+    }
+
+    private static int ldLib2ElementIdIndex(UIElement element) {
+        var id = element.getId();
+        var separator = id.lastIndexOf('_');
+        if (separator < 0 || separator == id.length() - 1) {
+            GTCEu.LOGGER.error("Invalid LDLib2 recipe element id '{}'", id);
+            throw new IllegalArgumentException("Invalid LDLib2 recipe element id: " + id);
+        }
+        try {
+            return Integer.parseInt(id.substring(separator + 1));
+        } catch (NumberFormatException e) {
+            GTCEu.LOGGER.error("Invalid LDLib2 recipe element id '{}'", id, e);
+            throw e;
+        }
+    }
+
+    private record LDLib2ElementGroup(UIElement element, int width, int height) {}
 
     protected WidgetGroup addInventorySlotGroup(boolean isOutputs, boolean isSteam, boolean isHighPressure) {
         int maxCount = 0;
