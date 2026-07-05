@@ -3748,7 +3748,6 @@
 	"gtpm.recipe_memory_widget.tooltip.0": "§7左クリックするとこのレシピがクラフトグリッドに自動的に搬入されます。",
 	"gtpm.recipe_memory_widget.tooltip.1": "§7シフトでレシピの固定化を設定",
 	"gtpm.recipe_type.show_recipes": "レシピを表示",
-	"gtpm.rei.group.potion_fluids": "ポーション液体",
 	"recipe_type.gtpm.research_station": "研究ステーション",
 	"recipe_type.gtpm.rock_breaker": "破砕機",
 	"recipe_type.gtpm.scanner": "スキャナー",

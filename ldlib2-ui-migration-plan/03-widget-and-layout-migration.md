@@ -116,7 +116,7 @@
 - 玩家背包 slot 正常显示和交互。
 - 机器输入输出 slot 限制不变。
 - phantom/cycle slot 正常显示。
-- JEI/EMI/REI 鼠标悬停 ingredient 正确。
+- JEI/EMI 鼠标悬停 ingredient 正确。
 - chance tooltip 不丢失。
 
 ## `TankWidget` 迁移

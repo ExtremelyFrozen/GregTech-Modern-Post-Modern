@@ -96,8 +96,7 @@
 4. progress。
 5. JEI。
 6. EMI。
-7. REI。
-8. `.rtui` NBT 到 LDLib2 XML 的一次性转换与旧资源删除。
+7. `.rtui` NBT 到 LDLib2 XML 的一次性转换与旧资源删除。
 
 验收：
 

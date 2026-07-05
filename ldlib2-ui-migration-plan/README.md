@@ -27,7 +27,7 @@
 - [06-cover-ui-holder-plan.md](06-cover-ui-holder-plan.md)
   - `UICoverHolder` 方案的协议、生命周期、同步回传和验收标准。
 - [07-recipe-xei-migration.md](07-recipe-xei-migration.md)
-  - `GTRecipeTypeUI`、recipe slot、JEI/EMI/REI/XEI 迁移计划。
+  - `GTRecipeTypeUI`、recipe slot、JEI/EMI/XEI 迁移计划。
 - [08-rollout-and-validation.md](08-rollout-and-validation.md)
   - 阶段顺序、验收矩阵、回归测试和风险清单。
 

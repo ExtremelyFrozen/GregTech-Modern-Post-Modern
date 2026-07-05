@@ -3734,7 +3734,6 @@
 	"gtpm.recipe_modifier.insufficient_eu_to_start_fusion": "能量不足以启动聚变反应",
 	"gtpm.recipe_modifier.insufficient_voltage": "电压等级不足",
 	"gtpm.recipe_type.show_recipes": "查看配方",
-	"gtpm.rei.group.potion_fluids": "药水流体",
 	"gtpm.scanner.copy_stick_empty": "§o空闪存",
 	"gtpm.scanner.copy_stick_from": "§o要复制的闪存",
 	"gtpm.scanner.copy_stick_to": "§o闪存（已复制）",

@@ -173,7 +173,7 @@ Recipe progress 有两类：
 
 转换后 `GTRecipeTypeUI` 应加载 `ui/recipe_type/*.xml` 并构建 LDLib2 UI tree；旧 `.rtui` 资源在验证通过后移除。
 
-## JEI/EMI/REI 集成
+## JEI/EMI 集成
 
 目标：
 
@@ -186,8 +186,7 @@ Recipe progress 有两类：
 1. 抽出 GTM recipe UI element builder。
 2. JEI category 使用同一个 builder。
 3. EMI category 使用同一个 builder。
-4. REI 如需要支持，也接入同一 builder。
-5. 每个 slot 显式声明 XEI role。
+4. 每个 slot 显式声明 XEI role。
 
 ## 验收清单
 

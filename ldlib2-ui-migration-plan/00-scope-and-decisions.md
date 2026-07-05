@@ -9,7 +9,7 @@
 - Item/Tool UI 打开链路。
 - GTM 自有控件层。
 - Fancy Machine UI 框架。
-- Recipe UI 与 XEI/JEI/EMI/REI 集成。
+- Recipe UI 与 XEI/JEI/EMI 集成。
 - UI 相关渲染预览，例如机器 `Scene`。
 - UI 交互所需的 GT 同步能力扩展。
 
@@ -116,5 +116,5 @@ facade 内部再转换为 LDLib2 `UIElement`、layout、style 和 event。
 - GT sync action 是复用现有 sync packet，还是新增独立 action packet。
 - UI Editor 是否保留。
 - `.rtui` 是否转换。
-- Recipe Viewer 是否一次性恢复 JEI/EMI/REI，还是按当前运行依赖逐个恢复。
+- Recipe Viewer 是否一次性恢复 JEI/EMI，还是按当前运行依赖逐个恢复。
 - Cover UI 关闭时 `onUIClosed()` 是否必须发送服务端通知。

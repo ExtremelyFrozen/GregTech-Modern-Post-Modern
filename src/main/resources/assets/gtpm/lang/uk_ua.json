@@ -3778,7 +3778,6 @@
 	"gtpm.recipe_memory_widget.tooltip.0": "§7Клацніть ЛКМ, щоб автоматично внести цей рецепт до сітки виготовлення",
 	"gtpm.recipe_memory_widget.tooltip.1": "§7Клацайте із затиснутим Shift, щоб заблокувати/розблокувати цей рецепт",
 	"gtpm.recipe_type.show_recipes": "Показати рецепти",
-	"gtpm.rei.group.potion_fluids": "Рідини зіллів",
 	"recipe_type.gtpm.research_station": "Дослідницька станція",
 	"recipe_type.gtpm.rock_breaker": "Кам'яна дробарка",
 	"recipe_type.gtpm.scanner": "Сканер",

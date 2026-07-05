@@ -3379,7 +3379,6 @@
 	"gtpm.recipe_memory_widget.tooltip.0": "§7左鍵點選自動輸入該配方至合成格",
 	"gtpm.recipe_memory_widget.tooltip.1": "§7按住Shift並點選以鎖定或解鎖該配方",
 	"gtpm.recipe_type.show_recipes": "檢視配方",
-	"gtpm.rei.group.potion_fluids": "藥水流體",
 	"gtpm.scanner.copy_stick_empty": "§o空快閃記憶體",
 	"gtpm.scanner.copy_stick_from": "§o要複製的快閃記憶體",
 	"gtpm.scanner.copy_stick_to": "§o快閃記憶體（已複製）",
