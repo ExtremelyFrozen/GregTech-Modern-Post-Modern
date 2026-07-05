@@ -40,6 +40,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         var filesToScan = sourceFilesToScan + gradleFilesToScan
         var ownImplementationSuffixDeclaration = ~/.*\b(class|interface|enum|record)\s+[A-Za-z0-9_]+Impl\b.*/
         var ldlib2RpcCall = ~/.*\baddRPCEvent\s*\(.*/
+        var manualMarkAsDirtyCall = ~/.*\.markAsDirty\s*\(.*/
         var ldlib2FluidClickAttribute = ~/.*(?<!legacy-)allow-click-(filled|drained)=.*/
 
         var patterns = [
@@ -53,7 +54,6 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'PacketUIRPCEvent',
                 'PacketUIRPCEventReturn',
                 'setOnServerClick',
-                'markAsDirty(',
                 'com.lowdragmc.lowdraglib2.syncdata.',
                 'com.lowdragmc.lowdraglib2.gui.sync.',
                 'compileOnly(forge.ldlib)',
@@ -94,6 +94,9 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                     }
                     if (ldlib2RpcCall.matches(line)) {
                         matches.add("${relativePath}:${number}: LDLib2 RPC must not be used for GTM business UI actions")
+                    }
+                    if (manualMarkAsDirtyCall.matches(line)) {
+                        matches.add("${relativePath}:${number}: Manual markAsDirty calls must not be used for GTM sync")
                     }
                     if (ldlib2FluidClickAttribute.matches(line)) {
                         matches.add("${relativePath}:${number}: LDLib2 fluid click attributes must stay legacy metadata")
