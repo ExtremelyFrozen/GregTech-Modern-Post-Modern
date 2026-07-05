@@ -18,9 +18,13 @@ public final class HeldItemUIHolderContext implements HeldItemUIHolder {
     private final ItemStack openedStack;
 
     public HeldItemUIHolderContext(Player player, InteractionHand hand) {
+        this(player, hand, player.getItemInHand(hand));
+    }
+
+    public HeldItemUIHolderContext(Player player, InteractionHand hand, ItemStack openedStack) {
         this.player = player;
         this.hand = hand;
-        this.openedStack = player.getItemInHand(hand).copy();
+        this.openedStack = openedStack.copy();
     }
 
     @Override

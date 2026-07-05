@@ -5,9 +5,15 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineActionToServer;
 
 import com.lowdragmc.lowdraglib2.gui.factory.BlockUIMenuType;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Centralizes machine UI opening while GTM migrates block-backed screens to LDLib2.
@@ -26,6 +32,21 @@ public final class MachineUIHelper {
             return true;
         }
         return MachineUIFactory.INSTANCE.openUI(machine, player);
+    }
+
+    /**
+     * Creates the parallel LDLib2 UI when the machine exposes the LDLib2 provider contract.
+     *
+     * @return the LDLib2 UI, or {@code null} when the machine has not migrated to the parallel provider contract.
+     */
+    @Nullable
+    public static ModularUI createLDLib2UI(MetaMachine machine, Player player) {
+        if (machine instanceof LDLib2MachineUIProvider uiProvider) {
+            MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
+            return Objects.requireNonNull(uiProvider.createLDLib2UI(player, holder),
+                    "LDLib2 machine UI provider returned null");
+        }
+        return null;
     }
 
     /**
