@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceTexture;
 import com.gregtechceu.gtceu.api.gui.widget.DualProgressWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
@@ -296,7 +297,9 @@ public class GTRecipeTypeUI {
     }
 
     public LDLib2RecipeUISize getLDLib2XEIRecipeUISize() {
-        return getLDLib2RecipeUISize(false, false);
+        LDLib2RecipeUISize rawSize = getLDLib2RecipeUISize(false, false);
+        return new LDLib2RecipeUISize(Math.max(rawSize.width(), 150),
+                rawSize.height() + 5 + getPropertyHeightShift());
     }
 
     public LDLib2RecipeUISize getLDLib2RecipeUISize(boolean isSteam, boolean isHighPressure) {
@@ -365,11 +368,7 @@ public class GTRecipeTypeUI {
             progressWidget.setId("progress");
             group.addWidget(progressWidget);
 
-            progressWidget.setProgressTexture((isSteam && steamProgressBarTexture != null) ?
-                    GuiTextures.progressBar(
-                            steamProgressBarTexture.get(isHighPressure).getSubTexture(0, 0, 1, 0.5),
-                            steamProgressBarTexture.get(isHighPressure).getSubTexture(0, 0.5, 1, 0.5))
-                            .setFillDirection(steamMoveType) : progressBarTexture);
+            progressWidget.setProgressTexture(getProgressTexture(isSteam, isHighPressure));
 
             return group;
         }, (template, recipeHolder) -> {
@@ -599,10 +598,24 @@ public class GTRecipeTypeUI {
 
     private void configureLDLib2ProgressTexture(GTProgressBarElement progress, boolean isSteam,
                                                 boolean isHighPressure) {
-        ProgressTexture texture = progressBarTexture;
+        ProgressTexture texture = getProgressTexture(isSteam, isHighPressure);
         progress.barBackground.style(style -> style.backgroundTexture(texture.getEmptyBarArea()));
         progress.bar.style(style -> style.backgroundTexture(texture.getFilledBarArea()));
         progress.progressBarStyle(style -> style.fillDirection(toLDLib2FillDirection(texture.getFillDirection())));
+    }
+
+    private ProgressTexture getProgressTexture(boolean isSteam, boolean isHighPressure) {
+        if (!isSteam || steamProgressBarTexture == null) {
+            return progressBarTexture;
+        }
+        IGuiTexture steamTexture = steamProgressBarTexture.get(isHighPressure);
+        if (steamTexture instanceof ResourceTexture resourceTexture) {
+            return GuiTextures.progressBar(resourceTexture, steamMoveType);
+        }
+        GTCEu.LOGGER.error("Steam progress bar texture must be a resource texture, got {}",
+                steamTexture.getClass().getName());
+        throw new IllegalArgumentException("Unsupported steam progress bar texture: " +
+                steamTexture.getClass().getName());
     }
 
     private static FillDirection toLDLib2FillDirection(ProgressTexture.FillDirection fillDirection) {

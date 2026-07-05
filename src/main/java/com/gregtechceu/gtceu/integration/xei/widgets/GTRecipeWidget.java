@@ -191,8 +191,8 @@ public class GTRecipeWidget extends WidgetGroup {
     }
 
     @NotNull
-    private static List<Component> getRecipeParaText(GTRecipeDefinition recipe, int duration,
-                                                     long eu) {
+    public static List<Component> getRecipeParaText(GTRecipeDefinition recipe, int duration,
+                                                    long eu) {
         List<Component> texts = new ArrayList<>();
         if (!RecipeData.getBoolean(recipe.data, "hide_duration")) {
             texts.add(Component.translatable("gtpm.recipe.duration", FormattingUtil.formatNumbers(duration / 20f)));
