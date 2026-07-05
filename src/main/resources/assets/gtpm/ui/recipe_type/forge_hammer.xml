@@ -10,7 +10,7 @@
         <element legacy-type="group" style="position: absolute; left: 66; top: 0; width: 26; height: 26;">
             <gtm-item-slot id="item_out_0" legacy-type="gtm_item_slot" style="position: absolute; left: 4; top: 4; width: 18; height: 18;" draw-hover-overlay="true" draw-hover-tips="true" can-put-items="true" can-take-items="true" legacy-background="border_texture:gtpm:textures/gui/base/slot.png"/>
         </element>
-        <progress-bar id="progress" legacy-type="progress" style="position: absolute; left: 36; top: 3; width: 20; height: 20;"/>
+        <gtm-progress-bar id="progress" legacy-type="progress" style="position: absolute; left: 36; top: 3; width: 20; height: 20;"/>
         <gtm-image legacy-type="image" style="position: absolute; left: 35; top: 20; width: 21; height: 6;" legacy-background="resource_texture:gtpm:textures/gui/progress_bar/progress_bar_hammer_base.png"/>
     </root>
 </ldlib2-ui>
