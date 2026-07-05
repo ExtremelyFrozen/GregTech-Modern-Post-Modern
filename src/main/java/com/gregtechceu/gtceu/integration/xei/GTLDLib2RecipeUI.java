@@ -27,15 +27,18 @@ import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.fml.loading.FMLLoader;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
@@ -97,6 +100,7 @@ public final class GTLDLib2RecipeUI {
         root.addChild(template.rootElement);
 
         addStaticXEIInfo(root, recipe, rootSize, templateSize);
+        addRecipeIdButton(root, recipe, rootSize);
         return UI.of(root, template.stylesheets);
     }
 
@@ -234,6 +238,29 @@ public final class GTLDLib2RecipeUI {
             }
         });
         return label;
+    }
+
+    private static void addRecipeIdButton(UIElement root, GTRecipeDefinition recipe, LDLib2RecipeUISize rootSize) {
+        if (FMLLoader.isProduction()) {
+            return;
+        }
+        Button button = new Button();
+        button.setText(Component.literal("ID"));
+        button.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(rootSize.width() - 18);
+            layout.top(rootSize.height() - 30);
+            layout.width(15);
+            layout.height(15);
+        });
+        button.buttonStyle(style -> style
+                .baseTexture(GuiTextures.BUTTON)
+                .hoverTexture(GuiTextures.BUTTON)
+                .pressedTexture(GuiTextures.BUTTON));
+        button.setOnClick(event -> Minecraft.getInstance().keyboardHandler.setClipboard(recipe.id.toString()));
+        button.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> event.hoverTooltips = new HoverTooltips(
+                List.of(Component.literal("click to copy: " + recipe.id)), null, null, null));
+        root.addChild(button);
     }
 
     public static void collectStorage(Table<IO, RecipeCapability<?>, Object> storages,
