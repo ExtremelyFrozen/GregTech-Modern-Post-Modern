@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 public class HPCABridgePartMachine extends HPCAComponentPartMachine {
 

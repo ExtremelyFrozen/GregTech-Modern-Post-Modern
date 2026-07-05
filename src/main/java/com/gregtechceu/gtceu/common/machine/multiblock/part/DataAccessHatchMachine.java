@@ -23,7 +23,7 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.research.DataBan
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 

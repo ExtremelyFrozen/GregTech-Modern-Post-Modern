@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCACoolantProviderTrait;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import lombok.Getter;
 

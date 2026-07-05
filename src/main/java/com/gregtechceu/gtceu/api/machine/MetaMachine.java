@@ -55,7 +55,7 @@ import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 import com.gregtechceu.gtceu.utils.data.TagCompatibilityFixer;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.utils.virtuallevel.DummyWorld;
 
 import net.minecraft.ChatFormatting;

@@ -12,7 +12,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.codecs.GridNodeHostCodec;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.GridNodeHostTrait;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import net.minecraft.core.Direction;
 
