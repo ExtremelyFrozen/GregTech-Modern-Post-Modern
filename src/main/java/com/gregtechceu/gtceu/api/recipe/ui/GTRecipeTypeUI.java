@@ -40,6 +40,9 @@ import com.lowdragmc.lowdraglib.utils.Size;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.layout.LayoutProperties;
 
 import net.minecraft.client.Minecraft;
@@ -47,6 +50,7 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 
@@ -480,10 +484,21 @@ public class GTRecipeTypeUI {
 
     private void setupLDLib2UI(UIElement root, RecipeHolder recipeHolder) {
         var isXEI = recipeHolder.progressSupplier == XEI_PROGRESS;
+        List<UIElement> progressElements = new ArrayList<>();
         root.selectId("progress", GTProgressBarElement.class)
-                .forEach(progress -> progress.setProgressSupplier(recipeHolder.progressSupplier));
+                .forEach(progress -> {
+                    progress.setProgressSupplier(recipeHolder.progressSupplier);
+                    progressElements.add(progress);
+                });
         root.selectId("progress", GTDualProgressElement.class)
-                .forEach(progress -> progress.setProgressSupplier(recipeHolder.progressSupplier));
+                .forEach(progress -> {
+                    progress.setProgressSupplier(recipeHolder.progressSupplier);
+                    progressElements.add(progress);
+                });
+
+        if (!isXEI && GTCEu.Mods.isAnyRecipeViewerLoaded()) {
+            progressElements.forEach(this::addLDLib2RecipeViewerButton);
+        }
 
         for (var capabilityEntry : recipeHolder.storages.rowMap().entrySet()) {
             IO io = capabilityEntry.getKey();
@@ -500,6 +515,38 @@ public class GTRecipeTypeUI {
                             });
                 }
             }
+        }
+    }
+
+    private void addLDLib2RecipeViewerButton(UIElement progress) {
+        Button button = new Button();
+        button.noText();
+        button.layout(layout -> {
+            layout.positionType(TaffyPosition.ABSOLUTE);
+            layout.left(0);
+            layout.top(0);
+            layout.widthPercent(100);
+            layout.heightPercent(100);
+        });
+        button.buttonStyle(style -> style
+                .baseTexture(IGuiTexture.EMPTY)
+                .hoverTexture(IGuiTexture.EMPTY)
+                .pressedTexture(IGuiTexture.EMPTY));
+        button.setOnClick(event -> showRecipeViewerCategory());
+        button.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> event.hoverTooltips =
+                new HoverTooltips(List.of(Component.translatable("gtpm.recipe_type.show_recipes")), null, null, null));
+        progress.addChild(button);
+    }
+
+    private void showRecipeViewerCategory() {
+        if (GTCEu.Mods.isEMILoaded()) {
+            EmiApi.displayRecipeCategory(GTRecipeEMICategory.machineCategory(recipeType.getCategory()));
+        } else if (GTCEu.Mods.isJEILoaded()) {
+            GTJEIPlugin.jeiRuntime.getRecipesGui().showTypes(
+                    recipeType.getCategories().stream()
+                            .filter(GTRecipeCategory::isXEIVisible)
+                            .map(GTLDLib2RecipeJEICategory::machineType)
+                            .collect(Collectors.toList()));
         }
     }
 
