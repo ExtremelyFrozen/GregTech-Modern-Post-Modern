@@ -1,10 +1,10 @@
 package com.gregtechceu.gtceu.api.gui.editor;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import com.lowdragmc.lowdraglib.gui.editor.ui.Editor;
 import com.lowdragmc.lowdraglib.gui.editor.ui.MainPanel;
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,10 +21,11 @@ public class UIMainPanel extends MainPanel {
 
             @Override
             @OnlyIn(Dist.CLIENT)
-            public void draw(GuiGraphics graphics, int mouseX, int mouseY, float x, float y, int width, int height) {
+            public void draw(GuiGraphics graphics, float mouseX, float mouseY, float x, float y, float width,
+                             float height, float partialTicks) {
                 if (description != null) {
                     GuiTextures.text(description).scale(2.0f).draw(graphics, mouseX, mouseY, x, y,
-                            width - editor.getConfigPanel().getSize().getWidth(), height);
+                            width - editor.getConfigPanel().getSize().getWidth(), height, partialTicks);
                 }
                 var border = 4;
                 var background = GuiTextures.BACKGROUND;
@@ -35,7 +36,7 @@ public class UIMainPanel extends MainPanel {
                 background.draw(graphics, mouseX, mouseY,
                         position.x - (w - size.width) / 2f,
                         position.y - (h - size.height) / 2f,
-                        w, h);
+                        w, h, partialTicks);
             }
         });
         this.description = description;
