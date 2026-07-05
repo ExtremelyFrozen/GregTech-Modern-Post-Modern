@@ -15,14 +15,14 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class FluidStorageImpl implements FluidStorage {
+public class MaterialFluidStorage implements FluidStorage {
 
     private final Map<FluidStorageKey, FluidEntry> map = new Object2ObjectOpenHashMap<>();
     private Map<FluidStorageKey, FluidBuilder> toRegister = new Object2ObjectOpenHashMap<>();
 
     private boolean registered = false;
 
-    public FluidStorageImpl() {}
+    public MaterialFluidStorage() {}
 
     /**
      * Enqueue a fluid for registration

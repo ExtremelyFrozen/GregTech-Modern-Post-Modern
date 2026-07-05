@@ -8,7 +8,7 @@ public final class SyncActionDispatchers {
     /**
      * Singleton dispatcher used by packet handlers and action registration code.
      */
-    private static final SyncActionDispatcher SERVER = new SyncActionDispatcherImpl();
+    private static final SyncActionDispatcher SERVER = new SyncActionDispatcherRegistry();
 
     private SyncActionDispatchers() {}
 

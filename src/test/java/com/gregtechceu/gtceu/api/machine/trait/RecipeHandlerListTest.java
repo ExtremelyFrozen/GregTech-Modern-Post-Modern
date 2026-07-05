@@ -41,7 +41,7 @@ public class RecipeHandlerListTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "RecipeHandlerList")
     public static void bothHandlersAreVisibleFromDirectionalHolderQueries(GameTestHelper helper) {
-        TestHolderImpl holder = new TestHolderImpl();
+        TestRecipeCapabilityHolder holder = new TestRecipeCapabilityHolder();
         RecipeHandlerList bothHandlerList = RecipeHandlerList.of(IO.BOTH, new MutatingItemHandler(IO.BOTH, false));
 
         holder.addHandlerList(bothHandlerList);
@@ -121,7 +121,7 @@ public class RecipeHandlerListTest {
         return new SizedIngredient(Ingredient.of(Items.COBBLESTONE), count);
     }
 
-    private static final class TestHolderImpl implements IRecipeCapabilityHolder {
+    private static final class TestRecipeCapabilityHolder implements IRecipeCapabilityHolder {
 
         private final Map<IO, List<RecipeHandlerList>> capabilityProxy = new Reference2ObjectOpenHashMap<>();
         private final Map<IO, Map<RecipeCapability<?>, List<IRecipeHandler<?>>>> capabilitiesFlat = new Reference2ObjectOpenHashMap<>();

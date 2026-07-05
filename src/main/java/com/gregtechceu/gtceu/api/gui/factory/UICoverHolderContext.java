@@ -17,18 +17,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Default cover UI holder used by the GTM compatibility factory.
  */
-public final class UICoverHolderImpl implements UICoverHolder {
+public final class UICoverHolderContext implements UICoverHolder {
 
     private final Player player;
     private final BlockPos pos;
     private final Direction side;
     private final ResourceLocation coverDefinitionId;
 
-    public UICoverHolderImpl(Player player, CoverBehavior cover) {
+    public UICoverHolderContext(Player player, CoverBehavior cover) {
         this(player, cover.coverHolder.getBlockPos(), cover.attachedSide, cover.coverDefinition.getId());
     }
 
-    public UICoverHolderImpl(Player player, BlockPos pos, Direction side, ResourceLocation coverDefinitionId) {
+    public UICoverHolderContext(Player player, BlockPos pos, Direction side, ResourceLocation coverDefinitionId) {
         this.player = player;
         this.pos = pos;
         this.side = side;

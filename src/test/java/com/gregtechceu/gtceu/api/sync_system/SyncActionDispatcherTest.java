@@ -35,7 +35,7 @@ public class SyncActionDispatcherTest {
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
     public static void dispatcherExecutesRegisteredAction(GameTestHelper helper) {
         RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true, true, true);
-        SyncActionDispatcherImpl dispatcher = dispatcherWith(handler);
+        SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
 
         boolean result = dispatcher.dispatch(context(helper, ACTION_ID, payload("accepted")));
 
@@ -54,7 +54,7 @@ public class SyncActionDispatcherTest {
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
     public static void dispatcherRejectsUnknownAction(GameTestHelper helper) {
         RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true, true, true);
-        SyncActionDispatcherImpl dispatcher = dispatcherWith(handler);
+        SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
 
         boolean result = dispatcher.dispatch(context(helper, UNKNOWN_ACTION_ID, payload("unknown")));
 
@@ -69,7 +69,7 @@ public class SyncActionDispatcherTest {
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
     public static void dispatcherRejectsEmptyPayloadWithoutExecuting(GameTestHelper helper) {
         RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true, true, true);
-        SyncActionDispatcherImpl dispatcher = dispatcherWith(handler);
+        SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
 
         boolean result = dispatcher.dispatch(context(helper, ACTION_ID, DataComponentMap.builder().build()));
 
@@ -87,7 +87,7 @@ public class SyncActionDispatcherTest {
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
     public static void dispatcherRejectsInvalidHolderWithoutExecuting(GameTestHelper helper) {
         RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, false, true, true);
-        SyncActionDispatcherImpl dispatcher = dispatcherWith(handler);
+        SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
 
         boolean result = dispatcher.dispatch(context(helper, ACTION_ID, payload("bad_holder")));
 
@@ -105,7 +105,7 @@ public class SyncActionDispatcherTest {
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
     public static void dispatcherRejectsInvalidPayloadWithoutExecuting(GameTestHelper helper) {
         RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true, false, true);
-        SyncActionDispatcherImpl dispatcher = dispatcherWith(handler);
+        SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
 
         boolean result = dispatcher.dispatch(context(helper, ACTION_ID, payload("bad_payload")));
 
@@ -124,7 +124,7 @@ public class SyncActionDispatcherTest {
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
     public static void dispatcherRejectsPermissionFailureWithoutExecuting(GameTestHelper helper) {
         RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true, true, false);
-        SyncActionDispatcherImpl dispatcher = dispatcherWith(handler);
+        SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
 
         boolean result = dispatcher.dispatch(context(helper, ACTION_ID, payload("denied")));
 
@@ -142,7 +142,7 @@ public class SyncActionDispatcherTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
     public static void dispatcherRejectsDuplicateRegistration(GameTestHelper helper) {
-        SyncActionDispatcherImpl dispatcher = new SyncActionDispatcherImpl();
+        SyncActionDispatcherRegistry dispatcher = new SyncActionDispatcherRegistry();
         dispatcher.register(new RecordingSyncActionHandler(ACTION_ID, true, true, true));
 
         try {
@@ -153,8 +153,8 @@ public class SyncActionDispatcherTest {
         }
     }
 
-    private static SyncActionDispatcherImpl dispatcherWith(RecordingSyncActionHandler handler) {
-        SyncActionDispatcherImpl dispatcher = new SyncActionDispatcherImpl();
+    private static SyncActionDispatcherRegistry dispatcherWith(RecordingSyncActionHandler handler) {
+        SyncActionDispatcherRegistry dispatcher = new SyncActionDispatcherRegistry();
         dispatcher.register(handler);
         return dispatcher;
     }

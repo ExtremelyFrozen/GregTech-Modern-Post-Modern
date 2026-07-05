@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-public class CoverUIFactory extends UIFactory<UICoverHolderImpl> {
+public class CoverUIFactory extends UIFactory<UICoverHolderContext> {
 
     public static final CoverUIFactory INSTANCE = new CoverUIFactory();
 
@@ -23,18 +23,18 @@ public class CoverUIFactory extends UIFactory<UICoverHolderImpl> {
     }
 
     public boolean openUI(CoverBehavior cover, ServerPlayer player) {
-        return openUI(new UICoverHolderImpl(player, cover), player);
+        return openUI(new UICoverHolderContext(player, cover), player);
     }
 
     @Override
-    protected ModularUI createUITemplate(UICoverHolderImpl holder, Player entityPlayer) {
+    protected ModularUI createUITemplate(UICoverHolderContext holder, Player entityPlayer) {
         if (holder == null) return null;
         return holder.createUI(entityPlayer);
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    protected UICoverHolderImpl readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
+    protected UICoverHolderContext readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
         var minecraft = Minecraft.getInstance();
         if (minecraft.level == null) return null;
         var player = minecraft.player;
@@ -42,11 +42,11 @@ public class CoverUIFactory extends UIFactory<UICoverHolderImpl> {
         var pos = syncData.readBlockPos();
         var side = syncData.readEnum(Direction.class);
         var coverDefinitionId = syncData.readResourceLocation();
-        return new UICoverHolderImpl(player, pos, side, coverDefinitionId);
+        return new UICoverHolderContext(player, pos, side, coverDefinitionId);
     }
 
     @Override
-    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, UICoverHolderImpl holder) {
+    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, UICoverHolderContext holder) {
         syncData.writeBlockPos(holder.getPos());
         syncData.writeEnum(holder.getSide());
         syncData.writeResourceLocation(holder.getCoverDefinitionId());

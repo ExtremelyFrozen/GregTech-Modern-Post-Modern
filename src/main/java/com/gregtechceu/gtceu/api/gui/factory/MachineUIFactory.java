@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-public class MachineUIFactory extends UIFactory<MachineUIHolderImpl> {
+public class MachineUIFactory extends UIFactory<MachineUIHolderContext> {
 
     public static final MachineUIFactory INSTANCE = new MachineUIFactory();
 
@@ -23,11 +23,11 @@ public class MachineUIFactory extends UIFactory<MachineUIHolderImpl> {
     }
 
     public boolean openUI(MetaMachine machine, ServerPlayer player) {
-        return openUI(new MachineUIHolderImpl(player, machine), player);
+        return openUI(new MachineUIHolderContext(player, machine), player);
     }
 
     @Override
-    protected ModularUI createUITemplate(MachineUIHolderImpl holder, Player entityPlayer) {
+    protected ModularUI createUITemplate(MachineUIHolderContext holder, Player entityPlayer) {
         if (holder == null) return null;
         if (holder.getMachine() instanceof IUIMachine machine) {
             return machine.createUI(entityPlayer);
@@ -37,18 +37,18 @@ public class MachineUIFactory extends UIFactory<MachineUIHolderImpl> {
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    protected MachineUIHolderImpl readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
+    protected MachineUIHolderContext readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
         var minecraft = Minecraft.getInstance();
         if (minecraft.level == null) return null;
         var player = minecraft.player;
         if (player == null) return null;
         var pos = syncData.readBlockPos();
         var machineDefinitionId = syncData.readResourceLocation();
-        return new MachineUIHolderImpl(player, pos, machineDefinitionId);
+        return new MachineUIHolderContext(player, pos, machineDefinitionId);
     }
 
     @Override
-    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, MachineUIHolderImpl holder) {
+    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, MachineUIHolderContext holder) {
         syncData.writeBlockPos(holder.getPos());
         syncData.writeResourceLocation(holder.getMachineDefinitionId());
     }

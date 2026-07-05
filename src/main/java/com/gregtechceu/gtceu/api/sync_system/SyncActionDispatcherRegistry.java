@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Default server dispatcher backed by action id registrations.
  */
-public class SyncActionDispatcherImpl implements SyncActionDispatcher {
+public class SyncActionDispatcherRegistry implements SyncActionDispatcher {
 
     /**
      * Stores the registered handler for each action id.

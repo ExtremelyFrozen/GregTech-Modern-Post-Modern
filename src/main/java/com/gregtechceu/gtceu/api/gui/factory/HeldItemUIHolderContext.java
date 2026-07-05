@@ -11,13 +11,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Default held item UI holder used by the GTM compatibility factory.
  */
-public final class HeldItemUIHolderImpl implements HeldItemUIHolder {
+public final class HeldItemUIHolderContext implements HeldItemUIHolder {
 
     private final Player player;
     private final InteractionHand hand;
     private final ItemStack openedStack;
 
-    public HeldItemUIHolderImpl(Player player, InteractionHand hand) {
+    public HeldItemUIHolderContext(Player player, InteractionHand hand) {
         this.player = player;
         this.hand = hand;
         this.openedStack = player.getItemInHand(hand).copy();

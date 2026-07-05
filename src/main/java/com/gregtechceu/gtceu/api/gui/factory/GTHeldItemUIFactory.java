@@ -16,7 +16,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 /**
  * Opens legacy GTM held item screens without exposing LDLib's held item factory to item behavior APIs.
  */
-public final class GTHeldItemUIFactory extends UIFactory<HeldItemUIHolderImpl> {
+public final class GTHeldItemUIFactory extends UIFactory<HeldItemUIHolderContext> {
 
     public static final GTHeldItemUIFactory INSTANCE = new GTHeldItemUIFactory();
 
@@ -25,24 +25,24 @@ public final class GTHeldItemUIFactory extends UIFactory<HeldItemUIHolderImpl> {
     }
 
     public boolean openUI(ServerPlayer player, InteractionHand hand) {
-        return openUI(new HeldItemUIHolderImpl(player, hand), player);
+        return openUI(new HeldItemUIHolderContext(player, hand), player);
     }
 
     @Override
-    protected ModularUI createUITemplate(HeldItemUIHolderImpl holder, Player entityPlayer) {
+    protected ModularUI createUITemplate(HeldItemUIHolderContext holder, Player entityPlayer) {
         return holder.createUI(entityPlayer);
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    protected HeldItemUIHolderImpl readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
+    protected HeldItemUIHolderContext readHolderFromSyncData(RegistryFriendlyByteBuf syncData) {
         var player = Minecraft.getInstance().player;
         if (player == null) return null;
-        return new HeldItemUIHolderImpl(player, syncData.readEnum(InteractionHand.class));
+        return new HeldItemUIHolderContext(player, syncData.readEnum(InteractionHand.class));
     }
 
     @Override
-    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, HeldItemUIHolderImpl holder) {
+    protected void writeHolderToSyncData(RegistryFriendlyByteBuf syncData, HeldItemUIHolderContext holder) {
         syncData.writeEnum(holder.getHand());
     }
 }

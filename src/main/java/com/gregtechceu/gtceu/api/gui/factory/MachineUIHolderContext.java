@@ -12,17 +12,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Default machine UI holder used by the GTM compatibility factory.
  */
-public final class MachineUIHolderImpl implements MachineUIHolder {
+public final class MachineUIHolderContext implements MachineUIHolder {
 
     private final Player player;
     private final BlockPos pos;
     private final ResourceLocation machineDefinitionId;
 
-    public MachineUIHolderImpl(Player player, MetaMachine machine) {
+    public MachineUIHolderContext(Player player, MetaMachine machine) {
         this(player, machine.getBlockPos(), machine.getDefinition().getId());
     }
 
-    public MachineUIHolderImpl(Player player, BlockPos pos, ResourceLocation machineDefinitionId) {
+    public MachineUIHolderContext(Player player, BlockPos pos, ResourceLocation machineDefinitionId) {
         this.player = player;
         this.pos = pos;
         this.machineDefinitionId = machineDefinitionId;
