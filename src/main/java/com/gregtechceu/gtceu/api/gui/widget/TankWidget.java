@@ -15,6 +15,8 @@ import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib1Adapter;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
+import com.gregtechceu.gtceu.integration.jei.GTClickableIngredient;
+import com.gregtechceu.gtceu.integration.jei.GTJEIPlugin;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib.gui.editor.annotation.Configurable;
@@ -26,9 +28,7 @@ import com.lowdragmc.lowdraglib.gui.ingredient.IRecipeIngredientSlot;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.gui.util.TextFormattingUtil;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.jei.ClickableIngredient;
 import com.lowdragmc.lowdraglib.jei.IngredientIO;
-import com.lowdragmc.lowdraglib.jei.JEIPlugin;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
 
@@ -624,7 +624,7 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
         }
 
         public static Object getJEIFluidClickable(FluidStack fluidStack, Position pos, Size size) {
-            return _getJEIFluidClickable(JEIPlugin.jeiHelpers.getPlatformFluidHelper(), fluidStack, pos,
+            return _getJEIFluidClickable(GTJEIPlugin.jeiHelpers.getPlatformFluidHelper(), fluidStack, pos,
                     size);
         }
 
@@ -632,8 +632,8 @@ public class TankWidget extends Widget implements IRecipeIngredientSlot, IConfig
                                                         FluidStack fluidStack, Position pos, Size size) {
             T ingredient = helper.create(fluidStack.getFluidHolder(), fluidStack.getAmount(),
                     fluidStack.getComponentsPatch());
-            return JEIPlugin.jeiHelpers.getIngredientManager().createTypedIngredient(ingredient, false)
-                    .map(typedIngredient -> new ClickableIngredient<>(typedIngredient, pos.x, pos.y, size.width,
+            return GTJEIPlugin.jeiHelpers.getIngredientManager().createTypedIngredient(ingredient, false)
+                    .map(typedIngredient -> new GTClickableIngredient<>(typedIngredient, pos.x, pos.y, size.width,
                             size.height))
                     .orElse(null);
         }

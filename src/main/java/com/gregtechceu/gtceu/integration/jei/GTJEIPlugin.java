@@ -24,16 +24,19 @@ import com.gregtechceu.gtceu.integration.xei.widgets.GTProgrammedCircuitWidget;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.helpers.IPlatformFluidHelper;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.registration.*;
 import mezz.jei.api.runtime.IJeiRuntime;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +46,7 @@ import java.util.List;
 public class GTJEIPlugin implements IModPlugin {
 
     public static IJeiRuntime jeiRuntime;
+    public static IJeiHelpers jeiHelpers;
 
     @Override
     public @NotNull ResourceLocation getPluginUid() {
@@ -54,11 +58,19 @@ public class GTJEIPlugin implements IModPlugin {
         GTJEIPlugin.jeiRuntime = jeiRuntime;
     }
 
+    @Nullable
+    public static Object getItemIngredient(ItemStack itemStack, int x, int y, int width, int height) {
+        return jeiHelpers.getIngredientManager()
+                .createTypedIngredient(VanillaTypes.ITEM_STACK, itemStack)
+                .map(typedIngredient -> new GTClickableIngredient<>(typedIngredient, x, y, width, height))
+                .orElse(null);
+    }
+
     @Override
     public void registerCategories(@NotNull IRecipeCategoryRegistration registry) {
         if (!GTCEu.Mods.isJEILoaded()) return;
 
-        IJeiHelpers jeiHelpers = registry.getJeiHelpers();
+        jeiHelpers = registry.getJeiHelpers();
         registry.addRecipeCategories(new MultiblockInfoCategory(jeiHelpers));
         if (!ConfigHolder.INSTANCE.compat.hideOreProcessingDiagrams)
             registry.addRecipeCategories(new GTOreProcessingInfoCategory(jeiHelpers));
