@@ -4,7 +4,9 @@ import com.lowdragmc.lowdraglib2.gui.factory.HeldItemUIMenuType;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Creates an LDLib2 held item UI through GTM's stable held item holder contract.
@@ -16,10 +18,32 @@ import net.minecraft.world.entity.player.Player;
 public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI {
 
     @Override
+    default HeldItemUIMenuType.HeldItemUIHolder createUIHolder(Player player, InteractionHand hand,
+                                                               ItemStack itemStack) {
+        return new HeldItemUIMenuType.HeldItemUIHolder(this, player, hand, itemStack.copy());
+    }
+
+    @Override
     default ModularUI createUI(HeldItemUIMenuType.HeldItemUIHolder holder) {
         HeldItemUIHolderContext gtmHolder = new HeldItemUIHolderContext(holder.player, holder.hand, holder.itemStack);
+        if (!canCreateLDLib2UI(holder.player, gtmHolder)) {
+            throw new IllegalStateException("Held item does not expose an LDLib2 UI for the opened stack.");
+        }
         UI ui = createLDLib2UI(holder.player, gtmHolder);
+        if (ui == null) {
+            throw new IllegalStateException("Held item LDLib2 UI provider returned null.");
+        }
         return ModularUI.of(ui, holder.player);
+    }
+
+    /**
+     * Returns whether this item should use LDLib2 for the provided held item context.
+     *
+     * <p>Composite items can implement the provider globally while using this method to keep legacy-only
+     * components on the old held item factory.
+     */
+    default boolean canCreateLDLib2UI(Player player, HeldItemUIHolder holder) {
+        return true;
     }
 
     /**

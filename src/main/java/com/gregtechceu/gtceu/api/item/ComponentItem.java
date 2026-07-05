@@ -4,12 +4,14 @@ import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2HeldItemUIProvider;
 import com.gregtechceu.gtceu.api.item.capability.ElectricItem;
 import com.gregtechceu.gtceu.api.item.component.*;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib2.client.renderer.IItemRendererProvider;
 import com.lowdragmc.lowdraglib2.client.renderer.IRenderer;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -43,7 +45,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ComponentItem extends Item
-                           implements HeldItemUIProvider, IItemRendererProvider, IComponentItem {
+                           implements HeldItemUIProvider, LDLib2HeldItemUIProvider, IItemRendererProvider,
+                           IComponentItem {
 
     @Getter
     protected List<IItemComponent> components;
@@ -302,6 +305,33 @@ public class ComponentItem extends Item
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean canCreateLDLib2UI(Player entityPlayer, HeldItemUIHolder holder) {
+        for (IItemComponent component : components) {
+            if (component instanceof IItemUIFactory uiFactory) {
+                return uiFactory.canCreateLDLib2UI(holder, entityPlayer);
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player entityPlayer, HeldItemUIHolder holder) {
+        for (IItemComponent component : components) {
+            if (component instanceof IItemUIFactory uiFactory) {
+                if (!uiFactory.canCreateLDLib2UI(holder, entityPlayer)) {
+                    break;
+                }
+                UI ui = uiFactory.createLDLib2UI(holder, entityPlayer);
+                if (ui == null) {
+                    throw new IllegalStateException("Item component reported an LDLib2 UI but returned null.");
+                }
+                return ui;
+            }
+        }
+        throw new IllegalStateException("No item component exposes an LDLib2 UI for the opened stack.");
     }
 
     @Nullable

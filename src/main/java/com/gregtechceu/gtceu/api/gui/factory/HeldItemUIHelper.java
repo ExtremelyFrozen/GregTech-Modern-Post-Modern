@@ -26,7 +26,8 @@ public final class HeldItemUIHelper {
      * @return {@code true} when the menu was opened by the current bridge implementation.
      */
     public static boolean open(ServerPlayer player, InteractionHand hand) {
-        if (player.getItemInHand(hand).getItem() instanceof LDLib2HeldItemUIProvider) {
+        if (player.getItemInHand(hand).getItem() instanceof LDLib2HeldItemUIProvider uiProvider &&
+                uiProvider.canCreateLDLib2UI(player, new HeldItemUIHolderContext(player, hand))) {
             return HeldItemUIMenuType.openUI(player, hand);
         }
         return GTHeldItemUIFactory.INSTANCE.openUI(player, hand);
@@ -41,7 +42,14 @@ public final class HeldItemUIHelper {
     public static ModularUI createLDLib2UI(Player player, InteractionHand hand) {
         if (player.getItemInHand(hand).getItem() instanceof LDLib2HeldItemUIProvider uiProvider) {
             HeldItemUIHolderContext holder = new HeldItemUIHolderContext(player, hand);
-            return ModularUI.of(uiProvider.createLDLib2UI(player, holder), player);
+            if (!uiProvider.canCreateLDLib2UI(player, holder)) {
+                return null;
+            }
+            var ui = uiProvider.createLDLib2UI(player, holder);
+            if (ui == null) {
+                throw new IllegalStateException("Held item LDLib2 UI provider returned null.");
+            }
+            return ModularUI.of(ui, player);
         }
         return null;
     }
