@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.gui;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 public class SteamTexture {
 

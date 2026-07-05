@@ -23,7 +23,7 @@ import com.gregtechceu.gtceu.api.sync_system.codecs.RecipeChanceCachesCodec;
 import com.gregtechceu.gtceu.common.cover.MachineControllerCover;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
