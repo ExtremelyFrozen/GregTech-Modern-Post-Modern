@@ -1,26 +1,29 @@
 package com.gregtechceu.gtceu.integration.emi.orevein;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.data.worldgen.GTOreDefinition;
 import com.gregtechceu.gtceu.integration.xei.widgets.GTOreVeinWidget;
 
-import com.lowdragmc.lowdraglib.emi.ModularEmiRecipe;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.integration.xei.emi.ModularUIEMIRecipe;
 
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.stack.EmiStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
-public class GTEmiOreVein extends ModularEmiRecipe<WidgetGroup> {
+public class GTEmiOreVein extends ModularUIEMIRecipe {
 
     private final Holder<GTOreDefinition> oreDefinition;
 
     public GTEmiOreVein(Holder<GTOreDefinition> oreDefinition) {
-        super(() -> new GTOreVeinWidget(oreDefinition));
+        super(GTEmiOreVein::createModularUI);
         this.oreDefinition = oreDefinition;
     }
 
@@ -31,14 +34,34 @@ public class GTEmiOreVein extends ModularEmiRecipe<WidgetGroup> {
 
     @Override
     public @Nullable ResourceLocation getId() {
-        return oreDefinition.getKey().location().withPrefix("/ore_vein_diagram/");
+        return Objects.requireNonNull(oreDefinition.getKey(), "Ore vein holder is missing a key")
+                .location()
+                .withPrefix("/ore_vein_diagram/");
     }
 
     @Override
-    public List<EmiStack> getOutputs() {
+    public int getDisplayWidth() {
+        return GTOreVeinWidget.WIDTH;
+    }
+
+    @Override
+    public int getDisplayHeight() {
+        return GTOreVeinWidget.HEIGHT;
+    }
+
+    @Override
+    public @NotNull List<EmiStack> getOutputs() {
         return GTOreVeinWidget.getContainedOresAndBlocks(oreDefinition.value())
                 .stream()
                 .map(EmiStack::of)
                 .toList();
+    }
+
+    private static ModularUI createModularUI(ModularUIEMIRecipe recipe) {
+        if (recipe instanceof GTEmiOreVein oreVein) {
+            return GTOreVeinWidget.createModularUI(oreVein.oreDefinition, GTOreVeinWidget.HEIGHT);
+        }
+        GTCEu.LOGGER.error("Expected GTEmiOreVein, got {}", recipe.getClass().getName());
+        throw new IllegalArgumentException("Expected GTEmiOreVein, got " + recipe.getClass().getName());
     }
 }
