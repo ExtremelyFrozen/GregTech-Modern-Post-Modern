@@ -28,7 +28,7 @@ public final class MachineUIHelper {
      * @return {@code true} when the menu was opened by the current bridge implementation.
      */
     public static boolean open(MetaMachine machine, ServerPlayer player) {
-        if (BlockUIMenuType.openUI(player, machine.getBlockPos())) {
+        if (machine instanceof LDLib2MachineUIProvider && BlockUIMenuType.openUI(player, machine.getBlockPos())) {
             return true;
         }
         return MachineUIFactory.INSTANCE.openUI(machine, player);
