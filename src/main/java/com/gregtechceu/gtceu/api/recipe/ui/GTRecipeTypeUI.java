@@ -31,6 +31,7 @@ import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponentMap;
@@ -50,14 +51,20 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 import java.io.DataInputStream;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Collectors;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 @SuppressWarnings("UnusedReturnValue")
 public class GTRecipeTypeUI {
@@ -83,6 +90,8 @@ public class GTRecipeTypeUI {
     protected int maxTooltips = 3;
 
     private CompoundTag customUICache;
+    private String customLDLib2UICache;
+    private boolean customLDLib2UICacheLoaded;
     private Size xeiSize;
     @Getter
     private int originalWidth;
@@ -96,12 +105,7 @@ public class GTRecipeTypeUI {
 
     public CompoundTag getCustomUI() {
         if (this.customUICache == null) {
-            ResourceManager resourceManager = null;
-            if (GTCEu.isClientSide()) {
-                resourceManager = Minecraft.getInstance().getResourceManager();
-            } else if (GTCEu.getMinecraftServer() != null) {
-                resourceManager = GTCEu.getMinecraftServer().getResourceManager();
-            }
+            ResourceManager resourceManager = getResourceManager();
             if (resourceManager == null) {
                 this.customUICache = new CompoundTag();
             } else {
@@ -131,8 +135,85 @@ public class GTRecipeTypeUI {
         return !getCustomUI().isEmpty();
     }
 
+    public boolean hasCustomLDLib2UI() {
+        return getCustomLDLib2UIXml() != null;
+    }
+
+    public UI createCustomLDLib2UI() {
+        String xml = getCustomLDLib2UIXml();
+        if (xml == null) {
+            return UI.empty();
+        }
+
+        try {
+            return UI.of(parseCustomLDLib2UI(xml));
+        } catch (Exception e) {
+            GTCEu.LOGGER.warn("Failed to parse LDLib2 recipe type UI from {}", getCustomLDLib2UILocation(), e);
+            return UI.empty();
+        }
+    }
+
+    @Nullable
+    private String getCustomLDLib2UIXml() {
+        if (!this.customLDLib2UICacheLoaded) {
+            ResourceManager resourceManager = getResourceManager();
+            if (resourceManager == null) {
+                this.customLDLib2UICache = null;
+            } else {
+                ResourceLocation location = getCustomLDLib2UILocation();
+                var resource = resourceManager.getResource(location);
+                if (resource.isEmpty()) {
+                    this.customLDLib2UICache = null;
+                } else {
+                    try (InputStream inputStream = resource.get().open()) {
+                        this.customLDLib2UICache = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    } catch (Exception e) {
+                        GTCEu.LOGGER.warn("Failed to load LDLib2 recipe type UI from {}", location, e);
+                        this.customLDLib2UICache = null;
+                    }
+                }
+            }
+            this.customLDLib2UICacheLoaded = true;
+        }
+        return this.customLDLib2UICache;
+    }
+
+    private ResourceLocation getCustomLDLib2UILocation() {
+        return ResourceLocation.fromNamespaceAndPath(recipeType.registryName.getNamespace(),
+                "ui/recipe_type/%s.xml".formatted(recipeType.registryName.getPath()));
+    }
+
+    @Nullable
+    private ResourceManager getResourceManager() {
+        if (GTCEu.isClientSide()) {
+            return Minecraft.getInstance().getResourceManager();
+        } else if (GTCEu.getMinecraftServer() != null) {
+            return GTCEu.getMinecraftServer().getResourceManager();
+        }
+        return null;
+    }
+
+    private static Document parseCustomLDLib2UI(String xml) throws Exception {
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        documentBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        documentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        documentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        documentBuilderFactory.setXIncludeAware(false);
+        documentBuilderFactory.setExpandEntityReferences(false);
+
+        var documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        try (StringReader reader = new StringReader(xml)) {
+            return documentBuilder.parse(new InputSource(reader));
+        }
+    }
+
     public void reloadCustomUI() {
         this.customUICache = null;
+        this.customLDLib2UICache = null;
+        this.customLDLib2UICacheLoaded = false;
         this.xeiSize = null;
     }
 
