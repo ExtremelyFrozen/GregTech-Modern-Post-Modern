@@ -38,6 +38,7 @@ import com.lowdragmc.lowdraglib.utils.Size;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
+import com.lowdragmc.lowdraglib2.gui.ui.layout.LayoutProperties;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponentMap;
@@ -72,6 +73,7 @@ import java.util.stream.Collectors;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import dev.vfyjxf.taffy.style.TaffyDimension;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 
 @SuppressWarnings("UnusedReturnValue")
@@ -246,6 +248,8 @@ public class GTRecipeTypeUI {
                                boolean isSteam,
                                boolean isHighPressure) {}
 
+    public record LDLib2RecipeUISize(int width, int height) {}
+
     /**
      * Auto layout UI template for recipes.
      *
@@ -289,6 +293,40 @@ public class GTRecipeTypeUI {
                                      DataComponentMap data,
                                      List<RecipeCondition<?>> conditions) {
         return createLDLib2UITemplate(progressSupplier, storages, data, conditions, false, false);
+    }
+
+    public LDLib2RecipeUISize getLDLib2XEIRecipeUISize() {
+        return getLDLib2RecipeUISize(false, false);
+    }
+
+    public LDLib2RecipeUISize getLDLib2RecipeUISize(boolean isSteam, boolean isHighPressure) {
+        UI ui = !isSteam && hasCustomLDLib2UI() ? createCustomLDLib2UI() :
+                createDefaultLDLib2UI(isSteam, isHighPressure);
+        return getLDLib2RecipeUISize(ui.rootElement);
+    }
+
+    private static LDLib2RecipeUISize getLDLib2RecipeUISize(UIElement root) {
+        return new LDLib2RecipeUISize(
+                fixedLDLib2RecipeUISize(getLDLib2Dimension(root, true), "width"),
+                fixedLDLib2RecipeUISize(getLDLib2Dimension(root, false), "height"));
+    }
+
+    private static TaffyDimension getLDLib2Dimension(UIElement root, boolean width) {
+        TaffyDimension dimension = width ? root.getLayout().getWidth() : root.getLayout().getHeight();
+        if (dimension != null && dimension.isLength()) {
+            return dimension;
+        }
+        TaffyDimension styleDimension = root.getStyleBag()
+                .computeCandidate(width ? LayoutProperties.WIDTH : LayoutProperties.HEIGHT);
+        return styleDimension == null ? dimension : styleDimension;
+    }
+
+    private static int fixedLDLib2RecipeUISize(TaffyDimension dimension, String axis) {
+        if (dimension == null || !dimension.isLength()) {
+            GTCEu.LOGGER.error("LDLib2 recipe UI {} must use a fixed pixel size, got {}", axis, dimension);
+            throw new IllegalArgumentException("LDLib2 recipe UI " + axis + " must use a fixed pixel size");
+        }
+        return Math.round(dimension.getValue());
     }
 
     /**
