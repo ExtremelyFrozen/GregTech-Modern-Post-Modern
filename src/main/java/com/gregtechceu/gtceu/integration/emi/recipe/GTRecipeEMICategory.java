@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.integration.emi.recipe;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
@@ -8,13 +9,13 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.integration.emi.GTEMIPlugin;
 
-import com.lowdragmc.lowdraglib.emi.IGui2Renderable;
-
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
+import dev.emi.emi.api.render.EmiRenderable;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiStack;
 
@@ -29,7 +30,7 @@ public class GTRecipeEMICategory extends EmiRecipeCategory {
     private final GTRecipeCategory category;
 
     private GTRecipeEMICategory(GTRecipeCategory category) {
-        super(category.registryKey, IGui2Renderable.toDrawable(category.getIcon(), 16, 16));
+        super(category.registryKey, toRenderable(category.getIcon(), 16, 16));
         this.category = category;
     }
 
@@ -80,5 +81,13 @@ public class GTRecipeEMICategory extends EmiRecipeCategory {
     @Override
     public Component getName() {
         return Component.translatable(category.getLanguageKey());
+    }
+
+    private static EmiRenderable toRenderable(IGuiTexture texture, int width, int height) {
+        return (graphics, x, y, delta) -> {
+            texture.draw(graphics, 0, 0, x, y, width, height);
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthMask(true);
+        };
     }
 }
