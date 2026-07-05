@@ -180,6 +180,10 @@ public abstract class RecipeCapability<T> {
         return new ArrayList<>();
     }
 
+    protected int getXEIContainerSlotCount(GTRecipeDefinition recipe, IO io) {
+        return io == IO.IN ? recipe.recipeType.getMaxInputs(this) : recipe.recipeType.getMaxOutputs(this);
+    }
+
     @Nullable
     public Object createXEIContainer(List<?> contents) {
         return null;

@@ -410,7 +410,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
             }
         }
 
-        while (entryLists.size() < recipe.recipeType.getMaxOutputs(this)) entryLists.add(null);
+        while (entryLists.size() < getXEIContainerSlotCount(recipe, io)) entryLists.add(null);
         return entryLists;
     }
 

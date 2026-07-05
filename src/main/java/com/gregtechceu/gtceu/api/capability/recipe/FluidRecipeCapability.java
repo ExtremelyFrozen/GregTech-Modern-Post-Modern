@@ -354,7 +354,7 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                 .map(FluidRecipeCapability::mapFluid)
                 .collect(Collectors.toList());
 
-        while (entryLists.size() < recipe.recipeType.getMaxOutputs(this)) entryLists.add(null);
+        while (entryLists.size() < getXEIContainerSlotCount(recipe, io)) entryLists.add(null);
         return entryLists;
     }
 
