@@ -27,6 +27,13 @@ public interface IItemUIFactory extends IInteractionItem {
     }
 
     /**
+     * Returns whether the currently held stack still belongs to this component's opened LDLib2 UI.
+     */
+    default boolean isLDLib2UIStillValid(HeldItemUIHolder holder, Player entityPlayer) {
+        return ItemStack.matches(holder.getHeld(), holder.getOpenedStack());
+    }
+
+    /**
      * Builds the migrated LDLib2 held-item UI for this component.
      *
      * @return the LDLib2 UI tree, or {@code null} when this component only supports the legacy held-item UI.

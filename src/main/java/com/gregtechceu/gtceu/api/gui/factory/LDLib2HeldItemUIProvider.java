@@ -24,6 +24,12 @@ public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI 
     }
 
     @Override
+    default boolean stillValid(HeldItemUIMenuType.HeldItemUIHolder holder) {
+        HeldItemUIHolderContext gtmHolder = new HeldItemUIHolderContext(holder.player, holder.hand, holder.itemStack);
+        return isLDLib2UIStillValid(holder.player, gtmHolder);
+    }
+
+    @Override
     default ModularUI createUI(HeldItemUIMenuType.HeldItemUIHolder holder) {
         HeldItemUIHolderContext gtmHolder = new HeldItemUIHolderContext(holder.player, holder.hand, holder.itemStack);
         if (!canCreateLDLib2UI(holder.player, gtmHolder)) {
@@ -44,6 +50,16 @@ public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI 
      */
     default boolean canCreateLDLib2UI(Player player, HeldItemUIHolder holder) {
         return true;
+    }
+
+    /**
+     * Returns whether the currently held stack still belongs to this opened LDLib2 UI.
+     *
+     * <p>The default keeps strict stack matching. Mutable item UIs can override this through their component provider
+     * and validate action payloads server-side.
+     */
+    default boolean isLDLib2UIStillValid(Player player, HeldItemUIHolder holder) {
+        return ItemStack.matches(holder.getHeld(), holder.getOpenedStack());
     }
 
     /**

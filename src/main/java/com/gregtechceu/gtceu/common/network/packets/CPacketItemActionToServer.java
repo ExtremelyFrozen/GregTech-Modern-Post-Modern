@@ -69,13 +69,13 @@ public class CPacketItemActionToServer implements CustomPacketPayload {
             return;
         }
 
-        if (!ItemStack.matches(stack, openedStack)) {
+        if (!ItemStack.isSameItem(stack, openedStack)) {
             GTCEu.LOGGER.warn("Sync action: rejecting item action {} from {} because held item changed",
                     action.actionId(), player.getGameProfile().getName());
             return;
         }
 
-        SyncActionDispatchers.server().dispatch(SyncActionContext.item(player, stack, action, hand));
+        SyncActionDispatchers.server().dispatch(SyncActionContext.item(player, stack, openedStack, action, hand));
     }
 
     @Override

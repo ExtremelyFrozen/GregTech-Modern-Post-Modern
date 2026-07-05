@@ -334,6 +334,16 @@ public class ComponentItem extends Item
         throw new IllegalStateException("No item component exposes an LDLib2 UI for the opened stack.");
     }
 
+    @Override
+    public boolean isLDLib2UIStillValid(Player entityPlayer, HeldItemUIHolder holder) {
+        for (IItemComponent component : components) {
+            if (component instanceof IItemUIFactory uiFactory) {
+                return uiFactory.isLDLib2UIStillValid(holder, entityPlayer);
+            }
+        }
+        return LDLib2HeldItemUIProvider.super.isLDLib2UIStillValid(entityPlayer, holder);
+    }
+
     @Nullable
     @Override
     public IRenderer getRenderer(ItemStack stack) {

@@ -42,6 +42,13 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
     }
 
     /**
+     * Returns whether the currently held stack still belongs to this behavior's opened LDLib2 UI.
+     */
+    default boolean isLDLib2UIStillValid(Player player, HeldItemUIHolder holder) {
+        return ItemStack.matches(holder.getHeld(), holder.getOpenedStack());
+    }
+
+    /**
      * Builds the migrated LDLib2 held-item UI for this behavior.
      *
      * @return the LDLib2 UI tree, or {@code null} when this behavior only supports the legacy held-item UI.

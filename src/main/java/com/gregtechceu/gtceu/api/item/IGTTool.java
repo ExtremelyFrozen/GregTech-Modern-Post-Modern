@@ -747,6 +747,21 @@ public interface IGTTool extends HeldItemUIProvider, LDLib2HeldItemUIProvider, I
         throw new IllegalStateException("No tool behavior exposes an LDLib2 UI for the opened stack.");
     }
 
+    @Override
+    default boolean isLDLib2UIStillValid(Player player, HeldItemUIHolder holder) {
+        for (var behavior : getToolStats().getBehaviors()) {
+            if (behavior instanceof IToolUIBehavior<?> uiBehavior) {
+                if (uiBehavior.openLDLib2UI(player, holder.getHand())) {
+                    return uiBehavior.isLDLib2UIStillValid(player, holder);
+                }
+                if (uiBehavior.openUI(player, holder.getHand())) {
+                    return false;
+                }
+            }
+        }
+        return LDLib2HeldItemUIProvider.super.isLDLib2UIStillValid(player, holder);
+    }
+
     default Set<GTToolType> getToolClasses(ItemStack stack) {
         return new HashSet<>(getToolType().toolClasses);
     }

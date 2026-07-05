@@ -22,32 +22,35 @@ import org.jetbrains.annotations.Nullable;
  * @param pos    the block position for block-backed holders, or {@code null} for item actions.
  * @param side   the cover side for cover holders, or {@code null} for other holders.
  * @param hand   the interaction hand for held item holders, or {@code null} for block-backed holders.
+ * @param openedStack the held item stack snapshot captured when the UI was opened, or {@code null} for block-backed
+ *                    holders.
  */
 public record SyncActionContext(ServerPlayer player, Object holder, SyncActionData action, @Nullable BlockPos pos,
-                                @Nullable Direction side, @Nullable InteractionHand hand) {
+                                @Nullable Direction side, @Nullable InteractionHand hand,
+                                @Nullable ItemStack openedStack) {
 
     /**
      * Creates context for a managed block entity action.
      */
     public static SyncActionContext machine(ServerPlayer player, ManagedSyncBlockEntity holder, SyncActionData action,
-                                            BlockPos pos) {
-        return new SyncActionContext(player, holder, action, pos, null, null);
+                                             BlockPos pos) {
+        return new SyncActionContext(player, holder, action, pos, null, null, null);
     }
 
     /**
      * Creates context for an attached cover action.
      */
     public static SyncActionContext cover(ServerPlayer player, CoverBehavior holder, SyncActionData action, BlockPos pos,
-                                          Direction side) {
-        return new SyncActionContext(player, holder, action, pos, side, null);
+                                           Direction side) {
+        return new SyncActionContext(player, holder, action, pos, side, null, null);
     }
 
     /**
      * Creates context for an action targeting the item currently held by the player.
      */
-    public static SyncActionContext item(ServerPlayer player, ItemStack holder, SyncActionData action,
-                                         InteractionHand hand) {
-        return new SyncActionContext(player, holder, action, null, null, hand);
+    public static SyncActionContext item(ServerPlayer player, ItemStack holder, ItemStack openedStack,
+                                         SyncActionData action, InteractionHand hand) {
+        return new SyncActionContext(player, holder, action, null, null, hand, openedStack);
     }
 
     /**
