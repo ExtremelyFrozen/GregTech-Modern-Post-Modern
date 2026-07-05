@@ -9,6 +9,8 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.SteamTexture;
 import com.gregtechceu.gtceu.api.gui.WidgetUtils;
 import com.gregtechceu.gtceu.api.gui.editor.IEditableUI;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.api.gui.widget.DualProgressWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
@@ -22,8 +24,6 @@ import com.gregtechceu.gtceu.integration.jei.recipe.GTRecipeJEICategory;
 
 import com.lowdragmc.lowdraglib.gui.editor.configurator.IConfigurableWidget;
 import com.lowdragmc.lowdraglib.gui.editor.data.Resources;
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;

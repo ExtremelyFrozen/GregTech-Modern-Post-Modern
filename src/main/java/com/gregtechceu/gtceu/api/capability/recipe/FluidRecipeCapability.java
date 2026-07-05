@@ -18,6 +18,7 @@ import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.client.TooltipsHandler;
+import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.common.valueprovider.*;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
@@ -27,7 +28,6 @@ import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandl
 import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 
 import net.minecraft.ChatFormatting;

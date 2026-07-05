@@ -48,7 +48,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.lowdragmc.lowdraglib.gui.texture.ProgressTexture.FillDirection.*;
+import static com.gregtechceu.gtceu.api.gui.texture.ProgressTexture.FillDirection.*;
 
 @ExtensionMethod(SizedIngredientExtensions.class)
 public class GTRecipeTypes {
