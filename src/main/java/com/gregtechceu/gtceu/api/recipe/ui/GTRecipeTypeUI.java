@@ -17,8 +17,6 @@ import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.api.gui.texture.ResourceTexture;
 import com.gregtechceu.gtceu.api.gui.widget.DualProgressWidget;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
-import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
@@ -755,56 +753,6 @@ public class GTRecipeTypeUI {
             index += (3 - (index % 3)) % 3;
         }
         return group;
-    }
-
-    /**
-     * Add a slot to this ui
-     */
-    protected void addSlot(WidgetGroup group, int x, int y, int slotIndex, int count, RecipeCapability<?> capability,
-                           boolean isOutputs, boolean isSteam, boolean isHighPressure) {
-        if (capability != FluidRecipeCapability.CAP) {
-            var slot = new SlotWidget();
-            slot.initTemplate();
-            slot.setSelfPosition(new Position(x, y));
-            slot.setBackground(
-                    getOverlaysForSlot(isOutputs, capability, slotIndex == count - 1, isSteam, isHighPressure));
-            slot.setId(ItemRecipeCapability.CAP.slotName(isOutputs ? IO.OUT : IO.IN, slotIndex));
-            group.addWidget(slot);
-        } else {
-            var tank = new TankWidget();
-            tank.initTemplate();
-            tank.setFillDirection(ProgressTexture.FillDirection.ALWAYS_FULL);
-            tank.setSelfPosition(new Position(x, y));
-            tank.setBackground(
-                    getOverlaysForSlot(isOutputs, capability, slotIndex == count - 1, isSteam, isHighPressure));
-            tank.setId(FluidRecipeCapability.CAP.slotName(isOutputs ? IO.OUT : IO.IN, slotIndex));
-            group.addWidget(tank);
-        }
-    }
-
-    protected static int[] determineSlotsGrid(int itemCount) {
-        int itemSlotsToLeft;
-        int itemSlotsToDown;
-        double sqrt = Math.sqrt(itemCount);
-        // if the number of input has an integer root
-        // return it.
-        if (sqrt % 1 == 0) {
-            itemSlotsToLeft = itemSlotsToDown = (int) sqrt;
-        } else if (itemCount == 3) {
-            itemSlotsToLeft = 3;
-            itemSlotsToDown = 1;
-        } else {
-            // if we couldn't fit all into a perfect square,
-            // increase the amount of slots to the left
-            itemSlotsToLeft = (int) Math.ceil(sqrt);
-            itemSlotsToDown = itemSlotsToLeft - 1;
-            // if we still can't fit all the slots in a grid,
-            // increase the amount of slots on the bottom
-            if (itemCount > itemSlotsToLeft * itemSlotsToDown) {
-                itemSlotsToDown = itemSlotsToLeft;
-            }
-        }
-        return new int[] { itemSlotsToLeft, itemSlotsToDown };
     }
 
     protected IGuiTexture getOverlaysForSlot(boolean isOutput, RecipeCapability<?> capability, boolean isLast,
