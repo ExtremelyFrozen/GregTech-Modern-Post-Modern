@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,14 +21,20 @@ public interface IFancyConfiguratorButton extends IFancyConfigurator {
 
     void onClick(ClickData clickData);
 
+    /**
+     * Button configurators do not own expandable content, so they do not expose a tab title by default.
+     */
     @Override
     default Component getTitle() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException("Button configurators do not expose a tab title.");
     }
 
+    /**
+     * Button configurators execute actions directly instead of creating a nested configurator widget.
+     */
     @Override
     default Widget createConfigurator() {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException("Button configurators do not create a nested configurator widget.");
     }
 
     @Accessors(chain = true)
