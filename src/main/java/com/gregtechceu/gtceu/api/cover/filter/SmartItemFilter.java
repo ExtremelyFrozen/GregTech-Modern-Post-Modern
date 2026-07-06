@@ -11,6 +11,8 @@ import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
@@ -20,6 +22,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 
 import java.util.Collections;
 import java.util.function.Consumer;
+
+import static com.gregtechceu.gtceu.api.gui.UITemplate.setLDLib2Bounds;
 
 public class SmartItemFilter implements ItemFilter {
 
@@ -59,6 +63,48 @@ public class SmartItemFilter implements ItemFilter {
         group.addWidget(new EnumSelectorWidget<>(16, 8, 32, 32,
                 SmartFilteringMode.VALUES, filterMode, this::setFilterMode));
         return group;
+    }
+
+    @Override
+    public boolean supportsLDLib2Configurator() {
+        return true;
+    }
+
+    @Override
+    public UIElement openLDLib2Configurator(int x, int y) {
+        UIElement group = new UIElement();
+        setLDLib2Bounds(group, x, y, 18 * 3 + 25, 18 * 3);
+        group.addChild(createLDLib2ModeButton(16, 8));
+        return group;
+    }
+
+    private Button createLDLib2ModeButton(int x, int y) {
+        Button button = new Button();
+        button.noText();
+        updateLDLib2ModeButtonTexture(button);
+        button.setOnClick(event -> {
+            setFilterMode(nextMode());
+            updateLDLib2ModeButtonTexture(button);
+        });
+        setLDLib2Bounds(button, x, y, 32, 32);
+        return button;
+    }
+
+    private void updateLDLib2ModeButtonTexture(Button button) {
+        IGuiTexture texture = GuiTextures.group(GuiTextures.VANILLA_BUTTON, filterMode.getIcon());
+        button.buttonStyle(style -> style
+                .baseTexture(texture)
+                .hoverTexture(texture)
+                .pressedTexture(texture));
+    }
+
+    private SmartFilteringMode nextMode() {
+        for (int i = 0; i < SmartFilteringMode.VALUES.length; i++) {
+            if (SmartFilteringMode.VALUES[i] == filterMode) {
+                return SmartFilteringMode.VALUES[(i + 1) % SmartFilteringMode.VALUES.length];
+            }
+        }
+        throw new IllegalStateException("Unknown smart filtering mode: " + filterMode);
     }
 
     @Override
