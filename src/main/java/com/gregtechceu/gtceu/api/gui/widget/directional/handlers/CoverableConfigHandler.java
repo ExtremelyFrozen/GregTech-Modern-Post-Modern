@@ -2,13 +2,11 @@ package com.gregtechceu.gtceu.api.gui.widget.directional.handlers;
 
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.gui.widget.CoverConfigurator;
 import com.gregtechceu.gtceu.api.gui.widget.PredicatedButtonWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.directional.IDirectionalConfigHandler;
@@ -21,12 +19,9 @@ import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
-import com.lowdragmc.lowdraglib.utils.Size;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -40,7 +35,6 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
     private Direction side;
 
     private ConfiguratorPanel panel;
-    private ConfiguratorPanel.FloatingTab coverConfigurator;
 
     private SlotWidget slotWidget;
     private CoverBehavior coverBehavior;
@@ -98,7 +92,6 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
         if (syncingDisplayedCoverItem) {
             return;
         }
-        closeConfigTab();
 
         if (!(panel.getGui().entityPlayer instanceof ServerPlayer serverPlayer) || side == null)
             return;
@@ -126,7 +119,6 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
     public void onSideSelected(BlockPos pos, Direction side) {
         this.side = side;
         checkCoverBehaviour();
-        closeConfigTab();
     }
 
     private void updateWidgetVisibility() {
@@ -158,12 +150,7 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
     private void toggleConfigTab(ClickData cd) {
         if (shouldOpenLDLib2CoverUI()) {
             openLDLib2CoverUI(cd);
-            return;
         }
-        if (this.coverConfigurator == null)
-            openConfigTab();
-        else
-            closeConfigTab();
     }
 
     private boolean hasConfigurableCover() {
@@ -173,9 +160,6 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
         var cover = machine.getCoverAtSide(side);
         if (cover == null) {
             return false;
-        }
-        if (cover instanceof IUICover) {
-            return true;
         }
         return panel.getGui().entityPlayer instanceof Player player &&
                 CoverUIHelper.canOpenLDLib2(cover, player);
@@ -195,61 +179,7 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
         if (cd.isRemote || coverBehavior == null || !(panel.getGui().entityPlayer instanceof ServerPlayer player)) {
             return;
         }
-        closeConfigTab();
         CoverUIHelper.open(coverBehavior, player);
-    }
-
-    private void openConfigTab() {
-        CoverConfigurator configurator = new CoverConfigurator(this.machine, this.side, this.coverBehavior) {
-
-            @Override
-            public Component getTitle() {
-                // Uses the widget's own title
-                return Component.empty();
-            }
-
-            @Override
-            public IGuiTexture getIcon() {
-                return GuiTextures.CLOSE_ICON;
-            }
-
-            @Override
-            public Widget createConfigurator() {
-                WidgetGroup group = new WidgetGroup(new Position(0, 0));
-
-                if (side == null || !(coverable.getCoverAtSide(side) instanceof IUICover iuiCover))
-                    return group;
-
-                Widget coverConfigurator = iuiCover.createUIWidget();
-                coverConfigurator.addSelfPosition(-1, -20);
-
-                group.addWidget(coverConfigurator);
-                group.setSize(new Size(
-                        Math.max(120, coverConfigurator.getSize().width),
-                        Math.max(80, coverConfigurator.getSize().height - 20)));
-
-                return group;
-            }
-        };
-
-        this.coverConfigurator = this.panel.createFloatingTab(configurator);
-        this.coverConfigurator.setGui(this.panel.getGui());
-        this.panel.addWidget(this.coverConfigurator);
-        this.panel.expandTab(this.coverConfigurator);
-
-        coverConfigurator.onClose(() -> {
-            if (coverConfigurator != null) {
-                this.panel.removeWidget(this.coverConfigurator);
-            }
-
-            this.coverConfigurator = null;
-        });
-    }
-
-    private void closeConfigTab() {
-        if (this.coverConfigurator != null) {
-            this.panel.collapseTab();
-        }
     }
 
     @Override
