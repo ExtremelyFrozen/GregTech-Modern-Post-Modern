@@ -3,6 +3,8 @@ package com.gregtechceu.gtceu.api.cover.filter;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -14,6 +16,7 @@ import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -37,6 +40,7 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
     private @Nullable F filter;
     private @Nullable CustomItemStackHandler filterSlot;
     private @Nullable WidgetGroup filterGroup;
+    private @Nullable UIElement filterLDLib2Group;
 
     private Consumer<F> onFilterLoaded = (filter) -> {};
     private Consumer<F> onFilterRemoved = (filter) -> {};
@@ -69,6 +73,23 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
         }
 
         return this.filterGroup;
+    }
+
+    public UIElement createFilterSlotLDLib2UI(int xPos, int yPos) {
+        GTItemSlotElement slot = new GTItemSlotElement(getFilterSlot(), 0)
+                .setChangeListener(this::updateFilter)
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY));
+        return UITemplate.setLDLib2Bounds(slot, xPos, yPos, 18, 18);
+    }
+
+    public UIElement createFilterConfigLDLib2UI(int xPos, int yPos, int width, int height) {
+        F loadedFilter = this.filterItem.isEmpty() ? null : getFilter();
+        this.filterLDLib2Group = UITemplate.setLDLib2Bounds(new UIElement(), xPos, yPos, width, height);
+        if (loadedFilter != null && loadedFilter.supportsLDLib2Configurator()) {
+            this.filterLDLib2Group.addChild(loadedFilter.openLDLib2Configurator(0, 0));
+        }
+
+        return this.filterLDLib2Group;
     }
 
     public boolean isFilterPresent() {
@@ -169,13 +190,22 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
     }
 
     private void updateFilterGroupUI() {
-        if (this.filterGroup == null)
-            return;
+        if (this.filterGroup != null) {
+            this.filterGroup.clearAllWidgets();
 
-        this.filterGroup.clearAllWidgets();
+            if (!this.filterItem.isEmpty() && this.filter != null) {
+                this.filterGroup.addWidget(this.filter.openConfigurator(0, 0));
+            }
+        }
 
-        if (!this.filterItem.isEmpty() && this.filter != null) {
-            this.filterGroup.addWidget(this.filter.openConfigurator(0, 0));
+        if (this.filterLDLib2Group != null) {
+            for (UIElement child : this.filterLDLib2Group.getSafeChildren()) {
+                this.filterLDLib2Group.removeChild(child);
+            }
+
+            if (!this.filterItem.isEmpty() && this.filter != null && this.filter.supportsLDLib2Configurator()) {
+                this.filterLDLib2Group.addChild(this.filter.openLDLib2Configurator(0, 0));
+            }
         }
     }
 
