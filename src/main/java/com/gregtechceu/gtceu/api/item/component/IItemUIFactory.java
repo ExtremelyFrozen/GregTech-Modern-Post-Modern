@@ -17,7 +17,13 @@ import org.jetbrains.annotations.Nullable;
 
 public interface IItemUIFactory extends IInteractionItem {
 
-    ModularUI createUI(HeldItemUIHolder holder, Player entityPlayer);
+    /**
+     * Builds the legacy LDLib held-item UI; components that only support LDLib2 may return {@code null}.
+     */
+    @Nullable
+    default ModularUI createUI(HeldItemUIHolder holder, Player entityPlayer) {
+        return null;
+    }
 
     /**
      * Returns whether this item component has a migrated LDLib2 held-item UI for the provided context.

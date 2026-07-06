@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.item.component.IAddInformation;
 import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -20,9 +19,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
@@ -105,43 +101,6 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
                                 TooltipFlag isAdvanced) {
         int configuration = getCircuitConfiguration(stack);
         tooltipComponents.add(Component.translatable("metaitem.int_circuit.configuration", configuration));
-    }
-
-    @Override
-    public ModularUI createUI(HeldItemUIHolder holder, Player entityPlayer) {
-        LabelWidget label = new LabelWidget(9, 8, "Programmed Circuit Configuration");
-        label.setDropShadow(false);
-        label.setTextColor(0x404040);
-        var modular = new ModularUI(184, 132, holder, entityPlayer)
-                .widget(label);
-        SlotWidget slotwidget = new SlotWidget(
-                new CustomItemStackHandler(stack(getCircuitConfiguration(holder.getHeld()))), 0, 82, 20, false, false);
-        slotwidget.setBackground(GuiTextures.SLOT);
-        modular.widget(slotwidget);
-        int idx = 0;
-        for (int x = 0; x <= 2; x++) {
-            for (int y = 0; y <= 8; y++) {
-                int finalIdx = idx;
-                modular.widget(new ButtonWidget(10 + (18 * y), 48 + (18 * x), 18, 18,
-                        GuiTextures.group(GuiTextures.SLOT, GuiTextures.itemStack(stack(finalIdx)).scale(16f / 18)),
-                        data -> {
-                            setCircuitConfiguration(holder, finalIdx);
-                            slotwidget.setHandlerSlot(new CustomItemStackHandler(stack(finalIdx)), 0);
-                        }));
-                idx++;
-            }
-        }
-        for (int x = 0; x <= 5; x++) {
-            int finalIdx = x + 27;
-            modular.widget(new ButtonWidget(10 + (18 * x), 102, 18, 18,
-                    GuiTextures.group(GuiTextures.SLOT, GuiTextures.itemStack(stack(finalIdx)).scale(16f / 18)),
-                    data -> {
-                        setCircuitConfiguration(holder, finalIdx);
-                        slotwidget.setHandlerSlot(new CustomItemStackHandler(stack(finalIdx)), 0);
-                    }));
-        }
-        modular.mainGroup.setBackground(GuiTextures.BACKGROUND);
-        return modular;
     }
 
     @Override
