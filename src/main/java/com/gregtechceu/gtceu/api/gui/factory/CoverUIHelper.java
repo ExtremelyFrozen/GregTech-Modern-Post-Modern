@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.common.network.packets.CPacketCoverActionToServer;
 
@@ -26,20 +25,14 @@ public final class CoverUIHelper {
      * @return {@code true} when the menu was opened by the current bridge implementation.
      */
     public static boolean open(CoverBehavior cover, ServerPlayer player) {
-        if (GTCoverUIMenuType.openUI(cover, player)) {
-            return true;
-        }
-        if (cover instanceof IUICover) {
-            return CoverUIFactory.INSTANCE.openUI(cover, player);
-        }
-        return false;
+        return GTCoverUIMenuType.openUI(cover, player);
     }
 
     /**
      * Returns whether the cover exposes any currently supported UI route.
      */
     public static boolean hasUI(CoverBehavior cover) {
-        return cover instanceof LDLib2CoverUIProvider || cover instanceof IUICover;
+        return cover instanceof LDLib2CoverUIProvider;
     }
 
     /**
