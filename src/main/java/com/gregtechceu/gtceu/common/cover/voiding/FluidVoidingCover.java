@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
-import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
@@ -51,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class FluidVoidingCover extends PumpCover implements LDLib2CoverUIProvider {
+public class FluidVoidingCover extends PumpCover {
 
     private static final ResourceLocation SET_FLUID_VOIDING_COVER_CONFIG_ACTION = GTCEu
             .id("set_fluid_voiding_cover_config");
@@ -169,12 +168,12 @@ public class FluidVoidingCover extends PumpCover implements LDLib2CoverUIProvide
         if (!context.getItemInHand().canPerformAction(GTItemAbilities.MALLET_PAUSE)) {
             return InteractionResult.PASS;
         }
-        if (!isRemote()) {
+        if (!coverHolder.isRemote()) {
             setWorkingEnabled(!isWorkingEnabled);
             context.getPlayer().sendSystemMessage(Component.translatable(isWorkingEnabled() ?
                     "cover.voiding.message.enabled" : "cover.voiding.message.disabled"));
         }
-        return InteractionResult.sidedSuccess(isRemote());
+        return InteractionResult.sidedSuccess(coverHolder.isRemote());
     }
 
     // TODO: Decide grid behavior
