@@ -12,16 +12,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import org.jetbrains.annotations.Nullable;
-
 public interface IItemUIFactory extends IInteractionItem {
 
     /**
      * Returns whether this item component has a migrated LDLib2 held-item UI for the provided context.
      */
-    default boolean canCreateLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
-        return false;
-    }
+    boolean canCreateLDLib2UI(HeldItemUIHolder holder, Player entityPlayer);
 
     /**
      * Returns whether the currently held stack still belongs to this component's opened LDLib2 UI.
@@ -32,13 +28,8 @@ public interface IItemUIFactory extends IInteractionItem {
 
     /**
      * Builds the migrated LDLib2 held-item UI for this component.
-     *
-     * @return the LDLib2 UI tree, or {@code null} when this component only supports the legacy held-item UI.
      */
-    @Nullable
-    default UI createLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
-        return null;
-    }
+    UI createLDLib2UI(HeldItemUIHolder holder, Player entityPlayer);
 
     @Override
     default InteractionResultHolder<ItemStack> use(ItemStack item, Level level, Player player,

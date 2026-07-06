@@ -311,11 +311,7 @@ public class ComponentItem extends Item
                 if (!uiFactory.canCreateLDLib2UI(holder, entityPlayer)) {
                     break;
                 }
-                UI ui = uiFactory.createLDLib2UI(holder, entityPlayer);
-                if (ui == null) {
-                    throw new IllegalStateException("Item component reported an LDLib2 UI but returned null.");
-                }
-                return ui;
+                return uiFactory.createLDLib2UI(holder, entityPlayer);
             }
         }
         throw new IllegalStateException("No item component exposes an LDLib2 UI for the opened stack.");

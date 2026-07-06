@@ -719,11 +719,7 @@ public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
             if (!uiBehavior.hasLDLib2UI(player, holder)) {
                 continue;
             }
-            UI ui = uiBehavior.createLDLib2UI(player, holder);
-            if (ui == null) {
-                throw new IllegalStateException("Tool behavior reported an LDLib2 UI but returned null.");
-            }
-            return ui;
+            return uiBehavior.createLDLib2UI(player, holder);
         }
         throw new IllegalStateException("No tool behavior exposes an LDLib2 UI for the opened stack.");
     }

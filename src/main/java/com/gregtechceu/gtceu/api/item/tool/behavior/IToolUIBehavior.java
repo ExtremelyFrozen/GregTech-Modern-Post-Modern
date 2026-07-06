@@ -13,7 +13,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBehavior<T> {
 
@@ -49,11 +48,6 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
 
     /**
      * Builds the migrated LDLib2 held-item UI for this behavior.
-     *
-     * @return the LDLib2 UI tree, or {@code null} when this behavior has no LDLib2 UI.
      */
-    @Nullable
-    default UI createLDLib2UI(Player player, HeldItemUIHolder holder) {
-        return null;
-    }
+    UI createLDLib2UI(Player player, HeldItemUIHolder holder);
 }
