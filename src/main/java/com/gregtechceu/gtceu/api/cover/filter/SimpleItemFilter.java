@@ -1,12 +1,16 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.widget.PhantomSlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -16,7 +20,10 @@ import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+
+import static com.gregtechceu.gtceu.api.gui.UITemplate.setLDLib2Bounds;
 
 public class SimpleItemFilter implements ItemFilter {
 
@@ -115,6 +122,78 @@ public class SimpleItemFilter implements ItemFilter {
         group.addWidget(new ToggleButtonWidget(18 * 3 + 5, 20, 20, 20,
                 GuiTextures.BUTTON_FILTER_NBT, this::isIgnoreNbt, this::setIgnoreNbt));
         return group;
+    }
+
+    @Override
+    public boolean supportsLDLib2Configurator() {
+        return true;
+    }
+
+    @Override
+    public UIElement openLDLib2Configurator(int x, int y) {
+        UIElement group = new UIElement();
+        setLDLib2Bounds(group, x, y, 18 * 3 + 25, 18 * 3);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                int index = i * 3 + j;
+                group.addChild(createLDLib2MatchSlot(index, i * 18, j * 18));
+            }
+        }
+        group.addChild(createLDLib2ToggleButton(18 * 3 + 5, 0,
+                GuiTextures.BUTTON_BLACKLIST, this::isBlackList, this::setBlackList));
+        group.addChild(createLDLib2ToggleButton(18 * 3 + 5, 20,
+                GuiTextures.BUTTON_FILTER_NBT, this::isIgnoreNbt, this::setIgnoreNbt));
+        return group;
+    }
+
+    private GTItemSlotElement createLDLib2MatchSlot(int index, int x, int y) {
+        GTItemSlotElement slot = new GTItemSlotElement();
+        slot.setItem(matches[index].copy(), false);
+        slot.setBackgroundTexture(GuiTextures.SLOT);
+        slot.xeiPhantom();
+        slot.registerValueListener(stack -> syncLDLib2MatchSlot(index, slot, stack));
+        setLDLib2Bounds(slot, x, y, 18, 18);
+        return slot;
+    }
+
+    private void syncLDLib2MatchSlot(int index, GTItemSlotElement slot, ItemStack stack) {
+        ItemStack normalized = normalizeLDLib2Match(stack);
+        if (!ItemStack.matches(normalized, stack)) {
+            slot.setItem(normalized, false);
+        }
+        matches[index] = normalized;
+        onUpdated.accept(this);
+    }
+
+    private ItemStack normalizeLDLib2Match(ItemStack stack) {
+        if (stack.isEmpty() || maxStackSize <= 0) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack normalized = stack.copy();
+        normalized.setCount(Math.min(normalized.getCount(), maxStackSize));
+        return normalized;
+    }
+
+    private Button createLDLib2ToggleButton(int x, int y, IGuiTexture texture, BooleanSupplier isPressed,
+                                            Consumer<Boolean> setPressed) {
+        Button button = new Button();
+        button.noText();
+        updateLDLib2ToggleButtonTexture(button, texture, isPressed.getAsBoolean());
+        button.setOnClick(event -> {
+            boolean pressed = !isPressed.getAsBoolean();
+            setPressed.accept(pressed);
+            updateLDLib2ToggleButtonTexture(button, texture, pressed);
+        });
+        setLDLib2Bounds(button, x, y, 20, 20);
+        return button;
+    }
+
+    private static void updateLDLib2ToggleButtonTexture(Button button, IGuiTexture texture, boolean pressed) {
+        IGuiTexture stateTexture = GuiTextures.buttonState(texture, pressed);
+        button.buttonStyle(style -> style
+                .baseTexture(stateTexture)
+                .hoverTexture(stateTexture)
+                .pressedTexture(stateTexture));
     }
 
     @Override
