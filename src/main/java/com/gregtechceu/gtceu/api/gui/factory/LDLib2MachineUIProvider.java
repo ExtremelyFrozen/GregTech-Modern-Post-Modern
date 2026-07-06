@@ -13,6 +13,16 @@ import net.minecraft.world.entity.player.Player;
 public interface LDLib2MachineUIProvider {
 
     /**
+     * Returns whether this machine should use LDLib2 for the provided holder context.
+     *
+     * <p>Machine implementations can expose the provider while keeping selected instances on the legacy UI path until
+     * their screen tree has been migrated.
+     */
+    default boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return true;
+    }
+
+    /**
      * Builds the LDLib2 machine UI tree for the provided player and opened machine identity.
      *
      * @param player player building the UI in the current runtime.

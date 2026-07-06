@@ -26,8 +26,12 @@ public final class MachineUIHelper {
      * @return {@code true} when the menu was opened by the current bridge implementation.
      */
     public static boolean open(MetaMachine machine, ServerPlayer player) {
-        if (machine instanceof LDLib2MachineUIProvider && BlockUIMenuType.openUI(player, machine.getBlockPos())) {
-            return true;
+        if (machine instanceof LDLib2MachineUIProvider uiProvider) {
+            MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
+            if (uiProvider.canCreateLDLib2UI(player, holder) &&
+                    BlockUIMenuType.openUI(player, machine.getBlockPos())) {
+                return true;
+            }
         }
         return MachineUIFactory.INSTANCE.openUI(machine, player);
     }
@@ -41,7 +45,14 @@ public final class MachineUIHelper {
     public static ModularUI createLDLib2UI(MetaMachine machine, Player player) {
         if (machine instanceof LDLib2MachineUIProvider uiProvider) {
             MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
-            return ModularUI.of(uiProvider.createLDLib2UI(player, holder), player);
+            if (!uiProvider.canCreateLDLib2UI(player, holder)) {
+                return null;
+            }
+            var ui = uiProvider.createLDLib2UI(player, holder);
+            if (ui == null) {
+                throw new IllegalStateException("Machine LDLib2 UI provider returned null.");
+            }
+            return ModularUI.of(ui, player);
         }
         return null;
     }

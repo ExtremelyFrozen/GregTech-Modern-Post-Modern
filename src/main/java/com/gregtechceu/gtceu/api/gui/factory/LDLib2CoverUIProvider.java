@@ -13,6 +13,16 @@ import net.minecraft.world.entity.player.Player;
 public interface LDLib2CoverUIProvider {
 
     /**
+     * Returns whether this cover should use LDLib2 for the provided holder context.
+     *
+     * <p>Cover implementations can expose the provider while keeping selected sides or cover states on the legacy UI
+     * path until their screen tree has been migrated.
+     */
+    default boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+        return true;
+    }
+
+    /**
      * Builds the LDLib2 cover UI tree for the provided player and opened cover identity.
      *
      * @param player player building the UI in the current runtime.
