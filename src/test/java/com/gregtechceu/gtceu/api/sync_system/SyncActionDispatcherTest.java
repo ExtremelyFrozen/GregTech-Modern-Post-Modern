@@ -164,7 +164,7 @@ public class SyncActionDispatcherTest {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         ItemStack holder = new ItemStack(Items.STICK);
         SyncActionData action = new SyncActionData(actionId, 1, payload);
-        return SyncActionContext.item(player, holder, action, InteractionHand.MAIN_HAND);
+        return SyncActionContext.item(player, holder, holder.copy(), action, InteractionHand.MAIN_HAND);
     }
 
     private static DataComponentMap payload(String name) {
