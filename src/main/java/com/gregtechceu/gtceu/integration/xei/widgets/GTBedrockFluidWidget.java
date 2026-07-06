@@ -104,6 +104,7 @@ public class GTBedrockFluidWidget {
         Fluid storedFluid = definition.getStoredFluid();
         FluidStack stack = new FluidStack(storedFluid, 1000);
         CustomFluidTank tank = new CustomFluidTank(stack);
+        Supplier<Stream<FluidStack>> fluidSupplier = () -> Stream.of(stack);
         GTFluidSlotElement slot = new GTFluidSlotElement();
         slot.setFluidTank(tank, 0);
         slot.setIngredientIO(GTXEIHelper.output());
@@ -111,7 +112,8 @@ public class GTBedrockFluidWidget {
         slot.setShowAmount(false);
         slot.setAllowClickFilled(false);
         slot.setAllowClickDrained(false);
-        slot.setXEIRecipeSlot(GTXEIHelper.output(), 1.0f, 1, () -> Stream.of(stack));
+        slot.xeiRecipeSlot(GTXEIHelper.output(), 1.0f, 1, fluidSupplier);
+        slot.xeiRecipeIngredient(GTXEIHelper.output(), fluidSupplier);
         slot.layout(layout -> {
             layout.positionType(TaffyPosition.ABSOLUTE);
             layout.left(FLUID_SLOT_X);

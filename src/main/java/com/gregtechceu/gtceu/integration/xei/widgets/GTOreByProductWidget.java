@@ -273,7 +273,8 @@ public class GTOreByProductWidget {
         slot.setShowAmount(false);
         slot.setAllowClickFilled(false);
         slot.setAllowClickDrained(false);
-        slot.setXEIRecipeSlot(GTXEIHelper.input(), 1.0f, 1, fluidSupplier);
+        slot.xeiRecipeSlot(GTXEIHelper.input(), 1.0f, 1, fluidSupplier);
+        slot.xeiRecipeIngredient(GTXEIHelper.input(), fluidSupplier);
         layoutSlot(slot, x, y);
         return slot;
     }
