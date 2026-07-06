@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.item.modules;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
+import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
 import com.gregtechceu.gtceu.client.renderer.monitor.IMonitorRenderer;
 import com.gregtechceu.gtceu.client.renderer.monitor.MonitorImageRenderer;
@@ -16,7 +17,6 @@ import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -56,10 +56,9 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
         UIElement builder = new UIElement();
         UITemplate.setLDLib2Bounds(builder, 0, 0, 100, 42);
 
-        TextField textField = new TextField();
+        GTTextFieldElement textField = new GTTextFieldElement(0, 0, 100, 10);
         textField.setAnyString();
         textField.setText(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, ""), false);
-        UITemplate.setLDLib2Bounds(textField, 0, 0, 100, 10);
 
         GTButtonElement saveButton = new GTButtonElement(-40, 22, 20, 20,
                 GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_CHECK),

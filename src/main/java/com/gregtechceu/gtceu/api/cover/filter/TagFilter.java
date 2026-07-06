@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.TagExprFilter;
 
@@ -8,7 +9,6 @@ import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -88,16 +88,15 @@ public abstract class TagFilter<T, S extends Filter<T, S>> implements Filter<T, 
         return icon;
     }
 
-    private TextField createLDLib2TextField() {
-        TextField textField = new TextField();
+    private GTTextFieldElement createLDLib2TextField() {
+        GTTextFieldElement textField = new GTTextFieldElement(0, 29, 18 * 3 + 25, 12);
         textField.setAnyString();
         textField.setText(tagFilterExpression, false);
         textField.setTextResponder(input -> updateLDLib2FilterExpr(textField, input));
-        setLDLib2Bounds(textField, 0, 29, 18 * 3 + 25, 12);
         return textField;
     }
 
-    private void updateLDLib2FilterExpr(TextField textField, String input) {
+    private void updateLDLib2FilterExpr(GTTextFieldElement textField, String input) {
         String normalized = normalizeInput(input);
         if (!normalized.equals(input)) {
             textField.setText(normalized, false);
