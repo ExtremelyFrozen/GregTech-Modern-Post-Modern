@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
+import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.common.network.packets.CPacketCoverActionToServer;
 
@@ -25,7 +26,13 @@ public final class CoverUIHelper {
      * @return {@code true} when the menu was opened by the current bridge implementation.
      */
     public static boolean open(CoverBehavior cover, ServerPlayer player) {
-        return CoverUIFactory.INSTANCE.openUI(cover, player);
+        if (GTCoverUIMenuType.openUI(cover, player)) {
+            return true;
+        }
+        if (cover instanceof IUICover) {
+            return CoverUIFactory.INSTANCE.openUI(cover, player);
+        }
+        return false;
     }
 
     /**
@@ -36,7 +43,7 @@ public final class CoverUIHelper {
     @Nullable
     public static ModularUI createLDLib2UI(CoverBehavior cover, Player player) {
         if (cover instanceof LDLib2CoverUIProvider uiProvider) {
-            UICoverHolderContext holder = new UICoverHolderContext(player, cover);
+            LDLib2CoverUIHolderContext holder = new LDLib2CoverUIHolderContext(player, cover);
             if (!uiProvider.canCreateLDLib2UI(player, holder)) {
                 return null;
             }

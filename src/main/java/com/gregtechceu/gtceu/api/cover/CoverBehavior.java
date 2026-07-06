@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.cover;
 import com.gregtechceu.gtceu.api.blockentity.ICopyable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
@@ -145,7 +146,7 @@ public abstract class CoverBehavior implements ISyncManaged, IToolGridHighlight,
     }
 
     public InteractionResult onScrewdriverClick(ExtendedUseOnContext context) {
-        if (this instanceof IUICover) {
+        if (hasCoverUI()) {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
                 CoverUIHelper.open(this, serverPlayer);
             }
@@ -185,7 +186,7 @@ public abstract class CoverBehavior implements ISyncManaged, IToolGridHighlight,
     public boolean shouldRenderGrid(Player player, BlockPos pos, BlockState state, ItemStack held,
                                     Set<GTToolType> toolTypes) {
         return toolTypes.contains(GTToolType.CROWBAR) ||
-                ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && this instanceof IUICover);
+                ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && hasCoverUI());
     }
 
     @Override
@@ -194,10 +195,14 @@ public abstract class CoverBehavior implements ISyncManaged, IToolGridHighlight,
         if (toolTypes.contains(GTToolType.CROWBAR)) {
             return GridHighlightTexture.TOOL_REMOVE_COVER;
         }
-        if ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && this instanceof IUICover) {
+        if ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && hasCoverUI()) {
             return GridHighlightTexture.TOOL_COVER_SETTINGS;
         }
         return null;
+    }
+
+    private boolean hasCoverUI() {
+        return this instanceof IUICover || this instanceof LDLib2CoverUIProvider;
     }
 
     /**

@@ -67,6 +67,7 @@ import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.data.GTMaterialBlocks;
 import com.gregtechceu.gtceu.common.data.GTMaterialItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
+import com.gregtechceu.gtceu.common.data.GTMenuTypes;
 import com.gregtechceu.gtceu.common.data.GTMobEffects;
 import com.gregtechceu.gtceu.common.data.GTParticleTypes;
 import com.gregtechceu.gtceu.common.data.GTRecipeCapabilities;
@@ -188,6 +189,7 @@ public class CommonProxy {
         REGISTRATE.registerEventListeners(modBus);
         GTCreativeModeTabs.init();
         GTAttachmentTypes.ATTACHMENT_TYPES.register(modBus);
+        GTMenuTypes.init(modBus);
 
         FusionReactorMachine.registerFusionTier(GTValues.LuV, "MKI");
         FusionReactorMachine.registerFusionTier(GTValues.ZPM, "MKII");
