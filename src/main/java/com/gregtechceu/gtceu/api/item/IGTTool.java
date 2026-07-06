@@ -705,9 +705,6 @@ public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
                 if (uiBehavior.hasLDLib2UI(player, holder)) {
                     return true;
                 }
-                if (uiBehavior.openUI(player, holder.getHand())) {
-                    return false;
-                }
             }
         }
         return false;
@@ -720,9 +717,6 @@ public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
                 continue;
             }
             if (!uiBehavior.hasLDLib2UI(player, holder)) {
-                if (uiBehavior.openUI(player, holder.getHand())) {
-                    break;
-                }
                 continue;
             }
             UI ui = uiBehavior.createLDLib2UI(player, holder);
@@ -740,9 +734,6 @@ public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
             if (behavior instanceof IToolUIBehavior<?> uiBehavior) {
                 if (uiBehavior.hasLDLib2UI(player, holder)) {
                     return uiBehavior.isLDLib2UIStillValid(player, holder);
-                }
-                if (uiBehavior.openUI(player, holder.getHand())) {
-                    return false;
                 }
             }
         }

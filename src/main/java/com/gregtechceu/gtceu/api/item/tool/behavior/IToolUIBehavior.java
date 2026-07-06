@@ -28,14 +28,10 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
         return InteractionResultHolder.pass(heldItem);
     }
 
-    boolean openUI(@NotNull Player player, @NotNull InteractionHand hand);
-
     /**
      * Returns whether this behavior has a migrated LDLib2 held-item UI for the provided context.
      */
-    default boolean openLDLib2UI(@NotNull Player player, @NotNull InteractionHand hand) {
-        return false;
-    }
+    boolean openLDLib2UI(@NotNull Player player, @NotNull InteractionHand hand);
 
     /**
      * Returns whether this behavior owns an LDLib2 UI for the currently opened held item context.

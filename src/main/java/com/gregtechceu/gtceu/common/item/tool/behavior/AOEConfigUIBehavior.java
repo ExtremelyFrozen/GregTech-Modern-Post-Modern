@@ -50,14 +50,9 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
     }
 
     @Override
-    public boolean openUI(@NotNull Player player, @NotNull InteractionHand hand) {
+    public boolean openLDLib2UI(@NotNull Player player, @NotNull InteractionHand hand) {
         return player.isShiftKeyDown() && !player.getItemInHand(hand)
                 .getOrDefault(GTDataComponents.AOE, AoESymmetrical.ZERO).isZero();
-    }
-
-    @Override
-    public boolean openLDLib2UI(@NotNull Player player, @NotNull InteractionHand hand) {
-        return openUI(player, hand);
     }
 
     @Override
