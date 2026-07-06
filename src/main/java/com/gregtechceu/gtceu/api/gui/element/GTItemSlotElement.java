@@ -196,6 +196,18 @@ public class GTItemSlotElement extends ItemSlot {
         return this;
     }
 
+    @Override
+    public GTItemSlotElement xeiPhantom() {
+        if (LDLib2.isJeiLoaded()) {
+            JEISupport.ghostIngredient(this);
+        }
+        if (LDLib2.isEmiLoaded()) {
+            EMISupport.renderDragHandler(this);
+            EMISupport.dropStackHandler(this);
+        }
+        return this;
+    }
+
     public GTItemSlotElement xeiRecipeIngredient() {
         return xeiRecipeIngredient(ingredientIO);
     }
