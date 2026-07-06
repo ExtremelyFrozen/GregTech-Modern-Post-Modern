@@ -7,7 +7,9 @@ import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.data.DimensionMarker;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
@@ -31,8 +33,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -92,15 +92,15 @@ public final class GTLDLib2RecipeUI {
         private final int templateX;
         private final int minTier;
         private final int recipeTier;
-        private final List<Label> recipeParaTexts = new ArrayList<>();
+        private final List<GTLabelElement> recipeParaTexts = new ArrayList<>();
         private int tier;
         private long recipeVoltageTooltipEUt;
         private OverclockingLogic overclockingLogic = OverclockingLogic.NON_PERFECT_OVERCLOCK;
         private UIElement root;
         private UIElement recipeContentRoot;
         private UIElement voltageClickArea;
-        private Label recipeVoltageText;
-        private Label voltageTextWidget;
+        private GTLabelElement recipeVoltageText;
+        private GTLabelElement voltageTextWidget;
 
         private RecipeView(GTRecipeDefinition recipe,
                            Table<IO, RecipeCapability<?>, Object> storages,
@@ -180,7 +180,7 @@ public final class GTLDLib2RecipeUI {
             long eu = RecipeHelper.getRealEUtWithIO(recipe);
             for (Component text : GTRecipeXEIHelper.getRecipeParaText(recipe, recipe.duration, eu)) {
                 textsY += LINE_HEIGHT;
-                Label label = createLabel(text, TEXT_X, textsY, rootSize.width() - 2 * TEXT_X, true);
+                GTLabelElement label = createLabel(text, TEXT_X, textsY, rootSize.width() - 2 * TEXT_X, true);
                 root.addChild(label);
                 recipeParaTexts.add(label);
             }
@@ -387,16 +387,8 @@ public final class GTLDLib2RecipeUI {
         return slot;
     }
 
-    private static Label createLabel(Component text, int x, int y, int width, boolean legacyWhiteText) {
-        Label label = new Label();
-        label.setValue(text);
-        label.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(x);
-            layout.top(y);
-            layout.width(Math.max(width, 0));
-            layout.height(LINE_HEIGHT);
-        });
+    private static GTLabelElement createLabel(Component text, int x, int y, int width, boolean legacyWhiteText) {
+        GTLabelElement label = new GTLabelElement(x, y, Math.max(width, 0), LINE_HEIGHT, text);
         label.textStyle(textStyle -> {
             textStyle.textWrap(TextWrap.NONE);
             if (legacyWhiteText) {
@@ -425,15 +417,8 @@ public final class GTLDLib2RecipeUI {
             return;
         }
         String recipeId = String.valueOf(recipe.id);
-        Button button = new Button();
+        GTButtonElement button = new GTButtonElement(rootSize.width() - 18, rootSize.height() - 30, 15, 15);
         button.setText(Component.literal("ID"));
-        button.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(rootSize.width() - 18);
-            layout.top(rootSize.height() - 30);
-            layout.width(15);
-            layout.height(15);
-        });
         button.buttonStyle(style -> style
                 .baseTexture(GuiTextures.BUTTON)
                 .hoverTexture(GuiTextures.BUTTON)
