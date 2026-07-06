@@ -1,32 +1,54 @@
 package com.gregtechceu.gtceu.common.cover.voiding;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.SimpleItemFilter;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
+import com.gregtechceu.gtceu.api.gui.element.GTEnumSelectorElement;
+import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.cover.data.VoidingMode;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public class AdvancedItemVoidingCover extends ItemVoidingCover {
+
+    private static final ResourceLocation SET_ADVANCED_ITEM_VOIDING_COVER_CONFIG_ACTION = GTCEu
+            .id("set_advanced_item_voiding_cover_config");
+    private static final ResourceLocation VOIDING_MODE_FIELD = SyncFieldData.key("voidingMode");
+    private static final ResourceLocation VOID_SIZE_FIELD = SyncFieldData.key("voidSize");
+
+    static {
+        SyncActionDispatchers.server().register(new AdvancedItemVoidingCoverConfigActionHandler());
+    }
 
     @SaveField
     @SyncToClient
@@ -37,7 +59,7 @@ public class AdvancedItemVoidingCover extends ItemVoidingCover {
     @Getter
     protected int globalVoidingLimit = 1;
 
-    private IntInputWidget stackSizeInput;
+    private @Nullable GTIntInputElement stackSizeLDLib2Input;
 
     public AdvancedItemVoidingCover(CoverDefinition definition, ICoverable coverHolder, Direction attachedSide) {
         super(definition, coverHolder, attachedSide);
@@ -115,15 +137,14 @@ public class AdvancedItemVoidingCover extends ItemVoidingCover {
     }
 
     @Override
-    protected void buildAdditionalUI(WidgetGroup group) {
-        group.addWidget(
-                new EnumSelectorWidget<>(146, 20, 20, 20, VoidingMode.values(), voidingMode, this::setVoidingMode));
+    protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {
+        root.addChild(new GTEnumSelectorElement<>(146, 20, 20, 20, VoidingMode.values(), this::getVoidingMode,
+                mode -> setLDLib2VoidingMode(player, holder, mode), VoidingMode::getIcon, VoidingMode::getTooltip));
 
-        this.stackSizeInput = new IntInputWidget(64, 20, 80, 20,
-                () -> globalVoidingLimit, val -> globalVoidingLimit = val);
+        this.stackSizeLDLib2Input = new GTIntInputElement(64, 20, 80, 20,
+                () -> globalVoidingLimit, value -> setLDLib2GlobalVoidingLimit(player, holder, value));
         configureStackSizeInput();
-
-        group.addWidget(this.stackSizeInput);
+        root.addChild(this.stackSizeLDLib2Input);
     }
 
     @Override
@@ -136,12 +157,12 @@ public class AdvancedItemVoidingCover extends ItemVoidingCover {
     }
 
     private void configureStackSizeInput() {
-        if (this.stackSizeInput == null)
+        if (this.stackSizeLDLib2Input == null)
             return;
 
-        this.stackSizeInput.setVisible(shouldShowStackSize());
-        this.stackSizeInput.setMin(1);
-        this.stackSizeInput.setMax(this.voidingMode.maxStackSize);
+        this.stackSizeLDLib2Input.setVisible(shouldShowStackSize());
+        this.stackSizeLDLib2Input.setMin(1);
+        this.stackSizeLDLib2Input.setMax(this.voidingMode.maxStackSize);
     }
 
     private boolean shouldShowStackSize() {
@@ -152,6 +173,39 @@ public class AdvancedItemVoidingCover extends ItemVoidingCover {
             return true;
 
         return this.filterHandler.getFilter().isBlackList();
+    }
+
+    private void setLDLib2VoidingMode(Player player, UICoverHolder holder, VoidingMode mode) {
+        setVoidingMode(mode);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2GlobalVoidingLimit(Player player, UICoverHolder holder, int value) {
+        setGlobalVoidingLimit(value);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setGlobalVoidingLimit(int value) {
+        this.globalVoidingLimit = Math.max(value, 1);
+        configureStackSizeInput();
+    }
+
+    private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
+        if (player.level().isClientSide()) {
+            CoverUIHelper.sendAction(holder, createSetAdvancedItemVoidingCoverConfigAction(
+                    getVoidingMode(), getGlobalVoidingLimit()));
+        }
+    }
+
+    private static SyncActionData createSetAdvancedItemVoidingCoverConfigAction(VoidingMode voidingMode,
+                                                                                int voidingLimit) {
+        DataComponentMap payload = DataComponentMap.builder()
+                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
+                        .put(VOIDING_MODE_FIELD, new JsonPrimitive(voidingMode.ordinal()))
+                        .put(VOID_SIZE_FIELD, new JsonPrimitive(voidingLimit))
+                        .build())
+                .build();
+        return new SyncActionData(SET_ADVANCED_ITEM_VOIDING_COVER_CONFIG_ACTION, 0, payload);
     }
 
     @Override
@@ -166,7 +220,92 @@ public class AdvancedItemVoidingCover extends ItemVoidingCover {
     @Override
     public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
         setVoidingMode(VoidingMode.values()[ConfigCopyHelper.getInt(config, "voidingMode")]);
-        globalVoidingLimit = ConfigCopyHelper.getInt(config, "voidSize");
+        setGlobalVoidingLimit(ConfigCopyHelper.getInt(config, "voidSize"));
         super.pasteConfig(player, registries, config);
+    }
+
+    private static final class AdvancedItemVoidingCoverConfigActionHandler implements SyncActionHandler {
+
+        @Override
+        public ResourceLocation actionId() {
+            return SET_ADVANCED_ITEM_VOIDING_COVER_CONFIG_ACTION;
+        }
+
+        @Override
+        public boolean acceptsHolder(SyncActionContext context) {
+            return context.holder() instanceof AdvancedItemVoidingCover;
+        }
+
+        @Override
+        public boolean acceptsPayload(DataComponentMap payload) {
+            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
+            return fields != null &&
+                    isValidOrdinal(fields, VOIDING_MODE_FIELD, VoidingMode.values().length) &&
+                    isValidPositiveInt(fields, VOID_SIZE_FIELD);
+        }
+
+        @Override
+        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
+            return !player.isSpectator();
+        }
+
+        @Override
+        public void execute(SyncActionContext context) {
+            if (!(context.holder() instanceof AdvancedItemVoidingCover cover)) {
+                throw new IllegalStateException("Advanced item voiding action received a non-item-voiding cover.");
+            }
+            cover.setVoidingMode(VoidingMode.values()[requireOrdinal(context.payload(), VOIDING_MODE_FIELD,
+                    VoidingMode.values().length)]);
+            cover.setGlobalVoidingLimit(requirePositiveInt(context.payload(), VOID_SIZE_FIELD));
+        }
+    }
+
+    private static boolean isValidOrdinal(SyncFieldData fields, ResourceLocation field, int valueCount) {
+        Integer ordinal = readInt(fields, field);
+        return ordinal != null && ordinal >= 0 && ordinal < valueCount;
+    }
+
+    private static int requireOrdinal(DataComponentMap payload, ResourceLocation field, int valueCount) {
+        int ordinal = requirePositiveOrZeroInt(payload, field);
+        if (ordinal >= valueCount) {
+            throw new IllegalArgumentException("Advanced item voiding action ordinal is out of range: " + ordinal);
+        }
+        return ordinal;
+    }
+
+    private static boolean isValidPositiveInt(SyncFieldData fields, ResourceLocation field) {
+        Integer value = readInt(fields, field);
+        return value != null && value > 0;
+    }
+
+    private static int requirePositiveInt(DataComponentMap payload, ResourceLocation field) {
+        int value = requirePositiveOrZeroInt(payload, field);
+        if (value <= 0) {
+            throw new IllegalArgumentException("Advanced item voiding action value must be positive: " + value);
+        }
+        return value;
+    }
+
+    private static int requirePositiveOrZeroInt(DataComponentMap payload, ResourceLocation field) {
+        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        if (fields == null) {
+            throw new IllegalStateException("Advanced item voiding action payload is missing field data.");
+        }
+        Integer value = readInt(fields, field);
+        if (value == null) {
+            throw new IllegalStateException("Advanced item voiding action payload is missing " + field + ".");
+        }
+        if (value < 0) {
+            throw new IllegalArgumentException("Advanced item voiding action value is negative: " + value);
+        }
+        return value;
+    }
+
+    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
+        JsonElement element = fields.get(field);
+        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
+            return primitive.getAsInt();
+        }
+        return null;
     }
 }

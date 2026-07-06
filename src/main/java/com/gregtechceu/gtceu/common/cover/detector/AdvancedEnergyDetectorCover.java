@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.capability.IEnergyInfoProvider;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
@@ -14,8 +13,6 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.gui.widget.LongInputWidget;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -26,15 +23,10 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextBoxWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -49,11 +41,10 @@ import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
-import java.util.List;
 
 import static com.gregtechceu.gtceu.utils.RedstoneUtil.computeLatchedRedstoneBetweenValues;
 
-public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements IUICover, LDLib2CoverUIProvider {
+public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements LDLib2CoverUIProvider {
 
     private static final int DEFAULT_MIN_PERCENT = 33;
     private static final int DEFAULT_MAX_PERCENT = 66;
@@ -79,8 +70,6 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
     @Getter
     private boolean usePercent;
 
-    private @Nullable LongInputWidget minValueInput;
-    private @Nullable LongInputWidget maxValueInput;
     private @Nullable GTLongInputElement minValueLDLib2Input;
     private @Nullable GTLongInputElement maxValueLDLib2Input;
 
@@ -166,47 +155,12 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
             syncDataHolder.markClientSyncFieldDirty("usePercent");
         }
 
-        initializeMinMaxInputs();
         initializeLDLib2MinMaxInputs();
     }
 
     //////////////////////////////////////
     // *********** GUI ***********//
     //////////////////////////////////////
-
-    @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(0, 0, 176, 105);
-        group.addWidget(new LabelWidget(10, 5, "cover.advanced_energy_detector.label"));
-
-        group.addWidget(new TextBoxWidget(10, 55, 25,
-                List.of(LocalizationUtils.format("cover.advanced_energy_detector.min"))));
-
-        group.addWidget(new TextBoxWidget(10, 80, 25,
-                List.of(LocalizationUtils.format("cover.advanced_energy_detector.max"))));
-
-        minValueInput = new LongInputWidget(40, 50, 176 - 40 - 10, 20, this::getMinValue, this::setMinValue);
-        maxValueInput = new LongInputWidget(40, 75, 176 - 40 - 10, 20, this::getMaxValue, this::setMaxValue);
-        initializeMinMaxInputs();
-        group.addWidget(minValueInput);
-        group.addWidget(maxValueInput);
-
-        // Invert Redstone Output Toggle:
-        group.addWidget(new ToggleButtonWidget(
-                9, 20, 20, 20,
-                GuiTextures.INVERT_REDSTONE_BUTTON, this::isInverted, this::setInverted)
-                .isMultiLang()
-                .setTooltipText("cover.advanced_energy_detector.invert"));
-
-        // Mode (EU / Percent) Toggle:
-        group.addWidget(new ToggleButtonWidget(
-                176 - 29, 20, 20, 20,
-                GuiTextures.ENERGY_DETECTOR_COVER_MODE_BUTTON, this::isUsePercent, this::setUsePercentFromUI)
-                .isMultiLang()
-                .setTooltipText("cover.advanced_energy_detector.use_percent"));
-
-        return group;
-    }
 
     @Override
     public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
@@ -289,17 +243,6 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
                         .build())
                 .build();
         return new SyncActionData(SET_ADVANCED_ENERGY_DETECTOR_CONFIG_ACTION, 0, payload);
-    }
-
-    private void initializeMinMaxInputs() {
-        if (GTCEu.isClientThread() || minValueInput == null || maxValueInput == null)
-            return;
-
-        long energyCapacity = getEnergyCapacity();
-        minValueInput.setMin(0L);
-        maxValueInput.setMin(0L);
-        minValueInput.setMax(usePercent ? 100L : energyCapacity);
-        maxValueInput.setMax(usePercent ? 100L : energyCapacity);
     }
 
     private void initializeLDLib2MinMaxInputs() {

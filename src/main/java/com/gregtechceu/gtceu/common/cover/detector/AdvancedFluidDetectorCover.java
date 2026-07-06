@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandler;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandlers;
 import com.gregtechceu.gtceu.api.cover.filter.FluidFilter;
@@ -16,8 +15,6 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -27,15 +24,10 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextBoxWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -58,7 +50,7 @@ import java.util.List;
 import static com.gregtechceu.gtceu.utils.RedstoneUtil.computeLatchedRedstoneBetweenValues;
 import static com.gregtechceu.gtceu.utils.RedstoneUtil.computeRedstoneBetweenValues;
 
-public class AdvancedFluidDetectorCover extends FluidDetectorCover implements IUICover, LDLib2CoverUIProvider {
+public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LDLib2CoverUIProvider {
 
     private static final int DEFAULT_MIN = 64;
     private static final int DEFAULT_MAX = 512;
@@ -157,39 +149,6 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements IU
     //////////////////////////////////////
     // *********** GUI ***********//
     //////////////////////////////////////
-
-    @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(0, 0, 176, 170);
-        group.addWidget(new LabelWidget(10, 5, "cover.advanced_fluid_detector.label"));
-
-        group.addWidget(new TextBoxWidget(10, 55, 65,
-                List.of(LocalizationUtils.format("cover.advanced_fluid_detector.min"))));
-
-        group.addWidget(new TextBoxWidget(10, 80, 65,
-                List.of(LocalizationUtils.format("cover.advanced_fluid_detector.max"))));
-
-        group.addWidget(new IntInputWidget(80, 50, 176 - 80 - 10, 20, this::getMinValue, this::setMinValue));
-        group.addWidget(new IntInputWidget(80, 75, 176 - 80 - 10, 20, this::getMaxValue, this::setMaxValue));
-
-        // Invert Redstone Output Toggle:
-        group.addWidget(new ToggleButtonWidget(
-                9, 20, 20, 20,
-                GuiTextures.INVERT_REDSTONE_BUTTON, this::isInverted, this::setInverted)
-                .isMultiLang()
-                .setTooltipText("cover.advanced_fluid_detector.invert"));
-
-        group.addWidget(
-                new ToggleButtonWidget(31, 21, 18, 18, GuiTextures.BUTTON_LOCK, this::isLatched, this::setLatched)
-                        .setShouldUseBaseBackground()
-                        .isMultiLang()
-                        .setTooltipText("cover.advanced_detector.latch"));
-
-        group.addWidget(filterHandler.createFilterSlotUI(148, 100));
-        group.addWidget(filterHandler.createFilterConfigUI(10, 100, 156, 60));
-
-        return group;
-    }
 
     @Override
     public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {

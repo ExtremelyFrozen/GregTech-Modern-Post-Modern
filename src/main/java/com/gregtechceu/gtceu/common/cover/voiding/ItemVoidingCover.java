@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
@@ -13,7 +12,6 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
@@ -26,9 +24,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
@@ -53,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class ItemVoidingCover extends ConveyorCover implements IUICover, IControllable, LDLib2CoverUIProvider {
+public class ItemVoidingCover extends ConveyorCover implements IControllable, LDLib2CoverUIProvider {
 
     private static final ResourceLocation SET_ITEM_VOIDING_COVER_CONFIG_ACTION = GTCEu
             .id("set_item_voiding_cover_config");
@@ -111,23 +106,6 @@ public class ItemVoidingCover extends ConveyorCover implements IUICover, IContro
     //////////////////////////////////////
 
     @Override
-    public Widget createUIWidget() {
-        final var group = new WidgetGroup(0, 0, 176, 120);
-        group.addWidget(new LabelWidget(10, 5, getUITitle()));
-
-        group.addWidget(new ToggleButtonWidget(10, 20, 20, 20,
-                GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
-
-        // group.addWidget(filterHandler.createFilterSlotUI(36, 21));
-        group.addWidget(filterHandler.createFilterSlotUI(148, 91));
-        group.addWidget(filterHandler.createFilterConfigUI(10, 50, 126, 60));
-
-        buildAdditionalUI(group);
-
-        return group;
-    }
-
-    @Override
     public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
         return holder.getCover() == this;
     }
@@ -141,11 +119,14 @@ public class ItemVoidingCover extends ConveyorCover implements IUICover, IContro
         root.addChild(createLDLib2Label());
         root.addChild(new GTToggleButtonElement(10, 20, 20, 20, GuiTextures.BUTTON_POWER,
                 this::isWorkingEnabled, enabled -> setLDLib2WorkingEnabled(player, holder, enabled)));
+        buildAdditionalLDLib2UI(root, player, holder);
         root.addChild(filterHandler.createFilterSlotLDLib2UI(148, 91));
         root.addChild(filterHandler.createFilterConfigLDLib2UI(10, 50, 126, 60));
         root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 120, true));
         return UI.of(root);
     }
+
+    protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {}
 
     private GTLabelElement createLDLib2Label() {
         GTLabelElement label = new GTLabelElement(10, 5, 156, 10, getUITitle(), true);

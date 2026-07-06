@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandler;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandlers;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
@@ -16,8 +15,6 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -28,15 +25,10 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.RedstoneUtil;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextBoxWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -55,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class AdvancedItemDetectorCover extends ItemDetectorCover implements IUICover, LDLib2CoverUIProvider {
+public class AdvancedItemDetectorCover extends ItemDetectorCover implements LDLib2CoverUIProvider {
 
     private static final int DEFAULT_MIN = 64;
     private static final int DEFAULT_MAX = 512;
@@ -153,40 +145,6 @@ public class AdvancedItemDetectorCover extends ItemDetectorCover implements IUIC
     //////////////////////////////////////
     // *********** GUI ***********//
     //////////////////////////////////////
-
-    @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(0, 0, 176, 170);
-        group.addWidget(new LabelWidget(10, 5, "cover.advanced_item_detector.label"));
-
-        group.addWidget(new TextBoxWidget(10, 55, 65,
-                List.of(LocalizationUtils.format("cover.advanced_item_detector.min"))));
-
-        group.addWidget(new TextBoxWidget(10, 80, 65,
-                List.of(LocalizationUtils.format("cover.advanced_item_detector.max"))));
-
-        group.addWidget(new IntInputWidget(80, 50, 176 - 80 - 10, 20, this::getMinValue, this::setMinValue));
-        group.addWidget(new IntInputWidget(80, 75, 176 - 80 - 10, 20, this::getMaxValue, this::setMaxValue));
-
-        // Invert Redstone Output Toggle:
-        group.addWidget(new ToggleButtonWidget(
-                9, 20, 20, 20,
-                GuiTextures.INVERT_REDSTONE_BUTTON, this::isInverted, this::setInverted)
-                .isMultiLang()
-                .setTooltipText("cover.advanced_item_detector.invert"));
-
-        group.addWidget(new ToggleButtonWidget(31, 21, 18, 18,
-                GuiTextures.BUTTON_LOCK, this::isLatched, this::setLatched)
-                .setShouldUseBaseBackground()
-                .isMultiLang()
-                .setTooltipText("cover.advanced_detector.latch"));
-
-        // Item Filter UI:
-        group.addWidget(filterHandler.createFilterSlotUI(148, 100));
-        group.addWidget(filterHandler.createFilterConfigUI(10, 100, 156, 60));
-
-        return group;
-    }
 
     @Override
     public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
