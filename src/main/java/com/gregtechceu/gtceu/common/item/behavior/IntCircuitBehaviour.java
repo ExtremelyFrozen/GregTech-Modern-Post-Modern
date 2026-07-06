@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.item.behavior;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
@@ -23,7 +24,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
 
 import net.minecraft.core.component.DataComponentMap;
@@ -151,18 +151,13 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
         return UI.of(root);
     }
 
-    private static Button createLDLib2CircuitButton(HeldItemUIHolder holder, GTItemSlotElement selectedSlot,
-                                                    int configuration, int x, int y) {
+    private static GTButtonElement createLDLib2CircuitButton(HeldItemUIHolder holder, GTItemSlotElement selectedSlot,
+                                                             int configuration, int x, int y) {
         var texture = GuiTextures.group(GuiTextures.SLOT,
                 GuiTextures.itemStack(stack(configuration)).scale(16f / 18));
-        Button button = new Button();
+        GTButtonElement button = new GTButtonElement(x, y, 18, 18, texture,
+                event -> setCircuitConfiguration(holder, selectedSlot, configuration));
         button.noText();
-        button.buttonStyle(style -> style
-                .baseTexture(texture)
-                .hoverTexture(texture)
-                .pressedTexture(texture));
-        button.setOnClick(event -> setCircuitConfiguration(holder, selectedSlot, configuration));
-        setLDLib2Bounds(button, x, y, 18, 18);
         return button;
     }
 

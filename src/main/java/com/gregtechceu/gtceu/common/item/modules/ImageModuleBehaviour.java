@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.item.modules;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
 import com.gregtechceu.gtceu.client.renderer.monitor.IMonitorRenderer;
 import com.gregtechceu.gtceu.client.renderer.monitor.MonitorImageRenderer;
@@ -15,7 +16,6 @@ import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 
 import net.minecraft.world.item.ItemStack;
@@ -61,20 +61,15 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
         textField.setText(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, ""), false);
         UITemplate.setLDLib2Bounds(textField, 0, 0, 100, 10);
 
-        Button saveButton = new Button();
-        saveButton.noText();
-        var texture = GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_CHECK);
-        saveButton.buttonStyle(style -> style
-                .baseTexture(texture)
-                .hoverTexture(texture)
-                .pressedTexture(texture));
-        saveButton.setOnClick(event -> {
-            if (!machine.getLevel().isClientSide()) return;
+        GTButtonElement saveButton = new GTButtonElement(-40, 22, 20, 20,
+                GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_CHECK),
+                event -> {
+                    if (!machine.getLevel().isClientSide()) return;
 
-            stack.set(GTDataComponents.IMAGE_MODULE_URL, textField.getValue());
-            PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
-        });
-        UITemplate.setLDLib2Bounds(saveButton, -40, 22, 20, 20);
+                    stack.set(GTDataComponents.IMAGE_MODULE_URL, textField.getValue());
+                    PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
+                });
+        saveButton.noText();
 
         builder.addChildren(textField, saveButton);
         return builder;

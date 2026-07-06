@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.item.tool.behavior;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.item.IGTTool;
@@ -19,7 +20,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
 
 import net.minecraft.core.component.DataComponentMap;
@@ -137,20 +137,14 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
         return createLDLib2Label(text, x, y, 18, 10, false);
     }
 
-    private static Button createLDLib2AOEButton(String text, int x, int y, Runnable action) {
-        Button button = new Button();
+    private static GTButtonElement createLDLib2AOEButton(String text, int x, int y, Runnable action) {
+        GTButtonElement button = new GTButtonElement(x, y, 20, 20, GuiTextures.BUTTON, event -> action.run());
         button.setText(text, false);
         button.textStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false)
                 .textAlignHorizontal(Horizontal.CENTER)
                 .textAlignVertical(Vertical.CENTER));
-        button.buttonStyle(style -> style
-                .baseTexture(GuiTextures.BUTTON)
-                .hoverTexture(GuiTextures.BUTTON)
-                .pressedTexture(GuiTextures.BUTTON));
-        button.setOnClick(event -> action.run());
-        setLDLib2Bounds(button, x, y, 20, 20);
         return button;
     }
 

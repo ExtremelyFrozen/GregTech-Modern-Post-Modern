@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.cover.filter;
 
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
@@ -12,7 +13,6 @@ import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
@@ -78,8 +78,8 @@ public class SmartItemFilter implements ItemFilter {
         return group;
     }
 
-    private Button createLDLib2ModeButton(int x, int y) {
-        Button button = new Button();
+    private GTButtonElement createLDLib2ModeButton(int x, int y) {
+        GTButtonElement button = new GTButtonElement();
         button.noText();
         updateLDLib2ModeButtonTexture(button);
         button.setOnClick(event -> {
@@ -90,12 +90,9 @@ public class SmartItemFilter implements ItemFilter {
         return button;
     }
 
-    private void updateLDLib2ModeButtonTexture(Button button) {
+    private void updateLDLib2ModeButtonTexture(GTButtonElement button) {
         IGuiTexture texture = GuiTextures.group(GuiTextures.VANILLA_BUTTON, filterMode.getIcon());
-        button.buttonStyle(style -> style
-                .baseTexture(texture)
-                .hoverTexture(texture)
-                .pressedTexture(texture));
+        button.setButtonTexture(texture);
     }
 
     private SmartFilteringMode nextMode() {

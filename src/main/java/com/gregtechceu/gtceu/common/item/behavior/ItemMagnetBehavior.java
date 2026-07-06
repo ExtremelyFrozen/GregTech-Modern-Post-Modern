@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.cover.filter.SimpleItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.TagItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
@@ -34,7 +35,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
 
 import net.minecraft.core.component.DataComponentMap;
@@ -173,9 +173,9 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
         });
     }
 
-    private static Button createLDLib2FilterButton(HeldItemUIHolder holder, Filter selected,
-                                                   List<LDLib2FilterPanel> panels) {
-        Button button = new Button();
+    private static GTButtonElement createLDLib2FilterButton(HeldItemUIHolder holder, Filter selected,
+                                                            List<LDLib2FilterPanel> panels) {
+        GTButtonElement button = new GTButtonElement();
         button.noText();
         updateLDLib2FilterButton(button, selected);
         button.setOnClick(event -> {
@@ -215,7 +215,7 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
     }
 
     private static void setLDLib2FilterSelection(HeldItemUIHolder holder, Filter filter,
-                                                 Collection<LDLib2FilterPanel> panels, Button button) {
+                                                 Collection<LDLib2FilterPanel> panels, GTButtonElement button) {
         ItemStack held = holder.getHeld();
         setMagnetFilter(held, filter);
         for (LDLib2FilterPanel panel : panels) {
@@ -227,12 +227,9 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
         }
     }
 
-    private static void updateLDLib2FilterButton(Button button, Filter filter) {
+    private static void updateLDLib2FilterButton(GTButtonElement button, Filter filter) {
         IGuiTexture texture = GuiTextures.group(GuiTextures.VANILLA_BUTTON, filter.getIcon());
-        button.buttonStyle(style -> style
-                .baseTexture(texture)
-                .hoverTexture(texture)
-                .pressedTexture(texture));
+        button.setButtonTexture(texture);
         button.style(style -> style.tooltips(Component.translatable(filter.getTooltip())));
     }
 
