@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.cover.filter.SimpleItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.TagItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
@@ -18,6 +19,10 @@ import com.gregtechceu.gtceu.api.item.component.IAddInformation;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.item.component.IItemLifeCycle;
 import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 
@@ -25,11 +30,20 @@ import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
 
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringRepresentable;
@@ -59,9 +73,15 @@ import org.jetbrains.annotations.NotNull;
 import oshi.util.tuples.Triplet;
 import top.theillusivec4.curios.api.CuriosApi;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAddInformation, IItemUIFactory {
+
+    private static final ResourceLocation SET_MAGNET_FILTER_ACTION = GTCEu.id("set_magnet_filter");
 
     private final int range;
     private final long energyDraw;
@@ -73,6 +93,7 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
 
     static {
         NeoForge.EVENT_BUS.register(ItemMagnetBehavior.class);
+        SyncActionDispatchers.server().register(new MagnetFilterActionHandler());
     }
 
     @Override
@@ -108,6 +129,41 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
         return ui;
     }
 
+    @Override
+    public boolean canCreateLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
+        ItemStack held = holder.getHeld();
+        return isMagnet(held) && ItemStack.isSameItem(held, holder.getOpenedStack()) &&
+                held.getOrDefault(GTDataComponents.MAGNET, MagnetComponent.EMPTY)
+                        .filterType()
+                        .loadFilter(held)
+                        .supportsLDLib2Configurator();
+    }
+
+    @Override
+    public boolean isLDLib2UIStillValid(HeldItemUIHolder holder, Player entityPlayer) {
+        return isMagnet(holder.getHeld()) && ItemStack.isSameItem(holder.getHeld(), holder.getOpenedStack());
+    }
+
+    @Override
+    public UI createLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
+        ItemStack held = holder.getHeld();
+        Filter selected = held.getOrDefault(GTDataComponents.MAGNET, MagnetComponent.EMPTY).filterType();
+        List<LDLib2FilterPanel> panels = new ArrayList<>();
+
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 157);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+
+        for (Filter filterType : Filter.values()) {
+            LDLib2FilterPanel panel = createLDLib2FilterPanel(holder, held, filterType, filterType == selected);
+            panels.add(panel);
+            root.addChild(panel.panel());
+        }
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(entityPlayer.getInventory(), GuiTextures.SLOT, 7, 75, true));
+        root.addChild(createLDLib2FilterButton(holder, selected, panels));
+        return UI.of(root);
+    }
+
     private void updateSelection(ItemStack stack, Filter filter, Collection<Triplet<Filter, Widget, Widget>> widgets) {
         stack.update(GTDataComponents.MAGNET, MagnetComponent.EMPTY, c -> new MagnetComponent(c.active(), filter));
         widgets.forEach(tri -> {
@@ -115,6 +171,101 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
             tri.getB().setVisible(visible);
             tri.getC().setVisible(visible);
         });
+    }
+
+    private static Button createLDLib2FilterButton(HeldItemUIHolder holder, Filter selected,
+                                                   List<LDLib2FilterPanel> panels) {
+        Button button = new Button();
+        button.noText();
+        updateLDLib2FilterButton(button, selected);
+        button.setOnClick(event -> {
+            Filter next = nextFilter(holder.getHeld()
+                    .getOrDefault(GTDataComponents.MAGNET, MagnetComponent.EMPTY)
+                    .filterType());
+            setLDLib2FilterSelection(holder, next, panels, button);
+        });
+        UITemplate.setLDLib2Bounds(button, 146, 5, 20, 20);
+        return button;
+    }
+
+    private static LDLib2FilterPanel createLDLib2FilterPanel(HeldItemUIHolder holder, ItemStack held, Filter filterType,
+                                                             boolean visible) {
+        UIElement panel = new UIElement();
+        UITemplate.setLDLib2Bounds(panel, 0, 0, 176, 75);
+        panel.setVisible(visible);
+
+        ItemStack filterStack = filterType.getFilter(held);
+        ItemFilter filter = ItemFilter.loadFilter(filterStack);
+        filter.setOnUpdated(updated -> filterType.saveFilter(holder.getHeld(), updated));
+        panel.addChild(createLDLib2Label(filterStack.getDescriptionId()));
+        panel.addChild(filter.openLDLib2Configurator((176 - 80) / 2, (60 - 55) / 2 + 15));
+        return new LDLib2FilterPanel(filterType, panel);
+    }
+
+    private static TextElement createLDLib2Label(String descriptionId) {
+        TextElement label = new TextElement();
+        label.setText(descriptionId, true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        UITemplate.setLDLib2Bounds(label, 5, 5, 136, 10);
+        return label;
+    }
+
+    private static void setLDLib2FilterSelection(HeldItemUIHolder holder, Filter filter,
+                                                 Collection<LDLib2FilterPanel> panels, Button button) {
+        ItemStack held = holder.getHeld();
+        setMagnetFilter(held, filter);
+        for (LDLib2FilterPanel panel : panels) {
+            panel.panel().setVisible(panel.filter() == filter);
+        }
+        updateLDLib2FilterButton(button, filter);
+        if (holder.getPlayer().level().isClientSide()) {
+            HeldItemUIHelper.sendAction(holder, createSetMagnetFilterAction(held, filter));
+        }
+    }
+
+    private static void updateLDLib2FilterButton(Button button, Filter filter) {
+        IGuiTexture texture = GuiTextures.group(GuiTextures.VANILLA_BUTTON, filter.getIcon());
+        button.buttonStyle(style -> style
+                .baseTexture(texture)
+                .hoverTexture(texture)
+                .pressedTexture(texture));
+        button.style(style -> style.tooltips(Component.translatable(filter.getTooltip())));
+    }
+
+    private static Filter nextFilter(Filter filter) {
+        Filter[] values = Filter.values();
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == filter) {
+                return values[(i + 1) % values.length];
+            }
+        }
+        throw new IllegalStateException("Unknown magnet filter: " + filter);
+    }
+
+    private static void setMagnetFilter(ItemStack stack, Filter filter) {
+        stack.update(GTDataComponents.MAGNET, MagnetComponent.EMPTY,
+                current -> new MagnetComponent(current.active(), filter));
+    }
+
+    private static SyncActionData createSetMagnetFilterAction(ItemStack stack, Filter filter) {
+        MagnetComponent current = stack.getOrDefault(GTDataComponents.MAGNET, MagnetComponent.EMPTY);
+        DataComponentMap payload = DataComponentMap.builder()
+                .set(GTDataComponents.MAGNET.get(), new MagnetComponent(current.active(), filter))
+                .build();
+        return new SyncActionData(SET_MAGNET_FILTER_ACTION, filter.ordinal(), payload);
+    }
+
+    private static boolean isKnownFilter(Filter filter) {
+        for (Filter value : Filter.values()) {
+            if (value == filter) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -369,5 +520,47 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
                 (active, ordinal) -> new MagnetComponent(active, Filter.get(ordinal)));
 
         public static final MagnetComponent EMPTY = new MagnetComponent(false, Filter.SIMPLE);
+    }
+
+    private record LDLib2FilterPanel(Filter filter, UIElement panel) {}
+
+    private static final class MagnetFilterActionHandler implements SyncActionHandler {
+
+        @Override
+        public ResourceLocation actionId() {
+            return SET_MAGNET_FILTER_ACTION;
+        }
+
+        @Override
+        public boolean acceptsHolder(SyncActionContext context) {
+            if (!(context.holder() instanceof ItemStack stack) || context.openedStack() == null) {
+                return false;
+            }
+            return isMagnet(stack) && isMagnet(context.openedStack()) &&
+                    ItemStack.isSameItem(stack, context.openedStack());
+        }
+
+        @Override
+        public boolean acceptsPayload(DataComponentMap payload) {
+            MagnetComponent requested = payload.get(GTDataComponents.MAGNET.get());
+            return requested != null && isKnownFilter(requested.filterType());
+        }
+
+        @Override
+        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
+            return !player.isSpectator();
+        }
+
+        @Override
+        public void execute(SyncActionContext context) {
+            if (!(context.holder() instanceof ItemStack stack)) {
+                throw new IllegalStateException("Magnet filter action received a non-item holder.");
+            }
+            MagnetComponent requested = context.payload().get(GTDataComponents.MAGNET.get());
+            if (requested == null) {
+                throw new IllegalStateException("Magnet filter action payload is missing.");
+            }
+            setMagnetFilter(stack, requested.filterType());
+        }
     }
 }
