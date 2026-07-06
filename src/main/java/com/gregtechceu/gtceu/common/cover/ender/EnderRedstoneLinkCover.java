@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.cover.ender;
 
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.entries.VirtualRedstone;
@@ -9,8 +10,7 @@ import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.Direction;
 
@@ -32,7 +32,7 @@ public class EnderRedstoneLinkCover extends AbstractEnderLinkCover<VirtualRedsto
 
     public EnderRedstoneLinkCover(CoverDefinition definition, ICoverable coverHolder, Direction attachedSide) {
         super(definition, coverHolder, attachedSide);
-        if (!isRemote()) {
+        if (!coverHolder.isRemote()) {
             uuid = UUID.randomUUID();
             setVirtualEntry();
         } else uuid = null;
@@ -75,8 +75,9 @@ public class EnderRedstoneLinkCover extends AbstractEnderLinkCover<VirtualRedsto
     }
 
     @Override
-    protected Widget addVirtualEntryWidget(VirtualEntry entry, int x, int y, int width, int height, boolean canClick) {
-        return new WidgetGroup(x, y, width, height);
+    protected UIElement addVirtualEntryLDLib2Element(VirtualEntry entry, int x, int y, int width, int height,
+                                                     boolean canClick) {
+        return UITemplate.setLDLib2Bounds(new UIElement(), x, y, width, height);
     }
 
     @Override

@@ -25,6 +25,7 @@ public class GTNetwork {
         registar.playToServer(CPacketItemActionToServer.TYPE, CPacketItemActionToServer.CODEC, CPacketItemActionToServer::execute);
         registar.playToClient(SPacketImageResponse.TYPE, SPacketImageResponse.CODEC, SPacketImageResponse::execute);
         registar.playToClient(SPacketMachineSyncToClient.TYPE, SPacketMachineSyncToClient.CODEC, SPacketMachineSyncToClient::execute);
+        registar.playToClient(SPacketEnderLinkChannelsToClient.TYPE, SPacketEnderLinkChannelsToClient.CODEC, SPacketEnderLinkChannelsToClient::execute);
 
         registar.playToServer(CPacketKeyDown.TYPE, CPacketKeyDown.CODEC, CPacketKeyDown::execute);
 
