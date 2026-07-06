@@ -15,9 +15,6 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTToolBehaviors;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
@@ -56,42 +53,6 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
     public boolean openUI(@NotNull Player player, @NotNull InteractionHand hand) {
         return player.isShiftKeyDown() && !player.getItemInHand(hand)
                 .getOrDefault(GTDataComponents.AOE, AoESymmetrical.ZERO).isZero();
-    }
-
-    @Override
-    public ModularUI createUI(Player player, HeldItemUIHolder holder) {
-        ItemStack held = holder.getHeld();
-        final AoESymmetrical.Mutable definition = getAoEDefinition(held).toMutable();
-        return new ModularUI(120, 80, holder, player).background(GuiTextures.BACKGROUND)
-                .widget(new LabelWidget(6, 10, "item.gtpm.tool.aoe.columns"))
-                .widget(new LabelWidget(49, 10, "item.gtpm.tool.aoe.rows"))
-                .widget(new LabelWidget(79, 10, "item.gtpm.tool.aoe.layers"))
-                .widget(new ButtonWidget(15, 24, 20, 20, GuiTextures.text("+"), (data) -> {
-                    held.set(GTDataComponents.AOE, definition.increaseColumn().toImmutable());
-                }))
-                .widget(new ButtonWidget(15, 44, 20, 20, GuiTextures.text("-"), (data) -> {
-                    held.set(GTDataComponents.AOE, definition.decreaseColumn().toImmutable());
-                }))
-                .widget(new ButtonWidget(50, 24, 20, 20, GuiTextures.text("+"), (data) -> {
-                    held.set(GTDataComponents.AOE, definition.increaseRow().toImmutable());
-                }))
-                .widget(new ButtonWidget(50, 44, 20, 20, GuiTextures.text("-"), (data) -> {
-                    held.set(GTDataComponents.AOE, definition.decreaseRow().toImmutable());
-                }))
-                .widget(new ButtonWidget(85, 24, 20, 20, GuiTextures.text("+"), (data) -> {
-                    held.set(GTDataComponents.AOE, definition.increaseLayer().toImmutable());
-                }))
-                .widget(new ButtonWidget(85, 44, 20, 20, GuiTextures.text("-"), (data) -> {
-                    held.set(GTDataComponents.AOE, definition.decreaseLayer().toImmutable());
-                }))
-                .widget(new LabelWidget(23, 65,
-                        () -> Integer.toString(
-                                1 + 2 * held.getOrDefault(GTDataComponents.AOE, AoESymmetrical.ZERO).column())))
-                .widget(new LabelWidget(58, 65,
-                        () -> Integer.toString(
-                                1 + 2 * held.getOrDefault(GTDataComponents.AOE, AoESymmetrical.ZERO).row())))
-                .widget(new LabelWidget(93, 65, () -> Integer
-                        .toString(1 + held.getOrDefault(GTDataComponents.AOE, AoESymmetrical.ZERO).layer())));
     }
 
     @Override

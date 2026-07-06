@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.item.tool.behavior;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -32,8 +31,6 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
 
     boolean openUI(@NotNull Player player, @NotNull InteractionHand hand);
 
-    ModularUI createUI(Player player, HeldItemUIHolder holder);
-
     /**
      * Returns whether this behavior has a migrated LDLib2 held-item UI for the provided context.
      */
@@ -58,7 +55,7 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
     /**
      * Builds the migrated LDLib2 held-item UI for this behavior.
      *
-     * @return the LDLib2 UI tree, or {@code null} when this behavior only supports the legacy held-item UI.
+     * @return the LDLib2 UI tree, or {@code null} when this behavior has no LDLib2 UI.
      */
     @Nullable
     default UI createLDLib2UI(Player player, HeldItemUIHolder holder) {

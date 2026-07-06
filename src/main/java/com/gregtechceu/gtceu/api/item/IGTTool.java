@@ -9,7 +9,6 @@ import com.gregtechceu.gtceu.api.data.chemical.material.properties.ToolProperty;
 import com.gregtechceu.gtceu.api.data.chemical.material.stack.MaterialEntry;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
-import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2HeldItemUIProvider;
 import com.gregtechceu.gtceu.api.item.capability.ElectricItem;
 import com.gregtechceu.gtceu.api.item.component.ElectricStats;
@@ -30,7 +29,6 @@ import com.gregtechceu.gtceu.data.recipe.VanillaRecipeHelper;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.core.*;
@@ -70,7 +68,7 @@ import java.util.stream.Collectors;
 
 import static com.gregtechceu.gtceu.api.item.tool.ToolHelper.*;
 
-public interface IGTTool extends HeldItemUIProvider, LDLib2HeldItemUIProvider, ItemLike {
+public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
 
     GTToolType getToolType();
 
@@ -698,17 +696,6 @@ public interface IGTTool extends HeldItemUIProvider, LDLib2HeldItemUIProvider, I
         if (ConfigHolder.INSTANCE.client.toolUseSounds && getSound() != null) {
             player.level().playSound(null, player, getSound().getMainEvent(), SoundSource.PLAYERS, 1F, 1F);
         }
-    }
-
-    @Override
-    default ModularUI createUI(Player player, HeldItemUIHolder holder) {
-        for (var behavior : getToolStats().getBehaviors()) {
-            if (!(behavior instanceof IToolUIBehavior<?> uiBehavior) || !uiBehavior.openUI(player, holder.getHand())) {
-                continue;
-            }
-            return uiBehavior.createUI(player, holder);
-        }
-        return new ModularUI(holder, player);
     }
 
     @Override
