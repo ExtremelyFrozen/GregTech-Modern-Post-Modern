@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.widget.ScrollablePhantomFluidWidget;
@@ -10,7 +11,6 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
@@ -207,26 +207,10 @@ public class SimpleFluidFilter implements FluidFilter {
         return amount;
     }
 
-    private Button createLDLib2ToggleButton(int x, int y, IGuiTexture texture, BooleanSupplier isPressed,
-                                            Consumer<Boolean> setPressed) {
-        Button button = new Button();
-        button.noText();
-        updateLDLib2ToggleButtonTexture(button, texture, isPressed.getAsBoolean());
-        button.setOnClick(event -> {
-            boolean pressed = !isPressed.getAsBoolean();
-            setPressed.accept(pressed);
-            updateLDLib2ToggleButtonTexture(button, texture, pressed);
-        });
-        setLDLib2Bounds(button, x, y, 20, 20);
-        return button;
-    }
-
-    private static void updateLDLib2ToggleButtonTexture(Button button, IGuiTexture texture, boolean pressed) {
-        IGuiTexture stateTexture = GuiTextures.buttonState(texture, pressed);
-        button.buttonStyle(style -> style
-                .baseTexture(stateTexture)
-                .hoverTexture(stateTexture)
-                .pressedTexture(stateTexture));
+    private GTToggleButtonElement createLDLib2ToggleButton(int x, int y, IGuiTexture texture,
+                                                           BooleanSupplier isPressed,
+                                                           Consumer<Boolean> setPressed) {
+        return new GTToggleButtonElement(x, y, 20, 20, texture, isPressed, setPressed);
     }
 
     @Override
