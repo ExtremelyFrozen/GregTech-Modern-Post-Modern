@@ -250,6 +250,33 @@ public class GTFluidSlotElement extends UIElement {
         return this;
     }
 
+    public GTFluidSlotElement xeiRecipeIngredient() {
+        return xeiRecipeIngredient(ingredientIO);
+    }
+
+    public GTFluidSlotElement xeiRecipeIngredient(IngredientIO ingredientIO) {
+        this.ingredientIO = ingredientIO;
+        addXEIRecipeIngredient(ingredientIO, xeiFluids);
+        return this;
+    }
+
+    public GTFluidSlotElement xeiRecipeIngredient(GTXEIIngredientRole role) {
+        return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role));
+    }
+
+    public GTFluidSlotElement xeiRecipeIngredient(IngredientIO ingredientIO,
+                                                  Supplier<Stream<FluidStack>> allPossibleFluids) {
+        this.ingredientIO = ingredientIO;
+        this.xeiFluids = allPossibleFluids;
+        addXEIRecipeIngredient(ingredientIO, allPossibleFluids);
+        return this;
+    }
+
+    public GTFluidSlotElement xeiRecipeIngredient(GTXEIIngredientRole role,
+                                                  Supplier<Stream<FluidStack>> allPossibleFluids) {
+        return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), allPossibleFluids);
+    }
+
     public GTFluidSlotElement setBackgroundTexture(IGuiTexture background) {
         this.background = background;
         return this;
@@ -390,6 +417,20 @@ public class GTFluidSlotElement extends UIElement {
         setFluid(refreshedFluid.copy());
         if (changed && changeListener != null) {
             changeListener.run();
+        }
+    }
+
+    private void addXEIRecipeIngredient(IngredientIO io, Supplier<Stream<FluidStack>> allPossibleFluids) {
+        if (LDLib2.isJeiLoaded()) {
+            LDLibJEIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
+                    .map(this::createJEIFluidIngredient)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()));
+        }
+        if (LDLib2.isEmiLoaded()) {
+            LDLibEMIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
+                    .map(fluid -> EmiStack.of(fluid.getFluid(), fluid.getComponentsPatch(), fluid.getAmount()))
+                    .collect(Collectors.toList()));
         }
     }
 
