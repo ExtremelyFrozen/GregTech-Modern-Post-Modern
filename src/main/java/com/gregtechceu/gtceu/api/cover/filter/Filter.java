@@ -6,14 +6,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Matches resources and optionally exposes an LDLib2 configurator for filter items.
+ * Matches resources and exposes an LDLib2 configurator for filter items.
  */
 public interface Filter<T, S extends Filter<T, S>> extends Predicate<T> {
-
-    /**
-     * Returns whether this filter instance can build an LDLib2 configurator for editing its state.
-     */
-    boolean supportsLDLib2Configurator();
 
     /**
      * Builds the LDLib2 configurator at the requested fixed-position offset.

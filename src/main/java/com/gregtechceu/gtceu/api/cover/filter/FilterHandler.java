@@ -73,7 +73,7 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
     public UIElement createFilterConfigLDLib2UI(int xPos, int yPos, int width, int height) {
         F loadedFilter = this.filterItem.isEmpty() ? null : getFilter();
         this.filterLDLib2Group = UITemplate.setLDLib2Bounds(new UIElement(), xPos, yPos, width, height);
-        if (loadedFilter != null && loadedFilter.supportsLDLib2Configurator()) {
+        if (!this.filterItem.isEmpty() && loadedFilter != null) {
             this.filterLDLib2Group.addChild(loadedFilter.openLDLib2Configurator(0, 0));
         }
 
@@ -184,7 +184,7 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
                 this.filterLDLib2Group.removeChild(child);
             }
 
-            if (!this.filterItem.isEmpty() && this.filter != null && this.filter.supportsLDLib2Configurator()) {
+            if (!this.filterItem.isEmpty() && this.filter != null) {
                 this.filterLDLib2Group.addChild(this.filter.openLDLib2Configurator(0, 0));
             }
         }

@@ -30,8 +30,7 @@ public record FluidFilterBehaviour(Function<ItemStack, FluidFilter> filterCreato
 
     @Override
     public boolean canCreateLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
-        return ItemStack.isSameItem(holder.getHeld(), holder.getOpenedStack()) &&
-                FluidFilter.loadFilter(holder.getHeld()).supportsLDLib2Configurator();
+        return ItemStack.isSameItem(holder.getHeld(), holder.getOpenedStack());
     }
 
     @Override

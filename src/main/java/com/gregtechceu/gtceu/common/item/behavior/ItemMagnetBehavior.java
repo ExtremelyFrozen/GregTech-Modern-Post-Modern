@@ -91,11 +91,7 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
     @Override
     public boolean canCreateLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
         ItemStack held = holder.getHeld();
-        return isMagnet(held) && ItemStack.isSameItem(held, holder.getOpenedStack()) &&
-                held.getOrDefault(GTDataComponents.MAGNET, MagnetComponent.EMPTY)
-                        .filterType()
-                        .loadFilter(held)
-                        .supportsLDLib2Configurator();
+        return isMagnet(held) && ItemStack.isSameItem(held, holder.getOpenedStack());
     }
 
     @Override

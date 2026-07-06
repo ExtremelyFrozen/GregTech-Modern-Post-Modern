@@ -114,7 +114,7 @@ public class ItemFilterCover extends CoverBehavior implements LDLib2CoverUIProvi
 
     @Override
     public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
-        return holder.getCover() == this && getItemFilter().supportsLDLib2Configurator();
+        return holder.getCover() == this;
     }
 
     @Override
@@ -239,8 +239,7 @@ public class ItemFilterCover extends CoverBehavior implements LDLib2CoverUIProvi
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ItemFilterCover cover &&
-                    cover.getItemFilter().supportsLDLib2Configurator();
+            return context.holder() instanceof ItemFilterCover;
         }
 
         @Override

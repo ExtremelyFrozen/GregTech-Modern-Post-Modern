@@ -103,7 +103,7 @@ public class FluidFilterCover extends CoverBehavior implements LDLib2CoverUIProv
 
     @Override
     public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
-        return holder.getCover() == this && getFluidFilter().supportsLDLib2Configurator();
+        return holder.getCover() == this;
     }
 
     @Override
@@ -227,8 +227,7 @@ public class FluidFilterCover extends CoverBehavior implements LDLib2CoverUIProv
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof FluidFilterCover cover &&
-                    cover.getFluidFilter().supportsLDLib2Configurator();
+            return context.holder() instanceof FluidFilterCover;
         }
 
         @Override

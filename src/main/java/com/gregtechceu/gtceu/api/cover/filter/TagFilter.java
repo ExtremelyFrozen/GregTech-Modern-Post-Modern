@@ -51,11 +51,6 @@ public abstract class TagFilter<T, S extends Filter<T, S>> implements Filter<T, 
     }
 
     @Override
-    public boolean supportsLDLib2Configurator() {
-        return true;
-    }
-
-    @Override
     public UIElement openLDLib2Configurator(int x, int y) {
         UIElement group = new UIElement();
         setLDLib2Bounds(group, x, y, 18 * 3 + 25, 18 * 3);
