@@ -21,8 +21,7 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
     default @NotNull InteractionResultHolder<ItemStack> onItemRightClick(@NotNull Level level, @NotNull Player player,
                                                                           @NotNull InteractionHand hand) {
         var heldItem = player.getItemInHand(hand);
-        if (player instanceof ServerPlayer serverPlayer && (openUI(serverPlayer, hand) ||
-                openLDLib2UI(serverPlayer, hand))) {
+        if (player instanceof ServerPlayer serverPlayer && openLDLib2UI(serverPlayer, hand)) {
             HeldItemUIHelper.open(serverPlayer, hand);
             return InteractionResultHolder.success(heldItem);
         }
