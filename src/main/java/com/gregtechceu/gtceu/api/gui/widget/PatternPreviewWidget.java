@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.gui.ColorPattern;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
@@ -24,7 +25,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scene;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
@@ -66,8 +66,8 @@ public class PatternPreviewWidget extends UIElement {
     private static final Map<MultiblockMachineDefinition, MBPattern[]> CACHE = new HashMap<>();
     private final Scene scene;
     private final ScrollerView scrollableView;
-    private final Button pageButton;
-    private final Button layerButton;
+    private final GTButtonElement pageButton;
+    private final GTButtonElement layerButton;
     public final MultiblockMachineDefinition controllerDefinition;
     private final MBPattern[] patterns;
     private final List<SimplePredicate> predicates;
@@ -176,23 +176,15 @@ public class PatternPreviewWidget extends UIElement {
         return title;
     }
 
-    private static Button createButton(int x, int y) {
-        Button button = new Button();
-        button.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(x);
-            layout.top(y);
-            layout.width(18);
-            layout.height(18);
-        });
+    private static GTButtonElement createButton(int x, int y) {
+        GTButtonElement button = new GTButtonElement(x, y, 18, 18);
         button.textStyle(style -> {
             style.textColor(-1);
             style.textShadow(false);
         });
-        button.buttonStyle(style -> style
-                .baseTexture(ColorPattern.T_GRAY.rectTexture())
-                .hoverTexture(GuiTextures.group(ColorPattern.T_GRAY.rectTexture(), GuiTextures.colorRect(0x4fffffff)))
-                .pressedTexture(ColorPattern.T_GRAY.rectTexture()));
+        button.setButtonTextures(ColorPattern.T_GRAY.rectTexture(),
+                GuiTextures.group(ColorPattern.T_GRAY.rectTexture(), GuiTextures.colorRect(0x4fffffff)),
+                ColorPattern.T_GRAY.rectTexture());
         return button;
     }
 
