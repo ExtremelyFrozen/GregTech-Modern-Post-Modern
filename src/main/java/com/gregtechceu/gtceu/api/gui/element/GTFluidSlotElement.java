@@ -210,20 +210,6 @@ public class GTFluidSlotElement extends UIElement {
         return setXEIPossibleFluids(fluids::stream);
     }
 
-    public GTFluidSlotElement setXEIRecipeSlot() {
-        return xeiRecipeSlot();
-    }
-
-    public GTFluidSlotElement setXEIRecipeSlot(IngredientIO ingredientIO, float xeiChance, int xeiAmount,
-                                               Supplier<Stream<FluidStack>> xeiFluids) {
-        return xeiRecipeSlot(ingredientIO, xeiChance, xeiAmount, xeiFluids);
-    }
-
-    public GTFluidSlotElement setXEIRecipeSlot(GTXEIIngredientRole role, float xeiChance, int xeiAmount,
-                                               Supplier<Stream<FluidStack>> xeiFluids) {
-        return setXEIRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), xeiChance, xeiAmount, xeiFluids);
-    }
-
     public GTFluidSlotElement setOnAddedTooltips(
                                                  BiConsumer<GTFluidSlotElement, List<Component>> onAddedTooltips) {
         this.onAddedTooltips = onAddedTooltips;
