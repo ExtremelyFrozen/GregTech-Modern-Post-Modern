@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.gui.widget.PredicatedButtonWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.directional.IDirectionalConfigHandler;
 import com.gregtechceu.gtceu.api.item.IComponentItem;
@@ -16,18 +15,23 @@ import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.item.behavior.CoverPlaceBehavior;
 
 import com.lowdragmc.lowdraglib2.gui.util.ClickData;
+import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 public class CoverableConfigHandler implements IDirectionalConfigHandler {
 
+    private static final int CONFIG_BUTTON_VISIBILITY_UPDATE_ID = 1;
     private static final IGuiTexture CONFIG_BTN_TEXTURE = GuiTextures.group(GuiTextures.IO_CONFIG_COVER_SETTINGS);
 
     private final ICoverable machine;
@@ -37,6 +41,7 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
     private ConfiguratorPanel panel;
 
     private SlotWidget slotWidget;
+    private ButtonWidget configButton;
     private CoverBehavior coverBehavior;
     private boolean syncingDisplayedCoverItem;
 
@@ -79,12 +84,60 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
         }
                 .setChangeListener(this::coverItemChanged)
                 .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.IO_CONFIG_COVER_SLOT_OVERLAY)));
-        group.addWidget(new PredicatedButtonWidget(0, 0, 18, 18, CONFIG_BTN_TEXTURE, this::toggleConfigTab,
-                this::hasConfigurableCover));
+        configButton = createConfigButton();
+        configButton.setVisible(false);
+        configButton.setActive(false);
+        group.addWidget(configButton);
 
         checkCoverBehaviour();
 
         return group;
+    }
+
+    private ButtonWidget createConfigButton() {
+        return new ButtonWidget(0, 0, 18, 18, CONFIG_BTN_TEXTURE, this::toggleConfigTab) {
+
+            private boolean configButtonVisible;
+
+            @Override
+            public void writeInitialData(RegistryFriendlyByteBuf buffer) {
+                super.writeInitialData(buffer);
+                updateConfigButtonState(hasConfigurableCover());
+                buffer.writeBoolean(configButtonVisible);
+            }
+
+            @Override
+            public void readInitialData(RegistryFriendlyByteBuf buffer) {
+                super.readInitialData(buffer);
+                updateConfigButtonState(buffer.readBoolean());
+            }
+
+            @Override
+            public void detectAndSendChanges() {
+                super.detectAndSendChanges();
+                boolean visible = hasConfigurableCover();
+                if (configButtonVisible != visible) {
+                    updateConfigButtonState(visible);
+                    writeUpdateInfo(CONFIG_BUTTON_VISIBILITY_UPDATE_ID, buf -> buf.writeBoolean(configButtonVisible));
+                }
+            }
+
+            @Override
+            @OnlyIn(Dist.CLIENT)
+            public void readUpdateInfo(int id, RegistryFriendlyByteBuf buffer) {
+                if (id == CONFIG_BUTTON_VISIBILITY_UPDATE_ID) {
+                    updateConfigButtonState(buffer.readBoolean());
+                    return;
+                }
+                super.readUpdateInfo(id, buffer);
+            }
+
+            private void updateConfigButtonState(boolean visible) {
+                configButtonVisible = visible;
+                setVisible(visible);
+                setActive(visible);
+            }
+        };
     }
 
     // FIXME: This gets called twice in a single tick, causing two covers to exist simultaneously
@@ -125,11 +178,16 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
         var sideSelected = this.side != null;
         slotWidget.setVisible(sideSelected);
         slotWidget.setActive(sideSelected);
+        var configurableCover = hasConfigurableCover();
+        configButton.setVisible(configurableCover);
+        configButton.setActive(configurableCover);
     }
 
     public void checkCoverBehaviour() {
-        if (side == null)
+        if (side == null) {
+            updateWidgetVisibility();
             return;
+        }
 
         var coverBehaviour = machine.getCoverAtSide(side);
         if (coverBehaviour != this.coverBehavior) {
