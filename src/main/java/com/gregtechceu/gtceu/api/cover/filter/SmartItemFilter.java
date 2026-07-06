@@ -4,14 +4,12 @@ import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.util.StringRepresentable;
@@ -55,14 +53,6 @@ public class SmartItemFilter implements ItemFilter {
     private void setFilterMode(SmartFilteringMode filterMode) {
         this.filterMode = filterMode;
         onUpdated.accept(this);
-    }
-
-    @Override
-    public WidgetGroup openConfigurator(int x, int y) {
-        WidgetGroup group = new WidgetGroup(x, y, 18 * 3 + 25, 18 * 3);
-        group.addWidget(new EnumSelectorWidget<>(16, 8, 32, 32,
-                SmartFilteringMode.VALUES, filterMode, this::setFilterMode));
-        return group;
     }
 
     @Override
@@ -139,7 +129,7 @@ public class SmartItemFilter implements ItemFilter {
         }
     }
 
-    public enum SmartFilteringMode implements EnumSelectorWidget.SelectableEnum, StringRepresentable {
+    public enum SmartFilteringMode implements StringRepresentable {
 
         ELECTROLYZER("electrolyzer", GTRecipeTypes.ELECTROLYZER_RECIPES),
         CENTRIFUGE("centrifuge", GTRecipeTypes.CENTRIFUGE_RECIPES),
@@ -157,12 +147,10 @@ public class SmartItemFilter implements ItemFilter {
             this.recipeType = type;
         }
 
-        @Override
         public String getTooltip() {
             return "cover.smart_item_filter.filtering_mode." + name;
         }
 
-        @Override
         public IGuiTexture getIcon() {
             return GuiTextures.resource("gtpm:textures/block/machines/" + name + "/overlay_front.png");
         }

@@ -5,13 +5,9 @@ import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.TagExprFilter;
 
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -52,17 +48,6 @@ public abstract class TagFilter<T, S extends Filter<T, S>> implements Filter<T, 
         matchExpr = TagExprFilter.parseExpression(tagFilterExpression);
         // noinspection unchecked
         onUpdated.accept((S) this);
-    }
-
-    public WidgetGroup openConfigurator(int x, int y) {
-        WidgetGroup group = new WidgetGroup(x, y, 18 * 3 + 25, 18 * 3); // 80 55
-        group.addWidget(new ImageWidget(0, 0, 20, 20, GuiTextures.INFO_ICON)
-                .setHoverTooltips(
-                        LangHandler.getMultiLang("cover.tag_filter.info").toArray(new MutableComponent[0])));
-        group.addWidget(new TextFieldWidget(0, 29, 18 * 3 + 25, 12, () -> tagFilterExpression, this::setFilterExpr)
-                .setMaxStringLength(MAX_FILTER_LENGTH)
-                .setValidator(TagFilter::normalizeInput));
-        return group;
     }
 
     @Override

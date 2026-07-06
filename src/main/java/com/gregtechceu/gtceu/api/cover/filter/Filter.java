@@ -1,14 +1,11 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public interface Filter<T, S extends Filter<T, S>> extends Predicate<T> {
-
-    WidgetGroup openConfigurator(int x, int y);
 
     default boolean supportsLDLib2Configurator() {
         return false;
