@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.cover;
 import com.gregtechceu.gtceu.api.blockentity.ICopyable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.IToolGridHighlight;
@@ -175,10 +174,6 @@ public abstract class CoverBehavior implements ISyncManaged, IToolGridHighlight,
 
     public @Nullable Supplier<ICoverRenderer> getCoverRenderer() {
         return coverDefinition.getCoverRenderer();
-    }
-
-    public @Nullable IFancyConfigurator getConfigurator() {
-        return null;
     }
 
     @Override

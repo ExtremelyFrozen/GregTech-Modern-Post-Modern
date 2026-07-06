@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.fancy.*;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CombinedDirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.MachineModeFancyConfigurator;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
@@ -18,7 +17,6 @@ import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
@@ -117,15 +115,6 @@ public interface IFancyUIMachine extends IUIMachine, IFancyUIProvider {
                     .setTooltipsSupplier(pressed -> List.of(
                             Component.translatable(
                                     pressed ? "behaviour.soft_hammer.enabled" : "behaviour.soft_hammer.disabled"))));
-        }
-        if (this instanceof MetaMachine machine) {
-            for (var direction : Direction.values()) {
-                if (machine.getCoverContainer().hasCover(direction)) {
-                    var configurator = machine.getCoverContainer().getCoverAtSide(direction).getConfigurator();
-                    if (configurator != null)
-                        configuratorPanel.attachConfigurators(configurator);
-                }
-            }
         }
     }
 
