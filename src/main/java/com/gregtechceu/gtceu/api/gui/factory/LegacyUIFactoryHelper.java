@@ -14,7 +14,6 @@ public final class LegacyUIFactoryHelper {
      */
     public static void register() {
         UIFactory.register(MachineUIFactory.INSTANCE);
-        UIFactory.register(GTHeldItemUIFactory.INSTANCE);
         UIFactory.register(GTUIEditorFactory.INSTANCE);
     }
 }

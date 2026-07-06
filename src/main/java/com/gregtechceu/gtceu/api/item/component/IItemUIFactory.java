@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.item.component;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -16,14 +15,6 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 public interface IItemUIFactory extends IInteractionItem {
-
-    /**
-     * Builds the legacy LDLib held-item UI; components that only support LDLib2 may return {@code null}.
-     */
-    @Nullable
-    default ModularUI createUI(HeldItemUIHolder holder, Player entityPlayer) {
-        return null;
-    }
 
     /**
      * Returns whether this item component has a migrated LDLib2 held-item UI for the provided context.

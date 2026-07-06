@@ -358,6 +358,28 @@ public abstract class ProspectorMode<T> {
         }
     };
 
+    public static int getNetworkId(ProspectorMode<?> mode) {
+        if (mode == ORE) {
+            return 0;
+        }
+        if (mode == FLUID) {
+            return 1;
+        }
+        if (mode == BEDROCK_ORE) {
+            return 2;
+        }
+        throw new IllegalStateException("Unknown prospector mode: " + mode.unlocalizedName);
+    }
+
+    public static ProspectorMode<?> fromNetworkId(int id) {
+        return switch (id) {
+            case 0 -> ORE;
+            case 1 -> FLUID;
+            case 2 -> BEDROCK_ORE;
+            default -> throw new IllegalStateException("Unknown prospector mode id: " + id);
+        };
+    }
+
     public final String unlocalizedName;
     public final int cellSize;
 

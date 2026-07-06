@@ -1,15 +1,11 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
- * Default held item UI holder used by the GTM compatibility factory.
+ * Default GTM held item UI holder used by LDLib2 held item providers.
  */
 public final class HeldItemUIHolderContext implements HeldItemUIHolder {
 
@@ -45,29 +41,5 @@ public final class HeldItemUIHolderContext implements HeldItemUIHolder {
     @Override
     public ItemStack getOpenedStack() {
         return openedStack;
-    }
-
-    @Nullable
-    @Override
-    public ModularUI createUI(Player player) {
-        if (getHeld().getItem() instanceof HeldItemUIProvider uiProvider) {
-            return uiProvider.createUI(player, this);
-        }
-        return null;
-    }
-
-    @Override
-    public boolean isInvalid() {
-        return !ItemStack.matches(player.getItemInHand(hand), openedStack);
-    }
-
-    @Override
-    public boolean isRemote() {
-        return player.level().isClientSide;
-    }
-
-    @Override
-    public void markAsDirty() {
-        // Required by legacy IUIHolder; GTM item UI state must use automatic sync or action packets.
     }
 }

@@ -1,8 +1,5 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
-import com.lowdragmc.lowdraglib.gui.modular.IUIHolder;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -10,10 +7,9 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Holds the player, hand, and opened stack needed to build a held item UI.
  *
- * <p>This interface keeps GTM item and tool UI code independent from LDLib's held item factory while the
- * current held item screens still build legacy {@link ModularUI} trees.
+ * <p>This interface keeps GTM item and tool UI code independent from LDLib2's native held item holder.
  */
-public interface HeldItemUIHolder extends IUIHolder {
+public interface HeldItemUIHolder {
 
     /**
      * Returns the player that opened the held item UI.

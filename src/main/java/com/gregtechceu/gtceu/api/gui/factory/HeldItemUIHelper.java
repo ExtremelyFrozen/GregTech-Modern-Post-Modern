@@ -30,7 +30,7 @@ public final class HeldItemUIHelper {
                 uiProvider.canCreateLDLib2UI(player, new HeldItemUIHolderContext(player, hand))) {
             return HeldItemUIMenuType.openUI(player, hand);
         }
-        return GTHeldItemUIFactory.INSTANCE.openUI(player, hand);
+        return false;
     }
 
     /**
