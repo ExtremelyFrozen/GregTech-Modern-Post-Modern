@@ -30,7 +30,6 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -78,22 +77,6 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
 
     private static boolean isValidCircuitConfiguration(int configuration) {
         return configuration >= 0 && configuration <= CIRCUIT_MAX;
-    }
-
-    // deprecated, not needed (for now)
-    @Deprecated
-    public static void adjustConfiguration(HeldItemUIHolder holder, int amount) {
-        adjustConfiguration(holder.getHeld(), amount);
-    }
-
-    // deprecated, not needed (for now)
-    @Deprecated
-    public static void adjustConfiguration(ItemStack stack, int amount) {
-        if (!isIntegratedCircuit(stack)) return;
-        int configuration = getCircuitConfiguration(stack);
-        configuration += amount;
-        configuration = Mth.clamp(configuration, 0, CIRCUIT_MAX);
-        setCircuitConfiguration(stack, configuration);
     }
 
     @Override
