@@ -28,9 +28,7 @@ import net.minecraft.world.level.Level;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class ProspectorScannerBehavior implements IItemUIFactory, IInteractionItem, IAddInformation {
 
@@ -40,7 +38,7 @@ public class ProspectorScannerBehavior implements IItemUIFactory, IInteractionIt
 
     public ProspectorScannerBehavior(int radius, long cost, ProspectorMode<?>... modes) {
         this.radius = radius + 1;
-        this.modes = Arrays.stream(modes).filter(Objects::nonNull).toArray(ProspectorMode[]::new);
+        this.modes = modes.clone();
         this.cost = cost;
     }
 
