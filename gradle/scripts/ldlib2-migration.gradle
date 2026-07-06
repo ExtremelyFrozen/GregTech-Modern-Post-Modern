@@ -43,6 +43,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         var manualMarkAsDirtyCall = ~/.*\.markAsDirty\s*\(.*/
         var ldlib2FluidClickAttribute = ~/.*(?<!legacy-)allow-click-(filled|drained)=.*/
         var forbiddenNullCheck = 'require' + 'NonNull'
+        var legacyFluidXeiSlotEntry = 'setXEIRecipe' + 'Slot'
 
         var patterns = [
                 'com.lowdragmc.lowdraglib.',
@@ -51,6 +52,7 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'IngredientIO.BOTH',
                 'Objects.' + forbiddenNullCheck,
                 forbiddenNullCheck + '(',
+                legacyFluidXeiSlotEntry,
                 '@RPCMethod',
                 'RPCEmitter',
                 'RPCEventBuilder',
