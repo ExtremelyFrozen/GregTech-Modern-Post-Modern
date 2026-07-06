@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.machine.fancyconfigurator;
 
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class FancySelectorConfigurator<T extends Enum<T> & EnumSelectorWidget.SelectableEnum>
+public class FancySelectorConfigurator<T extends Enum<T> & SelectableEnum>
                                       implements IFancyConfiguratorButton {
 
     private final EnumSelectorWidget<T> widget;

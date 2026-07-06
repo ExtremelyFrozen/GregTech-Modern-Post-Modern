@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.api.capability.recipe;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
@@ -10,7 +10,7 @@ import lombok.Getter;
 /**
  * The capability can be input or output or both
  */
-public enum IO implements EnumSelectorWidget.SelectableEnum {
+public enum IO implements SelectableEnum {
 
     IN("gtpm.io.import", "import"),
     OUT("gtpm.io.export", "export"),

@@ -1,11 +1,11 @@
 package com.gregtechceu.gtceu.common.cover.data;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
-public enum ManualIOMode implements EnumSelectorWidget.SelectableEnum {
+public enum ManualIOMode implements SelectableEnum {
 
     DISABLED("disabled"),
     FILTERED("filtered"),

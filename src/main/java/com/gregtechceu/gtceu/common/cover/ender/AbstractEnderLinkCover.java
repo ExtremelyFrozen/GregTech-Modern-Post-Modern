@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandler;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTEnumSelectorElement;
@@ -631,7 +632,7 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         return null;
     }
 
-    protected enum Permissions {
+    protected enum Permissions implements SelectableEnum {
 
         PUBLIC("cover.ender_fluid_link.private.tooltip.disabled",
                 GuiTextures.BUTTON_PUBLIC_PRIVATE.getSubTexture(0, 0, 1, 0.5)),
@@ -746,9 +747,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
 
         @Contract("_ -> new")
         private @NotNull UIElement createToggleButtonForPrivacy(int currentX) {
-            return new GTEnumSelectorElement<>(currentX, 0, WIDGET_BOARD, WIDGET_BOARD, Permissions.values(),
-                    cover::getPermission, value -> cover.setLDLib2Permission(player, holder, value),
-                    Permissions::getIcon, Permissions::getTooltip);
+            return GTEnumSelectorElement.selectable(currentX, 0, WIDGET_BOARD, WIDGET_BOARD, Permissions.values(),
+                    cover::getPermission, value -> cover.setLDLib2Permission(player, holder, value));
         }
 
         private ColorBlockElement createColorBlockElement(int currentX, IntSupplier colorSupplier) {
@@ -772,11 +772,11 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         }
 
         private void addEnumSelectorElements() {
-            mainGroup.addChild(new GTEnumSelectorElement<>(146, 82, WIDGET_BOARD, WIDGET_BOARD, List.of(IO.IN, IO.OUT),
-                    cover::getIo, value -> cover.setLDLib2Io(player, holder, value), IO::getIcon, IO::getTooltip));
-            mainGroup.addChild(new GTEnumSelectorElement<>(146, 107, WIDGET_BOARD, WIDGET_BOARD, ManualIOMode.VALUES,
-                    cover::getManualIOMode, value -> cover.setLDLib2ManualIOMode(player, holder, value),
-                    ManualIOMode::getIcon, ManualIOMode::getTooltip));
+            mainGroup.addChild(GTEnumSelectorElement.selectable(146, 82, WIDGET_BOARD, WIDGET_BOARD,
+                    List.of(IO.IN, IO.OUT), cover::getIo, value -> cover.setLDLib2Io(player, holder, value)));
+            mainGroup.addChild(GTEnumSelectorElement.selectable(146, 107, WIDGET_BOARD, WIDGET_BOARD,
+                    ManualIOMode.VALUES, cover::getManualIOMode,
+                    value -> cover.setLDLib2ManualIOMode(player, holder, value)));
         }
 
         private void addChannelWidgets(List<? extends VirtualEntry> entries) {

@@ -138,8 +138,8 @@ public class AdvancedItemVoidingCover extends ItemVoidingCover {
 
     @Override
     protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {
-        root.addChild(new GTEnumSelectorElement<>(146, 20, 20, 20, VoidingMode.values(), this::getVoidingMode,
-                mode -> setLDLib2VoidingMode(player, holder, mode), VoidingMode::getIcon, VoidingMode::getTooltip));
+        root.addChild(GTEnumSelectorElement.selectable(146, 20, 20, 20, VoidingMode.values(), this::getVoidingMode,
+                mode -> setLDLib2VoidingMode(player, holder, mode)));
 
         this.stackSizeLDLib2Input = new GTIntInputElement(64, 20, 80, 20,
                 () -> globalVoidingLimit, value -> setLDLib2GlobalVoidingLimit(player, holder, value));

@@ -195,9 +195,8 @@ public class RobotArmCover extends ConveyorCover {
 
     @Override
     protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {
-        root.addChild(new GTEnumSelectorElement<>(146, 45, 20, 20, TransferMode.values(), this::getTransferMode,
-                mode -> setLDLib2TransferMode(player, holder, mode), TransferMode::getIcon,
-                TransferMode::getTooltip));
+        root.addChild(GTEnumSelectorElement.selectable(146, 45, 20, 20, TransferMode.values(),
+                this::getTransferMode, mode -> setLDLib2TransferMode(player, holder, mode)));
 
         this.stackSizeLDLib2Input = new GTIntInputElement(64, 45, 80, 20,
                 this::getGlobalTransferLimit, value -> setLDLib2GlobalTransferLimit(player, holder, value));

@@ -113,10 +113,10 @@ public class FluidFilterCover extends CoverBehavior implements LDLib2CoverUIProv
         root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
 
         root.addChild(createLDLib2Label());
-        root.addChild(new GTEnumSelectorElement<>(35, 25, 18, 18, FilterMode.VALUES, this::getFilterMode,
-                mode -> setLDLib2FilterMode(player, holder, mode), FilterMode::getIcon, FilterMode::getTooltip));
-        root.addChild(new GTEnumSelectorElement<>(35, 45, 18, 18, ManualIOMode.VALUES, this::getAllowFlow,
-                mode -> setLDLib2ManualIO(player, holder, mode), ManualIOMode::getIcon, ManualIOMode::getTooltip));
+        root.addChild(GTEnumSelectorElement.selectable(35, 25, 18, 18, FilterMode.VALUES, this::getFilterMode,
+                mode -> setLDLib2FilterMode(player, holder, mode)));
+        root.addChild(GTEnumSelectorElement.selectable(35, 45, 18, 18, ManualIOMode.VALUES, this::getAllowFlow,
+                mode -> setLDLib2ManualIO(player, holder, mode)));
         root.addChild(getFluidFilter().openLDLib2Configurator(62, 25));
         root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 85, true));
         return UI.of(root);

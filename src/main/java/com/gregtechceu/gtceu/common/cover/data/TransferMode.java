@@ -1,13 +1,13 @@
 package com.gregtechceu.gtceu.common.cover.data;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import lombok.Getter;
 
-public enum TransferMode implements EnumSelectorWidget.SelectableEnum {
+public enum TransferMode implements SelectableEnum {
 
     TRANSFER_ANY("cover.robotic_arm.transfer_mode.transfer_any", "transfer_any", 1),
     TRANSFER_EXACT("cover.robotic_arm.transfer_mode.transfer_exact", "transfer_exact", 1024),

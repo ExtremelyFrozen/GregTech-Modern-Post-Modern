@@ -4,8 +4,8 @@ import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancySelectorConfigurator;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
@@ -45,7 +45,7 @@ public interface IVoidable extends IMachineFeature {
                                 Component.translatable(m.localeName))));
     }
 
-    enum VoidingMode implements StringRepresentable, EnumSelectorWidget.SelectableEnum {
+    enum VoidingMode implements StringRepresentable, SelectableEnum {
 
         VOID_NONE("gtpm.gui.no_voiding", cap -> false),
         VOID_ITEMS("gtpm.gui.item_voiding", cap -> cap == ItemRecipeCapability.CAP),

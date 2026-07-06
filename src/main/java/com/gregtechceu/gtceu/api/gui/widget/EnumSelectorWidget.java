@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.gui.widget;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
@@ -22,14 +23,7 @@ import java.util.function.Consumer;
 /**
  * A widget for selecting a value from an enum or a subset of its values.
  */
-public class EnumSelectorWidget<T extends Enum<T> & EnumSelectorWidget.SelectableEnum> extends WidgetGroup {
-
-    public interface SelectableEnum {
-
-        String getTooltip();
-
-        IGuiTexture getIcon();
-    }
+public class EnumSelectorWidget<T extends Enum<T> & SelectableEnum> extends WidgetGroup {
 
     public final CycleButtonWidget buttonWidget;
 

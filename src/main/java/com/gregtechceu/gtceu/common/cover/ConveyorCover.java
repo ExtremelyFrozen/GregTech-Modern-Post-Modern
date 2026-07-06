@@ -469,18 +469,16 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2Cove
                 value -> setLDLib2TransferRate(player, holder, value))
                 .setMin(1)
                 .setMax(maxItemTransferRate));
-        root.addChild(new GTEnumSelectorElement<>(10, 45, 20, 20, List.of(IO.IN, IO.OUT), this::getIo,
-                mode -> setLDLib2Io(player, holder, mode), IO::getIcon, IO::getTooltip));
+        root.addChild(GTEnumSelectorElement.selectable(10, 45, 20, 20, List.of(IO.IN, IO.OUT), this::getIo,
+                mode -> setLDLib2Io(player, holder, mode)));
 
         if (shouldDisplayDistributionMode()) {
-            root.addChild(new GTEnumSelectorElement<>(146, 67, 20, 20, DistributionMode.VALUES,
-                    this::getDistributionMode, mode -> setLDLib2DistributionMode(player, holder, mode),
-                    DistributionMode::getIcon, DistributionMode::getTooltip));
+            root.addChild(GTEnumSelectorElement.selectable(146, 67, 20, 20, DistributionMode.VALUES,
+                    this::getDistributionMode, mode -> setLDLib2DistributionMode(player, holder, mode)));
         }
 
-        root.addChild(new GTEnumSelectorElement<>(146, 107, 20, 20, ManualIOMode.VALUES, this::getManualIOMode,
-                mode -> setLDLib2ManualIOMode(player, holder, mode), ManualIOMode::getIcon,
-                ManualIOMode::getTooltip));
+        root.addChild(GTEnumSelectorElement.selectable(146, 107, 20, 20, ManualIOMode.VALUES,
+                this::getManualIOMode, mode -> setLDLib2ManualIOMode(player, holder, mode)));
 
         root.addChild(filterHandler.createFilterSlotLDLib2UI(125, 108));
         root.addChild(filterHandler.createFilterConfigLDLib2UI(10, 72, 156, 60));

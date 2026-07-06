@@ -228,9 +228,8 @@ public class FluidRegulatorCover extends PumpCover {
 
     @Override
     protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {
-        root.addChild(new GTEnumSelectorElement<>(146, 45, 20, 20, TransferMode.values(), this::getTransferMode,
-                mode -> setLDLib2TransferMode(player, holder, mode), TransferMode::getIcon,
-                TransferMode::getTooltip));
+        root.addChild(GTEnumSelectorElement.selectable(146, 45, 20, 20, TransferMode.values(),
+                this::getTransferMode, mode -> setLDLib2TransferMode(player, holder, mode)));
 
         this.transferSizeLDLib2Input = new GTIntInputElement(35, 45, 84, 20,
                 this::getCurrentBucketModeTransferSize,
@@ -239,9 +238,8 @@ public class FluidRegulatorCover extends PumpCover {
         configureTransferSizeInput();
         root.addChild(this.transferSizeLDLib2Input);
 
-        this.transferBucketModeLDLib2Input = new GTEnumSelectorElement<>(121, 45, 20, 20, BucketMode.values(),
-                this::getTransferBucketMode, mode -> setLDLib2TransferBucketMode(player, holder, mode),
-                BucketMode::getIcon, BucketMode::getTooltip);
+        this.transferBucketModeLDLib2Input = GTEnumSelectorElement.selectable(121, 45, 20, 20, BucketMode.values(),
+                this::getTransferBucketMode, mode -> setLDLib2TransferBucketMode(player, holder, mode));
         root.addChild(this.transferBucketModeLDLib2Input);
         configureTransferBucketModeInput(transferBucketMode.multiplier, transferBucketMode.multiplier);
         configureTransferSizeInput();

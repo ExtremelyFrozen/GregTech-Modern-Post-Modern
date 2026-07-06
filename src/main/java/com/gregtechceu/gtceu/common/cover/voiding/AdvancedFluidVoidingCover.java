@@ -145,8 +145,8 @@ public class AdvancedFluidVoidingCover extends FluidVoidingCover {
 
     @Override
     protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {
-        root.addChild(new GTEnumSelectorElement<>(146, 20, 20, 20, VoidingMode.values(), this::getVoidingMode,
-                mode -> setLDLib2VoidingMode(player, holder, mode), VoidingMode::getIcon, VoidingMode::getTooltip));
+        root.addChild(GTEnumSelectorElement.selectable(146, 20, 20, 20, VoidingMode.values(), this::getVoidingMode,
+                mode -> setLDLib2VoidingMode(player, holder, mode)));
 
         this.stackSizeLDLib2Input = new GTIntInputElement(35, 20, 84, 20,
                 this::getCurrentBucketModeTransferSize,
@@ -155,9 +155,8 @@ public class AdvancedFluidVoidingCover extends FluidVoidingCover {
         this.stackSizeLDLib2Input.setMax(Integer.MAX_VALUE);
         root.addChild(this.stackSizeLDLib2Input);
 
-        this.stackSizeBucketModeLDLib2Input = new GTEnumSelectorElement<>(121, 20, 20, 20, BucketMode.values(),
-                this::getTransferBucketMode, mode -> setLDLib2TransferBucketMode(player, holder, mode),
-                BucketMode::getIcon, BucketMode::getTooltip);
+        this.stackSizeBucketModeLDLib2Input = GTEnumSelectorElement.selectable(121, 20, 20, 20, BucketMode.values(),
+                this::getTransferBucketMode, mode -> setLDLib2TransferBucketMode(player, holder, mode));
         root.addChild(this.stackSizeBucketModeLDLib2Input);
         configureStackSizeInput();
     }

@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.element;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
@@ -28,6 +29,22 @@ public class GTEnumSelectorElement<T extends Enum<T>> extends GTButtonElement {
     private BiFunction<T, String, List<Component>> tooltipSupplier = (value, key) -> List
             .copyOf(LangHandler.getSingleOrMultiLang(key));
     private T lastSelected;
+
+    public static <T extends Enum<T> & SelectableEnum> GTEnumSelectorElement<T> selectable(int x, int y, int width,
+                                                                                           int height, T[] values,
+                                                                                           Supplier<T> selectedSupplier,
+                                                                                           Consumer<T> onChanged) {
+        return new GTEnumSelectorElement<>(x, y, width, height, values, selectedSupplier, onChanged,
+                SelectableEnum::getIcon, SelectableEnum::getTooltip);
+    }
+
+    public static <T extends Enum<T> & SelectableEnum> GTEnumSelectorElement<T> selectable(int x, int y, int width,
+                                                                                           int height, List<T> values,
+                                                                                           Supplier<T> selectedSupplier,
+                                                                                           Consumer<T> onChanged) {
+        return new GTEnumSelectorElement<>(x, y, width, height, values, selectedSupplier, onChanged,
+                SelectableEnum::getIcon, SelectableEnum::getTooltip);
+    }
 
     public GTEnumSelectorElement(int x, int y, int width, int height, T[] values, Supplier<T> selectedSupplier,
                                  Consumer<T> onChanged, Function<T, IGuiTexture> iconGetter,

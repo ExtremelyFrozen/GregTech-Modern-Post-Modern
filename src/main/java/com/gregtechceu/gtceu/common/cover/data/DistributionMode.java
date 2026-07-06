@@ -1,11 +1,11 @@
 package com.gregtechceu.gtceu.common.cover.data;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
-public enum DistributionMode implements EnumSelectorWidget.SelectableEnum {
+public enum DistributionMode implements SelectableEnum {
 
     ROUND_ROBIN_GLOBAL("round_robin_global"),
     ROUND_ROBIN_PRIO("round_robin_prio"),
