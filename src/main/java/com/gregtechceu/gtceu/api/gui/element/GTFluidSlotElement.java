@@ -205,18 +205,18 @@ public class GTFluidSlotElement extends UIElement {
         return this;
     }
 
+    public GTFluidSlotElement setXEIPossibleFluids(Stream<FluidStack> xeiFluids) {
+        var fluids = xeiFluids.toList();
+        return setXEIPossibleFluids(fluids::stream);
+    }
+
     public GTFluidSlotElement setXEIRecipeSlot() {
-        addXEIRecipeSlot(ingredientIO, () -> xeiChance, () -> xeiAmount, xeiFluids);
-        return this;
+        return xeiRecipeSlot();
     }
 
     public GTFluidSlotElement setXEIRecipeSlot(IngredientIO ingredientIO, float xeiChance, int xeiAmount,
                                                Supplier<Stream<FluidStack>> xeiFluids) {
-        return setIngredientIO(ingredientIO)
-                .setXEIChance(xeiChance)
-                .setXEIAmount(xeiAmount)
-                .setXEIPossibleFluids(xeiFluids)
-                .setXEIRecipeSlot();
+        return xeiRecipeSlot(ingredientIO, xeiChance, xeiAmount, xeiFluids);
     }
 
     public GTFluidSlotElement setXEIRecipeSlot(GTXEIIngredientRole role, float xeiChance, int xeiAmount,
@@ -275,6 +275,51 @@ public class GTFluidSlotElement extends UIElement {
     public GTFluidSlotElement xeiRecipeIngredient(GTXEIIngredientRole role,
                                                   Supplier<Stream<FluidStack>> allPossibleFluids) {
         return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), allPossibleFluids);
+    }
+
+    public GTFluidSlotElement xeiRecipeSlot() {
+        return xeiRecipeSlot(ingredientIO, xeiChance);
+    }
+
+    public GTFluidSlotElement xeiRecipeSlot(IngredientIO ingredientIO, float xeiChance) {
+        this.ingredientIO = ingredientIO;
+        this.xeiChance = xeiChance;
+        addXEIRecipeSlot(ingredientIO, () -> xeiChance, () -> xeiAmount, xeiFluids);
+        return this;
+    }
+
+    public GTFluidSlotElement xeiRecipeSlot(GTXEIIngredientRole role, float xeiChance) {
+        return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), xeiChance);
+    }
+
+    public GTFluidSlotElement xeiRecipeSlot(IngredientIO ingredientIO, float xeiChance, int xeiAmount,
+                                            Stream<FluidStack> allPossibleFluids) {
+        this.ingredientIO = ingredientIO;
+        this.xeiChance = xeiChance;
+        this.xeiAmount = xeiAmount;
+        setXEIPossibleFluids(allPossibleFluids);
+        addXEIRecipeSlot(ingredientIO, () -> xeiChance, () -> xeiAmount, xeiFluids);
+        return this;
+    }
+
+    public GTFluidSlotElement xeiRecipeSlot(GTXEIIngredientRole role, float xeiChance, int xeiAmount,
+                                            Stream<FluidStack> allPossibleFluids) {
+        return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), xeiChance, xeiAmount, allPossibleFluids);
+    }
+
+    public GTFluidSlotElement xeiRecipeSlot(IngredientIO ingredientIO, float xeiChance, int xeiAmount,
+                                            Supplier<Stream<FluidStack>> allPossibleFluids) {
+        this.ingredientIO = ingredientIO;
+        this.xeiChance = xeiChance;
+        this.xeiAmount = xeiAmount;
+        this.xeiFluids = allPossibleFluids;
+        addXEIRecipeSlot(ingredientIO, () -> xeiChance, () -> xeiAmount, allPossibleFluids);
+        return this;
+    }
+
+    public GTFluidSlotElement xeiRecipeSlot(GTXEIIngredientRole role, float xeiChance, int xeiAmount,
+                                            Supplier<Stream<FluidStack>> allPossibleFluids) {
+        return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), xeiChance, xeiAmount, allPossibleFluids);
     }
 
     public GTFluidSlotElement setBackgroundTexture(IGuiTexture background) {
