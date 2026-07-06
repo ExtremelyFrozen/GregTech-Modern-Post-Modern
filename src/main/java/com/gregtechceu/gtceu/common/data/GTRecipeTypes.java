@@ -663,7 +663,7 @@ public class GTRecipeTypes {
                     .setAllowClickFilled(false)
                     .setAllowClickDrained(false)
                     .setIngredientIO(GTXEIHelper.input())
-                    .setXEIRecipeSlot();
+                    .xeiRecipeSlot();
             layoutLDLib2Element(tank, rootSize.width() - 30 - xOffset, rootSize.height() - 30 + yOffset, 18, 18);
             root.addChild(tank);
 
