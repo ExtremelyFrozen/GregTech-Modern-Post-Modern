@@ -34,10 +34,12 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.stack.FluidEmiStack;
 import dev.emi.emi.api.stack.ListEmiIngredient;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.neoforge.NeoForgeTypes;
@@ -225,6 +227,26 @@ public class GTFluidSlotElement extends UIElement {
     public GTFluidSlotElement setOnAddedTooltips(
                                                  BiConsumer<GTFluidSlotElement, List<Component>> onAddedTooltips) {
         this.onAddedTooltips = onAddedTooltips;
+        return this;
+    }
+
+    public GTFluidSlotElement xeiPhantom() {
+        if (LDLib2.isJeiLoaded()) {
+            LDLibJEIPlugin.ghostIngredient(this, NeoForgeTypes.FLUID_STACK, ingredient -> true, this::setFluid);
+        }
+        if (LDLib2.isEmiLoaded()) {
+            LDLibEMIPlugin.renderDragHandler(this, dragged -> dragged instanceof FluidEmiStack);
+            LDLibEMIPlugin.dropStackHandler(this,
+                    dragged -> dragged instanceof FluidEmiStack,
+                    dragged -> {
+                        if (dragged instanceof FluidEmiStack droppedFluid) {
+                            setFluid(new FluidStack(
+                                    ((Fluid) droppedFluid.getKey()).builtInRegistryHolder(),
+                                    Math.max(1000, (int) droppedFluid.getAmount()),
+                                    droppedFluid.getComponentChanges()));
+                        }
+                    });
+        }
         return this;
     }
 
