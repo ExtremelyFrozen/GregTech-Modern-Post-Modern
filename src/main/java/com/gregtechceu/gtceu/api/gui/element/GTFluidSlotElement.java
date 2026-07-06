@@ -17,7 +17,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -63,7 +62,7 @@ import java.util.stream.Stream;
 @LDLRegister(name = "gtm-fluid-slot", group = "gtm", registry = "ldlib2:ui_element")
 public class GTFluidSlotElement extends UIElement {
 
-    private final Label amountLabel = new Label();
+    private final GTLabelElement amountLabel = new GTLabelElement();
     private IGuiTexture background = IGuiTexture.EMPTY;
     private IGuiTexture overlay = IGuiTexture.EMPTY;
     private IGuiTexture contentOverlay = IGuiTexture.EMPTY;

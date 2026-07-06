@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
@@ -31,12 +32,10 @@ import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 
-import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2IntAVLTreeMap;
@@ -302,17 +301,10 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
                                                 LDLib2RecipeUISize rootSize) {
         int fusionTier = findCeilingTier(euToStart);
         int tier = Math.max(MINIMUM_TIER, Math.max(recipeTier, fusionTier));
-        Label label = new Label();
+        GTLabelElement label = new GTLabelElement(-8, rootSize.height() - 10, rootSize.width() + 8, 10);
         label.setValue(Component.translatable("gtpm.recipe.eu_to_start",
                 FormattingUtil.formatNumberReadable2F(euToStart, false),
                 FUSION_NAMES.get(tier)));
-        label.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(-8);
-            layout.top(rootSize.height() - 10);
-            layout.width(rootSize.width() + 8);
-            layout.height(10);
-        });
         label.textStyle(textStyle -> textStyle.textWrap(TextWrap.NONE));
         root.addChild(label);
     }

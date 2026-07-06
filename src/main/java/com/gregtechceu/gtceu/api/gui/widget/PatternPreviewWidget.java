@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.gui.ColorPattern;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -24,7 +25,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scene;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
@@ -166,16 +166,9 @@ public class PatternPreviewWidget extends UIElement {
         return ModularUI.of(UI.of(getPatternWidget(controllerDefinition)));
     }
 
-    private Label createTitle() {
-        Label title = new Label();
+    private GTLabelElement createTitle() {
+        GTLabelElement title = new GTLabelElement(3, 3, 154, 10);
         title.setValue(Component.translatable(controllerDefinition.getDescriptionId()));
-        title.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(3);
-            layout.top(3);
-            layout.width(154);
-            layout.height(10);
-        });
         title.textStyle(style -> {
             style.textColor(-1);
             style.textShadow(true);
