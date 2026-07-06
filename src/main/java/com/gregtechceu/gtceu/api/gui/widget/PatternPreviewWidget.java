@@ -8,6 +8,7 @@ import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTSceneElement;
+import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -26,7 +27,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.utils.data.ItemStackKey;
 
@@ -65,7 +65,7 @@ public class PatternPreviewWidget extends UIElement {
     private static int LAST_OFFSET_INDEX = 0;
     private static final Map<MultiblockMachineDefinition, MBPattern[]> CACHE = new HashMap<>();
     private final GTSceneElement scene;
-    private final ScrollerView scrollableView;
+    private final GTScrollerViewElement scrollableView;
     private final GTButtonElement pageButton;
     private final GTButtonElement layerButton;
     public final MultiblockMachineDefinition controllerDefinition;
@@ -93,14 +93,7 @@ public class PatternPreviewWidget extends UIElement {
         scene.setRenderFacing(false);
         addChild(scene);
 
-        scrollableView = new ScrollerView();
-        scrollableView.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(3);
-            layout.top(132);
-            layout.width(154);
-            layout.height(22);
-        });
+        scrollableView = new GTScrollerViewElement(3, 132, 154, 22);
         scrollableView.scrollerStyle(style -> style
                 .mode(ScrollerMode.HORIZONTAL)
                 .horizontalScrollDisplay(ScrollDisplay.AUTO)
