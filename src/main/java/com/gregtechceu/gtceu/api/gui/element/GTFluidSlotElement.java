@@ -43,13 +43,12 @@ import dev.emi.emi.api.stack.FluidEmiStack;
 import dev.emi.emi.api.stack.ListEmiIngredient;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.neoforge.NeoForgeTypes;
-import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -455,7 +454,7 @@ public class GTFluidSlotElement extends UIElement {
         if (LDLib2.isJeiLoaded()) {
             LDLibJEIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
                     .map(this::createJEIFluidIngredient)
-                    .filter(Objects::nonNull)
+                    .flatMap(Optional::stream)
                     .collect(Collectors.toList()));
         }
         if (LDLib2.isEmiLoaded()) {
@@ -469,10 +468,10 @@ public class GTFluidSlotElement extends UIElement {
                                   Supplier<Stream<FluidStack>> allPossibleFluids) {
         if (LDLib2.isJeiLoaded()) {
             LDLibJEIPlugin.recipeSlot(this,
-                    () -> createJEIFluidIngredient(getFluid()),
+                    () -> createJEIFluidIngredient(getFluid()).orElse(null),
                     () -> allPossibleFluids.get()
                             .map(this::createJEIFluidIngredient)
-                            .filter(Objects::nonNull)
+                            .flatMap(Optional::stream)
                             .collect(Collectors.toList()));
         }
         if (LDLib2.isEmiLoaded()) {
@@ -487,12 +486,12 @@ public class GTFluidSlotElement extends UIElement {
         }
     }
 
-    @Nullable
-    private ITypedIngredient<?> createJEIFluidIngredient(FluidStack fluidStack) {
+    private Optional<ITypedIngredient<?>> createJEIFluidIngredient(FluidStack fluidStack) {
         if (fluidStack.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
-        return LDLibJEIPlugin.createTypedIngredient(NeoForgeTypes.FLUID_STACK, fluidStack).orElse(null);
+        return LDLibJEIPlugin.createTypedIngredient(NeoForgeTypes.FLUID_STACK, fluidStack)
+                .map(ingredient -> ingredient);
     }
 
     private FillDirection parseFillDirection(String value) {
