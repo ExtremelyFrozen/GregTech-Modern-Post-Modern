@@ -19,7 +19,6 @@ public class GTNetwork {
 
         registar.playToServer(CPacketImageRequest.TYPE, CPacketImageRequest.CODEC, CPacketImageRequest::execute);
         registar.playToServer(CPacketMachineSyncToServer.TYPE, CPacketMachineSyncToServer.CODEC, CPacketMachineSyncToServer::execute);
-        registar.playToServer(CPacketCoverSyncToServer.TYPE, CPacketCoverSyncToServer.CODEC, CPacketCoverSyncToServer::execute);
         registar.playToServer(CPacketMachineActionToServer.TYPE, CPacketMachineActionToServer.CODEC, CPacketMachineActionToServer::execute);
         registar.playToServer(CPacketCoverActionToServer.TYPE, CPacketCoverActionToServer.CODEC, CPacketCoverActionToServer::execute);
         registar.playToServer(CPacketItemActionToServer.TYPE, CPacketItemActionToServer.CODEC, CPacketItemActionToServer::execute);
