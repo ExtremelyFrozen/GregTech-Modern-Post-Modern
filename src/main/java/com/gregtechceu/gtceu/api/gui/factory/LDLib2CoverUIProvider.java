@@ -7,20 +7,14 @@ import net.minecraft.world.entity.player.Player;
 /**
  * Creates an LDLib2 cover UI through GTM's stable cover holder contract.
  *
- * <p>This provider lets cover business code depend on {@link UICoverHolder} instead of an LDLib2 menu holder. It
- * exists so LDLib2 screens can migrate in parallel while the legacy runtime remains active.
+ * <p>This provider lets cover business code depend on {@link UICoverHolder} instead of an LDLib2 menu holder.
  */
 public interface LDLib2CoverUIProvider {
 
     /**
      * Returns whether this cover should use LDLib2 for the provided holder context.
-     *
-     * <p>Cover implementations can expose the provider while keeping selected sides or cover states on the legacy UI
-     * path until their screen tree has been migrated.
      */
-    default boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
-        return true;
-    }
+    boolean canCreateLDLib2UI(Player player, UICoverHolder holder);
 
     /**
      * Builds the LDLib2 cover UI tree for the provided player and opened cover identity.

@@ -35,9 +35,7 @@ public interface IToolUIBehavior<T extends IToolUIBehavior<T>> extends IToolBeha
     /**
      * Returns whether this behavior owns an LDLib2 UI for the currently opened held item context.
      */
-    default boolean hasLDLib2UI(Player player, HeldItemUIHolder holder) {
-        return openLDLib2UI(player, holder.getHand());
-    }
+    boolean canCreateLDLib2UI(Player player, HeldItemUIHolder holder);
 
     /**
      * Returns whether the currently held stack still belongs to this behavior's opened LDLib2 UI.

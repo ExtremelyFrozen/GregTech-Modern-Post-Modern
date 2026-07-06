@@ -702,7 +702,7 @@ public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
     default boolean canCreateLDLib2UI(Player player, HeldItemUIHolder holder) {
         for (var behavior : getToolStats().getBehaviors()) {
             if (behavior instanceof IToolUIBehavior<?> uiBehavior) {
-                if (uiBehavior.hasLDLib2UI(player, holder)) {
+                if (uiBehavior.canCreateLDLib2UI(player, holder)) {
                     return true;
                 }
             }
@@ -716,7 +716,7 @@ public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
             if (!(behavior instanceof IToolUIBehavior<?> uiBehavior)) {
                 continue;
             }
-            if (!uiBehavior.hasLDLib2UI(player, holder)) {
+            if (!uiBehavior.canCreateLDLib2UI(player, holder)) {
                 continue;
             }
             return uiBehavior.createLDLib2UI(player, holder);
@@ -728,7 +728,7 @@ public interface IGTTool extends LDLib2HeldItemUIProvider, ItemLike {
     default boolean isLDLib2UIStillValid(Player player, HeldItemUIHolder holder) {
         for (var behavior : getToolStats().getBehaviors()) {
             if (behavior instanceof IToolUIBehavior<?> uiBehavior) {
-                if (uiBehavior.hasLDLib2UI(player, holder)) {
+                if (uiBehavior.canCreateLDLib2UI(player, holder)) {
                     return uiBehavior.isLDLib2UIStillValid(player, holder);
                 }
             }

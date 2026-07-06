@@ -56,13 +56,13 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
     }
 
     @Override
-    public boolean hasLDLib2UI(Player player, HeldItemUIHolder holder) {
+    public boolean canCreateLDLib2UI(Player player, HeldItemUIHolder holder) {
         return ItemStack.isSameItem(holder.getHeld(), holder.getOpenedStack()) && hasConfigurableAOE(holder.getHeld());
     }
 
     @Override
     public boolean isLDLib2UIStillValid(Player player, HeldItemUIHolder holder) {
-        return hasLDLib2UI(player, holder);
+        return canCreateLDLib2UI(player, holder);
     }
 
     @Override

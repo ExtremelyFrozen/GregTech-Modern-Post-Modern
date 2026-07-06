@@ -228,7 +228,7 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
             return false;
         }
         if (!(panel.getGui().entityPlayer instanceof Player player)) {
-            return CoverUIHelper.hasLDLib2UI(coverBehavior);
+            return CoverUIHelper.hasUI(coverBehavior);
         }
         return CoverUIHelper.canOpenLDLib2(coverBehavior, player);
     }
