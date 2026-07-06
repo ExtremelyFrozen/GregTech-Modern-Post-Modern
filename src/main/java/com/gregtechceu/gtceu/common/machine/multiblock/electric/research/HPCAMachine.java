@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.api.gui.util.TimedProgressSupplier;
-import com.gregtechceu.gtceu.api.gui.widget.ExtendedProgressWidget;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
@@ -36,16 +35,21 @@ import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
+import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -59,6 +63,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -269,7 +275,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
     public Widget createUIWidget() {
         WidgetGroup builder = (WidgetGroup) super.createUIWidget();
         // Create the hover grid
-        builder.addWidget(new ExtendedProgressWidget(
+        builder.addWidget(new HPCAProgressWidget(
                 () -> hpcaHandler.getAllocatedCWUt() > 0 ? progressSupplier.getAsDouble() : 0,
                 74, 57, 47, 47, GuiTextures.progressBar(GuiTextures.HPCA_COMPONENT_OUTLINE))
                 .setServerTooltipSupplier(hpcaHandler::addInfo)
@@ -294,6 +300,65 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
             }
         }
         return builder;
+    }
+
+    private static final class HPCAProgressWidget extends ProgressWidget {
+
+        private List<Component> serverTooltips = new ArrayList<>();
+        private Consumer<List<Component>> serverTooltipSupplier;
+
+        private HPCAProgressWidget(DoubleSupplier progressSupplier, int x, int y, int width, int height,
+                                   ProgressTexture progressBar) {
+            super(progressSupplier, x, y, width, height, progressBar);
+        }
+
+        private HPCAProgressWidget setServerTooltipSupplier(Consumer<List<Component>> serverTooltipSupplier) {
+            this.serverTooltipSupplier = serverTooltipSupplier;
+            return this;
+        }
+
+        @Override
+        public void detectAndSendChanges() {
+            super.detectAndSendChanges();
+
+            if (serverTooltipSupplier != null) {
+                List<Component> textBuffer = new ArrayList<>();
+                serverTooltipSupplier.accept(textBuffer);
+                if (!serverTooltips.equals(textBuffer)) {
+                    this.serverTooltips = textBuffer;
+                    writeUpdateInfo(1, buffer -> {
+                        buffer.writeVarInt(serverTooltips.size());
+                        for (Component component : serverTooltips) {
+                            ComponentSerialization.STREAM_CODEC.encode(buffer, component);
+                        }
+                    });
+                }
+            }
+        }
+
+        @Override
+        public void readUpdateInfo(int id, RegistryFriendlyByteBuf buffer) {
+            if (id == 1) {
+                this.serverTooltips.clear();
+                int count = buffer.readVarInt();
+                for (int i = 0; i < count; i++) {
+                    Component component = ComponentSerialization.STREAM_CODEC.decode(buffer);
+                    this.serverTooltips.add(component);
+                }
+            } else {
+                super.readUpdateInfo(id, buffer);
+            }
+        }
+
+        @Override
+        public void drawInForeground(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+            if ((!tooltipTexts.isEmpty() || !serverTooltips.isEmpty()) && isMouseOverElement(mouseX, mouseY) &&
+                    getHoverElement(mouseX, mouseY) == this && gui != null && gui.getModularUIGui() != null) {
+                var tips = new ArrayList<>(tooltipTexts);
+                tips.addAll(serverTooltips);
+                gui.getModularUIGui().setHoverTooltip(tips, ItemStack.EMPTY, null, null);
+            }
+        }
     }
 
     @Override
