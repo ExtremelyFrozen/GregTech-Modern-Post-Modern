@@ -207,6 +207,10 @@ public class GTItemSlotElement extends ItemSlot {
         return this;
     }
 
+    public GTItemSlotElement xeiRecipeIngredient(GTXEIIngredientRole role) {
+        return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role));
+    }
+
     @Override
     public GTItemSlotElement xeiRecipeIngredient(IngredientIO io, Stream<ItemStack> allPossibleItems) {
         this.ingredientIO = io;
@@ -215,12 +219,21 @@ public class GTItemSlotElement extends ItemSlot {
         return this;
     }
 
+    public GTItemSlotElement xeiRecipeIngredient(GTXEIIngredientRole role, Stream<ItemStack> allPossibleItems) {
+        return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), allPossibleItems);
+    }
+
     public GTItemSlotElement xeiRecipeIngredient(IngredientIO io,
                                                  Supplier<Stream<ItemStack>> allPossibleItems) {
         this.ingredientIO = io;
         this.xeiStacks = allPossibleItems;
         addXEIRecipeIngredient(io, allPossibleItems);
         return this;
+    }
+
+    public GTItemSlotElement xeiRecipeIngredient(GTXEIIngredientRole role,
+                                                 Supplier<Stream<ItemStack>> allPossibleItems) {
+        return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), allPossibleItems);
     }
 
     @Override
@@ -236,6 +249,10 @@ public class GTItemSlotElement extends ItemSlot {
         return this;
     }
 
+    public GTItemSlotElement xeiRecipeSlot(GTXEIIngredientRole role, float chance) {
+        return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), chance);
+    }
+
     @Override
     public GTItemSlotElement xeiRecipeSlot(IngredientIO io, float chance, int amount,
                                            Stream<ItemStack> allPossibleItems) {
@@ -247,6 +264,11 @@ public class GTItemSlotElement extends ItemSlot {
         return this;
     }
 
+    public GTItemSlotElement xeiRecipeSlot(GTXEIIngredientRole role, float chance, int amount,
+                                           Stream<ItemStack> allPossibleItems) {
+        return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), chance, amount, allPossibleItems);
+    }
+
     public GTItemSlotElement xeiRecipeSlot(IngredientIO io, float chance, int amount,
                                            Supplier<Stream<ItemStack>> allPossibleItems) {
         this.ingredientIO = io;
@@ -255,6 +277,11 @@ public class GTItemSlotElement extends ItemSlot {
         this.xeiStacks = allPossibleItems;
         addXEIRecipeSlot(io, () -> chance, () -> amount, allPossibleItems);
         return this;
+    }
+
+    public GTItemSlotElement xeiRecipeSlot(GTXEIIngredientRole role, float chance, int amount,
+                                           Supplier<Stream<ItemStack>> allPossibleItems) {
+        return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), chance, amount, allPossibleItems);
     }
 
     @Override

@@ -4,11 +4,12 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
+import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -71,7 +72,7 @@ public class GTProgrammedCircuitWidget {
 
     private static GTItemSlotElement createCircuitSlot(CustomItemStackHandler handler, int circuit,
                                                        int column, int row) {
-        IngredientIO primaryRole = circuit == CIRCUIT_COUNT - 1 ? IngredientIO.OUTPUT : IngredientIO.INPUT;
+        GTXEIIngredientRole primaryRole = circuit == CIRCUIT_COUNT - 1 ? GTXEIHelper.output() : GTXEIHelper.input();
         Supplier<Stream<ItemStack>> stackSupplier = () -> Stream.of(IntCircuitBehaviour.stack(circuit + 1));
 
         GTItemSlotElement slot = new GTItemSlotElement(handler, circuit);
@@ -87,8 +88,8 @@ public class GTProgrammedCircuitWidget {
         slot.setCanPutItems(false);
         slot.xeiRecipeSlot(primaryRole, 1.0f, 1, stackSupplier);
         slot.xeiRecipeIngredient(primaryRole, stackSupplier);
-        if (primaryRole == IngredientIO.INPUT) {
-            slot.xeiRecipeIngredient(IngredientIO.OUTPUT, stackSupplier);
+        if (GTXEIHelper.isInput(primaryRole)) {
+            slot.xeiRecipeIngredient(GTXEIHelper.output(), stackSupplier);
         }
         slot.setIngredientIO(primaryRole);
         return slot;

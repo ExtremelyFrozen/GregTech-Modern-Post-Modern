@@ -217,6 +217,11 @@ public class GTFluidSlotElement extends UIElement {
                 .setXEIRecipeSlot();
     }
 
+    public GTFluidSlotElement setXEIRecipeSlot(GTXEIIngredientRole role, float xeiChance, int xeiAmount,
+                                               Supplier<Stream<FluidStack>> xeiFluids) {
+        return setXEIRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), xeiChance, xeiAmount, xeiFluids);
+    }
+
     public GTFluidSlotElement setOnAddedTooltips(
                                                  BiConsumer<GTFluidSlotElement, List<Component>> onAddedTooltips) {
         this.onAddedTooltips = onAddedTooltips;
