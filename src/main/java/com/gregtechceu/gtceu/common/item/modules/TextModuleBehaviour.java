@@ -147,11 +147,6 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
     }
 
     @Override
-    public boolean supportsLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
-        return true;
-    }
-
-    @Override
     public UIElement createLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
         UIElement builder = new UIElement();
         UITemplate.setLDLib2Bounds(builder, 0, 0, EDITOR_WIDTH, EDITOR_HEIGHT);
