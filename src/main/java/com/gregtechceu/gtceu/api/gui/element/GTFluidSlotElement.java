@@ -10,7 +10,6 @@ import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib2Adapter;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -215,10 +214,10 @@ public class GTFluidSlotElement extends UIElement {
     }
 
     public GTFluidSlotElement xeiPhantom() {
-        if (LDLib2.isJeiLoaded()) {
+        if (GTCEu.Mods.isJEILoaded()) {
             LDLibJEIPlugin.ghostIngredient(this, NeoForgeTypes.FLUID_STACK, ingredient -> true, this::setFluid);
         }
-        if (LDLib2.isEmiLoaded()) {
+        if (GTCEu.Mods.isEMILoaded()) {
             LDLibEMIPlugin.renderDragHandler(this, dragged -> dragged instanceof FluidEmiStack);
             LDLibEMIPlugin.dropStackHandler(this,
                     dragged -> dragged instanceof FluidEmiStack,
@@ -450,13 +449,13 @@ public class GTFluidSlotElement extends UIElement {
     }
 
     private void addXEIRecipeIngredient(IngredientIO io, Supplier<Stream<FluidStack>> allPossibleFluids) {
-        if (LDLib2.isJeiLoaded()) {
+        if (GTCEu.Mods.isJEILoaded()) {
             LDLibJEIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
                     .map(this::createJEIFluidIngredient)
                     .flatMap(Optional::stream)
                     .collect(Collectors.toList()));
         }
-        if (LDLib2.isEmiLoaded()) {
+        if (GTCEu.Mods.isEMILoaded()) {
             LDLibEMIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
                     .map(fluid -> EmiStack.of(fluid.getFluid(), fluid.getComponentsPatch(), fluid.getAmount()))
                     .collect(Collectors.toList()));
@@ -465,7 +464,7 @@ public class GTFluidSlotElement extends UIElement {
 
     private void addXEIRecipeSlot(IngredientIO io, Supplier<Float> chance, IntSupplier amount,
                                   Supplier<Stream<FluidStack>> allPossibleFluids) {
-        if (LDLib2.isJeiLoaded()) {
+        if (GTCEu.Mods.isJEILoaded()) {
             LDLibJEIPlugin.recipeSlot(this,
                     () -> createJEIFluidIngredient(getFluid()).orElse(null),
                     () -> allPossibleFluids.get()
@@ -473,7 +472,7 @@ public class GTFluidSlotElement extends UIElement {
                             .flatMap(Optional::stream)
                             .collect(Collectors.toList()));
         }
-        if (LDLib2.isEmiLoaded()) {
+        if (GTCEu.Mods.isEMILoaded()) {
             LDLibEMIPlugin.recipeSlot(this, () ->
                     new ListEmiIngredient(
                             allPossibleFluids.get()

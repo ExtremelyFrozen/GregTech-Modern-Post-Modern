@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib2Adapter;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 
-import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.gui.slot.ItemHandlerSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
@@ -198,10 +197,10 @@ public class GTItemSlotElement extends ItemSlot {
 
     @Override
     public GTItemSlotElement xeiPhantom() {
-        if (LDLib2.isJeiLoaded()) {
+        if (GTCEu.Mods.isJEILoaded()) {
             JEISupport.ghostIngredient(this);
         }
-        if (LDLib2.isEmiLoaded()) {
+        if (GTCEu.Mods.isEMILoaded()) {
             EMISupport.renderDragHandler(this);
             EMISupport.dropStackHandler(this);
         }
@@ -399,20 +398,20 @@ public class GTItemSlotElement extends ItemSlot {
     }
 
     private void addXEIRecipeIngredient(IngredientIO io, Supplier<Stream<ItemStack>> allPossibleItems) {
-        if (LDLib2.isJeiLoaded()) {
+        if (GTCEu.Mods.isJEILoaded()) {
             JEISupport.recipeIngredient(this, io, allPossibleItems);
         }
-        if (LDLib2.isEmiLoaded()) {
+        if (GTCEu.Mods.isEMILoaded()) {
             EMISupport.recipeIngredient(this, io, allPossibleItems);
         }
     }
 
     private void addXEIRecipeSlot(IngredientIO io, Supplier<Float> chance, IntSupplier amount,
                                   Supplier<Stream<ItemStack>> allPossibleItems) {
-        if (LDLib2.isJeiLoaded()) {
+        if (GTCEu.Mods.isJEILoaded()) {
             JEISupport.recipeSlot(this, allPossibleItems);
         }
-        if (LDLib2.isEmiLoaded()) {
+        if (GTCEu.Mods.isEMILoaded()) {
             EMISupport.recipeSlot(this, chance, amount, allPossibleItems);
         }
     }
