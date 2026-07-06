@@ -31,10 +31,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import com.mojang.serialization.Codec;
-import dev.vfyjxf.taffy.style.TaffyPosition;
 import io.netty.buffer.ByteBuf;
 import org.jetbrains.annotations.NotNull;
 
+import static com.gregtechceu.gtceu.api.gui.UITemplate.setLDLib2Bounds;
 import static com.gregtechceu.gtceu.api.item.tool.ToolHelper.*;
 
 public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior> {
@@ -76,11 +76,7 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
         AoESymmetrical.Mutable definition = getAoEDefinition(held).toMutable();
 
         UIElement root = new UIElement();
-        root.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.width(120);
-            layout.height(80);
-        });
+        setLDLib2Bounds(root, 0, 0, 120, 80);
         root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
 
         root.addChild(createLDLib2Label("item.gtpm.tool.aoe.columns", 6, 10, 38, 10, true));
@@ -193,16 +189,6 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
 
     private static String layerText(AoESymmetrical definition) {
         return Integer.toString(1 + definition.layer());
-    }
-
-    private static void setLDLib2Bounds(UIElement element, int x, int y, int width, int height) {
-        element.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(x);
-            layout.top(y);
-            layout.width(width);
-            layout.height(height);
-        });
     }
 
     private static boolean hasConfigurableAOE(ItemStack stack) {

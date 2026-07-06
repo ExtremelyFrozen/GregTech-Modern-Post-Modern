@@ -39,9 +39,9 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import dev.vfyjxf.taffy.style.TaffyPosition;
-
 import java.util.List;
+
+import static com.gregtechceu.gtceu.api.gui.UITemplate.setLDLib2Bounds;
 
 public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
 
@@ -116,11 +116,7 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
     @Override
     public UI createLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
         UIElement root = new UIElement();
-        root.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.width(184);
-            layout.height(132);
-        });
+        setLDLib2Bounds(root, 0, 0, 184, 132);
         root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
 
         TextElement label = new TextElement();
@@ -186,16 +182,6 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
                 .set(GTDataComponents.CIRCUIT_CONFIG.get(), configuration)
                 .build();
         return new SyncActionData(SET_CIRCUIT_CONFIGURATION_ACTION, configuration, payload);
-    }
-
-    private static void setLDLib2Bounds(UIElement element, int x, int y, int width, int height) {
-        element.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(x);
-            layout.top(y);
-            layout.width(width);
-            layout.height(height);
-        });
     }
 
     @Override

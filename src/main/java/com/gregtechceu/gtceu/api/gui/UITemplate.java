@@ -64,7 +64,7 @@ public class UITemplate {
         return root;
     }
 
-    private static void setLDLib2Bounds(UIElement element, int x, int y, int width, int height) {
+    public static <T extends UIElement> T setLDLib2Bounds(T element, int x, int y, int width, int height) {
         element.layout(layout -> {
             layout.positionType(TaffyPosition.ABSOLUTE);
             layout.left(x);
@@ -72,5 +72,6 @@ public class UITemplate {
             layout.width(width);
             layout.height(height);
         });
+        return element;
     }
 }
