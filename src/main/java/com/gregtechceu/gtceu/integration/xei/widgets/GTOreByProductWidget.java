@@ -11,11 +11,11 @@ import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemEntryList;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
@@ -227,9 +227,9 @@ public class GTOreByProductWidget {
         slot.setCanTakeItems(false);
         slot.setCanPutItems(false);
         slot.setOnAddedTooltips((element, tooltips) -> recipeWrapper.getTooltip(slotIndex, tooltips));
-        slot.xeiRecipeSlot(IngredientIO.INPUT, 1.0f, 1, stackSupplier);
-        slot.xeiRecipeIngredient(IngredientIO.INPUT, stackSupplier);
-        slot.setIngredientIO(IngredientIO.INPUT);
+        slot.xeiRecipeSlot(GTXEIHelper.input(), 1.0f, 1, stackSupplier);
+        slot.xeiRecipeIngredient(GTXEIHelper.input(), stackSupplier);
+        slot.setIngredientIO(GTXEIHelper.input());
         return slot;
     }
 
@@ -254,12 +254,12 @@ public class GTOreByProductWidget {
         slot.setXEIChance(xeiChance);
         slot.setContentOverlay(overlay);
         slot.setOnAddedTooltips((element, tooltips) -> recipeWrapper.getTooltip(slotIndex + itemInputCount, tooltips));
-        slot.xeiRecipeSlot(IngredientIO.OUTPUT, xeiChance, 1, stackSupplier);
-        slot.xeiRecipeIngredient(IngredientIO.OUTPUT, stackSupplier);
+        slot.xeiRecipeSlot(GTXEIHelper.output(), xeiChance, 1, stackSupplier);
+        slot.xeiRecipeIngredient(GTXEIHelper.output(), stackSupplier);
         if (!FINAL_OUTPUT_INDICES.contains(locationIndex)) {
-            slot.xeiRecipeIngredient(IngredientIO.INPUT, stackSupplier);
+            slot.xeiRecipeIngredient(GTXEIHelper.input(), stackSupplier);
         }
-        slot.setIngredientIO(IngredientIO.OUTPUT);
+        slot.setIngredientIO(GTXEIHelper.output());
         return slot;
     }
 
@@ -268,12 +268,12 @@ public class GTOreByProductWidget {
                 .filter(fluid -> !fluid.isEmpty());
         GTFluidSlotElement slot = new GTFluidSlotElement();
         slot.setFluidTank(handler, slotIndex);
-        slot.setIngredientIO(IngredientIO.INPUT);
+        slot.setIngredientIO(GTXEIHelper.input());
         slot.setBackgroundTexture(GuiTextures.FLUID_SLOT);
         slot.setShowAmount(false);
         slot.setAllowClickFilled(false);
         slot.setAllowClickDrained(false);
-        slot.setXEIRecipeSlot(IngredientIO.INPUT, 1.0f, 1, fluidSupplier);
+        slot.setXEIRecipeSlot(GTXEIHelper.input(), 1.0f, 1, fluidSupplier);
         layoutSlot(slot, x, y);
         return slot;
     }

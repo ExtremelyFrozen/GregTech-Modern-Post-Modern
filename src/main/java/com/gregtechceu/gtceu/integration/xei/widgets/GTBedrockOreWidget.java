@@ -12,12 +12,12 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.recipe.condition.DimensionCondition;
 import com.gregtechceu.gtceu.config.ConfigHolder;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.core.Holder;
@@ -127,9 +127,9 @@ public class GTBedrockOreWidget {
         slot.setCanPutItems(false);
         slot.setOnAddedTooltips((element, tooltips) -> tooltips.add(
                 Component.translatable("gtpm.jei.ore_vein_diagram.chance", chance)));
-        slot.xeiRecipeSlot(IngredientIO.OUTPUT, 1.0f, 1, stackSupplier);
-        slot.xeiRecipeIngredient(IngredientIO.OUTPUT, stackSupplier);
-        slot.setIngredientIO(IngredientIO.OUTPUT);
+        slot.xeiRecipeSlot(GTXEIHelper.output(), 1.0f, 1, stackSupplier);
+        slot.xeiRecipeIngredient(GTXEIHelper.output(), stackSupplier);
+        slot.setIngredientIO(GTXEIHelper.output());
         return slot;
     }
 
@@ -188,9 +188,9 @@ public class GTBedrockOreWidget {
         slot.setBackgroundTexture(IGuiTexture.EMPTY);
         slot.setCanTakeItems(false);
         slot.setCanPutItems(false);
-        slot.xeiRecipeSlot(IngredientIO.CATALYST, 1.0f, 1, stackSupplier);
-        slot.xeiRecipeIngredient(IngredientIO.CATALYST, stackSupplier);
-        slot.setIngredientIO(IngredientIO.CATALYST);
+        slot.xeiRecipeSlot(GTXEIHelper.catalyst(), 1.0f, 1, stackSupplier);
+        slot.xeiRecipeIngredient(GTXEIHelper.catalyst(), stackSupplier);
+        slot.setIngredientIO(GTXEIHelper.catalyst());
         if (ConfigHolder.INSTANCE.compat.showDimensionTier) {
             slot.setContentOverlay(GuiTextures.text("T" +
                             (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
