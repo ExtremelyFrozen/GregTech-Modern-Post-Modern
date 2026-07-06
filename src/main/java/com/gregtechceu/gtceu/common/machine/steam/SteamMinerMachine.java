@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.capability.IMiner;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
-import com.gregtechceu.gtceu.api.gui.widget.PredicatedImageWidget;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.*;
@@ -24,13 +24,17 @@ import com.lowdragmc.lowdraglib.gui.widget.ComponentPanelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import lombok.Getter;
@@ -40,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -89,7 +94,7 @@ public class SteamMinerMachine extends SteamWorkableMachine implements IControll
     }
 
     @Override
-    public void onNeighborChanged(net.minecraft.world.level.block.Block block, BlockPos fromPos, boolean isMoving) {
+    public void onNeighborChanged(Block block, BlockPos fromPos, boolean isMoving) {
         super.onNeighborChanged(block, fromPos, isMoving);
         updateAutoOutputSubscription();
         getRecipeLogic().updateTickSubscription();
@@ -156,8 +161,8 @@ public class SteamMinerMachine extends SteamWorkableMachine implements IControll
         }
 
         builder.widget(new LabelWidget(5, 5, getBlockState().getBlock().getDescriptionId()));
-        builder.widget(new PredicatedImageWidget(79, 42, 18, 18, GuiTextures.INDICATOR_NO_STEAM.get(isHighPressure()))
-                .setPredicate(() -> !drainInput(true)));
+        builder.widget(createWaitingIndicator(79, 42, 18, 18,
+                GuiTextures.INDICATOR_NO_STEAM.get(isHighPressure()), () -> !drainInput(true)));
         builder.widget(new ImageWidget(7, 16, 105, 75, GuiTextures.DISPLAY_STEAM.get(isHighPressure())));
         builder.widget(new ComponentPanelWidget(10, 19, this::addDisplayText)
                 .setMaxWidthLimit(84));
@@ -165,6 +170,55 @@ public class SteamMinerMachine extends SteamWorkableMachine implements IControll
                 .setMaxWidthLimit(84));
 
         return builder;
+    }
+
+    private static ImageWidget createWaitingIndicator(int xPosition, int yPosition, int width, int height,
+                                                      IGuiTexture texture, BooleanSupplier predicate) {
+        return new ImageWidget(xPosition, yPosition, width, height, texture) {
+
+            private boolean isVisible = true;
+
+            @Override
+            public void writeInitialData(RegistryFriendlyByteBuf buffer) {
+                super.writeInitialData(buffer);
+                isVisible = predicate.getAsBoolean();
+                buffer.writeBoolean(isVisible);
+            }
+
+            @Override
+            public void readInitialData(RegistryFriendlyByteBuf buffer) {
+                super.readInitialData(buffer);
+                isVisible = buffer.readBoolean();
+            }
+
+            @Override
+            public void detectAndSendChanges() {
+                super.detectAndSendChanges();
+                boolean visible = predicate.getAsBoolean();
+                if (isVisible != visible) {
+                    isVisible = visible;
+                    writeUpdateInfo(1, buf -> buf.writeBoolean(isVisible));
+                }
+            }
+
+            @Override
+            @OnlyIn(Dist.CLIENT)
+            public void readUpdateInfo(int id, RegistryFriendlyByteBuf buffer) {
+                if (id == 1) {
+                    isVisible = buffer.readBoolean();
+                } else {
+                    super.readUpdateInfo(id, buffer);
+                }
+            }
+
+            @Override
+            @OnlyIn(Dist.CLIENT)
+            public void drawInBackground(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+                if (isVisible) {
+                    super.drawInBackground(graphics, mouseX, mouseY, partialTicks);
+                }
+            }
+        };
     }
 
     void addDisplayText(List<Component> textList) {
