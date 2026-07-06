@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.item.tool.behavior;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.item.IGTTool;
@@ -20,7 +21,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
 
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.codec.StreamCodec;
@@ -83,9 +83,9 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
         root.addChild(createLDLib2Label("item.gtpm.tool.aoe.rows", 49, 10, 28, 10, true));
         root.addChild(createLDLib2Label("item.gtpm.tool.aoe.layers", 79, 10, 34, 10, true));
 
-        TextElement columnValue = createLDLib2ValueLabel(columnText(definition.toImmutable()), 23, 65);
-        TextElement rowValue = createLDLib2ValueLabel(rowText(definition.toImmutable()), 58, 65);
-        TextElement layerValue = createLDLib2ValueLabel(layerText(definition.toImmutable()), 93, 65);
+        GTLabelElement columnValue = createLDLib2ValueLabel(columnText(definition.toImmutable()), 23, 65);
+        GTLabelElement rowValue = createLDLib2ValueLabel(rowText(definition.toImmutable()), 58, 65);
+        GTLabelElement layerValue = createLDLib2ValueLabel(layerText(definition.toImmutable()), 93, 65);
 
         root.addChild(createLDLib2AOEButton("+", 15, 24, () -> {
             AoESymmetrical next = definition.increaseColumn().toImmutable();
@@ -121,19 +121,18 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
         return GTToolBehaviors.AOE_CONFIG_UI;
     }
 
-    private static TextElement createLDLib2Label(String text, int x, int y, int width, int height, boolean translate) {
-        TextElement label = new TextElement();
-        label.setText(text, translate);
+    private static GTLabelElement createLDLib2Label(String text, int x, int y, int width, int height,
+                                                    boolean translate) {
+        GTLabelElement label = new GTLabelElement(x, y, width, height, text, translate);
         label.textStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false)
                 .textAlignHorizontal(Horizontal.CENTER)
                 .textAlignVertical(Vertical.CENTER));
-        setLDLib2Bounds(label, x, y, width, height);
         return label;
     }
 
-    private static TextElement createLDLib2ValueLabel(String text, int x, int y) {
+    private static GTLabelElement createLDLib2ValueLabel(String text, int x, int y) {
         return createLDLib2Label(text, x, y, 18, 10, false);
     }
 
@@ -149,7 +148,8 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
     }
 
     private static void setAOEDefinition(HeldItemUIHolder holder, AoESymmetrical definition,
-                                         TextElement columnValue, TextElement rowValue, TextElement layerValue) {
+                                         GTLabelElement columnValue, GTLabelElement rowValue,
+                                         GTLabelElement layerValue) {
         if (holder.getPlayer().level().isClientSide()) {
             HeldItemUIHelper.sendAction(holder, createSetToolAOEAction(definition));
         }
@@ -166,8 +166,8 @@ public class AOEConfigUIBehavior implements IToolUIBehavior<AOEConfigUIBehavior>
         return new SyncActionData(SET_TOOL_AOE_ACTION, 0, payload);
     }
 
-    private static void updateValueLabels(AoESymmetrical definition, TextElement columnValue, TextElement rowValue,
-                                          TextElement layerValue) {
+    private static void updateValueLabels(AoESymmetrical definition, GTLabelElement columnValue,
+                                          GTLabelElement rowValue, GTLabelElement layerValue) {
         columnValue.setText(columnText(definition), false);
         rowValue.setText(rowText(definition), false);
         layerValue.setText(layerText(definition), false);

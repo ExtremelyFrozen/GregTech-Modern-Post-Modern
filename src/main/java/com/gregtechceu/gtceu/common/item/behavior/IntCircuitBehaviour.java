@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.item.component.IAddInformation;
@@ -24,7 +25,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement;
 
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
@@ -119,14 +119,13 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
         setLDLib2Bounds(root, 0, 0, 184, 132);
         root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
 
-        TextElement label = new TextElement();
-        label.setText("Programmed Circuit Configuration", false);
+        GTLabelElement label = new GTLabelElement(9, 8, 166, 10,
+                "Programmed Circuit Configuration", false);
         label.textStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false)
                 .textAlignHorizontal(Horizontal.LEFT)
                 .textAlignVertical(Vertical.CENTER));
-        setLDLib2Bounds(label, 9, 8, 166, 10);
         root.addChild(label);
 
         GTItemSlotElement selectedSlot = new GTItemSlotElement(
