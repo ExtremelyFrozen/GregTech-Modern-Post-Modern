@@ -10,7 +10,7 @@ import net.minecraft.world.InteractionHand;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Centralizes held item UI opening while GTM migrates item screens from LDLib to LDLib2.
+ * Centralizes held item UI opening through GTM's LDLib2 held item bridge.
  */
 public final class HeldItemUIHelper {
 

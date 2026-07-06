@@ -42,11 +42,13 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         var ldlib2RpcCall = ~/.*\baddRPCEvent\s*\(.*/
         var manualMarkAsDirtyCall = ~/.*\.markAsDirty\s*\(.*/
         var ldlib2FluidClickAttribute = ~/.*(?<!legacy-)allow-click-(filled|drained)=.*/
+        var reiCompatibilityReference = ~/.*\b(REI|rei)\b.*/
         var forbiddenNullCheck = 'require' + 'NonNull'
         var legacyFluidXeiSlotEntry = 'setXEIRecipe' + 'Slot'
 
         var patterns = [
                 'com.lowdragmc.lowdraglib.',
+                'LDLib2.isEmiLoaded(',
                 'IngredientIO.RENDER_ONLY',
                 'IngredientIO.valueOf("RENDER_ONLY")',
                 'IngredientIO.BOTH',
@@ -59,6 +61,12 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'PacketUIRPCEvent',
                 'PacketUIRPCEventReturn',
                 'setOnServerClick',
+                'com.lowdragmc.lowdraglib2.integration.xei.rei',
+                'ModularUIDisplay',
+                'ModularUIDisplayCategory',
+                'RoughlyEnoughItems',
+                'REIPlugin',
+                'isREILoaded',
                 'com.lowdragmc.lowdraglib2.syncdata.',
                 'com.lowdragmc.lowdraglib2.gui.sync.',
                 'compileOnly(forge.ldlib)',
@@ -105,6 +113,9 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                     }
                     if (ldlib2FluidClickAttribute.matcher(line).matches()) {
                         matches.add("${relativePath}:${number}: LDLib2 fluid click attributes must stay legacy metadata")
+                    }
+                    if (reiCompatibilityReference.matcher(line).matches()) {
+                        matches.add("${relativePath}:${number}: REI compatibility is not part of the LDLib2 migration")
                     }
                 }
             }

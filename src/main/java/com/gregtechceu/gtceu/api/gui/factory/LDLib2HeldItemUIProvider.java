@@ -45,8 +45,8 @@ public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI 
     /**
      * Returns whether this item should use LDLib2 for the provided held item context.
      *
-     * <p>Composite items can implement the provider globally while using this method to keep legacy-only
-     * components on the old held item factory.
+     * <p>Composite items can implement the provider globally while using this method to route only components that
+     * own a held item UI for the opened stack.
      */
     default boolean canCreateLDLib2UI(Player player, HeldItemUIHolder holder) {
         return true;
