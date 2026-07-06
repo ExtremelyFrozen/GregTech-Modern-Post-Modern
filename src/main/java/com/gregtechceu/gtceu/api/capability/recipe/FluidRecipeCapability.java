@@ -492,7 +492,7 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                     }
                 });
                 if (isXEI) {
-                    tank.setXEIRecipeSlot();
+                    tank.xeiRecipeSlot();
                 }
             }
         }
