@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidDefiniti
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
@@ -17,7 +18,6 @@ import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.core.Holder;
@@ -124,20 +124,13 @@ public class GTBedrockFluidWidget {
         return slot;
     }
 
-    private static Label createLabel(String translationKey, Object value, int y) {
+    private static GTLabelElement createLabel(String translationKey, Object value, int y) {
         return createLabel(Component.literal(LocalizationUtils.format(translationKey, value)), y);
     }
 
-    private static Label createLabel(Component text, int y) {
-        Label label = new Label();
+    private static GTLabelElement createLabel(Component text, int y) {
+        GTLabelElement label = new GTLabelElement(TEXT_X, y, WIDTH - 2 * TEXT_X, LINE_HEIGHT);
         label.setValue(text);
-        label.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(TEXT_X);
-            layout.top(y);
-            layout.width(WIDTH - 2 * TEXT_X);
-            layout.height(LINE_HEIGHT);
-        });
         return label;
     }
 
