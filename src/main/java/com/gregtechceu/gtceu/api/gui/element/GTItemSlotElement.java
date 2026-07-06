@@ -329,6 +329,12 @@ public class GTItemSlotElement extends ItemSlot {
         if (element.hasAttribute("draw-hover-tips")) {
             slotStyle(style -> style.showItemTooltips(XmlUtils.getAsBoolean(element, "draw-hover-tips", true)));
         }
+        if (element.hasAttribute("can-put-items")) {
+            setCanPutItems(XmlUtils.getAsBoolean(element, "can-put-items", true));
+        }
+        if (element.hasAttribute("can-take-items")) {
+            setCanTakeItems(XmlUtils.getAsBoolean(element, "can-take-items", true));
+        }
     }
 
     private void applyItemHandlerSlotOptions() {
