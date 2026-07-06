@@ -36,6 +36,31 @@ public final class CoverUIHelper {
     }
 
     /**
+     * Returns whether the cover exposes any currently supported UI route.
+     */
+    public static boolean hasUI(CoverBehavior cover) {
+        return cover instanceof LDLib2CoverUIProvider || cover instanceof IUICover;
+    }
+
+    /**
+     * Returns whether the cover has opted into the LDLib2 cover menu contract.
+     */
+    public static boolean hasLDLib2UI(CoverBehavior cover) {
+        return cover instanceof LDLib2CoverUIProvider;
+    }
+
+    /**
+     * Returns whether the cover can open its LDLib2 menu for the supplied player.
+     */
+    public static boolean canOpenLDLib2(CoverBehavior cover, Player player) {
+        if (cover instanceof LDLib2CoverUIProvider uiProvider) {
+            LDLib2CoverUIHolderContext holder = new LDLib2CoverUIHolderContext(player, cover);
+            return uiProvider.canCreateLDLib2UI(player, holder);
+        }
+        return false;
+    }
+
+    /**
      * Creates the parallel LDLib2 UI when the cover exposes the LDLib2 provider contract.
      *
      * @return the LDLib2 UI, or {@code null} when the cover has not migrated to the parallel provider contract.

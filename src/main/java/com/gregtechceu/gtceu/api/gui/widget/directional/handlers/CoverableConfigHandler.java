@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
@@ -27,6 +28,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public class CoverableConfigHandler implements IDirectionalConfigHandler {
@@ -84,7 +86,7 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
                 .setChangeListener(this::coverItemChanged)
                 .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.IO_CONFIG_COVER_SLOT_OVERLAY)));
         group.addWidget(new PredicatedButtonWidget(0, 0, 18, 18, CONFIG_BTN_TEXTURE, this::toggleConfigTab,
-                () -> side != null && coverBehavior != null && machine.getCoverAtSide(side) instanceof IUICover));
+                this::hasConfigurableCover));
 
         checkCoverBehaviour();
 
@@ -154,10 +156,47 @@ public class CoverableConfigHandler implements IDirectionalConfigHandler {
     }
 
     private void toggleConfigTab(ClickData cd) {
+        if (shouldOpenLDLib2CoverUI()) {
+            openLDLib2CoverUI(cd);
+            return;
+        }
         if (this.coverConfigurator == null)
             openConfigTab();
         else
             closeConfigTab();
+    }
+
+    private boolean hasConfigurableCover() {
+        if (side == null || coverBehavior == null) {
+            return false;
+        }
+        var cover = machine.getCoverAtSide(side);
+        if (cover == null) {
+            return false;
+        }
+        if (cover instanceof IUICover) {
+            return true;
+        }
+        return panel.getGui().entityPlayer instanceof Player player &&
+                CoverUIHelper.canOpenLDLib2(cover, player);
+    }
+
+    private boolean shouldOpenLDLib2CoverUI() {
+        if (coverBehavior == null) {
+            return false;
+        }
+        if (!(panel.getGui().entityPlayer instanceof Player player)) {
+            return CoverUIHelper.hasLDLib2UI(coverBehavior);
+        }
+        return CoverUIHelper.canOpenLDLib2(coverBehavior, player);
+    }
+
+    private void openLDLib2CoverUI(ClickData cd) {
+        if (cd.isRemote || coverBehavior == null || !(panel.getGui().entityPlayer instanceof ServerPlayer player)) {
+            return;
+        }
+        closeConfigTab();
+        CoverUIHelper.open(coverBehavior, player);
     }
 
     private void openConfigTab() {
