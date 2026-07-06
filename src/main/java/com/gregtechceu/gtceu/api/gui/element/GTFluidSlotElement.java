@@ -41,6 +41,7 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.stack.ListEmiIngredient;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.neoforge.NeoForgeTypes;
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -387,6 +388,7 @@ public class GTFluidSlotElement extends UIElement {
         }
     }
 
+    @Nullable
     private ITypedIngredient<?> createJEIFluidIngredient(FluidStack fluidStack) {
         if (fluidStack.isEmpty()) {
             return null;

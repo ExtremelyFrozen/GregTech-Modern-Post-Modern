@@ -41,7 +41,8 @@ public class GTProgressBarElement extends ProgressBar {
     }
 
     public GTProgressBarElement setProgressSupplier(Supplier<Double> progressSupplier) {
-        return setProgressSupplier(() -> progressSupplier.get());
+        DoubleSupplier doubleSupplier = progressSupplier::get;
+        return setProgressSupplier(doubleSupplier);
     }
 
     @Override
