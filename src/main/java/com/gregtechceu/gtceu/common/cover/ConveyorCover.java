@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.cover;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.IControllable;
@@ -8,14 +9,22 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.IIOCover;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandler;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandlers;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTEnumSelectorElement;
+import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -24,26 +33,31 @@ import com.gregtechceu.gtceu.api.transfer.item.ItemHandlerDelegate;
 import com.gregtechceu.gtceu.common.blockentity.ItemPipeBlockEntity;
 import com.gregtechceu.gtceu.common.cover.data.DistributionMode;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -56,14 +70,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, IControllable {
+public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2CoverUIProvider, IControllable {
 
     // 8 32 128 512 1024
     public static final Int2IntFunction CONVEYOR_SCALING = tier -> 2 * (int) Math.pow(4, Math.min(tier, GTValues.LuV));
+    private static final ResourceLocation SET_CONVEYOR_COVER_CONFIG_ACTION = GTCEu
+            .id("set_conveyor_cover_config");
+    private static final ResourceLocation TRANSFER_RATE_FIELD = SyncFieldData.key("transferRate");
+    private static final ResourceLocation IO_FIELD = SyncFieldData.key("io");
+    private static final ResourceLocation DISTRIBUTION_MODE_FIELD = SyncFieldData.key("distributionMode");
+    private static final ResourceLocation MANUAL_IO_FIELD = SyncFieldData.key("manualIO");
+
+    static {
+        SyncActionDispatchers.server().register(new ConveyorCoverConfigActionHandler());
+    }
 
     public final int tier;
     public final int maxItemTransferRate;
     @SaveField
+    @SyncToClient
     @Getter
     protected int transferRate;
     @SaveField
@@ -84,7 +109,6 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
     @Getter
     protected boolean isWorkingEnabled = true;
     protected int itemsLeftToTransferLastSecond;
-    private Widget ioModeSwitch;
 
     @SaveField
     @SyncToClient
@@ -127,8 +151,10 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
     }
 
     public void setDistributionMode(DistributionMode mode) {
-        distributionMode = mode;
-        syncDataHolder.markClientSyncFieldDirty("distributionMode");
+        if (distributionMode != mode) {
+            distributionMode = mode;
+            syncDataHolder.markClientSyncFieldDirty("distributionMode");
+        }
     }
 
     //////////////////////////////////////
@@ -141,20 +167,28 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
     }
 
     public void setTransferRate(int transferRate) {
-        if (transferRate <= maxItemTransferRate) {
-            this.transferRate = transferRate;
+        int clamped = Math.min(Math.max(transferRate, 1), maxItemTransferRate);
+        if (this.transferRate != clamped) {
+            this.transferRate = clamped;
+            syncDataHolder.markClientSyncFieldDirty("transferRate");
         }
     }
 
     public void setIo(IO io) {
         if (io == IO.IN || io == IO.OUT) {
-            this.io = io;
+            if (this.io != io) {
+                this.io = io;
+                syncDataHolder.markClientSyncFieldDirty("io");
+            }
         }
         subscriptionHandler.updateSubscription();
     }
 
     protected void setManualIOMode(ManualIOMode manualIOMode) {
-        this.manualIOMode = manualIOMode;
+        if (this.manualIOMode != manualIOMode) {
+            this.manualIOMode = manualIOMode;
+            syncDataHolder.markClientSyncFieldDirty("manualIOMode");
+        }
     }
 
     @Override
@@ -183,7 +217,7 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
     //////////////////////////////////////
 
     @Override
-    public void onNeighborChanged(net.minecraft.world.level.block.Block block, BlockPos fromPos, boolean isMoving) {
+    public void onNeighborChanged(Block block, BlockPos fromPos, boolean isMoving) {
         subscriptionHandler.updateSubscription();
     }
 
@@ -191,6 +225,7 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
     public void setWorkingEnabled(boolean isWorkingAllowed) {
         if (this.isWorkingEnabled != isWorkingAllowed) {
             this.isWorkingEnabled = isWorkingAllowed;
+            syncDataHolder.markClientSyncFieldDirty("isWorkingEnabled");
             subscriptionHandler.updateSubscription();
         }
     }
@@ -419,48 +454,39 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
     // *********** GUI ***********//
     //////////////////////////////////////
     @Override
-    public Widget createUIWidget() {
-        final var group = new WidgetGroup(0, 0, 176, 137);
-        group.addWidget(new LabelWidget(10, 5, Component.translatable(getUITitle(), GTValues.VN[tier]).getString()));
+    public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+        return holder.getCover() == this;
+    }
 
-        group.addWidget(new IntInputWidget(10, 20, 156, 20, () -> this.transferRate, this::setTransferRate)
-                .setMin(1).setMax(maxItemTransferRate));
+    @Override
+    public UI createLDLib2UI(Player player, UICoverHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 219);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
 
-        final EnumSelectorWidget<DistributionMode> distributionSelector = new EnumSelectorWidget<>(146, 67, 20, 20,
-                DistributionMode.values(), distributionMode, this::setDistributionMode);
-
-        distributionSelector.setVisible(shouldRespectDistributionMode());
-        group.addWidget(distributionSelector);
-
-        ioModeSwitch = new SwitchWidget(10, 45, 20, 20,
-                (clickData, value) -> {
-                    setIo(value ? IO.IN : IO.OUT);
-                    ioModeSwitch.setHoverTooltips(
-                            LocalizationUtils.format("cover.conveyor.mode", LocalizationUtils.format(io.tooltip)));
-                })
-                .setTexture(
-                        GuiTextures.group(GuiTextures.VANILLA_BUTTON, IO.OUT.icon),
-                        GuiTextures.group(GuiTextures.VANILLA_BUTTON, IO.IN.icon))
-                .setPressed(io == IO.IN)
-                .setHoverTooltips(
-                        LocalizationUtils.format("cover.conveyor.mode", LocalizationUtils.format(io.tooltip)));
-        group.addWidget(ioModeSwitch);
+        root.addChild(createLDLib2Label());
+        root.addChild(new GTIntInputElement(10, 20, 156, 20, this::getTransferRate,
+                value -> setLDLib2TransferRate(player, holder, value))
+                .setMin(1)
+                .setMax(maxItemTransferRate));
+        root.addChild(new GTEnumSelectorElement<>(10, 45, 20, 20, List.of(IO.IN, IO.OUT), this::getIo,
+                mode -> setLDLib2Io(player, holder, mode), IO::getIcon, IO::getTooltip));
 
         if (shouldDisplayDistributionMode()) {
-            group.addWidget(new EnumSelectorWidget<>(146, 67, 20, 20,
-                    DistributionMode.VALUES, distributionMode, this::setDistributionMode));
+            root.addChild(new GTEnumSelectorElement<>(146, 67, 20, 20, DistributionMode.VALUES,
+                    this::getDistributionMode, mode -> setLDLib2DistributionMode(player, holder, mode),
+                    DistributionMode::getIcon, DistributionMode::getTooltip));
         }
 
-        group.addWidget(new EnumSelectorWidget<>(146, 107, 20, 20,
-                ManualIOMode.VALUES, manualIOMode, this::setManualIOMode)
-                .setHoverTooltips("cover.universal.manual_import_export.mode.description"));
+        root.addChild(new GTEnumSelectorElement<>(146, 107, 20, 20, ManualIOMode.VALUES, this::getManualIOMode,
+                mode -> setLDLib2ManualIOMode(player, holder, mode), ManualIOMode::getIcon,
+                ManualIOMode::getTooltip));
 
-        group.addWidget(filterHandler.createFilterSlotUI(125, 108));
-        group.addWidget(filterHandler.createFilterConfigUI(10, 72, 156, 60));
-
-        buildAdditionalUI(group);
-
-        return group;
+        root.addChild(filterHandler.createFilterSlotLDLib2UI(125, 108));
+        root.addChild(filterHandler.createFilterConfigLDLib2UI(10, 72, 156, 60));
+        buildAdditionalLDLib2UI(root, player, holder);
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 137, true));
+        return UI.of(root);
     }
 
     private boolean shouldDisplayDistributionMode() {
@@ -475,12 +501,64 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
         return "cover.conveyor.title";
     }
 
-    protected void buildAdditionalUI(WidgetGroup group) {
+    protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {
         // Do nothing in the base implementation. This is intended to be overridden by subclasses.
     }
 
     protected void configureFilter() {
         // Do nothing in the base implementation. This is intended to be overridden by subclasses.
+    }
+
+    private GTLabelElement createLDLib2Label() {
+        GTLabelElement label = new GTLabelElement(10, 5, 156, 10, Component.translatable(getUITitle(),
+                GTValues.VN[tier]));
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private void setLDLib2TransferRate(Player player, UICoverHolder holder, int value) {
+        setTransferRate(value);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2Io(Player player, UICoverHolder holder, IO io) {
+        setIo(io);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2DistributionMode(Player player, UICoverHolder holder, DistributionMode mode) {
+        setDistributionMode(mode);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2ManualIOMode(Player player, UICoverHolder holder, ManualIOMode mode) {
+        setManualIOMode(mode);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
+        if (player.level().isClientSide()) {
+            CoverUIHelper.sendAction(holder, createSetConveyorCoverConfigAction(getTransferRate(), getIo(),
+                    getDistributionMode(), getManualIOMode()));
+        }
+    }
+
+    private static SyncActionData createSetConveyorCoverConfigAction(int transferRate, IO io,
+                                                                     DistributionMode distributionMode,
+                                                                     ManualIOMode manualIOMode) {
+        DataComponentMap payload = DataComponentMap.builder()
+                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
+                        .put(TRANSFER_RATE_FIELD, new JsonPrimitive(transferRate))
+                        .put(IO_FIELD, new JsonPrimitive(io.ordinal()))
+                        .put(DISTRIBUTION_MODE_FIELD, new JsonPrimitive(distributionMode.ordinal()))
+                        .put(MANUAL_IO_FIELD, new JsonPrimitive(manualIOMode.ordinal()))
+                        .build())
+                .build();
+        return new SyncActionData(SET_CONVEYOR_COVER_CONFIG_ACTION, 0, payload);
     }
 
     /////////////////////////////////////
@@ -567,5 +645,112 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, IUICover, 
         filterHandler
                 .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
         super.pasteConfig(player, registries, config);
+    }
+
+    private static final class ConveyorCoverConfigActionHandler implements SyncActionHandler {
+
+        @Override
+        public ResourceLocation actionId() {
+            return SET_CONVEYOR_COVER_CONFIG_ACTION;
+        }
+
+        @Override
+        public boolean acceptsHolder(SyncActionContext context) {
+            return context.holder() instanceof ConveyorCover;
+        }
+
+        @Override
+        public boolean acceptsPayload(DataComponentMap payload) {
+            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
+            return fields != null &&
+                    isValidPositiveInt(fields, TRANSFER_RATE_FIELD) &&
+                    isValidIOOrdinal(fields, IO_FIELD) &&
+                    isValidOrdinal(fields, DISTRIBUTION_MODE_FIELD, DistributionMode.VALUES.length) &&
+                    isValidOrdinal(fields, MANUAL_IO_FIELD, ManualIOMode.VALUES.length);
+        }
+
+        @Override
+        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
+            return !player.isSpectator();
+        }
+
+        @Override
+        public void execute(SyncActionContext context) {
+            if (!(context.holder() instanceof ConveyorCover cover)) {
+                throw new IllegalStateException("Conveyor cover config action received a non-conveyor cover.");
+            }
+            cover.setTransferRate(requirePositiveInt(context.payload(), TRANSFER_RATE_FIELD));
+            cover.setIo(IO.values()[requireIOOrdinal(context.payload(), IO_FIELD)]);
+            cover.setDistributionMode(DistributionMode.VALUES[requireOrdinal(context.payload(),
+                    DISTRIBUTION_MODE_FIELD, DistributionMode.VALUES.length)]);
+            cover.setManualIOMode(ManualIOMode.VALUES[requireOrdinal(context.payload(), MANUAL_IO_FIELD,
+                    ManualIOMode.VALUES.length)]);
+        }
+    }
+
+    private static boolean isValidPositiveInt(SyncFieldData fields, ResourceLocation field) {
+        Integer value = readInt(fields, field);
+        return value != null && value > 0;
+    }
+
+    private static int requirePositiveInt(DataComponentMap payload, ResourceLocation field) {
+        int value = requireNonNegativeInt(payload, field);
+        if (value <= 0) {
+            throw new IllegalArgumentException("Conveyor cover config action value must be positive: " + value);
+        }
+        return value;
+    }
+
+    private static boolean isValidIOOrdinal(SyncFieldData fields, ResourceLocation field) {
+        Integer ordinal = readInt(fields, field);
+        return ordinal != null && isImportExportOrdinal(ordinal);
+    }
+
+    private static int requireIOOrdinal(DataComponentMap payload, ResourceLocation field) {
+        int ordinal = requireNonNegativeInt(payload, field);
+        if (!isImportExportOrdinal(ordinal)) {
+            throw new IllegalArgumentException("Conveyor cover config action IO ordinal is out of range: " + ordinal);
+        }
+        return ordinal;
+    }
+
+    private static boolean isImportExportOrdinal(int ordinal) {
+        return ordinal == IO.IN.ordinal() || ordinal == IO.OUT.ordinal();
+    }
+
+    private static boolean isValidOrdinal(SyncFieldData fields, ResourceLocation field, int valueCount) {
+        Integer ordinal = readInt(fields, field);
+        return ordinal != null && ordinal >= 0 && ordinal < valueCount;
+    }
+
+    private static int requireOrdinal(DataComponentMap payload, ResourceLocation field, int valueCount) {
+        int ordinal = requireNonNegativeInt(payload, field);
+        if (ordinal >= valueCount) {
+            throw new IllegalArgumentException("Conveyor cover config action ordinal is out of range: " + ordinal);
+        }
+        return ordinal;
+    }
+
+    private static int requireNonNegativeInt(DataComponentMap payload, ResourceLocation field) {
+        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        if (fields == null) {
+            throw new IllegalStateException("Conveyor cover config action payload is missing field data.");
+        }
+        Integer value = readInt(fields, field);
+        if (value == null) {
+            throw new IllegalStateException("Conveyor cover config action payload is missing " + field + ".");
+        }
+        if (value < 0) {
+            throw new IllegalArgumentException("Conveyor cover config action value is negative: " + value);
+        }
+        return value;
+    }
+
+    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
+        JsonElement element = fields.get(field);
+        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
+            return primitive.getAsInt();
+        }
+        return null;
     }
 }

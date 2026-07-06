@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -24,6 +25,8 @@ public class GTEnumSelectorElement<T extends Enum<T>> extends GTButtonElement {
     private final Consumer<T> onChanged;
     private final Function<T, IGuiTexture> iconGetter;
     private final Function<T, String> tooltipKeyGetter;
+    private BiFunction<T, String, List<Component>> tooltipSupplier = (value, key) -> List
+            .copyOf(LangHandler.getSingleOrMultiLang(key));
     private T lastSelected;
 
     public GTEnumSelectorElement(int x, int y, int width, int height, T[] values, Supplier<T> selectedSupplier,
@@ -47,6 +50,12 @@ public class GTEnumSelectorElement<T extends Enum<T>> extends GTButtonElement {
         setOnClick(event -> cycle());
         UITemplate.setLDLib2Bounds(this, x, y, width, height);
         refreshState();
+    }
+
+    public GTEnumSelectorElement<T> setTooltipSupplier(BiFunction<T, String, List<Component>> tooltipSupplier) {
+        this.tooltipSupplier = tooltipSupplier;
+        refreshState();
+        return this;
     }
 
     @Override
@@ -74,7 +83,8 @@ public class GTEnumSelectorElement<T extends Enum<T>> extends GTButtonElement {
         getSelectedIndex(selected);
         lastSelected = selected;
         setButtonTexture(GuiTextures.group(GuiTextures.VANILLA_BUTTON, iconGetter.apply(selected)));
-        List<Component> tooltips = List.copyOf(LangHandler.getSingleOrMultiLang(tooltipKeyGetter.apply(selected)));
+        String tooltipKey = tooltipKeyGetter.apply(selected);
+        List<Component> tooltips = List.copyOf(tooltipSupplier.apply(selected, tooltipKey));
         style(style -> style.tooltips(tooltips.toArray(Component[]::new)));
     }
 
