@@ -5,22 +5,36 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/**
+ * Matches resources and optionally exposes an LDLib2 configurator for filter items.
+ */
 public interface Filter<T, S extends Filter<T, S>> extends Predicate<T> {
 
-    default boolean supportsLDLib2Configurator() {
-        return false;
-    }
+    /**
+     * Returns whether this filter instance can build an LDLib2 configurator for editing its state.
+     */
+    boolean supportsLDLib2Configurator();
 
-    default UIElement openLDLib2Configurator(int x, int y) {
-        throw new UnsupportedOperationException("LDLib2 configurator is not supported by this filter");
-    }
+    /**
+     * Builds the LDLib2 configurator at the requested fixed-position offset.
+     */
+    UIElement openLDLib2Configurator(int x, int y);
 
+    /**
+     * Registers the callback used to persist and propagate filter changes.
+     */
     void setOnUpdated(Consumer<S> onUpdated);
 
+    /**
+     * Returns whether this filter rejects matching resources instead of accepting them.
+     */
     default boolean isBlackList() {
         return false;
     }
 
+    /**
+     * Returns whether this filter has no configured matching rules.
+     */
     default boolean isBlank() {
         return false;
     }

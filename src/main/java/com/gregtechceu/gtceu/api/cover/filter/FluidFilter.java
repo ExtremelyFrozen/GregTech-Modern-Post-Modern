@@ -6,8 +6,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -53,13 +51,18 @@ public interface FluidFilter extends Filter<FluidStack, FluidFilter> {
         }
 
         @Override
+        public boolean supportsLDLib2Configurator() {
+            return false;
+        }
+
+        @Override
         public UIElement openLDLib2Configurator(int x, int y) {
-            throw new NotImplementedException("Not available for empty fluid filter");
+            throw new UnsupportedOperationException("Not available for empty fluid filter");
         }
 
         @Override
         public void setOnUpdated(Consumer<FluidFilter> onUpdated) {
-            throw new NotImplementedException("Not available for empty fluid filter");
+            throw new UnsupportedOperationException("Not available for empty fluid filter");
         }
     };
 }
