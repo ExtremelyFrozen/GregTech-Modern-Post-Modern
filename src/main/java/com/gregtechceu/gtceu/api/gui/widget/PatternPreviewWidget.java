@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTSceneElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -25,7 +26,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Scene;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.utils.data.ItemStackKey;
@@ -64,7 +64,7 @@ public class PatternPreviewWidget extends UIElement {
     private static final int REGION_SIZE = 512;
     private static int LAST_OFFSET_INDEX = 0;
     private static final Map<MultiblockMachineDefinition, MBPattern[]> CACHE = new HashMap<>();
-    private final Scene scene;
+    private final GTSceneElement scene;
     private final ScrollerView scrollableView;
     private final GTButtonElement pageButton;
     private final GTButtonElement layerButton;
@@ -87,16 +87,10 @@ public class PatternPreviewWidget extends UIElement {
         predicates = new ArrayList<>();
         layer = -1;
 
-        scene = new Scene().createScene(LEVEL)
-                .setOnSelected(this::onPosSelected)
-                .setRenderFacing(false);
-        scene.layout(layout -> {
-            layout.positionType(TaffyPosition.ABSOLUTE);
-            layout.left(3);
-            layout.top(3);
-            layout.width(150);
-            layout.height(150);
-        });
+        scene = new GTSceneElement(3, 3, 150, 150);
+        scene.createScene(LEVEL);
+        scene.setOnSelected(this::onPosSelected);
+        scene.setRenderFacing(false);
         addChild(scene);
 
         scrollableView = new ScrollerView();
