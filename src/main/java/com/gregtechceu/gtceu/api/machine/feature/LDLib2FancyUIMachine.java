@@ -47,7 +47,7 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIPr
      */
     @Override
     default UI createLDLib2UI(Player player, MachineUIHolder holder) {
-        return UI.of(new LDLib2FancyMachineUIElement(this, player.getInventory(), getLDLib2PageWidth(),
+        return UI.of(new LDLib2FancyMachineUIElement(this, player.getInventory(), holder, getLDLib2PageWidth(),
                 getLDLib2PageHeight()));
     }
 

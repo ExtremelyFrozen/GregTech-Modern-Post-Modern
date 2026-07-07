@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.gui.fancy;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
@@ -29,6 +30,7 @@ public class LDLib2FancyMachineUIElement extends UIElement {
     private static final int DEFAULT_BORDER = 4;
 
     private final LDLib2FancyUIProvider mainPage;
+    private final MachineUIHolder holder;
     private final UIElement pageContainer;
     private final LDLib2FancyTitleBarElement titleBar;
     private final LDLib2FancyTabsElement sideTabsElement;
@@ -48,8 +50,10 @@ public class LDLib2FancyMachineUIElement extends UIElement {
     private record NavigationEntry(LDLib2FancyUIProvider page, LDLib2FancyUIProvider homePage,
                                    Runnable onNavigation) {}
 
-    public LDLib2FancyMachineUIElement(LDLib2FancyUIProvider mainPage, Inventory inventory, int width, int height) {
+    public LDLib2FancyMachineUIElement(LDLib2FancyUIProvider mainPage, Inventory inventory, MachineUIHolder holder,
+                                       int width, int height) {
         this.mainPage = mainPage;
+        this.holder = holder;
         UITemplate.setLDLib2Bounds(this, 0, 0, width, height);
         style(style -> style
                 .backgroundTexture(GuiTextures.BACKGROUND)
@@ -73,6 +77,13 @@ public class LDLib2FancyMachineUIElement extends UIElement {
         addChildren(titleBar, sideTabsElement, tooltipsPanel, configuratorPanel);
 
         initializePages();
+    }
+
+    /**
+     * Returns the machine holder captured when this LDLib2 Fancy screen was opened.
+     */
+    public MachineUIHolder getHolder() {
+        return holder;
     }
 
     public LDLib2ConfiguratorPanelElement getConfiguratorPanel() {
