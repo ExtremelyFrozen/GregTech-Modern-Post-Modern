@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ldlib2-ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/Low-Drag-MC/LDLib2/refs/heads/1.21/ldlib2-ui.xsd">
-    <!-- Generated from legacy recipe NBT UI asset lathe.rtui. -->
     <stylesheet location="ldlib2:lss/mc.lss"/>
     <root source-format="legacy-nbt-ui" style="position: relative; width: 110; height: 26;">
         <element legacy-type="group" style="position: absolute; left: 0; top: 0; width: 26; height: 26;">

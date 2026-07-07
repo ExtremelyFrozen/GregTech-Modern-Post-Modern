@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ldlib2-ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/Low-Drag-MC/LDLib2/refs/heads/1.21/ldlib2-ui.xsd">
-    <!-- Generated from legacy recipe NBT UI asset distillation_tower.rtui. -->
     <stylesheet location="ldlib2:lss/mc.lss"/>
     <root source-format="legacy-nbt-ui" style="position: relative; width: 148; height: 96;">
         <gtm-dual-progress id="progress" legacy-type="dual_progress" style="position: absolute; left: 27; top: 8; width: 90; height: 82;" split-point="0.4000000059604645">
