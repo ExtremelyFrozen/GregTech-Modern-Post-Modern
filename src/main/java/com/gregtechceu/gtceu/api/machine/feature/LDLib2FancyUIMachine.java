@@ -1,8 +1,10 @@
 package com.gregtechceu.gtceu.api.machine.feature;
 
+import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
@@ -10,6 +12,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2MachineModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -69,6 +72,17 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIPr
         if (this instanceof IRecipeLogicMachine recipeLogicMachine &&
                 recipeLogicMachine.getRecipeTypes().length > 1) {
             tabs.attachSubTab(new LDLib2MachineModeFancyConfigurator(recipeLogicMachine));
+        }
+    }
+
+    /**
+     * Registers common LDLib2 machine configurator buttons.
+     */
+    @Override
+    default void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+        if (this instanceof IControllable controllable) {
+            configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(controllable,
+                    configuratorPanel.getHolder()));
         }
     }
 
