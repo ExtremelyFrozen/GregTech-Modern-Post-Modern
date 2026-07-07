@@ -18,6 +18,7 @@ import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifierList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.ParallelHatchPartMachine;
 
@@ -44,6 +45,7 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
     @Getter
     protected int tier;
     @SaveField
+    @SyncToClient
     @Getter
     protected boolean batchEnabled;
 
@@ -91,6 +93,7 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
     @Override
     public void setBatchEnabled(boolean batch) {
         this.batchEnabled = batch;
+        syncDataHolder.markClientSyncFieldDirty("batchEnabled");
     }
 
     //////////////////////////////////////
