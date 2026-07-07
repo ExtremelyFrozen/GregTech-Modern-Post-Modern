@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTPhantomItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
@@ -14,6 +14,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -41,6 +42,8 @@ public class SimpleItemFilter implements ItemFilter {
 
     @Getter
     protected int maxStackSize;
+
+    private final List<GTPhantomItemSlotElement> ldLib2MatchSlots = new ArrayList<>();
 
     protected SimpleItemFilter() {
         Arrays.fill(matches, ItemStack.EMPTY);
@@ -86,6 +89,7 @@ public class SimpleItemFilter implements ItemFilter {
     public UIElement openLDLib2Configurator(int x, int y) {
         UIElement group = new UIElement();
         setLDLib2Bounds(group, x, y, 18 * 3 + 25, 18 * 3);
+        ldLib2MatchSlots.clear();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 int index = i * 3 + j;
@@ -99,32 +103,19 @@ public class SimpleItemFilter implements ItemFilter {
         return group;
     }
 
-    private GTItemSlotElement createLDLib2MatchSlot(int index, int x, int y) {
-        GTItemSlotElement slot = new GTItemSlotElement();
-        slot.setItem(matches[index].copy(), false);
-        slot.setBackgroundTexture(GuiTextures.SLOT);
-        slot.xeiPhantom();
-        slot.registerValueListener(stack -> syncLDLib2MatchSlot(index, slot, stack));
+    private GTPhantomItemSlotElement createLDLib2MatchSlot(int index, int x, int y) {
+        GTPhantomItemSlotElement slot = new GTPhantomItemSlotElement(
+                () -> matches[index],
+                stack -> syncLDLib2MatchSlot(index, stack),
+                () -> maxStackSize);
+        ldLib2MatchSlots.add(slot);
         setLDLib2Bounds(slot, x, y, 18, 18);
         return slot;
     }
 
-    private void syncLDLib2MatchSlot(int index, GTItemSlotElement slot, ItemStack stack) {
-        ItemStack normalized = normalizeLDLib2Match(stack);
-        if (!ItemStack.matches(normalized, stack)) {
-            slot.setItem(normalized, false);
-        }
-        matches[index] = normalized;
+    private void syncLDLib2MatchSlot(int index, ItemStack stack) {
+        matches[index] = stack;
         onUpdated.accept(this);
-    }
-
-    private ItemStack normalizeLDLib2Match(ItemStack stack) {
-        if (stack.isEmpty() || maxStackSize <= 0) {
-            return ItemStack.EMPTY;
-        }
-        ItemStack normalized = stack.copy();
-        normalized.setCount(Math.min(normalized.getCount(), maxStackSize));
-        return normalized;
     }
 
     private GTToggleButtonElement createLDLib2ToggleButton(int x, int y, IGuiTexture texture,
@@ -166,8 +157,17 @@ public class SimpleItemFilter implements ItemFilter {
     public void setMaxStackSize(int maxStackSize) {
         this.maxStackSize = maxStackSize;
 
-        for (ItemStack match : matches) {
-            match.setCount(Math.min(match.getCount(), maxStackSize));
+        for (int i = 0; i < matches.length; i++) {
+            ItemStack match = matches[i];
+            if (match.isEmpty() || maxStackSize <= 0) {
+                matches[i] = ItemStack.EMPTY;
+            } else {
+                match.setCount(Math.min(match.getCount(), maxStackSize));
+            }
+        }
+
+        for (GTPhantomItemSlotElement slot : ldLib2MatchSlots) {
+            slot.refreshFromSupplier();
         }
     }
 
