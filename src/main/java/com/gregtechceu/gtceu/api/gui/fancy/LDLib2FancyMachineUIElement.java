@@ -72,7 +72,7 @@ public class LDLib2FancyMachineUIElement extends UIElement {
         this.titleBar = new LDLib2FancyTitleBarElement(width, event -> navigateBack(), event -> openPageSwitcher());
         this.sideTabsElement = new LDLib2FancyTabsElement(this::navigate, -20, 0, 24, height, true);
         this.tooltipsPanel = new LDLib2FancyTooltipsPanelElement(width + 2, 2);
-        this.configuratorPanel = new LDLib2ConfiguratorPanelElement(-26, height);
+        this.configuratorPanel = new LDLib2ConfiguratorPanelElement(holder, -26, height);
         this.pageSwitcher = new LDLib2FancyPageSwitcher(this::switchPage);
         addChildren(titleBar, sideTabsElement, tooltipsPanel, configuratorPanel);
 

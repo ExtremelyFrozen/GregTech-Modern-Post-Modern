@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 
@@ -30,6 +31,7 @@ public class LDLib2ConfiguratorPanelElement extends UIElement {
     private static final int EXPANDED_GAP = 2;
 
     private final List<Tab> tabs = new ArrayList<>();
+    private final MachineUIHolder holder;
     private int x;
     private int y;
     private int border = 4;
@@ -38,11 +40,19 @@ public class LDLib2ConfiguratorPanelElement extends UIElement {
     @Nullable
     private Tab expanded;
 
-    public LDLib2ConfiguratorPanelElement(int x, int y) {
+    public LDLib2ConfiguratorPanelElement(MachineUIHolder holder, int x, int y) {
+        this.holder = holder;
         this.x = x;
         this.y = y;
         UITemplate.setLDLib2Bounds(this, x, y, TAB_SIZE, 0);
         style(style -> style.overflowVisible(true));
+    }
+
+    /**
+     * Returns the machine holder captured when the owning Fancy screen opened.
+     */
+    public MachineUIHolder getHolder() {
+        return holder;
     }
 
     public void clear() {
