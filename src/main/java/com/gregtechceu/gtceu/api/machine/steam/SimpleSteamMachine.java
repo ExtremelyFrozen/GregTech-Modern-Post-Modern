@@ -7,9 +7,12 @@ import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -23,27 +26,24 @@ import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 import com.gregtechceu.gtceu.common.machine.trait.ExhaustVentMachineTrait;
 import com.gregtechceu.gtceu.common.recipe.condition.VentCondition;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.utils.Position;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import com.google.common.collect.Tables;
 import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.function.BooleanSupplier;
 
-public class SimpleSteamMachine extends SteamWorkableMachine implements IUIMachine {
+public class SimpleSteamMachine extends SteamWorkableMachine implements LDLib2MachineUIProvider {
 
     @SaveField
     public final NotifiableItemStackHandler importItems;
@@ -177,77 +177,57 @@ public class SimpleSteamMachine extends SteamWorkableMachine implements IUIMachi
     //////////////////////////////////////
 
     @Override
-    public ModularUI createUI(Player entityPlayer) {
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
         var storages = Tables.newCustomTable(new EnumMap<>(IO.class), LinkedHashMap<RecipeCapability<?>, Object>::new);
         storages.put(IO.IN, ItemRecipeCapability.CAP, importItems.storage);
         storages.put(IO.OUT, ItemRecipeCapability.CAP, exportItems.storage);
 
-        var group = getRecipeType().getRecipeUI().createUITemplate(recipeLogic::getProgressPercent,
+        var recipeType = getRecipeType();
+        var recipeUI = recipeType.getRecipeUI();
+        var recipeSize = recipeUI.getLDLib2RecipeUISize(true, isHighPressure);
+        var recipeTemplate = recipeUI.createLDLib2UITemplate(recipeLogic::getProgressPercent,
                 storages,
                 DataComponentMap.EMPTY,
                 Collections.emptyList(),
                 true,
                 isHighPressure);
-        Position pos = new Position((Math.max(group.getSize().width + 4 + 8, 176) - 4 - group.getSize().width) / 2 + 4,
-                32);
-        group.setSelfPosition(pos);
-        return new ModularUI(176, 166, this, entityPlayer)
-                .background(GuiTextures.BACKGROUND_STEAM.get(isHighPressure))
-                .widget(group)
-                .widget(new LabelWidget(5, 5, getBlockState().getBlock().getDescriptionId()))
-                .widget(createWaitingIndicator(pos.x + group.getSize().width / 2 - 9,
-                        pos.y + group.getSize().height / 2 - 9, 18, 18,
-                        GuiTextures.INDICATOR_NO_STEAM.get(isHighPressure), recipeLogic::isWaiting))
-                .widget(UITemplate.bindPlayerInventory(entityPlayer.getInventory(),
-                        GuiTextures.SLOT_STEAM.get(isHighPressure), 7, 84, true));
+        int recipeX = (Math.max(recipeSize.width() + 4 + 8, 176) - 4 - recipeSize.width()) / 2 + 4;
+        int recipeY = 32;
+        UITemplate.setLDLib2Bounds(recipeTemplate.rootElement, recipeX, recipeY,
+                recipeSize.width(), recipeSize.height());
+
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 166);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_STEAM.get(isHighPressure)));
+        root.addChild(recipeTemplate.rootElement);
+        root.addChild(createLDLib2TitleLabel());
+        root.addChild(createWaitingIndicator(recipeX + recipeSize.width() / 2 - 9,
+                recipeY + recipeSize.height() / 2 - 9, 18, 18,
+                GuiTextures.INDICATOR_NO_STEAM.get(isHighPressure), recipeLogic::isWaiting));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(),
+                GuiTextures.SLOT_STEAM.get(isHighPressure), 7, 84, true));
+        return UI.of(root);
     }
 
-    private static ImageWidget createWaitingIndicator(int xPosition, int yPosition, int width, int height,
-                                                      IGuiTexture texture, BooleanSupplier predicate) {
-        return new ImageWidget(xPosition, yPosition, width, height, texture) {
+    private GTLabelElement createLDLib2TitleLabel() {
+        GTLabelElement label = new GTLabelElement(5, 5, 166, 10,
+                getBlockState().getBlock().getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
 
-            private boolean isVisible = true;
-
-            @Override
-            public void writeInitialData(RegistryFriendlyByteBuf buffer) {
-                super.writeInitialData(buffer);
-                isVisible = predicate.getAsBoolean();
-                buffer.writeBoolean(isVisible);
-            }
-
-            @Override
-            public void readInitialData(RegistryFriendlyByteBuf buffer) {
-                super.readInitialData(buffer);
-                isVisible = buffer.readBoolean();
-            }
-
-            @Override
-            public void detectAndSendChanges() {
-                super.detectAndSendChanges();
-                boolean visible = predicate.getAsBoolean();
-                if (isVisible != visible) {
-                    isVisible = visible;
-                    writeUpdateInfo(1, buf -> buf.writeBoolean(isVisible));
-                }
-            }
-
-            @Override
-            @OnlyIn(Dist.CLIENT)
-            public void readUpdateInfo(int id, RegistryFriendlyByteBuf buffer) {
-                if (id == 1) {
-                    isVisible = buffer.readBoolean();
-                } else {
-                    super.readUpdateInfo(id, buffer);
-                }
-            }
-
-            @Override
-            @OnlyIn(Dist.CLIENT)
-            public void drawInBackground(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-                if (isVisible) {
-                    super.drawInBackground(graphics, mouseX, mouseY, partialTicks);
-                }
-            }
-        };
+    private static GTImageElement createWaitingIndicator(int xPosition, int yPosition, int width, int height,
+                                                         IGuiTexture texture, BooleanSupplier predicate) {
+        return new GTImageElement(xPosition, yPosition, width, height, texture)
+                .setVisibleSupplier(predicate);
     }
 }
