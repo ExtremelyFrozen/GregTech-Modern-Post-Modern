@@ -23,13 +23,10 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.integration.emi.recipe.GTRecipeEMICategory;
 import com.gregtechceu.gtceu.integration.jei.GTJEIPlugin;
 import com.gregtechceu.gtceu.integration.jei.recipe.GTLDLib2RecipeJEICategory;
 
-import com.lowdragmc.lowdraglib.gui.editor.configurator.IConfigurableWidget;
-import com.lowdragmc.lowdraglib.gui.editor.data.Resources;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -45,8 +42,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.layout.LayoutProperties;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -64,7 +59,6 @@ import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -104,7 +98,6 @@ public class GTRecipeTypeUI {
     @Getter
     protected int maxTooltips = 3;
 
-    private CompoundTag customUICache;
     private String customLDLib2UICache;
     private boolean customLDLib2UICacheLoaded;
 
@@ -116,35 +109,11 @@ public class GTRecipeTypeUI {
     }
 
     public CompoundTag getCustomUI() {
-        if (this.customUICache == null) {
-            ResourceManager resourceManager = getResourceManager();
-            if (resourceManager == null) {
-                this.customUICache = new CompoundTag();
-            } else {
-                var location = ResourceLocation.fromNamespaceAndPath(recipeType.registryName.getNamespace(),
-                        "ui/recipe_type/%s.rtui".formatted(recipeType.registryName.getPath()));
-                var resource = resourceManager.getResource(location);
-                if (resource.isEmpty()) {
-                    this.customUICache = new CompoundTag();
-                } else {
-                    try (InputStream inputStream = resource.get().open();
-                         DataInputStream dataInputStream = new DataInputStream(inputStream)) {
-                        this.customUICache = NbtIo.read(dataInputStream, NbtAccounter.unlimitedHeap());
-                    } catch (Exception e) {
-                        GTCEu.LOGGER.warn("Failed to load recipe type UI from {}", location, e);
-                        this.customUICache = new CompoundTag();
-                    }
-                }
-                if (this.customUICache == null) {
-                    this.customUICache = new CompoundTag();
-                }
-            }
-        }
-        return this.customUICache;
+        return new CompoundTag();
     }
 
     public boolean hasCustomUI() {
-        return !getCustomUI().isEmpty();
+        return false;
     }
 
     public boolean hasCustomLDLib2UI() {
@@ -223,7 +192,6 @@ public class GTRecipeTypeUI {
     }
 
     public void reloadCustomUI() {
-        this.customUICache = null;
         this.customLDLib2UICache = null;
         this.customLDLib2UICacheLoaded = false;
     }
@@ -330,17 +298,6 @@ public class GTRecipeTypeUI {
     public IEditableUI<WidgetGroup, RecipeHolder> createEditableUITemplate(final boolean isSteam,
                                                                            final boolean isHighPressure) {
         return new IEditableUI.Normal<>(() -> {
-            var isCustomUI = !isSteam && hasCustomUI();
-            if (isCustomUI) {
-                CompoundTag nbt = getCustomUI();
-                WidgetGroup group = new WidgetGroup();
-                IConfigurableWidget.deserializeNBT(group, nbt.getCompound("root"),
-                        Resources.fromNBT(nbt.getCompound("resources")), false,
-                        GTRegistries.builtinRegistry());
-                group.setSelfPosition(new Position(0, 0));
-                return group;
-            }
-
             var inputs = addInventorySlotGroup(false, isSteam, isHighPressure);
             var outputs = addInventorySlotGroup(true, isSteam, isHighPressure);
             var maxWidth = Math.max(inputs.getSize().width, outputs.getSize().width);
