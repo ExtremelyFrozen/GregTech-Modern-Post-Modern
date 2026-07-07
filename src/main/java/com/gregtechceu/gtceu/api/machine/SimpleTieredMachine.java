@@ -5,8 +5,10 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
 import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
@@ -259,6 +261,20 @@ public class SimpleTieredMachine extends WorkableTieredMachine
             slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
                     GTValues.VNF[machine.getTier()], GTValues.VNF[machine.getTier()]).toArray(Component[]::new));
         });
+    }
+
+    /**
+     * Create an LDLib2 battery slot element.
+     */
+    protected GTItemSlotElement createLDLib2BatterySlot() {
+        var slot = new GTItemSlotElement(chargerInventory, 0)
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.CHARGER_OVERLAY))
+                .setCanPutItems(true)
+                .setCanTakeItems(true)
+                .setOnAddedTooltips((slotElement, tooltips) -> tooltips.addAll(
+                        LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
+                                GTValues.VNF[tier], GTValues.VNF[tier])));
+        return UITemplate.setLDLib2Bounds(slot, 0, 0, 18, 18);
     }
 
     /**

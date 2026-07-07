@@ -3,9 +3,11 @@ package com.gregtechceu.gtceu.api.machine;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
+import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
-import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
 import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -13,6 +15,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.machine.trait.EnvironmentalExplosionTrait;
 
 import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
+import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
 
 import net.minecraft.util.Mth;
 
@@ -102,5 +105,24 @@ public class TieredEnergyMachine extends TieredMachine implements ITieredMachine
             return progressBar;
         }, (progressBar, machine) -> progressBar.setProgressSupplier(
                 () -> machine.energyContainer.getEnergyStored() * 1d / machine.energyContainer.getEnergyCapacity()));
+    }
+
+    /**
+     * Create an LDLib2 energy bar element.
+     */
+    protected GTProgressBarElement createLDLib2EnergyBar() {
+        var progressBar = new GTProgressBarElement(this::getLDLib2EnergyProgress)
+                .setProgressTexture(IGuiTexture.EMPTY, GuiTextures.ENERGY_BAR_BASE)
+                .setFillDirection(FillDirection.DOWN_TO_UP);
+        progressBar.style(style -> style.backgroundTexture(GuiTextures.ENERGY_BAR_BACKGROUND));
+        return UITemplate.setLDLib2Bounds(progressBar, 0, 0, 18, 60);
+    }
+
+    private double getLDLib2EnergyProgress() {
+        long energyCapacity = energyContainer.getEnergyCapacity();
+        if (energyCapacity == 0L) {
+            return 0.0;
+        }
+        return energyContainer.getEnergyStored() * 1.0 / energyCapacity;
     }
 }
