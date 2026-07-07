@@ -24,6 +24,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SimpleSteamMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SteamBoilerMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/electric/PumpMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/MultiblockTankMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/DataAccessHatchMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MaintenanceHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MufflerPartMachine.java',
