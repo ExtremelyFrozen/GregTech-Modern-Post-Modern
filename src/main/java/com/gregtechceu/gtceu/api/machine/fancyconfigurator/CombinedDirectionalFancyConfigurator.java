@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -96,7 +97,7 @@ public class CombinedDirectionalFancyConfigurator implements IFancyUIProvider {
     public static CombinedDirectionalFancyConfigurator of(MetaMachine container, MetaMachine machine) {
         var configs = CONFIG_HANDLERS.stream()
                 .map(handler -> handler.apply(container))
-                .filter(config -> config != null)
+                .filter(Objects::nonNull)
                 .toList();
 
         return configs.isEmpty() ? null : new CombinedDirectionalFancyConfigurator(configs, machine);
