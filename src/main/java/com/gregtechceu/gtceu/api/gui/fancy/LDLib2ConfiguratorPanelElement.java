@@ -16,6 +16,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import net.minecraft.world.item.ItemStack;
 
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -154,6 +155,7 @@ public class LDLib2ConfiguratorPanelElement extends UIElement {
             button.noText();
             button.style(style -> style.zIndex(310));
             button.addEventListener(UIEvents.HOVER_TOOLTIPS, this::applyTooltip);
+            button.addEventListener(UIEvents.MOUSE_WHEEL, this::onMouseWheel);
 
             this.icon = new GTImageElement(TAB_SIZE - ICON_SIZE - border, border, ICON_SIZE, ICON_SIZE,
                     configurator.getIcon());
@@ -199,9 +201,24 @@ public class LDLib2ConfiguratorPanelElement extends UIElement {
             return createdView;
         }
 
+        private void onMouseWheel(UIEvent event) {
+            if (configurator instanceof LDLib2FancyCustomMouseWheelAction mouseWheelAction &&
+                    mouseWheelAction.mouseWheelMove(event)) {
+                event.stopImmediatePropagation();
+                event.hasHandler = true;
+            }
+        }
+
         private void onClick(UIEvent event) {
-            if (configurator instanceof LDLib2FancyConfiguratorButton button) {
-                button.onClick(event);
+            if (event.button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE &&
+                    configurator instanceof LDLib2FancyCustomMiddleClickAction middleClickAction) {
+                middleClickAction.onMiddleClick(event);
+                event.stopImmediatePropagation();
+                event.hasHandler = true;
+                return;
+            }
+            if (configurator instanceof LDLib2FancyConfiguratorButton configuratorButton) {
+                configuratorButton.onClick(event);
                 return;
             }
             if (expanded == this) {
