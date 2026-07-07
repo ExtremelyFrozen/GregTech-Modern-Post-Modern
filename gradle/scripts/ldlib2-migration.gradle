@@ -74,6 +74,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2FancyUIMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2FancySelectorConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2MachineModeFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2VoidingModeFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2WorkingEnabledFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SimpleSteamMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SteamBoilerMachine.java',
