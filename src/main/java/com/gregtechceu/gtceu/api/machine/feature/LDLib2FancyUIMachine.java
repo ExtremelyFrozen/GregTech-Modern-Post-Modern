@@ -6,8 +6,10 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2MachineModeFancyConfigurator;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -57,6 +59,17 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIPr
     @Override
     default IGuiTexture getTabIcon() {
         return GuiTextures.itemStack(self().getDefinition().getItem());
+    }
+
+    /**
+     * Registers local LDLib2 side tabs for machine metadata pages.
+     */
+    @Override
+    default void attachSideTabs(LDLib2FancyTabsElement tabs) {
+        if (this instanceof IRecipeLogicMachine recipeLogicMachine &&
+                recipeLogicMachine.getRecipeTypes().length > 1) {
+            tabs.attachSubTab(new LDLib2MachineModeFancyConfigurator(recipeLogicMachine));
+        }
     }
 
     /**
