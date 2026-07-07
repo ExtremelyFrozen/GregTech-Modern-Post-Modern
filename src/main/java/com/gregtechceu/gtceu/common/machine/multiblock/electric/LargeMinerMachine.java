@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
+import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
@@ -23,7 +24,6 @@ import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.ComponentPanelWidget;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
@@ -189,13 +189,13 @@ public class LargeMinerMachine extends WorkableElectricMultiblockMachine
             textList.add(Component.translatable("gtpm.machine.miner.startz",
                     getRecipeLogic().getZ() == Integer.MAX_VALUE ? 0 : getRecipeLogic().getZ()));
             textList.add(Component.translatable("gtpm.universal.tooltip.silk_touch")
-                    .append(ComponentPanelWidget.withButton(Component.literal("[")
+                    .append(GTComponentPanelElement.withButton(Component.literal("[")
                             .append(getRecipeLogic().isSilkTouchMode() ?
                                     Component.translatable("gtpm.creative.activity.on") :
                                     Component.translatable("gtpm.creative.activity.off"))
                             .append(Component.literal("]")), "silk_touch")));
             textList.add(Component.translatable("gtpm.universal.tooltip.chunk_mode")
-                    .append(ComponentPanelWidget.withButton(Component.literal("[")
+                    .append(GTComponentPanelElement.withButton(Component.literal("[")
                             .append(getRecipeLogic().isChunkMode() ?
                                     Component.translatable("gtpm.creative.activity.on") :
                                     Component.translatable("gtpm.creative.activity.off"))
