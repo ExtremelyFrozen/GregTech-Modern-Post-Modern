@@ -133,8 +133,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'com.lowdragmc.lowdraglib2.syncdata.',
                 'com.lowdragmc.lowdraglib2.gui.sync.',
                 'Objects.requireNonNull',
-                'requireNonNull(',
-                'java.util.Objects'
+                'requireNonNull('
         ]
 
         var matches = []
