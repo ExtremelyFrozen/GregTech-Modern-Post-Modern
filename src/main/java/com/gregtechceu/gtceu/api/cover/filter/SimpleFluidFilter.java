@@ -1,14 +1,12 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTPhantomFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
-import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -45,7 +43,7 @@ public class SimpleFluidFilter implements FluidFilter {
     @Getter
     protected int maxStackSize = 1;
 
-    private final List<LDLib2PhantomFluidSlot> ldLib2FluidSlots = new ArrayList<>();
+    private final List<GTPhantomFluidSlotElement> ldLib2FluidSlots = new ArrayList<>();
 
     protected SimpleFluidFilter() {
         Arrays.fill(matches, FluidStack.EMPTY);
@@ -104,55 +102,19 @@ public class SimpleFluidFilter implements FluidFilter {
         return group;
     }
 
-    private GTFluidSlotElement createLDLib2MatchSlot(int index, int x, int y) {
-        LDLib2PhantomFluidSlot slot = new LDLib2PhantomFluidSlot(index);
+    private GTPhantomFluidSlotElement createLDLib2MatchSlot(int index, int x, int y) {
+        GTPhantomFluidSlotElement slot = new GTPhantomFluidSlotElement(
+                () -> matches[index],
+                fluidStack -> syncLDLib2MatchSlot(index, fluidStack),
+                () -> maxStackSize);
         ldLib2FluidSlots.add(slot);
         setLDLib2Bounds(slot, x, y, 18, 18);
         return slot;
     }
 
     private void syncLDLib2MatchSlot(int index, FluidStack fluidStack) {
-        matches[index] = normalizeLDLib2Match(fluidStack);
+        matches[index] = fluidStack;
         onUpdated.accept(this);
-    }
-
-    private FluidStack normalizeLDLib2Match(FluidStack fluidStack) {
-        if (fluidStack.isEmpty() || maxStackSize <= 0) {
-            return FluidStack.EMPTY;
-        }
-        FluidStack normalized = fluidStack.copy();
-        normalized.setAmount(Math.min(normalized.getAmount(), maxStackSize));
-        return normalized;
-    }
-
-    private void adjustLDLib2FluidAmount(LDLib2PhantomFluidSlot slot, UIEvent event) {
-        FluidStack current = slot.getFluid();
-        if (current.isEmpty() || event.deltaY == 0) {
-            return;
-        }
-        int delta = getLDLib2ModifiedChangeAmount(event.deltaY > 0 ? 1 : -1, event);
-        int amount = Math.min(Math.max(current.getAmount() + delta, 0), maxStackSize);
-        if (amount <= 0) {
-            slot.setFluid(FluidStack.EMPTY);
-        } else {
-            FluidStack adjusted = current.copy();
-            adjusted.setAmount(amount);
-            slot.setFluid(adjusted);
-        }
-        event.stopPropagation();
-    }
-
-    private int getLDLib2ModifiedChangeAmount(int amount, UIEvent event) {
-        if (event.isShiftDown()) {
-            amount *= 10;
-        }
-        if (event.isCtrlDown()) {
-            amount *= 100;
-        }
-        if (!event.isAltDown()) {
-            amount *= 1000;
-        }
-        return amount;
     }
 
     private GTToggleButtonElement createLDLib2ToggleButton(int x, int y, IGuiTexture texture,
@@ -199,41 +161,8 @@ public class SimpleFluidFilter implements FluidFilter {
                 match.setAmount(Math.min(match.getAmount(), maxStackSize));
         }
 
-        for (LDLib2PhantomFluidSlot slot : ldLib2FluidSlots) {
-            slot.refreshFromMatch();
-        }
-    }
-
-    private final class LDLib2PhantomFluidSlot extends GTFluidSlotElement {
-
-        private final int index;
-        private boolean suppressUpdate = true;
-
-        private LDLib2PhantomFluidSlot(int index) {
-            this.index = index;
-            setBackgroundTexture(GuiTextures.SLOT);
-            refreshFromMatch();
-            suppressUpdate = false;
-            xeiPhantom();
-            addEventListener(UIEvents.MOUSE_WHEEL, event -> adjustLDLib2FluidAmount(this, event));
-        }
-
-        @Override
-        public GTFluidSlotElement setFluid(FluidStack fluid) {
-            FluidStack normalized = normalizeLDLib2Match(fluid);
-            super.setFluid(normalized);
-            if (!suppressUpdate) {
-                syncLDLib2MatchSlot(index, normalized);
-            }
-            return this;
-        }
-
-        private void refreshFromMatch() {
-            suppressUpdate = true;
-            setCapacity(maxStackSize);
-            setShowAmount(maxStackSize > 1);
-            setFluid(matches[index]);
-            suppressUpdate = false;
+        for (GTPhantomFluidSlotElement slot : ldLib2FluidSlots) {
+            slot.refreshFromSupplier();
         }
     }
 
