@@ -214,3 +214,134 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         }
     }
 }
+
+tasks.register('reportLdlib2MigrationInventory') {
+    group = 'verification'
+    description = 'Generates the LDLib2 migration baseline inventory without failing on remaining matches.'
+
+    doLast {
+        var sourceRoots = [
+                file('src/main/java'),
+                file('src/test/java'),
+                file('src/main/resources'),
+                file('src/main/templates')
+        ]
+        var sourceFilesToScan = files(sourceRoots.findAll { it.exists() }).asFileTree.matching {
+            include '**/*.java'
+            include '**/*.kt'
+            include '**/*.json'
+            include '**/*.toml'
+            include '**/*.mcmeta'
+            include '**/*.md'
+            include '**/*.rtui'
+            include '**/*.xml'
+            exclude 'src/generated/**'
+        }
+        var gradleFilesToScan = files([
+                file('dependencies.gradle'),
+                file('gradle/forge.versions.toml'),
+                file('gradle/scripts/resources.gradle')
+        ].findAll { it.exists() })
+        var filesToScan = (sourceFilesToScan + gradleFilesToScan).files.sort { left, right ->
+            rootProject.relativePath(left) <=> rootProject.relativePath(right)
+        }
+        var legacyFluidXeiSlotEntry = 'setXEIRecipe' + 'Slot'
+
+        var stringPatterns = [
+                [category: 'legacy-package', snippet: 'com.lowdragmc.lowdraglib.'],
+                [category: 'legacy-ui-model', snippet: 'ModularUI'],
+                [category: 'legacy-ui-model', snippet: 'WidgetGroup'],
+                [category: 'legacy-ui-model', snippet: 'Widget'],
+                [category: 'legacy-xei-role', snippet: 'IngredientIO.RENDER_ONLY'],
+                [category: 'legacy-xei-role', snippet: 'IngredientIO.valueOf("RENDER_ONLY")'],
+                [category: 'legacy-xei-role', snippet: 'IngredientIO.BOTH'],
+                [category: 'legacy-xei-role', snippet: legacyFluidXeiSlotEntry],
+                [category: 'legacy-resource', snippet: '"ldlib":'],
+                [category: 'legacy-resource', snippet: '"ldlib.'],
+                [category: 'legacy-resource', snippet: 'ldlib:'],
+                [category: 'disabled-ldlib2-sync', snippet: '@RPCMethod'],
+                [category: 'disabled-ldlib2-sync', snippet: 'RPCEmitter'],
+                [category: 'disabled-ldlib2-sync', snippet: 'RPCEventBuilder'],
+                [category: 'disabled-ldlib2-sync', snippet: 'PacketUIRPCEvent'],
+                [category: 'disabled-ldlib2-sync', snippet: 'PacketUIRPCEventReturn'],
+                [category: 'disabled-ldlib2-sync', snippet: 'setOnServerClick'],
+                [category: 'disabled-ldlib2-sync', snippet: 'com.lowdragmc.lowdraglib2.syncdata.'],
+                [category: 'disabled-ldlib2-sync', snippet: 'com.lowdragmc.lowdraglib2.gui.sync.'],
+                [category: 'legacy-dependency', snippet: 'compileOnly(forge.ldlib)'],
+                [category: 'legacy-dependency', snippet: 'api(forge.ldlib)'],
+                [category: 'legacy-dependency', snippet: 'jarJar(api(forge.ldlib))'],
+                [category: 'legacy-dependency', snippet: 'jarJar(api(forge.ldlib.get()))'],
+                [category: 'legacy-dependency', snippet: 'forge.versions.ldlib.get()'],
+                [category: 'legacy-dependency', snippet: 'version.ref = "ldlib"'],
+                [category: 'legacy-dependency', snippet: 'com.lowdragmc.ldlib:ldlib-neoforge'],
+                [category: 'legacy-dependency', snippet: 'ldlib_version'],
+                [category: 'legacy-dependency', snippet: 'modId = "ldlib"'],
+                [category: 'legacy-dependency', snippet: 'modrinth = "ldlib"'],
+                [category: 'legacy-dependency', snippet: 'curseforge = "ldlib"']
+        ]
+        var regexPatterns = [
+                [category: 'disabled-ldlib2-sync', pattern: ~/.*\baddRPCEvent\s*\(.*/, snippet: 'addRPCEvent('],
+                [category: 'disabled-ldlib2-sync', pattern: ~/.*\.markAsDirty\s*\(.*/, snippet: '.markAsDirty(']
+        ]
+
+        var matches = []
+        filesToScan.each { scannedFile ->
+            var relativePath = rootProject.relativePath(scannedFile)
+            if (relativePath.endsWith('.rtui')) {
+                matches.add([path: relativePath, line: 1, category: 'legacy-rtui', snippet: 'legacy LDLib1 .rtui file'])
+            } else {
+                scannedFile.eachLine('UTF-8') { line, number ->
+                    stringPatterns.each { inventoryPattern ->
+                        if (line.contains(inventoryPattern.snippet)) {
+                            matches.add([
+                                    path    : relativePath,
+                                    line    : number,
+                                    category: inventoryPattern.category,
+                                    snippet : inventoryPattern.snippet
+                            ])
+                        }
+                    }
+                    regexPatterns.each { inventoryPattern ->
+                        if (inventoryPattern.pattern.matcher(line).matches()) {
+                            matches.add([
+                                    path    : relativePath,
+                                    line    : number,
+                                    category: inventoryPattern.category,
+                                    snippet : inventoryPattern.snippet
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+        matches = matches.sort { left, right ->
+            var pathComparison = left.path <=> right.path
+            if (pathComparison != 0) {
+                return pathComparison
+            }
+            var lineComparison = left.line <=> right.line
+            if (lineComparison != 0) {
+                return lineComparison
+            }
+            var categoryComparison = left.category <=> right.category
+            if (categoryComparison != 0) {
+                return categoryComparison
+            }
+            left.snippet <=> right.snippet
+        }
+
+        var reportFile = layout.buildDirectory.file('reports/ldlib2-migration/inventory.txt').get().asFile
+        reportFile.parentFile.mkdirs()
+        reportFile.withWriter('UTF-8') { writer ->
+            writer.writeLine('# LDLib2 migration inventory')
+            writer.writeLine('# Format: relative-path:line: category: matching-snippet')
+            writer.writeLine("# Matches: ${matches.size()}")
+            writer.writeLine('')
+            matches.each { match ->
+                writer.writeLine("${match.path}:${match.line}: ${match.category}: ${match.snippet}")
+            }
+        }
+
+        logger.lifecycle("LDLib2 migration inventory written to ${reportFile.absolutePath} with ${matches.size()} matches.")
+    }
+}
