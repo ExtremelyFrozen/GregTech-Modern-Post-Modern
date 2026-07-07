@@ -9,6 +9,27 @@
 
 这表示源码仍编译依赖旧 LDLib API，但运行产物已包含 LDLib2。UI 迁移的第一目标不是添加 LDLib2 依赖，而是移除旧 `lowdraglib.gui` 使用面。
 
+## 自动清单入口
+
+用于生成并冻结迁移清单的可运行命令：
+
+```powershell
+$env:GRADLE_USER_HOME='E:\.gradle'; .\gradlew.bat reportLdlib2MigrationInventory --no-daemon
+```
+
+输出路径：
+
+`build/reports/ldlib2-migration/inventory.txt`
+
+当前本地运行结果：
+
+- `2010 matches`
+- `legacy-package=295`
+- `legacy-ui-model=1714`
+- `legacy-xei-role=1`
+
+该报告任务是非失败型 baseline inventory，只负责生成可审阅清单；真正失败型 gate 仍是 `verifyLdlib2MigrationGuardrails`，以及已接入 `check` 的 migrated-surfaces/Gradle-home 护栏。
+
 ## 旧 UI 打开入口
 
 ### `MachineUIFactory`
