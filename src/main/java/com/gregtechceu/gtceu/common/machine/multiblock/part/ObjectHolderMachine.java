@@ -3,7 +3,13 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.BlockableSlotWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
@@ -14,12 +20,13 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
@@ -28,7 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ObjectHolderMachine extends MultiblockPartMachine {
+public class ObjectHolderMachine extends MultiblockPartMachine implements LDLib2MachineUIProvider {
+
+    private static final int SLOT_LOCKED_OVERLAY_COLOR = 0x80404040;
 
     @SaveField
     private final ObjectInputHandler inputItemHandler;
@@ -78,15 +87,50 @@ public class ObjectHolderMachine extends MultiblockPartMachine {
     }
 
     @Override
-    public Widget createUIWidget() {
-        return new WidgetGroup(new Position(0, 0))
-                .addWidget(new ImageWidget(46, 15, 84, 60, GuiTextures.PROGRESS_BAR_RESEARCH_STATION_BASE))
-                .addWidget(new BlockableSlotWidget(inputItemHandler, 0, 79, 36)
-                        .setIsBlocked(this::isLocked)
-                        .setBackground(GuiTextures.SLOT, GuiTextures.RESEARCH_STATION_OVERLAY))
-                .addWidget(new BlockableSlotWidget(dataItemHandler, 0, 15, 36)
-                        .setIsBlocked(this::isLocked)
-                        .setBackground(GuiTextures.SLOT, GuiTextures.DATA_ORB_OVERLAY));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 166);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+        root.addChild(createLDLib2TitleLabel());
+        root.addChild(new GTImageElement(46, 15, 84, 60, GuiTextures.PROGRESS_BAR_RESEARCH_STATION_BASE));
+        root.addChild(createLDLib2ItemSlot(inputItemHandler, 79, 36, GuiTextures.RESEARCH_STATION_OVERLAY));
+        root.addChild(createLDLib2LockedOverlay(79, 36));
+        root.addChild(createLDLib2ItemSlot(dataItemHandler, 15, 36, GuiTextures.DATA_ORB_OVERLAY));
+        root.addChild(createLDLib2LockedOverlay(15, 36));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 84, true));
+        return UI.of(root);
+    }
+
+    private GTLabelElement createLDLib2TitleLabel() {
+        GTLabelElement label = new GTLabelElement(10, 5, 156, 10,
+                getBlockState().getBlock().getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private GTItemSlotElement createLDLib2ItemSlot(NotifiableItemStackHandler handler, int x, int y,
+                                                   IGuiTexture overlay) {
+        GTItemSlotElement slot = new GTItemSlotElement(handler, 0)
+                .setBackgroundTexture(GuiTextures.SLOT)
+                .setContentOverlay(overlay)
+                .setCanPut(stack -> !isLocked())
+                .setCanTake(player -> !isLocked());
+        UITemplate.setLDLib2Bounds(slot, x, y, 18, 18);
+        return slot;
+    }
+
+    private GTImageElement createLDLib2LockedOverlay(int slotX, int slotY) {
+        return new GTImageElement(slotX + 1, slotY + 1, 16, 16, GuiTextures.colorRect(SLOT_LOCKED_OVERLAY_COLOR))
+                .setVisibleSupplier(this::isLocked);
     }
 
     @Override
