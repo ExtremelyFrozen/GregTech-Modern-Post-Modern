@@ -10,11 +10,7 @@ import net.minecraft.network.chat.Style;
 
 import java.util.List;
 
-public interface IDistinctPart extends IMultiPart {
-
-    boolean isDistinct();
-
-    void setDistinct(boolean isDistinct);
+public interface IDistinctPart extends IMultiPart, DistinctPart {
 
     @Override
     default void attachConfigurators(ConfiguratorPanel configuratorPanel) {

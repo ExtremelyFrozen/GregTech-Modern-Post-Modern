@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDistinctPart;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.DistinctPart;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -48,7 +48,7 @@ public final class LDLib2DistinctPartFancyConfigurator {
     /**
      * Attaches a distinct part toggle to a migrated LDLib2 Fancy configurator panel.
      */
-    public static void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel, IDistinctPart part) {
+    public static void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel, DistinctPart part) {
         configuratorPanel.attachConfigurators(new LDLib2FancyConfiguratorButton.Toggle(
                 GuiTextures.BUTTON_DISTINCT_BUSES.getSubTexture(0, 0.5, 1, 0.5),
                 GuiTextures.BUTTON_DISTINCT_BUSES.getSubTexture(0, 0, 1, 0.5),
@@ -86,7 +86,7 @@ public final class LDLib2DistinctPartFancyConfigurator {
 
         @Override
         public boolean acceptsHolder(@NotNull SyncActionContext context) {
-            return context.holder() instanceof IDistinctPart &&
+            return context.holder() instanceof DistinctPart &&
                     context.holder() instanceof LDLib2FancyUIMachine;
         }
 
@@ -103,7 +103,7 @@ public final class LDLib2DistinctPartFancyConfigurator {
 
         @Override
         public void execute(@NotNull SyncActionContext context) {
-            if (!(context.holder() instanceof IDistinctPart part)) {
+            if (!(context.holder() instanceof DistinctPart part)) {
                 throw new IllegalStateException("Distinct part action received a non-distinct holder.");
             }
             part.setDistinct(requireDistinct(context.payload()));
