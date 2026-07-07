@@ -6,15 +6,13 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
-import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifierList;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.BatchModeMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
-import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
 
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
@@ -26,7 +24,6 @@ import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -50,8 +47,8 @@ public final class LDLib2BatchModeFancyConfigurator {
      * Attaches the batch mode toggle when the machine definition uses the batch recipe modifier.
      */
     public static void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel,
-                                           WorkableElectricMultiblockMachine machine) {
-        if (!supportsBatchMode(machine)) {
+                                           BatchModeMachine machine) {
+        if (!machine.supportsBatchMode()) {
             return;
         }
 
@@ -72,15 +69,6 @@ public final class LDLib2BatchModeFancyConfigurator {
                         "gtpm.machine.batch_" + (pressed ? "enabled" : "disabled")))));
     }
 
-    /**
-     * Returns whether this machine definition uses the legacy batch mode recipe modifier.
-     */
-    public static boolean supportsBatchMode(WorkableElectricMultiblockMachine machine) {
-        return machine.getDefinition().getRecipeModifier() instanceof RecipeModifierList list &&
-                Arrays.stream(list.getModifiers())
-                        .anyMatch(modifier -> modifier == GTRecipeModifiers.BATCH_MODE);
-    }
-
     private static SyncActionData createSetBatchEnabledAction(boolean batchEnabled) {
         DataComponentMap payload = DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
@@ -99,9 +87,9 @@ public final class LDLib2BatchModeFancyConfigurator {
 
         @Override
         public boolean acceptsHolder(@NotNull SyncActionContext context) {
-            return context.holder() instanceof WorkableElectricMultiblockMachine machine &&
+            return context.holder() instanceof BatchModeMachine machine &&
                     context.holder() instanceof LDLib2FancyUIMachine &&
-                    supportsBatchMode(machine);
+                    machine.supportsBatchMode();
         }
 
         @Override
@@ -117,8 +105,9 @@ public final class LDLib2BatchModeFancyConfigurator {
 
         @Override
         public void execute(@NotNull SyncActionContext context) {
-            if (!(context.holder() instanceof WorkableElectricMultiblockMachine machine) ||
-                    !supportsBatchMode(machine)) {
+            if (!(context.holder() instanceof BatchModeMachine machine) ||
+                    !(context.holder() instanceof LDLib2FancyUIMachine) ||
+                    !machine.supportsBatchMode()) {
                 throw new IllegalStateException("Batch mode action received an invalid holder.");
             }
             machine.setBatchEnabled(requireBatchEnabled(context.payload()));

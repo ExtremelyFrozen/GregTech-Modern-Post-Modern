@@ -18,8 +18,8 @@ import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DistinctPartFan
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2MachineModeFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2VoidingModeFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.BatchModeMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.DistinctPart;
-import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -91,8 +91,8 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIPr
         if (this instanceof IVoidable voidable) {
             LDLib2VoidingModeFancyConfigurator.attachConfigurators(configuratorPanel, voidable);
         }
-        if (this instanceof WorkableElectricMultiblockMachine workableMultiblockMachine) {
-            LDLib2BatchModeFancyConfigurator.attachConfigurators(configuratorPanel, workableMultiblockMachine);
+        if (this instanceof BatchModeMachine batchModeMachine) {
+            LDLib2BatchModeFancyConfigurator.attachConfigurators(configuratorPanel, batchModeMachine);
         }
         if (this instanceof IControllable controllable) {
             configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(controllable,
