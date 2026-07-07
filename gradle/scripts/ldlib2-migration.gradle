@@ -17,6 +17,25 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
     doLast {
         var migratedSurfacePaths = [
                 'src/main/java/com/gregtechceu/gtceu/api/block/MetaMachineBlock.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTButtonElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTComponentPanelElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTDualProgressElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTEnumSelectorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTFluidSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTImageElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTIntInputElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTItemSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTLabelElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTLongInputElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTPhantomFluidSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTPhantomItemSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTProgressBarElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTSceneElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTScrollerViewElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTStringSelectorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTTextFieldElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTToggleButtonElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/ProspectingMapElement.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/CoverUIHelper.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/GTCoverUIMenuType.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/HeldItemUIHelper.java',
@@ -31,6 +50,14 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHolder.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHolderContext.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/UICoverHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ColorBorderTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ColorRectTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/GTGuiTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/IGuiTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ItemStackTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ProspectingTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ResourceBorderTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/TextTexture.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/ComponentItem.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/IGTTool.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/component/IItemUIFactory.java',
@@ -74,7 +101,14 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamMinerMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CrateMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeComputationProviderMachine.java',
-                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeEnergyContainerMachine.java'
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeEnergyContainerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTLDLib2RecipeUI.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIIngredientRoleLDLib2Adapter.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTBedrockFluidWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTBedrockOreWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTOreByProductWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTOreVeinWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTProgrammedCircuitWidget.java'
         ]
         var missingFiles = migratedSurfacePaths.findAll { !file(it).isFile() }
         if (!missingFiles.isEmpty()) {
@@ -83,6 +117,10 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
 
         var patterns = [
                 'com.lowdragmc.lowdraglib.',
+                'IngredientIO.RENDER_ONLY',
+                'IngredientIO.valueOf("RENDER_ONLY")',
+                'IngredientIO.BOTH',
+                'setXEIRecipeSlot',
                 '@RPCMethod',
                 'RPCEmitter',
                 'RPCEventBuilder',
