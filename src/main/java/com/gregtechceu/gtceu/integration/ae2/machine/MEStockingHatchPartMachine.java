@@ -51,13 +51,13 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     private boolean autoPull;
 
     @Getter
-    @Setter
     @SaveField
+    @SyncToClient
     private int minStackSize = 1;
 
     @Getter
-    @Setter
     @SaveField
+    @SyncToClient
     private int ticksPerCycle = 40;
 
     @Setter
@@ -138,6 +138,18 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     @Override
     public IConfigurableSlotList getSlotList() {
         return aeFluidHandler;
+    }
+
+    @Override
+    public void setMinStackSize(int minStackSize) {
+        this.minStackSize = minStackSize;
+        syncDataHolder.markClientSyncFieldDirty("minStackSize");
+    }
+
+    @Override
+    public void setTicksPerCycle(int ticksPerCycle) {
+        this.ticksPerCycle = ticksPerCycle;
+        syncDataHolder.markClientSyncFieldDirty("ticksPerCycle");
     }
 
     @Override
