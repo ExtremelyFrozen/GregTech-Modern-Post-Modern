@@ -34,25 +34,32 @@ public class LDLib2FancyPageSwitcher implements LDLib2FancyUIProvider {
     private static final int TEXT_COLOR = 0x404040;
 
     private final Consumer<LDLib2FancyUIProvider> onPageSwitched;
+    private final UIElement container;
+    private final GTScrollerViewElement scrollableGroup;
 
     private List<LDLib2FancyUIProvider> pages = List.of();
     private LDLib2FancyUIProvider currentPage;
 
     public LDLib2FancyPageSwitcher(Consumer<LDLib2FancyUIProvider> onPageSwitched) {
         this.onPageSwitched = onPageSwitched;
+        this.container = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, WIDTH, HEIGHT);
+        this.scrollableGroup = new GTScrollerViewElement(10, 10, 156, 146);
+        container.addChild(scrollableGroup);
     }
 
     public void setPageList(List<LDLib2FancyUIProvider> allPages, LDLib2FancyUIProvider currentPage) {
         this.pages = allPages;
         this.currentPage = currentPage;
+        rebuildPageButtons();
     }
 
     @Override
     public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
-        UIElement container = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, WIDTH, HEIGHT);
-        GTScrollerViewElement scrollableGroup = new GTScrollerViewElement(10, 10, 156, 146);
-        container.addChild(scrollableGroup);
+        return container;
+    }
 
+    private void rebuildPageButtons() {
+        scrollableGroup.clearAllChildren();
         var groupedPages = pages.stream().collect(Collectors.groupingBy(page -> {
             PageGroupingData groupingData = page.getPageGroupingData();
             return groupingData == null ? new PageGroupingData(null, -1) : groupingData;
@@ -84,8 +91,6 @@ public class LDLib2FancyPageSwitcher implements LDLib2FancyUIProvider {
                 currentY += ((groupPages.size() - 1) / MAX_COLUMNS + 1) * ROW_HEIGHT;
             }
         }
-
-        return container;
     }
 
     @Override
