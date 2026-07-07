@@ -87,7 +87,10 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
 }
 
 tasks.named('check') {
-    dependsOn(tasks.named('verifyLdlib2MigratedSurfaces'))
+    dependsOn(
+            tasks.named('verifyGradleUserHomeOnE'),
+            tasks.named('verifyLdlib2MigratedSurfaces')
+    )
 }
 
 tasks.register('verifyLdlib2MigrationGuardrails') {
