@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine implements IFancyUIMachine,
                                                IDisplayUIMachine, ITieredMachine, IOverclockMachine {
@@ -157,7 +156,7 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
 
     @Override
     public List<IFancyUIProvider> getSubTabs() {
-        return getParts().stream().filter(Objects::nonNull).map(IFancyUIProvider.class::cast).toList();
+        return getParts().stream().filter(part -> part != null).map(IFancyUIProvider.class::cast).toList();
     }
 
     @Override
