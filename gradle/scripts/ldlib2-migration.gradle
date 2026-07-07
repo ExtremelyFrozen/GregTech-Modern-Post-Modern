@@ -170,10 +170,67 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
     }
 }
 
+tasks.register('verifyLdlib2RecipeCapabilitySurface') {
+    group = 'verification'
+    description = 'Verifies recipe capability LDLib2 element paths do not regress to legacy XEI roles or disabled sync paths.'
+
+    doLast {
+        var recipeCapabilitySurfacePaths = [
+                'src/main/java/com/gregtechceu/gtceu/api/capability/recipe/RecipeCapability.java',
+                'src/main/java/com/gregtechceu/gtceu/api/capability/recipe/ItemRecipeCapability.java',
+                'src/main/java/com/gregtechceu/gtceu/api/capability/recipe/FluidRecipeCapability.java'
+        ]
+        var missingFiles = recipeCapabilitySurfacePaths.findAll { !file(it).isFile() }
+        if (!missingFiles.isEmpty()) {
+            throw new GradleException("LDLib2 recipe capability surface files are missing: ${missingFiles.join(', ')}")
+        }
+
+        var patterns = [
+                'IngredientIO.RENDER_ONLY',
+                'IngredientIO.valueOf("RENDER_ONLY")',
+                'IngredientIO.BOTH',
+                'setXEIRecipeSlot',
+                '@RPCMethod',
+                'RPCEmitter',
+                'RPCEventBuilder',
+                'PacketUIRPCEvent',
+                'PacketUIRPCEventReturn',
+                'setOnServerClick',
+                'com.lowdragmc.lowdraglib2.syncdata.',
+                'com.lowdragmc.lowdraglib2.gui.sync.',
+                'Objects.requireNonNull',
+                'requireNonNull('
+        ]
+
+        var matches = []
+        recipeCapabilitySurfacePaths.each { surfacePath ->
+            var scannedFile = file(surfacePath)
+            var relativePath = rootProject.relativePath(scannedFile)
+            scannedFile.eachLine('UTF-8') { line, number ->
+                patterns.each { pattern ->
+                    if (line.contains(pattern)) {
+                        matches.add("${relativePath}:${number}: ${pattern}")
+                    }
+                }
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('LDLib2 recipe capability surface guardrail matches:')
+            matches.take(200).each { logger.lifecycle(" - ${it}") }
+            if (matches.size() > 200) {
+                logger.lifecycle(" - ... ${matches.size() - 200} more")
+            }
+            throw new GradleException("LDLib2 recipe capability guardrails found ${matches.size()} regression references.")
+        }
+    }
+}
+
 tasks.named('check') {
     dependsOn(
             tasks.named('verifyGradleUserHomeOnE'),
-            tasks.named('verifyLdlib2MigratedSurfaces')
+            tasks.named('verifyLdlib2MigratedSurfaces'),
+            tasks.named('verifyLdlib2RecipeCapabilitySurface')
     )
 }
 
