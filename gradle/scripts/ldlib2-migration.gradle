@@ -86,6 +86,10 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
     }
 }
 
+tasks.named('check') {
+    dependsOn(tasks.named('verifyLdlib2MigratedSurfaces'))
+}
+
 tasks.register('verifyLdlib2MigrationGuardrails') {
     group = 'verification'
     description = 'Reports remaining legacy LDLib references that must be removed before migration completion.'
