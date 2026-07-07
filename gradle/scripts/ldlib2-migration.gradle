@@ -10,6 +10,82 @@ tasks.register('verifyGradleUserHomeOnE') {
     }
 }
 
+tasks.register('verifyLdlib2MigratedSurfaces') {
+    group = 'verification'
+    description = 'Verifies migrated LDLib2 UI bridge and facade surfaces do not regress to legacy LDLib or disabled sync paths.'
+
+    doLast {
+        var migratedSurfacePaths = [
+                'src/main/java/com/gregtechceu/gtceu/api/block/MetaMachineBlock.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/LDLib2MachineUIProvider.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHelper.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHolderContext.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SimpleSteamMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SteamBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/PumpMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/DataAccessHatchMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MaintenanceHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MufflerPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ObjectHolderMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ParallelHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/PumpHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/RotorHolderPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamItemBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/primitive/CokeOvenMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/primitive/PrimitiveBlastFurnaceMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/steam/LargeBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/steam/SteamParallelMultiblockMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamMinerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CrateMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeComputationProviderMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeEnergyContainerMachine.java'
+        ]
+        var missingFiles = migratedSurfacePaths.findAll { !file(it).isFile() }
+        if (!missingFiles.isEmpty()) {
+            throw new GradleException("LDLib2 migrated surface files are missing: ${missingFiles.join(', ')}")
+        }
+
+        var patterns = [
+                'com.lowdragmc.lowdraglib.',
+                '@RPCMethod',
+                'RPCEmitter',
+                'RPCEventBuilder',
+                'PacketUIRPCEvent',
+                'PacketUIRPCEventReturn',
+                'setOnServerClick',
+                'com.lowdragmc.lowdraglib2.syncdata.',
+                'com.lowdragmc.lowdraglib2.gui.sync.',
+                'Objects.requireNonNull',
+                'requireNonNull(',
+                'java.util.Objects'
+        ]
+
+        var matches = []
+        migratedSurfacePaths.each { surfacePath ->
+            var scannedFile = file(surfacePath)
+            var relativePath = rootProject.relativePath(scannedFile)
+            scannedFile.eachLine('UTF-8') { line, number ->
+                patterns.each { pattern ->
+                    if (line.contains(pattern)) {
+                        matches.add("${relativePath}:${number}: ${pattern}")
+                    }
+                }
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('LDLib2 migrated surface guardrail matches:')
+            matches.take(200).each { logger.lifecycle(" - ${it}") }
+            if (matches.size() > 200) {
+                logger.lifecycle(" - ... ${matches.size() - 200} more")
+            }
+            throw new GradleException("LDLib2 migrated surface guardrails found ${matches.size()} regression references.")
+        }
+    }
+}
+
 tasks.register('verifyLdlib2MigrationGuardrails') {
     group = 'verification'
     description = 'Reports remaining legacy LDLib references that must be removed before migration completion.'
