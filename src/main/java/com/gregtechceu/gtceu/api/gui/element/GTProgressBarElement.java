@@ -45,11 +45,22 @@ public class GTProgressBarElement extends ProgressBar {
         return setProgressSupplier(doubleSupplier);
     }
 
+    public GTProgressBarElement setProgressTexture(IGuiTexture emptyBar, IGuiTexture filledBar) {
+        barBackground.style(style -> style.backgroundTexture(emptyBar));
+        bar.style(style -> style.backgroundTexture(filledBar));
+        return this;
+    }
+
+    public GTProgressBarElement setFillDirection(FillDirection fillDirection) {
+        progressBarStyle(style -> style.fillDirection(fillDirection));
+        return this;
+    }
+
     @Override
     public void loadXml(Element element) {
         super.loadXml(element);
         if (element.hasAttribute("fill-direction")) {
-            setFillDirection(element.getAttribute("fill-direction"));
+            setFillDirectionFromXml(element.getAttribute("fill-direction"));
         }
         if (element.hasAttribute("legacy-empty-bar")) {
             barBackground.style(style -> style.backgroundTexture(
@@ -69,9 +80,9 @@ public class GTProgressBarElement extends ProgressBar {
         super.screenTick();
     }
 
-    private void setFillDirection(String value) {
+    private void setFillDirectionFromXml(String value) {
         try {
-            progressBarStyle(style -> style.fillDirection(FillDirection.valueOf(value)));
+            setFillDirection(FillDirection.valueOf(value));
         } catch (IllegalArgumentException e) {
             GTCEu.LOGGER.error("Invalid GTM progress bar fill direction '{}'", value, e);
             throw e;
