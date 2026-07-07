@@ -5,8 +5,12 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
-import com.gregtechceu.gtceu.api.gui.widget.BlockableSlotWidget;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.*;
@@ -23,8 +27,8 @@ import com.gregtechceu.gtceu.common.item.behavior.TurbineRotorBehaviour;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -32,6 +36,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import lombok.Getter;
@@ -45,10 +50,11 @@ import static com.gregtechceu.gtceu.api.machine.property.GTMachineModelPropertie
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class RotorHolderPartMachine extends TieredPartMachine {
+public class RotorHolderPartMachine extends TieredPartMachine implements LDLib2MachineUIProvider {
 
     public static final int SPEED_INCREMENT = 1;
     public static final int SPEED_DECREMENT = 3;
+    private static final int ROTOR_SLOT_LOCKED_OVERLAY_COLOR = 0x80404040;
     @SaveField
     public final NotifiableItemStackHandler inventory;
     @Getter
@@ -231,15 +237,40 @@ public class RotorHolderPartMachine extends TieredPartMachine {
     // ********** GUI ***********//
     //////////////////////////////////////
     @Override
-    public Widget createUIWidget() {
-        var group = new WidgetGroup(0, 0, 18 + 16, 18 + 16);
-        var container = new WidgetGroup(4, 4, 18 + 8, 18 + 8);
-        container.addWidget(new BlockableSlotWidget(inventory.storage, 0, 4, 4)
-                .setIsBlocked(() -> rotorSpeed != 0)
-                .setBackground(GuiTextures.SLOT, GuiTextures.TURBINE_OVERLAY));
-        container.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        group.addWidget(container);
-        return group;
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 34, 34);
+
+        UIElement container = new UIElement();
+        UITemplate.setLDLib2Bounds(container, 4, 4, 26, 26);
+        container.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+        root.addChild(container);
+        root.addChild(createLDLib2RotorSlot());
+        root.addChild(createLDLib2RotorLockedOverlay());
+        return UI.of(root);
+    }
+
+    private GTItemSlotElement createLDLib2RotorSlot() {
+        GTItemSlotElement slot = new GTItemSlotElement(inventory.storage, 0)
+                .setBackgroundTexture(GuiTextures.SLOT)
+                .setContentOverlay(GuiTextures.TURBINE_OVERLAY)
+                .setCanPut(stack -> !isRotorSlotBlocked())
+                .setCanTake(player -> !isRotorSlotBlocked());
+        return UITemplate.setLDLib2Bounds(slot, 8, 8, 18, 18);
+    }
+
+    private GTImageElement createLDLib2RotorLockedOverlay() {
+        return new GTImageElement(9, 9, 16, 16, GuiTextures.colorRect(ROTOR_SLOT_LOCKED_OVERLAY_COLOR))
+                .setVisibleSupplier(this::isRotorSlotBlocked);
+    }
+
+    private boolean isRotorSlotBlocked() {
+        return rotorSpeed != 0;
     }
 
     //////////////////////////////////////
