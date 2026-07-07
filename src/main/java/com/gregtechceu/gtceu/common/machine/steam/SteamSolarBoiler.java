@@ -2,13 +2,16 @@ package com.gregtechceu.gtceu.common.machine.steam;
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceTexture;
 import com.gregtechceu.gtceu.api.machine.steam.SteamBoilerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.Direction;
@@ -66,15 +69,17 @@ public class SteamSolarBoiler extends SteamBoilerMachine {
     }
 
     @Override
-    public ModularUI createUI(Player entityPlayer) {
-        return super.createUI(entityPlayer)
-                .widget(new ProgressWidget(
-                        () -> GTUtil.canSeeSunClearly(getLevel(), getBlockPos()) ? 1.0 : 0.0,
-                        114,
-                        44, 20,
-                        20)
-                        .setProgressTexture(GuiTextures.progressBar(
-                                GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(isHighPressure))));
+    protected void addLDLib2AdditionalWidgets(UIElement root, Player player, MachineUIHolder holder) {
+        root.addChild(createLDLib2SolarProgressBar());
+    }
+
+    private GTProgressBarElement createLDLib2SolarProgressBar() {
+        var progressTexture = GuiTextures.progressBar(
+                (ResourceTexture) GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(isHighPressure));
+        GTProgressBarElement progressBar = new GTProgressBarElement(
+                () -> GTUtil.canSeeSunClearly(getLevel(), getBlockPos()) ? 1.0 : 0.0)
+                .setProgressTexture(progressTexture.getEmptyBarArea(), progressTexture.getFilledBarArea());
+        return UITemplate.setLDLib2Bounds(progressBar, 114, 44, 20, 20);
     }
 
     @Override

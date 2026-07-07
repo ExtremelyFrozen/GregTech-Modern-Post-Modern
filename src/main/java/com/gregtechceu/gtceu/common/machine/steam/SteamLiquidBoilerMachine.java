@@ -3,16 +3,14 @@ package com.gregtechceu.gtceu.common.machine.steam;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
-import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.steam.SteamBoilerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
@@ -62,12 +60,17 @@ public class SteamLiquidBoilerMachine extends SteamBoilerMachine {
     }
 
     @Override
-    public ModularUI createUI(Player entityPlayer) {
-        return super.createUI(entityPlayer)
-                .widget(new TankWidget(fuelTank.getStorages()[0], 119, 26, 10, 54, true, true)
-                        .setShowAmount(false)
-                        .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP)
-                        .setBackground(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure)));
+    protected void addLDLib2AdditionalWidgets(UIElement root, Player player, MachineUIHolder holder) {
+        root.addChild(createLDLib2FluidSlot(player, holder, fuelTank.getStorages()[0], 119, 26,
+                FUEL_FLUID_SLOT, true, true));
+    }
+
+    @Override
+    protected LDLib2FluidClickTarget getLDLib2FluidClickTarget(int fluidSlot) {
+        if (fluidSlot == FUEL_FLUID_SLOT) {
+            return createLDLib2FluidClickTarget(fuelTank.getStorages()[0], true, true);
+        }
+        return super.getLDLib2FluidClickTarget(fluidSlot);
     }
 
     @Override
