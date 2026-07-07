@@ -111,7 +111,12 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTBedrockOreWidget.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTOreByProductWidget.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTOreVeinWidget.java',
-                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTProgrammedCircuitWidget.java'
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTProgrammedCircuitWidget.java',
+                'src/main/resources/assets/gtpm/ui/recipe_type/assembly_line.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/distillation_tower.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/forge_hammer.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/lathe.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/research_station.xml'
         ]
         var missingFiles = migratedSurfacePaths.findAll { !file(it).isFile() }
         if (!missingFiles.isEmpty()) {
@@ -132,6 +137,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'setOnServerClick',
                 'com.lowdragmc.lowdraglib2.syncdata.',
                 'com.lowdragmc.lowdraglib2.gui.sync.',
+                '.rtui',
                 'Objects.requireNonNull',
                 'requireNonNull('
         ]
