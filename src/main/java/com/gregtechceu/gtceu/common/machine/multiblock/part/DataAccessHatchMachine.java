@@ -8,7 +8,12 @@ import com.gregtechceu.gtceu.api.capability.IMonitorComponent;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -23,9 +28,10 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.research.DataBan
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -40,10 +46,15 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class DataAccessHatchMachine extends TieredPartMachine
-                                    implements IDataAccessMachine, IDataInfoProvider, IMonitorComponent {
+        implements LDLib2MachineUIProvider, IDataAccessMachine, IDataInfoProvider,
+        IMonitorComponent {
 
     private final Set<GTRecipeDefinition> recipeDefinitions;
     @Getter
@@ -93,20 +104,50 @@ public class DataAccessHatchMachine extends TieredPartMachine
     }
 
     @Override
-    public Widget createUIWidget() {
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this && !isCreative;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
         int rowSize = (int) Math.sqrt(getInventorySize());
-        int xOffset = 18 * rowSize / 2;
-        WidgetGroup group = new WidgetGroup(0, 0, 18 * rowSize, 18 * rowSize);
+        int rootWidth = 176;
+        int rootHeight = 18 + 18 * rowSize + 94;
+
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, rootWidth, rootHeight);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+        root.addChild(createLDLib2TitleLabel(rootWidth));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7,
+                18 + 18 * rowSize + 12, true));
 
         for (int y = 0; y < rowSize; y++) {
             for (int x = 0; x < rowSize; x++) {
                 int index = y * rowSize + x;
-                group.addWidget(new SlotWidget(importItems, index,
-                        rowSize * 9 + x * 18 - xOffset, y * 18, true, true)
-                        .setBackgroundTexture(GuiTextures.SLOT));
+                root.addChild(createLDLib2DataSlot(index, 88 - rowSize * 9 + x * 18, 18 + y * 18));
             }
         }
-        return group;
+        return UI.of(root);
+    }
+
+    private GTLabelElement createLDLib2TitleLabel(int rootWidth) {
+        GTLabelElement label = new GTLabelElement(10, 5, rootWidth - 20, 10,
+                getBlockState().getBlock().getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private GTItemSlotElement createLDLib2DataSlot(int index, int x, int y) {
+        GTItemSlotElement slot = new GTItemSlotElement(importItems, index)
+                .setBackgroundTexture(GuiTextures.SLOT)
+                .setCanPutItems(true)
+                .setCanTakeItems(true);
+        UITemplate.setLDLib2Bounds(slot, x, y, 18, 18);
+        return slot;
     }
 
     @Override
