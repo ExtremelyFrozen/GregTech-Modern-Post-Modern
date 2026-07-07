@@ -105,6 +105,8 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CrateMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeComputationProviderMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeEnergyContainerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIHelper.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIIngredientRole.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/GTLDLib2RecipeUI.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIIngredientRoleLDLib2Adapter.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTBedrockFluidWidget.java',
@@ -138,6 +140,8 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'com.lowdragmc.lowdraglib2.syncdata.',
                 'com.lowdragmc.lowdraglib2.gui.sync.',
                 '.rtui',
+                '<ldlib-ui',
+                'ldlib:',
                 'Objects.requireNonNull',
                 'requireNonNull('
         ]
