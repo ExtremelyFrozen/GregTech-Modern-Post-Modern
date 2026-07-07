@@ -75,6 +75,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2AutoOutputFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2AutoStockingFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2BatchModeFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2ButtonConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2DistinctPartFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2FancyInvConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2FancyTankConfigurator.java',
