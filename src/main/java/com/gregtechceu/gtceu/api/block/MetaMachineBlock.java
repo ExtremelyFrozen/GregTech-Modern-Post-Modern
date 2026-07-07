@@ -8,6 +8,7 @@ import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineBlockUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
@@ -340,9 +341,16 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock, B
             shouldOpenUi = gtToolItem.definition$shouldOpenUIAfterUse(new UseOnContext(player, hand, hit));
         }
 
-        if (shouldOpenUi && machine instanceof IUIMachine uiMachine &&
-                MachineOwner.canOpenOwnerMachine(player, machine)) {
-            return uiMachine.tryToOpenUI(player, hand, hit);
+        if (shouldOpenUi && MachineOwner.canOpenOwnerMachine(player, machine)) {
+            if (machine instanceof LDLib2MachineUIProvider) {
+                if (player instanceof ServerPlayer serverPlayer) {
+                    MachineUIHelper.open(machine, serverPlayer);
+                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            }
+            if (machine instanceof IUIMachine uiMachine) {
+                return uiMachine.tryToOpenUI(player, hand, hit);
+            }
         }
         return shouldOpenUi ? ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION : ItemInteractionResult.CONSUME;
     }
@@ -352,9 +360,14 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock, B
                                                Player player, BlockHitResult hit) {
         var machine = MetaMachine.getMachine(level, pos);
         if (machine == null) return InteractionResult.PASS;
-        if (machine instanceof IUIMachine uiMachine &&
-                MachineOwner.canOpenOwnerMachine(player, machine)) {
-            uiMachine.tryToOpenUI(player, InteractionHand.MAIN_HAND, hit).result();
+        if (MachineOwner.canOpenOwnerMachine(player, machine)) {
+            if (machine instanceof LDLib2MachineUIProvider) {
+                if (player instanceof ServerPlayer serverPlayer) {
+                    MachineUIHelper.open(machine, serverPlayer);
+                }
+            } else if (machine instanceof IUIMachine uiMachine) {
+                uiMachine.tryToOpenUI(player, InteractionHand.MAIN_HAND, hit).result();
+            }
         }
         return machine.onUse(new ExtendedUseOnContext(player, InteractionHand.MAIN_HAND, hit));
     }

@@ -24,9 +24,8 @@ public final class MachineUIHelper {
     public static boolean open(MetaMachine machine, ServerPlayer player) {
         if (machine instanceof LDLib2MachineUIProvider uiProvider) {
             MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
-            if (uiProvider.canCreateLDLib2UI(player, holder) &&
-                    BlockUIMenuType.openUI(player, machine.getBlockPos())) {
-                return true;
+            if (uiProvider.canCreateLDLib2UI(player, holder)) {
+                return BlockUIMenuType.openUI(player, machine.getBlockPos());
             }
         }
         return MachineUIFactory.INSTANCE.openUI(machine, player);
