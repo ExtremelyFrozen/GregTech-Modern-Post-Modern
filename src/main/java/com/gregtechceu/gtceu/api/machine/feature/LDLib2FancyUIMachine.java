@@ -13,6 +13,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2AutoOutputFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2BatchModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DistinctPartFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2MachineModeFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2VoidingModeFancyConfigurator;
@@ -100,6 +101,10 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIPr
         AutoOutputTrait autoOutputTrait = self().getTrait(AutoOutputTrait.TYPE);
         if (autoOutputTrait != null) {
             LDLib2AutoOutputFancyConfigurator.attachConfigurators(configuratorPanel, autoOutputTrait);
+        }
+        if (this instanceof IHasCircuitSlot circuitHolder && circuitHolder.isCircuitSlotEnabled()) {
+            configuratorPanel.attachConfigurators(new LDLib2CircuitFancyConfigurator(circuitHolder,
+                    configuratorPanel.getHolder()));
         }
         if (this instanceof IDistinctPart distinctPart) {
             LDLib2DistinctPartFancyConfigurator.attachConfigurators(configuratorPanel, distinctPart);
