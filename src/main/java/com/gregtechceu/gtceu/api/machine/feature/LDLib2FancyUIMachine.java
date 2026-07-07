@@ -11,8 +11,15 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2AutoOutputFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2BatchModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DistinctPartFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2MachineModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2VoidingModeFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDistinctPart;
+import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -80,9 +87,22 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIPr
      */
     @Override
     default void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+        if (this instanceof IVoidable voidable) {
+            LDLib2VoidingModeFancyConfigurator.attachConfigurators(configuratorPanel, voidable);
+        }
+        if (this instanceof WorkableElectricMultiblockMachine workableMultiblockMachine) {
+            LDLib2BatchModeFancyConfigurator.attachConfigurators(configuratorPanel, workableMultiblockMachine);
+        }
         if (this instanceof IControllable controllable) {
             configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(controllable,
                     configuratorPanel.getHolder()));
+        }
+        AutoOutputTrait autoOutputTrait = self().getTrait(AutoOutputTrait.TYPE);
+        if (autoOutputTrait != null) {
+            LDLib2AutoOutputFancyConfigurator.attachConfigurators(configuratorPanel, autoOutputTrait);
+        }
+        if (this instanceof IDistinctPart distinctPart) {
+            LDLib2DistinctPartFancyConfigurator.attachConfigurators(configuratorPanel, distinctPart);
         }
     }
 
