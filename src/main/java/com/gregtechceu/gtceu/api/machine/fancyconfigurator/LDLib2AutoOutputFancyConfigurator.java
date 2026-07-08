@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.AutoOutputMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -25,6 +26,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -55,18 +57,21 @@ public final class LDLib2AutoOutputFancyConfigurator {
     /**
      * Attaches supported auto-output toggles to a migrated LDLib2 Fancy configurator panel.
      */
-    public static void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel, AutoOutputTrait trait) {
-        if (trait.supportsAutoOutputFluids()) {
-            configuratorPanel.attachConfigurators(createAutoOutputFluidConfigurator(configuratorPanel, trait));
+    public static void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel,
+                                           AutoOutputMachine autoOutputMachine) {
+        if (autoOutputMachine.supportsAutoOutputFluids()) {
+            configuratorPanel.attachConfigurators(createAutoOutputFluidConfigurator(configuratorPanel,
+                    autoOutputMachine));
         }
-        if (trait.supportsAutoOutputItems()) {
-            configuratorPanel.attachConfigurators(createAutoOutputItemConfigurator(configuratorPanel, trait));
+        if (autoOutputMachine.supportsAutoOutputItems()) {
+            configuratorPanel.attachConfigurators(createAutoOutputItemConfigurator(configuratorPanel,
+                    autoOutputMachine));
         }
     }
 
     private static LDLib2FancyConfiguratorButton.Toggle createAutoOutputFluidConfigurator(
                                                                                           LDLib2ConfiguratorPanelElement panel,
-                                                                                          AutoOutputTrait trait) {
+                                                                                          AutoOutputMachine autoOutputMachine) {
         return createAutoOutputConfigurator(
                 GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
@@ -74,7 +79,7 @@ public final class LDLib2AutoOutputFancyConfigurator {
                 GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0.5, 1, 0.5),
                         GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f)),
-                trait::isAutoOutputFluids,
+                autoOutputMachine::isAutoOutputFluids,
                 "gtpm.gui.fluid_auto_output",
                 (event, enabled) -> {
                     var machine = panel.getHolder().getMachine();
@@ -88,7 +93,7 @@ public final class LDLib2AutoOutputFancyConfigurator {
 
     private static LDLib2FancyConfiguratorButton.Toggle createAutoOutputItemConfigurator(
                                                                                          LDLib2ConfiguratorPanelElement panel,
-                                                                                         AutoOutputTrait trait) {
+                                                                                         AutoOutputMachine autoOutputMachine) {
         return createAutoOutputConfigurator(
                 GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
@@ -96,7 +101,7 @@ public final class LDLib2AutoOutputFancyConfigurator {
                 GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0.5, 1, 0.5),
                         GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f)),
-                trait::isAutoOutputItems,
+                autoOutputMachine::isAutoOutputItems,
                 "gtpm.gui.item_auto_output",
                 (event, enabled) -> {
                     var machine = panel.getHolder().getMachine();
@@ -140,14 +145,14 @@ public final class LDLib2AutoOutputFancyConfigurator {
     private static final class AutoOutputItemsActionHandler implements SyncActionHandler {
 
         @Override
-        public ResourceLocation actionId() {
+        public @NotNull ResourceLocation actionId() {
             return SET_AUTO_OUTPUT_ITEMS_ACTION;
         }
 
         @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            AutoOutputTrait trait = readAutoOutputTrait(context);
-            return trait != null && trait.supportsAutoOutputItems();
+        public boolean acceptsHolder(@NotNull SyncActionContext context) {
+            AutoOutputMachine machine = readAutoOutputMachine(context);
+            return machine != null && machine.supportsAutoOutputItems();
         }
 
         @Override
@@ -157,14 +162,14 @@ public final class LDLib2AutoOutputFancyConfigurator {
         }
 
         @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
+        public boolean mayExecute(@NotNull ServerPlayer player, @NotNull SyncActionContext context) {
             return !player.isSpectator();
         }
 
         @Override
-        public void execute(SyncActionContext context) {
-            AutoOutputTrait trait = requireAutoOutputItemsTrait(context);
-            trait.setAllowAutoOutputItems(requireBoolean(context.payload(), AUTO_OUTPUT_ITEMS_FIELD,
+        public void execute(@NotNull SyncActionContext context) {
+            AutoOutputMachine machine = requireAutoOutputItemsMachine(context);
+            machine.setAllowAutoOutputItems(requireBoolean(context.payload(), AUTO_OUTPUT_ITEMS_FIELD,
                     "Auto-output items action payload is missing enabled state."));
         }
     }
@@ -172,14 +177,14 @@ public final class LDLib2AutoOutputFancyConfigurator {
     private static final class AutoOutputFluidsActionHandler implements SyncActionHandler {
 
         @Override
-        public ResourceLocation actionId() {
+        public @NotNull ResourceLocation actionId() {
             return SET_AUTO_OUTPUT_FLUIDS_ACTION;
         }
 
         @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            AutoOutputTrait trait = readAutoOutputTrait(context);
-            return trait != null && trait.supportsAutoOutputFluids();
+        public boolean acceptsHolder(@NotNull SyncActionContext context) {
+            AutoOutputMachine machine = readAutoOutputMachine(context);
+            return machine != null && machine.supportsAutoOutputFluids();
         }
 
         @Override
@@ -189,40 +194,45 @@ public final class LDLib2AutoOutputFancyConfigurator {
         }
 
         @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
+        public boolean mayExecute(@NotNull ServerPlayer player, @NotNull SyncActionContext context) {
             return !player.isSpectator();
         }
 
         @Override
-        public void execute(SyncActionContext context) {
-            AutoOutputTrait trait = requireAutoOutputFluidsTrait(context);
-            trait.setAllowAutoOutputFluids(requireBoolean(context.payload(), AUTO_OUTPUT_FLUIDS_FIELD,
+        public void execute(@NotNull SyncActionContext context) {
+            AutoOutputMachine machine = requireAutoOutputFluidsMachine(context);
+            machine.setAllowAutoOutputFluids(requireBoolean(context.payload(), AUTO_OUTPUT_FLUIDS_FIELD,
                     "Auto-output fluids action payload is missing enabled state."));
         }
     }
 
-    private static @Nullable AutoOutputTrait readAutoOutputTrait(SyncActionContext context) {
-        if (!(context.holder() instanceof MetaMachine machine) ||
-                !(context.holder() instanceof LDLib2FancyUIMachine)) {
+    private static @Nullable AutoOutputMachine readAutoOutputMachine(SyncActionContext context) {
+        if (!(context.holder() instanceof LDLib2FancyUIMachine)) {
             return null;
         }
-        return machine.getTrait(AutoOutputTrait.TYPE);
+        if (context.holder() instanceof AutoOutputMachine autoOutputMachine) {
+            return autoOutputMachine;
+        }
+        if (context.holder() instanceof MetaMachine machine) {
+            return machine.getTrait(AutoOutputTrait.TYPE);
+        }
+        return null;
     }
 
-    private static AutoOutputTrait requireAutoOutputItemsTrait(SyncActionContext context) {
-        AutoOutputTrait trait = readAutoOutputTrait(context);
-        if (trait == null || !trait.supportsAutoOutputItems()) {
-            throw new IllegalStateException("Auto-output items action received an invalid holder or trait.");
+    private static AutoOutputMachine requireAutoOutputItemsMachine(SyncActionContext context) {
+        AutoOutputMachine machine = readAutoOutputMachine(context);
+        if (machine == null || !machine.supportsAutoOutputItems()) {
+            throw new IllegalStateException("Auto-output items action received an invalid holder.");
         }
-        return trait;
+        return machine;
     }
 
-    private static AutoOutputTrait requireAutoOutputFluidsTrait(SyncActionContext context) {
-        AutoOutputTrait trait = readAutoOutputTrait(context);
-        if (trait == null || !trait.supportsAutoOutputFluids()) {
-            throw new IllegalStateException("Auto-output fluids action received an invalid holder or trait.");
+    private static AutoOutputMachine requireAutoOutputFluidsMachine(SyncActionContext context) {
+        AutoOutputMachine machine = readAutoOutputMachine(context);
+        if (machine == null || !machine.supportsAutoOutputFluids()) {
+            throw new IllegalStateException("Auto-output fluids action received an invalid holder.");
         }
-        return trait;
+        return machine;
     }
 
     private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field, String failureMessage) {

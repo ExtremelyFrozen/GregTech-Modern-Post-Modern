@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
+import com.gregtechceu.gtceu.api.machine.feature.AutoOutputMachine;
 import com.gregtechceu.gtceu.api.machine.trait.*;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IFrontFacingTrait;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IInteractionTrait;
@@ -37,7 +38,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class AutoOutputTrait extends MachineTrait implements IRenderingTrait, IInteractionTrait, IFrontFacingTrait {
+public class AutoOutputTrait extends MachineTrait implements AutoOutputMachine, IRenderingTrait, IInteractionTrait,
+                             IFrontFacingTrait {
 
     public static final MachineTraitType<AutoOutputTrait> TYPE = new MachineTraitType<>(AutoOutputTrait.class);
 
