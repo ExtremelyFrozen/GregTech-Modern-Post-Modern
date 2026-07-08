@@ -133,6 +133,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeChestMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeComputationProviderMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeEnergyContainerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeTankMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIHelper.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIIngredientRole.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/xei/GTLDLib2RecipeUI.java',
