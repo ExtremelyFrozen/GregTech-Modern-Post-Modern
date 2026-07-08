@@ -18,8 +18,7 @@ import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.config.ConfigHolder;
-import com.gregtechceu.gtceu.integration.ae2.machine.MEStockingBusPartMachine;
-import com.gregtechceu.gtceu.integration.ae2.machine.feature.multiblock.IMEStockingPart;
+import com.gregtechceu.gtceu.integration.ae2.machine.feature.multiblock.AutoStockingPart;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
@@ -53,7 +52,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
     private static final ResourceLocation MIN_STACK_SIZE_FIELD = SyncFieldData.key("minStackSize");
     private static final ResourceLocation TICKS_PER_CYCLE_FIELD = SyncFieldData.key("ticksPerCycle");
 
-    private final IMEStockingPart machine;
+    private final AutoStockingPart machine;
     private final MachineUIHolder holder;
 
     static {
@@ -64,7 +63,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
     /**
      * Creates an advanced auto-stocking configurator bound to the opened machine holder.
      */
-    public LDLib2AutoStockingFancyConfigurator(IMEStockingPart machine, MachineUIHolder holder) {
+    public LDLib2AutoStockingFancyConfigurator(AutoStockingPart machine, MachineUIHolder holder) {
         this.machine = machine;
         this.holder = holder;
     }
@@ -84,7 +83,10 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
         UIElement root = new UIElement();
         UITemplate.setLDLib2Bounds(root, 0, 0, CONFIGURATOR_WIDTH, CONFIGURATOR_HEIGHT);
 
-        String suffix = machine instanceof MEStockingBusPartMachine ? "min_item_count" : "min_fluid_count";
+        String suffix = switch (machine.getStockingTarget()) {
+            case ITEM -> "min_item_count";
+            case FLUID -> "min_fluid_count";
+        };
         root.addChild(new GTLabelElement(4, 2, 81, 10,
                 "gtpm.gui.title.adv_stocking_config." + suffix, true));
 
@@ -163,7 +165,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof IMEStockingPart &&
+            return context.holder() instanceof AutoStockingPart &&
                     context.holder() instanceof LDLib2FancyUIMachine;
         }
 
@@ -180,7 +182,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
 
         @Override
         public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof IMEStockingPart stockingPart)) {
+            if (!(context.holder() instanceof AutoStockingPart stockingPart)) {
                 throw new IllegalStateException("Auto-stocking min stack size action received an invalid holder.");
             }
             Integer value = readIntPayload(context.payload(), MIN_STACK_SIZE_FIELD);
@@ -200,7 +202,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof IMEStockingPart &&
+            return context.holder() instanceof AutoStockingPart &&
                     context.holder() instanceof LDLib2FancyUIMachine;
         }
 
@@ -217,7 +219,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
 
         @Override
         public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof IMEStockingPart stockingPart)) {
+            if (!(context.holder() instanceof AutoStockingPart stockingPart)) {
                 throw new IllegalStateException("Auto-stocking ticks per cycle action received an invalid holder.");
             }
             Integer value = readIntPayload(context.payload(), TICKS_PER_CYCLE_FIELD);

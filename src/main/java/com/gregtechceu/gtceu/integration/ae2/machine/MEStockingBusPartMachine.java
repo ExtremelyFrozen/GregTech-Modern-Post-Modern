@@ -160,6 +160,11 @@ public class MEStockingBusPartMachine extends MEInputBusPartMachine implements I
     }
 
     @Override
+    public StockingTarget getStockingTarget() {
+        return StockingTarget.ITEM;
+    }
+
+    @Override
     public boolean testConfiguredInOtherPart(@Nullable GenericStack config) {
         if (config == null) return false;
         // In distinct mode, we don't need to check other buses since only one bus can run a recipe at a time.

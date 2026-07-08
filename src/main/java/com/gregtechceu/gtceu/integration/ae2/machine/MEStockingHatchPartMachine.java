@@ -153,6 +153,11 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     }
 
     @Override
+    public StockingTarget getStockingTarget() {
+        return StockingTarget.FLUID;
+    }
+
+    @Override
     public boolean testConfiguredInOtherPart(@Nullable GenericStack config) {
         if (config == null) return false;
         if (!isFormed()) return false;
