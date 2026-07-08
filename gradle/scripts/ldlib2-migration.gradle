@@ -128,6 +128,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamMinerMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamSolarBoiler.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamSolidBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/BufferMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CrateMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeComputationProviderMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeEnergyContainerMachine.java',
