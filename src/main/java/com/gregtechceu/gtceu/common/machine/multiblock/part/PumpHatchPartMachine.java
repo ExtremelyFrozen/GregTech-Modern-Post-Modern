@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.PumpHatch;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -47,7 +48,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.Nullable;
 
-public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib2MachineUIProvider {
+public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib2MachineUIProvider, PumpHatch {
 
     private static final ResourceLocation CLICK_PUMP_HATCH_FLUID_SLOT_ACTION = GTCEu
             .id("click_pump_hatch_fluid_slot");
@@ -330,7 +331,7 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof PumpHatchPartMachine;
+            return context.holder() instanceof PumpHatch;
         }
 
         @Override
@@ -346,10 +347,10 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib
 
         @Override
         public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof PumpHatchPartMachine machine)) {
-                throw new IllegalStateException("Pump hatch config action received a non-pump-hatch machine.");
+            if (!(context.holder() instanceof PumpHatch pumpHatch)) {
+                throw new IllegalStateException("Pump hatch config action received an invalid holder.");
             }
-            machine.setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
+            pumpHatch.setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
         }
     }
 
