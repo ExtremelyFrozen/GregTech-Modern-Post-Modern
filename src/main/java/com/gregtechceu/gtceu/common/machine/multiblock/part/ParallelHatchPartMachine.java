@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.ParallelHatch;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
@@ -33,7 +34,7 @@ import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
-public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib2MachineUIProvider {
+public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib2MachineUIProvider, ParallelHatch {
 
     private static final int MIN_PARALLEL = 1;
     private static final ResourceLocation SET_PARALLEL_HATCH_CURRENT_PARALLEL_ACTION = GTCEu
@@ -56,6 +57,7 @@ public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib
         this.currentParallel = maxParallel;
     }
 
+    @Override
     public void setCurrentParallel(int parallelAmount) {
         this.currentParallel = Mth.clamp(parallelAmount, MIN_PARALLEL, this.maxParallel);
         for (MultiblockControllerMachine controller : this.getControllers()) {
@@ -106,7 +108,7 @@ public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ParallelHatchPartMachine;
+            return context.holder() instanceof ParallelHatch;
         }
 
         @Override
@@ -122,10 +124,10 @@ public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib
 
         @Override
         public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ParallelHatchPartMachine machine)) {
-                throw new IllegalStateException("Parallel hatch action received a non-parallel-hatch machine.");
+            if (!(context.holder() instanceof ParallelHatch parallelHatch)) {
+                throw new IllegalStateException("Parallel hatch action received an invalid holder.");
             }
-            machine.setCurrentParallel(requireInt(context.payload(), CURRENT_PARALLEL_FIELD));
+            parallelHatch.setCurrentParallel(requireInt(context.payload(), CURRENT_PARALLEL_FIELD));
         }
     }
 
@@ -144,9 +146,13 @@ public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib
     private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
         JsonElement element = fields.get(field);
         if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            long value = primitive.getAsLong();
-            if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
-                return (int) value;
+            try {
+                long value = primitive.getAsBigDecimal().longValueExact();
+                if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+                    return (int) value;
+                }
+            } catch (ArithmeticException | NumberFormatException e) {
+                GTCEu.LOGGER.warn("Invalid parallel hatch integer action payload.", e);
             }
         }
         return null;
