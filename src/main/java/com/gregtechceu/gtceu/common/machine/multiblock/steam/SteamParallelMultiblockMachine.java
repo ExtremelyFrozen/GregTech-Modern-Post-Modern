@@ -50,7 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine
-                                      implements IDisplayUIMachine, LDLib2MachineUIProvider {
+                                            implements IDisplayUIMachine, LDLib2MachineUIProvider {
 
     @Getter
     @Setter

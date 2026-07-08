@@ -1,10 +1,10 @@
 package com.gregtechceu.gtceu.integration.xei;
 
 import com.gregtechceu.gtceu.GTCEu;
-import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.capability.recipe.CWURecipeCapability;
-import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.capability.recipe.CWURecipeCapability;
+import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.data.DimensionMarker;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
@@ -47,15 +47,14 @@ import net.minecraft.world.level.block.Blocks;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
+import dev.vfyjxf.taffy.style.TaffyPosition;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import dev.vfyjxf.taffy.style.TaffyPosition;
-import org.lwjgl.glfw.GLFW;
 
 /**
  * Builds the parallel LDLib2 recipe UI tree without touching the legacy WidgetGroup XEI path.
@@ -65,8 +64,7 @@ public final class GTLDLib2RecipeUI {
     private static final int TEXT_X = 3;
     private static final int LINE_HEIGHT = GTRecipeXEIHelper.LINE_HEIGHT;
 
-    private GTLDLib2RecipeUI() {
-    }
+    private GTLDLib2RecipeUI() {}
 
     public static UI createUI(GTRecipeDefinition recipe, int recipeTier, int chanceTier) {
         var storages = Tables.newCustomTable(new EnumMap<>(IO.class), LinkedHashMap<RecipeCapability<?>, Object>::new);
@@ -193,12 +191,13 @@ public final class GTLDLib2RecipeUI {
             int minVoltageTier = RecipeHelper.getRecipeEUtTier(recipe);
             float minAmperage = (float) Math.abs(eu) / GTValues.V[minVoltageTier];
             Component text = Component.translatable(eu > 0 ? "gtpm.recipe.eu" : "gtpm.recipe.eu_inverted",
-                            FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[minVoltageTier])
+                    FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[minVoltageTier])
                     .withStyle(ChatFormatting.UNDERLINE);
             recipeVoltageText = createLabel(text, TEXT_X, textsY, rootSize.width() - 2 * TEXT_X, true);
             recipeVoltageTooltipEUt = Math.abs(eu);
-            recipeVoltageText.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> event.hoverTooltips =
-                    new HoverTooltips(List.of(createRecipeVoltageTooltip()), null, null, null));
+            recipeVoltageText.addEventListener(UIEvents.HOVER_TOOLTIPS,
+                    event -> event.hoverTooltips = new HoverTooltips(List.of(createRecipeVoltageTooltip()), null, null,
+                            null));
             root.addChild(recipeVoltageText);
 
             if (eu > 0) {
@@ -223,8 +222,8 @@ public final class GTLDLib2RecipeUI {
                 layout.height(LINE_HEIGHT);
             });
             voltageClickArea.addEventListener(UIEvents.MOUSE_DOWN, this::setRecipeOC);
-            voltageClickArea.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> event.hoverTooltips =
-                    new HoverTooltips(getVoltageTierTooltips(), null, null, null));
+            voltageClickArea.addEventListener(UIEvents.HOVER_TOOLTIPS,
+                    event -> event.hoverTooltips = new HoverTooltips(getVoltageTierTooltips(), null, null, null));
             root.addChild(voltageClickArea);
         }
 
@@ -280,7 +279,7 @@ public final class GTLDLib2RecipeUI {
             if (recipeVoltageText != null) {
                 float minAmperage = (float) preview.eut() / GTValues.V[tier];
                 recipeVoltageText.setValue(Component.translatable("gtpm.recipe.eu",
-                                FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[tier])
+                        FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[tier])
                         .withStyle(ChatFormatting.UNDERLINE));
                 recipeVoltageTooltipEUt = preview.eut();
             }
@@ -312,7 +311,7 @@ public final class GTLDLib2RecipeUI {
 
         private Component createRecipeVoltageTooltip() {
             return Component.translatable("gtpm.recipe.eu.total",
-                            FormattingUtil.formatNumbers(Math.abs(recipeVoltageTooltipEUt)))
+                    FormattingUtil.formatNumbers(Math.abs(recipeVoltageTooltipEUt)))
                     .withStyle(ChatFormatting.UNDERLINE);
         }
     }
@@ -333,7 +332,7 @@ public final class GTLDLib2RecipeUI {
         if (RecipeData.getBoolean(recipe.data, "duration_is_total_cwu")) {
             yOffset[0] += LINE_HEIGHT;
             root.addChild(createLabel(Component.translatable("gtpm.recipe.total_computation",
-                            FormattingUtil.formatNumbers(recipe.duration)), TEXT_X, yOffset[0],
+                    FormattingUtil.formatNumbers(recipe.duration)), TEXT_X, yOffset[0],
                     rootSize.width() - 2 * TEXT_X, false));
         }
     }

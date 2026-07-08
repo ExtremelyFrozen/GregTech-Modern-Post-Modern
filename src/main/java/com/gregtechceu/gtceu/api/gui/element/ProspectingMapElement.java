@@ -146,7 +146,8 @@ public class ProspectingMapElement extends UIElement implements SearchComponent.
     }
 
     public boolean acceptsProspectingPacket(InteractionHand hand, ItemStack openedStack, ProspectorMode<?> packetMode) {
-        return holder.getHand() == hand && mode == packetMode && ItemStack.matches(holder.getOpenedStack(), openedStack);
+        return holder.getHand() == hand && mode == packetMode &&
+                ItemStack.matches(holder.getOpenedStack(), openedStack);
     }
 
     public void receiveProspectingPacket(PacketProspecting packet) {

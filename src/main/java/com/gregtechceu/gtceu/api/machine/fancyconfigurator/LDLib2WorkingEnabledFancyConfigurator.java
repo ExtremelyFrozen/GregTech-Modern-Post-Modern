@@ -28,7 +28,8 @@ import java.util.List;
 /**
  * LDLib2 Fancy toggle for the common machine working-enabled state.
  *
- * <p>The button sends a GTM machine action for server-side mutation and does not use LDLib2-owned business state
+ * <p>
+ * The button sends a GTM machine action for server-side mutation and does not use LDLib2-owned business state
  * channels.
  */
 public class LDLib2WorkingEnabledFancyConfigurator extends LDLib2FancyConfiguratorButton.Toggle {

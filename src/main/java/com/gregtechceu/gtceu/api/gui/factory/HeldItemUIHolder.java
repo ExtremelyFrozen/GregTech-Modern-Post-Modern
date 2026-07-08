@@ -7,7 +7,8 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Holds the player, hand, and opened stack needed to build a held item UI.
  *
- * <p>This interface keeps GTM item and tool UI code independent from LDLib2's native held item holder.
+ * <p>
+ * This interface keeps GTM item and tool UI code independent from LDLib2's native held item holder.
  */
 public interface HeldItemUIHolder {
 

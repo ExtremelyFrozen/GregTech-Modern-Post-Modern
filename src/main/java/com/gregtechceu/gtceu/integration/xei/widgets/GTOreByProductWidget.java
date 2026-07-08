@@ -7,11 +7,11 @@ import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemEntryList;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
-import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -21,6 +21,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
 import it.unimi.dsi.fastutil.booleans.BooleanList;
 import it.unimi.dsi.fastutil.ints.IntImmutableList;
@@ -29,8 +30,6 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import dev.vfyjxf.taffy.style.TaffyPosition;
 
 public class GTOreByProductWidget {
 
@@ -263,7 +262,8 @@ public class GTOreByProductWidget {
         return slot;
     }
 
-    private static GTFluidSlotElement createFluidInputSlot(CycleFluidEntryHandler handler, int slotIndex, int x, int y) {
+    private static GTFluidSlotElement createFluidInputSlot(CycleFluidEntryHandler handler, int slotIndex, int x,
+                                                           int y) {
         Supplier<Stream<FluidStack>> fluidSupplier = () -> handler.getEntry(slotIndex).getStacks().stream()
                 .filter(fluid -> !fluid.isEmpty());
         GTFluidSlotElement slot = new GTFluidSlotElement();

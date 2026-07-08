@@ -29,7 +29,8 @@ import java.util.List;
 /**
  * LDLib2 Fancy configurator helper for multiblock batch mode.
  *
- * <p>The button sends a GTM machine action for server-side mutation and leaves legacy Fancy controller wiring
+ * <p>
+ * The button sends a GTM machine action for server-side mutation and leaves legacy Fancy controller wiring
  * untouched until each owning machine migrates to LDLib2.
  */
 public final class LDLib2BatchModeFancyConfigurator {

@@ -72,7 +72,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public class ComputerMonitorCover extends CoverBehavior
-        implements LDLib2CoverUIProvider, IDataStickInteractable, IPlaceholderInfoProviderCover {
+                                  implements LDLib2CoverUIProvider, IDataStickInteractable,
+                                  IPlaceholderInfoProviderCover {
 
     private static final int FORMAT_LINE_COUNT = 8;
     private static final int TEXT_FIELD_WIDTH = 160;

@@ -38,7 +38,8 @@ import java.util.List;
 /**
  * LDLib2 Fancy page for selecting the active recipe type of a recipe logic machine.
  *
- * <p>The page sends a GTM machine action for server-side mutation instead of LDLib2-owned business state channels.
+ * <p>
+ * The page sends a GTM machine action for server-side mutation instead of LDLib2-owned business state channels.
  */
 public class LDLib2MachineModeFancyConfigurator implements LDLib2FancyUIProvider {
 

@@ -25,8 +25,7 @@ public class MultiblockBlockInfo extends BlockInfo {
     @Nullable
     private BlockEntity lastEntity;
 
-    public MultiblockBlockInfo() {
-    }
+    public MultiblockBlockInfo() {}
 
     public MultiblockBlockInfo(Block block) {
         super(block);

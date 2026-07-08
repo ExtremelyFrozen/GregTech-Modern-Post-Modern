@@ -48,11 +48,12 @@ import java.util.List;
 /**
  * LDLib2 Fancy configurator for machine programmed-circuit slots.
  *
- * <p>The configurator keeps the client-visible circuit slot responsive locally, then sends GTM machine actions for the
+ * <p>
+ * The configurator keeps the client-visible circuit slot responsive locally, then sends GTM machine actions for the
  * authoritative server write when the opened holder currently resolves to a remote machine.
  */
 public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, LDLib2FancyCustomMouseWheelAction,
-                                               LDLib2FancyCustomMiddleClickAction {
+                                            LDLib2FancyCustomMiddleClickAction {
 
     private static final ResourceLocation SET_MACHINE_CIRCUIT_CONFIGURATION_ACTION = GTCEu.id(
             "set_machine_circuit_configuration");
@@ -74,7 +75,7 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
      * Creates a circuit configurator bound to the machine circuit inventory and opened UI holder.
      *
      * @param circuitMachine machine feature that owns the configurable circuit slot.
-     * @param holder opened machine UI holder used to send GTM machine actions.
+     * @param holder         opened machine UI holder used to send GTM machine actions.
      */
     public LDLib2CircuitFancyConfigurator(IHasCircuitSlot circuitMachine, MachineUIHolder holder) {
         if (!hasUsableCircuitSlot(circuitMachine)) {

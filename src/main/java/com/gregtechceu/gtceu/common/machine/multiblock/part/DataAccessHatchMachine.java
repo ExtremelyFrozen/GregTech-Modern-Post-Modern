@@ -53,8 +53,8 @@ import java.util.List;
 import java.util.Set;
 
 public class DataAccessHatchMachine extends TieredPartMachine
-        implements LDLib2MachineUIProvider, IDataAccessMachine, IDataInfoProvider,
-        IMonitorComponent {
+                                    implements LDLib2MachineUIProvider, IDataAccessMachine, IDataInfoProvider,
+                                    IMonitorComponent {
 
     private final Set<GTRecipeDefinition> recipeDefinitions;
     @Getter

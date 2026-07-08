@@ -42,8 +42,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
@@ -62,7 +62,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDisplayUIMachine, LDLib2MachineUIProvider {
+public class LargeBoilerMachine extends WorkableMultiblockMachine
+                                implements IDisplayUIMachine, LDLib2MachineUIProvider {
 
     public static final int TICKS_PER_STEAM_GENERATION = 5;
     private static final int THROTTLE_STEP = 5;

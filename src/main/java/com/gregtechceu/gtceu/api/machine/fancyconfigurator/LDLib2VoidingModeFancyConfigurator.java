@@ -26,7 +26,8 @@ import java.util.List;
 /**
  * LDLib2 Fancy configurator helper for multiblock output voiding mode.
  *
- * <p>The selector sends a GTM machine action for server-side mutation and leaves existing legacy Fancy call sites
+ * <p>
+ * The selector sends a GTM machine action for server-side mutation and leaves existing legacy Fancy call sites
  * untouched until their owning machines migrate.
  */
 public final class LDLib2VoidingModeFancyConfigurator {

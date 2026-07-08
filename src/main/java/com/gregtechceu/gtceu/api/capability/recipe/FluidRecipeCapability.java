@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.capability.recipe;
 
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
+import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
@@ -19,14 +20,13 @@ import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.client.TooltipsHandler;
-import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.common.valueprovider.*;
+import com.gregtechceu.gtceu.integration.xei.GTRecipeXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidTagList;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
-import com.gregtechceu.gtceu.integration.xei.GTRecipeXEIHelper;
 import com.gregtechceu.gtceu.utils.GTMath;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -445,11 +445,9 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                                        int index,
                                        boolean isXEI,
                                        IO io,
-                                       GTRecipeTypeUI.@UnknownNullability("null when storage == null")
-                                       RecipeHolder recipeHolder,
+                                       GTRecipeTypeUI.@UnknownNullability("null when storage == null") RecipeHolder recipeHolder,
                                        @NotNull GTRecipeType recipeType,
-                                       @UnknownNullability("null when content == null")
-                                       GTRecipeDefinition recipe,
+                                       @UnknownNullability("null when content == null") GTRecipeDefinition recipe,
                                        @Nullable Content content,
                                        @Nullable Object storage, int recipeTier, int chanceTier) {
         if (element instanceof GTFluidSlotElement tank) {

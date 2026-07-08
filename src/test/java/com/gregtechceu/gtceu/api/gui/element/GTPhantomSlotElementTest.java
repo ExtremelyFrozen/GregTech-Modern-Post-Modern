@@ -148,7 +148,8 @@ public class GTPhantomSlotElementTest {
 
         helper.assertTrue(zeroAmountElement.getFluid().isEmpty(), "zero fluid amount should normalize to empty");
         helper.assertTrue(zeroMaxElement.getFluid().isEmpty(), "zero max fluid amount should normalize to empty");
-        helper.assertTrue(negativeMaxElement.getFluid().isEmpty(), "negative max fluid amount should normalize to empty");
+        helper.assertTrue(negativeMaxElement.getFluid().isEmpty(),
+                "negative max fluid amount should normalize to empty");
         helper.succeed();
     }
 
@@ -167,7 +168,8 @@ public class GTPhantomSlotElementTest {
 
         element.setFluid(new FluidStack(Fluids.LAVA, 900));
 
-        helper.assertTrue(consumedFluid.get().getFluid() == Fluids.LAVA, "consumer should receive the normalized fluid");
+        helper.assertTrue(consumedFluid.get().getFluid() == Fluids.LAVA,
+                "consumer should receive the normalized fluid");
         helper.assertTrue(consumedFluid.get().getAmount() == 1, "consumer mutation should affect only captured copy");
         assertFluid(helper, element.getFluid(), Fluids.LAVA, 900,
                 "mutating consumer fluid stack should not change element fluid");

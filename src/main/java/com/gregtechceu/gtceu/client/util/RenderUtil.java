@@ -285,7 +285,8 @@ public class RenderUtil {
         var matrix = graphics.pose().last().pose();
         buffer.addVertex(matrix, xCoord, yCoord + 16, zLevel).setUv(uMin, vMax).setColor(fluidColor);
         buffer.addVertex(matrix, xCoord + 16 - maskRight, yCoord + 16, zLevel).setUv(uMax, vMax).setColor(fluidColor);
-        buffer.addVertex(matrix, xCoord + 16 - maskRight, yCoord + maskTop, zLevel).setUv(uMax, vMin).setColor(fluidColor);
+        buffer.addVertex(matrix, xCoord + 16 - maskRight, yCoord + maskTop, zLevel).setUv(uMax, vMin)
+                .setColor(fluidColor);
         buffer.addVertex(matrix, xCoord, yCoord + maskTop, zLevel).setUv(uMin, vMin).setColor(fluidColor);
     }
 

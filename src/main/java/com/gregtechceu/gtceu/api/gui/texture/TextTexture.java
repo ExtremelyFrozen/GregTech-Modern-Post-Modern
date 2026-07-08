@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.gui.texture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
-import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -13,6 +12,7 @@ import net.minecraft.network.chat.Style;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import org.joml.Vector4f;
 
 import java.util.Collections;
@@ -166,10 +166,10 @@ public class TextTexture extends TransformTexture {
             drawHideText(graphics, mouseX, mouseY, x, y, width, height, font, textHeight, type == TextType.LEFT_HIDE);
         } else if (type == TextType.ROLL || type == TextType.ROLL_ALWAYS ||
                 type == TextType.LEFT_ROLL || type == TextType.LEFT_ROLL_ALWAYS) {
-            boolean left = type == TextType.LEFT_ROLL || type == TextType.LEFT_ROLL_ALWAYS;
-            boolean always = type == TextType.ROLL_ALWAYS || type == TextType.LEFT_ROLL_ALWAYS;
-            drawRollingText(graphics, mouseX, mouseY, x, y, width, height, font, textHeight, left, always);
-        }
+                    boolean left = type == TextType.LEFT_ROLL || type == TextType.LEFT_ROLL_ALWAYS;
+                    boolean always = type == TextType.ROLL_ALWAYS || type == TextType.LEFT_ROLL_ALWAYS;
+                    drawRollingText(graphics, mouseX, mouseY, x, y, width, height, font, textHeight, left, always);
+                }
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 

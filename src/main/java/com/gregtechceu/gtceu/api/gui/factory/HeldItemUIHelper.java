@@ -33,6 +33,7 @@ public final class HeldItemUIHelper {
      * Sends a held item UI sync action to the server.
      */
     public static void sendAction(HeldItemUIHolder holder, SyncActionData action) {
-        PacketDistributor.sendToServer(new CPacketItemActionToServer(holder.getHand(), holder.getOpenedStack(), action));
+        PacketDistributor
+                .sendToServer(new CPacketItemActionToServer(holder.getHand(), holder.getOpenedStack(), action));
     }
 }

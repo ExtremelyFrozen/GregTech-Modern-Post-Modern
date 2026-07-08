@@ -11,9 +11,9 @@ import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.client.resources.language.I18n;
 
+import static com.gregtechceu.gtceu.api.gui.texture.ProgressTexture.FillDirection.LEFT_TO_RIGHT;
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.MULTIBLOCK;
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.register;
-import static com.gregtechceu.gtceu.api.gui.texture.ProgressTexture.FillDirection.LEFT_TO_RIGHT;
 
 public class GCYMRecipeTypes {
 
@@ -45,8 +45,8 @@ public class GCYMRecipeTypes {
                 }
                 return "";
             })
-            .setLDLib2UiBuilder((recipe, root, rootSize) ->
-                    GTRecipeTypes.addLDLib2HeatingCoilSlot(recipe, root, rootSize, 40))
+            .setLDLib2UiBuilder(
+                    (recipe, root, rootSize) -> GTRecipeTypes.addLDLib2HeatingCoilSlot(recipe, root, rootSize, 40))
             .setSound(GTSoundEntries.ARC);
 
     public static void init() {}

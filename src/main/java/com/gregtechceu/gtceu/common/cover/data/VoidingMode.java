@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.common.cover.data;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.SelectableEnum;
-
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import lombok.Getter;

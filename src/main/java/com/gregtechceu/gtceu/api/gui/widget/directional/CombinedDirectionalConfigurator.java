@@ -6,16 +6,16 @@ import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib2.client.scene.ISceneBlockRenderHook;
-import com.lowdragmc.lowdraglib2.client.scene.WorldSceneRenderer;
-import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.SceneWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib2.utils.data.BlockPosFace;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.client.scene.ISceneBlockRenderHook;
+import com.lowdragmc.lowdraglib2.client.scene.WorldSceneRenderer;
+import com.lowdragmc.lowdraglib2.gui.util.ClickData;
+import com.lowdragmc.lowdraglib2.utils.data.BlockPosFace;
 
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;

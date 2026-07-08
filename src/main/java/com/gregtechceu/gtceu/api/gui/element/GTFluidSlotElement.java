@@ -43,7 +43,6 @@ import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import org.w3c.dom.Element;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +51,8 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 fluid slot element for GTM recipe XML metadata with GTM-controlled bucket interactions.
@@ -473,14 +474,14 @@ public class GTFluidSlotElement extends UIElement {
                             .collect(Collectors.toList()));
         }
         if (GTCEu.Mods.isEMILoaded()) {
-            LDLibEMIPlugin.recipeSlot(this, () ->
-                    new ListEmiIngredient(
-                            allPossibleFluids.get()
-                                    .map(fluid -> EmiStack.of(fluid.getFluid(),
-                                            fluid.getComponentsPatch(), fluid.getAmount()))
-                                    .map(stack -> stack.setChance(chance.get()))
-                                    .collect(Collectors.toList()), amount.getAsInt())
-                            .setChance(chance.get()));
+            LDLibEMIPlugin.recipeSlot(this, () -> new ListEmiIngredient(
+                    allPossibleFluids.get()
+                            .map(fluid -> EmiStack.of(fluid.getFluid(),
+                                    fluid.getComponentsPatch(), fluid.getAmount()))
+                            .map(stack -> stack.setChance(chance.get()))
+                            .collect(Collectors.toList()),
+                    amount.getAsInt())
+                    .setChance(chance.get()));
         }
     }
 

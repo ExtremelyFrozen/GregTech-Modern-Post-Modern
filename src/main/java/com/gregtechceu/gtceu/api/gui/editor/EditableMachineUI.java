@@ -86,7 +86,7 @@ public class EditableMachineUI implements IEditableUI<WidgetGroup, MetaMachine> 
                     this.customUICache = new CompoundTag();
                 } else {
                     try (InputStream inputStream = resource.get().open();
-                         DataInputStream dataInputStream = new DataInputStream(inputStream)) {
+                            DataInputStream dataInputStream = new DataInputStream(inputStream)) {
                         this.customUICache = NbtIo.read(dataInputStream, NbtAccounter.unlimitedHeap());
                     } catch (Exception e) {
                         GTCEu.LOGGER.warn("Failed to load machine UI from {}", location, e);

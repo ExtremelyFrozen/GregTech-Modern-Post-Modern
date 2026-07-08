@@ -9,8 +9,8 @@ import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -218,7 +218,8 @@ public class FluidVoidingCover extends PumpCover {
         @Override
         public void execute(SyncActionContext context) {
             if (!(context.holder() instanceof FluidVoidingCover cover)) {
-                throw new IllegalStateException("Fluid voiding cover config action received a non-fluid-voiding cover.");
+                throw new IllegalStateException(
+                        "Fluid voiding cover config action received a non-fluid-voiding cover.");
             }
             cover.setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
         }

@@ -14,7 +14,8 @@ import java.util.List;
 /**
  * Describes a Fancy UI page that can build its page body with LDLib2 elements.
  *
- * <p>This contract is the LDLib2-side entry point for the Fancy shell. It keeps page metadata, page sizing,
+ * <p>
+ * This contract is the LDLib2-side entry point for the Fancy shell. It keeps page metadata, page sizing,
  * local side-tab registration, configurator registration, and tooltip registration outside concrete machine UI
  * implementations so machine pages can migrate one page at a time.
  */
@@ -107,7 +108,7 @@ public interface LDLib2FancyUIProvider {
     /**
      * Groups page switcher entries and controls group ordering.
      *
-     * @param groupKey translated group key, or {@code null} for the default unlabelled group.
+     * @param groupKey            translated group key, or {@code null} for the default unlabelled group.
      * @param groupPositionWeight lower values appear earlier in the switcher.
      */
     record PageGroupingData(@Nullable String groupKey, int groupPositionWeight) {}

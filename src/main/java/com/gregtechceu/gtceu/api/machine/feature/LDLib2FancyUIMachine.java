@@ -4,11 +4,11 @@ import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
-import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
-import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2AutoOutputFancyConfigurator;
@@ -33,7 +33,8 @@ import java.util.List;
 /**
  * Bridges machine-owned Fancy pages into the LDLib2 machine UI opening path.
  *
- * <p>This interface lets machines opt into the LDLib2 Fancy shell one call site at a time while the legacy
+ * <p>
+ * This interface lets machines opt into the LDLib2 Fancy shell one call site at a time while the legacy
  * {@link IFancyUIMachine} contract remains available for machines that still depend on old LDLib widgets.
  */
 public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIProvider, LDLib2FancyUIProvider {
@@ -41,7 +42,8 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIPr
     /**
      * Builds the machine's concrete LDLib2 Fancy page body.
      *
-     * <p>Implementations provide the real page element explicitly so the migration does not install a placeholder or
+     * <p>
+     * Implementations provide the real page element explicitly so the migration does not install a placeholder or
      * silently preserve the old {@code SceneWidget} preview path.
      */
     @Override

@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.gui.element;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.texture.GuiTextureMetadata;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
@@ -12,8 +13,9 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.BooleanSupplier;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 element for static GTM image metadata converted from legacy recipe UI definitions.

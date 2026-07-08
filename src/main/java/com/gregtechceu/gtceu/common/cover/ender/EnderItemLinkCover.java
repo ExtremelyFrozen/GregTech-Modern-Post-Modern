@@ -54,8 +54,9 @@ public class EnderItemLinkCover extends AbstractEnderLinkCover<VirtualItemStorag
         super(definition, coverHolder, attachedSide);
         itemsLeftToTransferLastSecond = TRANSFER_RATE * 20;
         filterHandler = FilterHandlers.item(this);
-        if (!coverHolder.isRemote()) setEntry(VirtualEnderRegistry.getInstance().getOrCreateEntry(getOwner(), EntryTypes.ENDER_ITEM,
-                getChannelName()));
+        if (!coverHolder.isRemote())
+            setEntry(VirtualEnderRegistry.getInstance().getOrCreateEntry(getOwner(), EntryTypes.ENDER_ITEM,
+                    getChannelName()));
     }
 
     @Override

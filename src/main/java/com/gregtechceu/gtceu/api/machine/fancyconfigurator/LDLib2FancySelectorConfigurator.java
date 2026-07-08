@@ -18,7 +18,8 @@ import java.util.function.Supplier;
 /**
  * LDLib2 Fancy collapsed selector for enum-backed machine options.
  *
- * <p>The selector only computes the requested next value. Callers that mutate business state must send a GTM action
+ * <p>
+ * The selector only computes the requested next value. Callers that mutate business state must send a GTM action
  * packet or update a GTM sync field from the change callback.
  */
 public class LDLib2FancySelectorConfigurator<T extends Enum<T> & SelectableEnum>
@@ -32,9 +33,9 @@ public class LDLib2FancySelectorConfigurator<T extends Enum<T> & SelectableEnum>
     /**
      * Creates a selector over the supplied enum values.
      *
-     * @param values selectable enum values in display and cycle order.
+     * @param values        selectable enum values in display and cycle order.
      * @param valueSupplier supplies the current client-visible value.
-     * @param onChanged receives the requested next value when clicked.
+     * @param onChanged     receives the requested next value when clicked.
      */
     public LDLib2FancySelectorConfigurator(T[] values, Supplier<T> valueSupplier, BiConsumer<UIEvent, T> onChanged) {
         this.values = List.of(values);

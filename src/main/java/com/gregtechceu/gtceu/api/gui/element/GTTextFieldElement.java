@@ -7,8 +7,9 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.Consumer;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 text field facade for GTM pixel-positioned input fields.

@@ -13,8 +13,9 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.Consumer;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 button facade for GTM pixel-positioned textured buttons.

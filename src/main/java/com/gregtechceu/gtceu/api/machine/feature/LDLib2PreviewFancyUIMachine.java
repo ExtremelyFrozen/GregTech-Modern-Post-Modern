@@ -17,7 +17,8 @@ import java.util.List;
 /**
  * Supplies the LDLib2 default preview page for Fancy machines without a dedicated page body.
  *
- * <p>This opt-in contract mirrors the legacy fallback preview while keeping {@link LDLib2FancyUIMachine} explicit:
+ * <p>
+ * This opt-in contract mirrors the legacy fallback preview while keeping {@link LDLib2FancyUIMachine} explicit:
  * concrete machines must choose this fallback instead of silently receiving a placeholder page.
  */
 public interface LDLib2PreviewFancyUIMachine extends LDLib2FancyUIMachine {

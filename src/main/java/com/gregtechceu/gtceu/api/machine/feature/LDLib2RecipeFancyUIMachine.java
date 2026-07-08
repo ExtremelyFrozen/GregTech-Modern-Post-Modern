@@ -25,7 +25,8 @@ import java.util.LinkedHashMap;
 /**
  * Supplies the default LDLib2 Fancy recipe page for tiered recipe machines.
  *
- * <p>This contract is intentionally limited to the generated recipe template and the machine's normal recipe
+ * <p>
+ * This contract is intentionally limited to the generated recipe template and the machine's normal recipe
  * storages. It does not load legacy editable UI definitions or wire concrete machines into the LDLib2 Fancy opening
  * path.
  */
@@ -126,8 +127,8 @@ public interface LDLib2RecipeFancyUIMachine extends LDLib2FancyUIMachine {
     /**
      * Lets concrete machine pages add fixed-position LDLib2 elements around the generated recipe template.
      *
-     * @param root page root receiving additional elements.
-     * @param machine tiered recipe machine that owns this page.
+     * @param root       page root receiving additional elements.
+     * @param machine    tiered recipe machine that owns this page.
      * @param recipeSize active recipe template dimensions.
      */
     default void attachLDLib2RecipePageElements(UIElement root, WorkableTieredMachine machine,

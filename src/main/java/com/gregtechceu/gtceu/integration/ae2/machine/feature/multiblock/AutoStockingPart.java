@@ -3,7 +3,8 @@ package com.gregtechceu.gtceu.integration.ae2.machine.feature.multiblock;
 /**
  * AE2 auto-stocking threshold capability separated from the legacy multiblock and Fancy UI lifecycle.
  *
- * <p>LDLib2 action handlers and future migrated parts use this narrow contract instead of depending on
+ * <p>
+ * LDLib2 action handlers and future migrated parts use this narrow contract instead of depending on
  * {@link IMEStockingPart}, which still carries the old controller lifecycle and Fancy inheritance chain.
  */
 public interface AutoStockingPart {

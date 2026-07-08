@@ -68,7 +68,7 @@ public class LDLib2FancyDisplayConfiguratorTest {
     }
 
     private static void assertItemTitleAndTooltips(GameTestHelper helper, LDLib2FancyInvConfigurator configurator,
-                                                  Component title) {
+                                                   Component title) {
         helper.assertTrue(configurator.getTitle() == title, "item configurator title should be the constructor title");
         helper.assertTrue(configurator.getTooltips().isEmpty(), "item configurator default tooltips should be empty");
 
@@ -80,7 +80,7 @@ public class LDLib2FancyDisplayConfiguratorTest {
     }
 
     private static void assertTankTitleAndTooltips(GameTestHelper helper, LDLib2FancyTankConfigurator configurator,
-                                                  Component title) {
+                                                   Component title) {
         helper.assertTrue(configurator.getTitle() == title, "tank configurator title should be the constructor title");
         helper.assertTrue(configurator.getTooltips().isEmpty(), "tank configurator default tooltips should be empty");
 
@@ -97,7 +97,8 @@ public class LDLib2FancyDisplayConfiguratorTest {
         helper.assertTrue(height == expectedHeight, name + " configurator height should match the display grid");
     }
 
-    private static void assertItemTree(GameTestHelper helper, UIElement root, int slotCount, boolean assertSlotDetails) {
+    private static void assertItemTree(GameTestHelper helper, UIElement root, int slotCount,
+                                       boolean assertSlotDetails) {
         UIElement container = assertSingleContainer(helper, root);
         List<UIElement> children = container.getChildren();
         helper.assertTrue(children.size() == slotCount, "item container should contain " + slotCount + " item slots");

@@ -50,12 +50,11 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -64,7 +63,7 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 
 public class MaintenanceHatchPartMachine extends TieredPartMachine
-                                          implements IMaintenanceMachine, LDLib2MachineUIProvider {
+                                         implements IMaintenanceMachine, LDLib2MachineUIProvider {
 
     private static final float MAX_DURATION_MULTIPLIER = 1.1f;
     private static final float MIN_DURATION_MULTIPLIER = 0.9f;

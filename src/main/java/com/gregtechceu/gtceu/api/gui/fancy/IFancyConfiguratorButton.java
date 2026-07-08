@@ -1,8 +1,9 @@
 package com.gregtechceu.gtceu.api.gui.fancy;
 
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib2.gui.util.ClickData;
+
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
+import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;

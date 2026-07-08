@@ -16,12 +16,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Server-side context passed to a registered sync action handler.
  *
- * @param player the server player that sent the action request.
- * @param holder the resolved machine, cover, or item holder for the request.
- * @param action the decoded action data.
- * @param pos    the block position for block-backed holders, or {@code null} for item actions.
- * @param side   the cover side for cover holders, or {@code null} for other holders.
- * @param hand   the interaction hand for held item holders, or {@code null} for block-backed holders.
+ * @param player      the server player that sent the action request.
+ * @param holder      the resolved machine, cover, or item holder for the request.
+ * @param action      the decoded action data.
+ * @param pos         the block position for block-backed holders, or {@code null} for item actions.
+ * @param side        the cover side for cover holders, or {@code null} for other holders.
+ * @param hand        the interaction hand for held item holders, or {@code null} for block-backed holders.
  * @param openedStack the held item stack snapshot captured when the UI was opened, or {@code null} for block-backed
  *                    holders.
  */
@@ -33,15 +33,16 @@ public record SyncActionContext(ServerPlayer player, Object holder, SyncActionDa
      * Creates context for a managed block entity action.
      */
     public static SyncActionContext machine(ServerPlayer player, ManagedSyncBlockEntity holder, SyncActionData action,
-                                             BlockPos pos) {
+                                            BlockPos pos) {
         return new SyncActionContext(player, holder, action, pos, null, null, null);
     }
 
     /**
      * Creates context for an attached cover action.
      */
-    public static SyncActionContext cover(ServerPlayer player, CoverBehavior holder, SyncActionData action, BlockPos pos,
-                                           Direction side) {
+    public static SyncActionContext cover(ServerPlayer player, CoverBehavior holder, SyncActionData action,
+                                          BlockPos pos,
+                                          Direction side) {
         return new SyncActionContext(player, holder, action, pos, side, null, null);
     }
 

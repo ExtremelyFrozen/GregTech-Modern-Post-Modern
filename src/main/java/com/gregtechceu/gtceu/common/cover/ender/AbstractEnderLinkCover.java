@@ -78,7 +78,7 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends CoverBehavior
-                                             implements LDLib2CoverUIProvider, IControllable {
+                                            implements LDLib2CoverUIProvider, IControllable {
 
     public static final Pattern COLOR_INPUT_PATTERN = Pattern.compile("^[0-9a-fA-F]{0,8}$");
 

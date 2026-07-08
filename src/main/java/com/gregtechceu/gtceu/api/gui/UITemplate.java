@@ -34,7 +34,8 @@ public class UITemplate {
         return group;
     }
 
-    public static UIElement bindPlayerInventoryLDLib2(Inventory inventoryPlayer, IGuiTexture imageLocation, int x, int y,
+    public static UIElement bindPlayerInventoryLDLib2(Inventory inventoryPlayer, IGuiTexture imageLocation, int x,
+                                                      int y,
                                                       boolean addHotbar) {
         UIElement root = new UIElement();
         setLDLib2Bounds(root, x, y, 162, 54 + (addHotbar ? 22 : 0));

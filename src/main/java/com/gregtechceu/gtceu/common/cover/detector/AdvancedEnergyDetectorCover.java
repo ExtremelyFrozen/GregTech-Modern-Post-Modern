@@ -343,7 +343,8 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
         @Override
         public void execute(SyncActionContext context) {
             if (!(context.holder() instanceof AdvancedEnergyDetectorCover cover)) {
-                throw new IllegalStateException("Advanced energy detector config action received a non-energy detector.");
+                throw new IllegalStateException(
+                        "Advanced energy detector config action received a non-energy detector.");
             }
             cover.setUsePercent(requireBoolean(context.payload(), USE_PERCENT_FIELD));
             cover.setMinValue(requireNonNegativeLong(context.payload(), MIN_FIELD));

@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Holds the stable cover identity used to open and validate a cover UI.
  *
- * <p>The holder keeps cover screens from depending on a {@link CoverBehavior} instance as the UI factory payload while
+ * <p>
+ * The holder keeps cover screens from depending on a {@link CoverBehavior} instance as the UI factory payload while
  * the widgets still build the remaining legacy UI trees.
  */
 public interface UICoverHolder {

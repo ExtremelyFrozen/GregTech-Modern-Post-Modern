@@ -7,7 +7,8 @@ import net.minecraft.world.entity.player.Player;
 /**
  * Creates an LDLib2 cover UI through GTM's stable cover holder contract.
  *
- * <p>This provider lets cover business code depend on {@link UICoverHolder} instead of an LDLib2 menu holder.
+ * <p>
+ * This provider lets cover business code depend on {@link UICoverHolder} instead of an LDLib2 menu holder.
  */
 public interface LDLib2CoverUIProvider {
 

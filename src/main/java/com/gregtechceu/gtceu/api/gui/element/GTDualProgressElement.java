@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.gui.element;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.texture.GuiTextureMetadata;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
@@ -11,8 +12,9 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 
 import org.w3c.dom.Element;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.DoubleSupplier;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 container for GTM recipe progress groups converted from legacy dual progress widgets.

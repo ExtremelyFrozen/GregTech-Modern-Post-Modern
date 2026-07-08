@@ -16,6 +16,7 @@ import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.IToolGridHighlight;
@@ -55,7 +56,6 @@ import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 import com.gregtechceu.gtceu.utils.data.TagCompatibilityFixer;
 
-import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.utils.virtuallevel.DummyWorld;
 
 import net.minecraft.ChatFormatting;

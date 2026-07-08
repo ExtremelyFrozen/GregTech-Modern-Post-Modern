@@ -12,11 +12,9 @@ import net.minecraft.world.item.ItemStack;
 
 public interface IMonitorModuleItem extends IItemComponent {
 
-    default void tick(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
-    }
+    default void tick(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {}
 
-    default void tickInPlaceholder(ItemStack stack, PlaceholderContext context) {
-    }
+    default void tickInPlaceholder(ItemStack stack, PlaceholderContext context) {}
 
     IMonitorRenderer getRenderer(ItemStack stack);
 

@@ -34,7 +34,8 @@ import java.util.function.BooleanSupplier;
 /**
  * LDLib2 Fancy configurator helper for common auto-output item and fluid toggles.
  *
- * <p>The buttons send GTM machine actions for server-side mutation and do not use LDLib2-owned business state
+ * <p>
+ * The buttons send GTM machine actions for server-side mutation and do not use LDLib2-owned business state
  * channels.
  */
 public final class LDLib2AutoOutputFancyConfigurator {
@@ -64,7 +65,8 @@ public final class LDLib2AutoOutputFancyConfigurator {
     }
 
     private static LDLib2FancyConfiguratorButton.Toggle createAutoOutputFluidConfigurator(
-            LDLib2ConfiguratorPanelElement panel, AutoOutputTrait trait) {
+                                                                                          LDLib2ConfiguratorPanelElement panel,
+                                                                                          AutoOutputTrait trait) {
         return createAutoOutputConfigurator(
                 GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
@@ -85,7 +87,8 @@ public final class LDLib2AutoOutputFancyConfigurator {
     }
 
     private static LDLib2FancyConfiguratorButton.Toggle createAutoOutputItemConfigurator(
-            LDLib2ConfiguratorPanelElement panel, AutoOutputTrait trait) {
+                                                                                         LDLib2ConfiguratorPanelElement panel,
+                                                                                         AutoOutputTrait trait) {
         return createAutoOutputConfigurator(
                 GuiTextures.group(
                         GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
@@ -106,11 +109,11 @@ public final class LDLib2AutoOutputFancyConfigurator {
     }
 
     private static LDLib2FancyConfiguratorButton.Toggle createAutoOutputConfigurator(
-            IGuiTexture disabledIcon,
-            IGuiTexture enabledIcon,
-            BooleanSupplier stateSupplier,
-            String tooltipBaseLangKey,
-            BiConsumer<UIEvent, Boolean> clickHandler) {
+                                                                                     IGuiTexture disabledIcon,
+                                                                                     IGuiTexture enabledIcon,
+                                                                                     BooleanSupplier stateSupplier,
+                                                                                     String tooltipBaseLangKey,
+                                                                                     BiConsumer<UIEvent, Boolean> clickHandler) {
         return new LDLib2FancyConfiguratorButton.Toggle(disabledIcon, enabledIcon, stateSupplier, clickHandler)
                 .setTooltipsSupplier(enabled -> List.of(Component.translatable(
                         tooltipBaseLangKey + "." + (enabled ? "enabled" : "disabled"))));

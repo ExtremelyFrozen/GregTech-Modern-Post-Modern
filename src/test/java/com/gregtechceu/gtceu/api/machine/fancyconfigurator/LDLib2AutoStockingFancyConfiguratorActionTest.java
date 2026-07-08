@@ -37,10 +37,10 @@ import org.jetbrains.annotations.Nullable;
 @GameTestHolder(GTCEu.MOD_ID)
 public class LDLib2AutoStockingFancyConfiguratorActionTest {
 
-    private static final ResourceLocation SET_AUTO_STOCKING_MIN_STACK_SIZE_ACTION =
-            GTCEu.id("set_auto_stocking_min_stack_size");
-    private static final ResourceLocation SET_AUTO_STOCKING_TICKS_PER_CYCLE_ACTION =
-            GTCEu.id("set_auto_stocking_ticks_per_cycle");
+    private static final ResourceLocation SET_AUTO_STOCKING_MIN_STACK_SIZE_ACTION = GTCEu
+            .id("set_auto_stocking_min_stack_size");
+    private static final ResourceLocation SET_AUTO_STOCKING_TICKS_PER_CYCLE_ACTION = GTCEu
+            .id("set_auto_stocking_ticks_per_cycle");
     private static final ResourceLocation MIN_STACK_SIZE_FIELD = SyncFieldData.key("minStackSize");
     private static final ResourceLocation TICKS_PER_CYCLE_FIELD = SyncFieldData.key("ticksPerCycle");
     private static final ResourceLocation OTHER_FIELD = SyncFieldData.key("otherField");
@@ -92,7 +92,8 @@ public class LDLib2AutoStockingFancyConfiguratorActionTest {
 
         helper.assertTrue(!result, "non-fancy auto-stocking holder was accepted");
         helper.assertTrue(holder.getMinStackSize() == 1, "rejected holder action changed min stack size");
-        helper.assertTrue(holder.getTicksPerCycle() == updateIntervals, "rejected holder action changed ticks per cycle");
+        helper.assertTrue(holder.getTicksPerCycle() == updateIntervals,
+                "rejected holder action changed ticks per cycle");
         helper.succeed();
     }
 

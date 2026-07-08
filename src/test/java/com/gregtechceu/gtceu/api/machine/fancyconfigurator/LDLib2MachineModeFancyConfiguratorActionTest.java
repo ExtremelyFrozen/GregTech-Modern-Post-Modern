@@ -171,7 +171,8 @@ public class LDLib2MachineModeFancyConfiguratorActionTest {
         }
     }
 
-    private static final class TestFancyRecipeLogicHolder extends TestRecipeLogicHolder implements LDLib2FancyUIMachine {
+    private static final class TestFancyRecipeLogicHolder extends TestRecipeLogicHolder
+                                                          implements LDLib2FancyUIMachine {
 
         private TestFancyRecipeLogicHolder(int activeRecipeType) {
             super(activeRecipeType);

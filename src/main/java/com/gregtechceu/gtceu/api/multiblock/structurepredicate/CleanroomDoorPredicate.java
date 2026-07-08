@@ -37,7 +37,8 @@ public enum CleanroomDoorPredicate implements StructurePredicate {
     public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return List.of(
                 new MultiblockBlockInfo(Blocks.IRON_DOOR.defaultBlockState()),
-                new MultiblockBlockInfo(Blocks.IRON_DOOR.defaultBlockState().setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER)));
+                new MultiblockBlockInfo(
+                        Blocks.IRON_DOOR.defaultBlockState().setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER)));
     }
 
     @Override

@@ -9,10 +9,11 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 phantom fluid slot element backed by external state.

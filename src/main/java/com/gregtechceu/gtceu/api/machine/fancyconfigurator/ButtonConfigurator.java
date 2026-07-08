@@ -1,8 +1,8 @@
 package com.gregtechceu.gtceu.api.machine.fancyconfigurator;
 
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
-
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+
 import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.network.chat.Component;

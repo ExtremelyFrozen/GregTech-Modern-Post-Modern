@@ -4,8 +4,8 @@ import com.gregtechceu.gtceu.api.blockentity.PipeBlockEntity;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.item.PipeBlockItem;
-import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.IToolGridHighlight;
 import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -159,7 +159,8 @@ public class BlockHighlightRenderer {
     private static float bColour;
 
     private static void drawGridOverlays(PoseStack poseStack, MultiBufferSource bufferSource, Vec3 cameraPos,
-                                         BlockHitResult blockHitResult, Function<Direction, GridHighlightTexture> texture) {
+                                         BlockHitResult blockHitResult,
+                                         Function<Direction, GridHighlightTexture> texture) {
         rColour = gColour = 0.2F + (float) Math.sin((System.currentTimeMillis() % (Mth.PI * 800)) / 800) / 2;
         bColour = 1f;
         BlockPos blockPos = blockHitResult.getBlockPos();

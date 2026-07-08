@@ -11,10 +11,11 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 toggle button facade that preserves GTM's legacy pressed/unpressed texture semantics.

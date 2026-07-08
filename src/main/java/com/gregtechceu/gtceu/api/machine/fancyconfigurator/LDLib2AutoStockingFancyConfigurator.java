@@ -37,7 +37,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 /**
  * LDLib2 Fancy page for advanced auto-stocking item and fluid thresholds.
  *
- * <p>The page sends GTM machine actions for server-side mutation instead of LDLib2-owned business state channels.
+ * <p>
+ * The page sends GTM machine actions for server-side mutation instead of LDLib2-owned business state channels.
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
@@ -45,10 +46,10 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
 
     private static final int CONFIGURATOR_WIDTH = 90;
     private static final int CONFIGURATOR_HEIGHT = 70;
-    private static final ResourceLocation SET_AUTO_STOCKING_MIN_STACK_SIZE_ACTION =
-            GTCEu.id("set_auto_stocking_min_stack_size");
-    private static final ResourceLocation SET_AUTO_STOCKING_TICKS_PER_CYCLE_ACTION =
-            GTCEu.id("set_auto_stocking_ticks_per_cycle");
+    private static final ResourceLocation SET_AUTO_STOCKING_MIN_STACK_SIZE_ACTION = GTCEu
+            .id("set_auto_stocking_min_stack_size");
+    private static final ResourceLocation SET_AUTO_STOCKING_TICKS_PER_CYCLE_ACTION = GTCEu
+            .id("set_auto_stocking_ticks_per_cycle");
     private static final ResourceLocation MIN_STACK_SIZE_FIELD = SyncFieldData.key("minStackSize");
     private static final ResourceLocation TICKS_PER_CYCLE_FIELD = SyncFieldData.key("ticksPerCycle");
 

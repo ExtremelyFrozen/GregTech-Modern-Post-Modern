@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.recipe.ui;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.SteamTexture;
@@ -48,6 +47,8 @@ import net.minecraft.server.packs.resources.ResourceManager;
 
 import com.google.common.collect.Table;
 import dev.emi.emi.api.EmiApi;
+import dev.vfyjxf.taffy.style.TaffyDimension;
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectArrayMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntAVLTreeMap;
@@ -66,17 +67,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Collectors;
+
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
-
-import dev.vfyjxf.taffy.style.TaffyDimension;
-import dev.vfyjxf.taffy.style.TaffyPosition;
 
 @SuppressWarnings("UnusedReturnValue")
 public class GTRecipeTypeUI {
 
-    public static final DoubleSupplier XEI_PROGRESS =
-            () -> Math.abs(System.currentTimeMillis() % 2000) / 2000.0;
+    public static final DoubleSupplier XEI_PROGRESS = () -> Math.abs(System.currentTimeMillis() % 2000) / 2000.0;
 
     @Getter
     @Setter
@@ -468,8 +466,8 @@ public class GTRecipeTypeUI {
                 .hoverTexture(IGuiTexture.EMPTY)
                 .pressedTexture(IGuiTexture.EMPTY));
         button.setOnClick(event -> showRecipeViewerCategory());
-        button.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> event.hoverTooltips =
-                new HoverTooltips(List.of(Component.translatable("gtpm.recipe_type.show_recipes")), null, null, null));
+        button.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> event.hoverTooltips = new HoverTooltips(
+                List.of(Component.translatable("gtpm.recipe_type.show_recipes")), null, null, null));
         progress.addChild(button);
     }
 

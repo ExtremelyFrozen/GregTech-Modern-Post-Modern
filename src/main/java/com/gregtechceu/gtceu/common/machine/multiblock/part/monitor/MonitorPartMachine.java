@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part.monitor;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import net.minecraft.world.InteractionHand;

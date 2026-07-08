@@ -29,12 +29,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import dev.vfyjxf.taffy.style.TaffyPosition;
+
 import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import dev.vfyjxf.taffy.style.TaffyPosition;
 
 public class GTBedrockFluidWidget {
 
@@ -177,7 +177,7 @@ public class GTBedrockFluidWidget {
         slot.setIngredientIO(GTXEIHelper.catalyst());
         if (ConfigHolder.INSTANCE.compat.showDimensionTier) {
             slot.setContentOverlay(GuiTextures.text("T" +
-                            (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
+                    (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
                     .scale(0.75f)
                     .transform(-3.0f, 5.0f));
         }

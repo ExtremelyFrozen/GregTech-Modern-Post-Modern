@@ -17,7 +17,8 @@ import java.util.List;
 /**
  * LDLib2 Fancy configurator for display-only fluid tank grids.
  *
- * <p>Bucket transfer must be wired by the owning machine through a GT action before this replaces legacy TankWidget
+ * <p>
+ * Bucket transfer must be wired by the owning machine through a GT action before this replaces legacy TankWidget
  * behavior.
  */
 public class LDLib2FancyTankConfigurator implements LDLib2FancyConfigurator {

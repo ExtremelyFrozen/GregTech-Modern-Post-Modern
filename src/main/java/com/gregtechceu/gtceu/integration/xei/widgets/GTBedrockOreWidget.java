@@ -28,6 +28,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.Comparator;
@@ -35,8 +36,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import dev.vfyjxf.taffy.style.TaffyPosition;
 
 public class GTBedrockOreWidget {
 
@@ -186,7 +185,7 @@ public class GTBedrockOreWidget {
         slot.setIngredientIO(GTXEIHelper.catalyst());
         if (ConfigHolder.INSTANCE.compat.showDimensionTier) {
             slot.setContentOverlay(GuiTextures.text("T" +
-                            (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
+                    (dimMarker.tier >= DimensionMarker.MAX_TIER ? "?" : dimMarker.tier))
                     .scale(0.75f)
                     .transform(-3.0f, 5.0f));
         }

@@ -7,7 +7,8 @@ import net.minecraft.world.entity.player.Player;
 /**
  * Creates an LDLib2 machine UI through GTM's stable machine holder contract.
  *
- * <p>This provider lets machine business code depend on {@link MachineUIHolder} instead of an LDLib2 menu holder.
+ * <p>
+ * This provider lets machine business code depend on {@link MachineUIHolder} instead of an LDLib2 menu holder.
  */
 public interface LDLib2MachineUIProvider {
 

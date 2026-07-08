@@ -35,7 +35,8 @@ public final class MachineUIHelper {
      * Sends a machine UI sync action to the server.
      */
     public static void sendAction(MachineUIHolder holder, SyncActionData action) {
-        PacketDistributor.sendToServer(new CPacketMachineActionToServer(holder.getPos(), holder.getMachineDefinitionId(),
-                action));
+        PacketDistributor
+                .sendToServer(new CPacketMachineActionToServer(holder.getPos(), holder.getMachineDefinitionId(),
+                        action));
     }
 }

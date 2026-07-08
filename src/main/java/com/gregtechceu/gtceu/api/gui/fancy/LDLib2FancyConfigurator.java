@@ -11,7 +11,8 @@ import java.util.List;
 /**
  * Describes an expandable LDLib2 Fancy configurator.
  *
- * <p>The configurator owns only UI construction and metadata. Field persistence and business actions must be wired
+ * <p>
+ * The configurator owns only UI construction and metadata. Field persistence and business actions must be wired
  * through GTM sync fields or GTM action packets by concrete callers.
  */
 public interface LDLib2FancyConfigurator {

@@ -14,9 +14,10 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.LongConsumer;
 import java.util.function.LongSupplier;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 long input facade for GTM pixel-positioned numeric controls.

@@ -71,7 +71,8 @@ public final class GuiTextureMetadata {
             try {
                 area[i] = Float.parseFloat(parts[i]);
             } catch (NumberFormatException e) {
-                GTCEu.LOGGER.error("Invalid GTM image texture area number '{}' in metadata '{}'", parts[i], metadata, e);
+                GTCEu.LOGGER.error("Invalid GTM image texture area number '{}' in metadata '{}'", parts[i], metadata,
+                        e);
                 throw e;
             }
         }

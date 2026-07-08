@@ -3,7 +3,8 @@ package com.gregtechceu.gtceu.api.machine.feature.multiblock;
 /**
  * Narrow state contract for machines or parts that expose distinct bus or part state.
  *
- * <p>This interface decouples distinct state from the legacy Fancy multiblock part lifecycle, allowing LDLib2 action
+ * <p>
+ * This interface decouples distinct state from the legacy Fancy multiblock part lifecycle, allowing LDLib2 action
  * handlers and future migrated parts to share the capability without depending on {@link IMultiPart}.
  */
 public interface DistinctPart {

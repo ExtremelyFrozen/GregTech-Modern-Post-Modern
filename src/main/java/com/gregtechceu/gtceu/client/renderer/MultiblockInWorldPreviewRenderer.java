@@ -370,7 +370,8 @@ public class MultiblockInWorldPreviewRenderer {
         }
     }
 
-    private static void prepareBuffers(MultiblockPreviewLevel level, Collection<BlockPos> renderedBlocks, int duration) {
+    private static void prepareBuffers(MultiblockPreviewLevel level, Collection<BlockPos> renderedBlocks,
+                                       int duration) {
         if (THREAD != null) {
             THREAD.interrupt();
         }
@@ -428,7 +429,8 @@ public class MultiblockInWorldPreviewRenderer {
         THREAD.start();
     }
 
-    private static void renderBlocks(MultiblockPreviewLevel level, PoseStack poseStack, BlockRenderDispatcher dispatcher,
+    private static void renderBlocks(MultiblockPreviewLevel level, PoseStack poseStack,
+                                     BlockRenderDispatcher dispatcher,
                                      RenderType layer, WorldSceneRenderer.VertexConsumerWrapper wrapperBuffer,
                                      Collection<BlockPos> renderedBlocks) {
         for (BlockPos pos : renderedBlocks) {
@@ -467,7 +469,8 @@ public class MultiblockInWorldPreviewRenderer {
     }
 
     private static void renderBlockLayer(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos,
-                                         MultiblockPreviewLevel level, PoseStack poseStack, VertexConsumer vertexConsumer,
+                                         MultiblockPreviewLevel level, PoseStack poseStack,
+                                         VertexConsumer vertexConsumer,
                                          RandomSource random, RenderType layer) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         var model = dispatcher.getBlockModel(state);

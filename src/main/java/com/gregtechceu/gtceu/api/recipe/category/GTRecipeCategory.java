@@ -2,12 +2,11 @@ package com.gregtechceu.gtceu.api.recipe.category;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-
-import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;

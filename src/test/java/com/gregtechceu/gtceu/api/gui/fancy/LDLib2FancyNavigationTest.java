@@ -39,7 +39,8 @@ public class LDLib2FancyNavigationTest {
 
         pageSwitcher.setPageList(List.of(page("replacement first"), page("replacement second")), firstPage);
 
-        helper.assertTrue(root.getChildren().size() == 1, "page switcher root should keep one scroll child after rebuild");
+        helper.assertTrue(root.getChildren().size() == 1,
+                "page switcher root should keep one scroll child after rebuild");
         helper.assertTrue(scrollChild.getChildren().size() == 2,
                 "page switcher should replace old page children when the page list changes");
         helper.succeed();
@@ -86,7 +87,8 @@ public class LDLib2FancyNavigationTest {
         helper.assertTrue(tabs.getChildren().size() == 3, "selectTab should rebuild without accumulating children");
 
         tabs.setMainTab(mainTab);
-        helper.assertTrue(tabs.getChildren().size() == 3, "repeated setMainTab should rebuild without accumulating children");
+        helper.assertTrue(tabs.getChildren().size() == 3,
+                "repeated setMainTab should rebuild without accumulating children");
 
         tabs.clearSubTabs();
         helper.assertTrue(tabs.getChildren().size() == 1, "clearSubTabs should leave only the main tab");

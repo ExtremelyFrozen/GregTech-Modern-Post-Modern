@@ -5,7 +5,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 /**
  * Handles mouse-wheel shortcut actions on an LDLib2 Fancy configurator tab.
  *
- * <p>Implementations use this when the collapsed tab itself is the shortcut target and the action should be handled
+ * <p>
+ * Implementations use this when the collapsed tab itself is the shortcut target and the action should be handled
  * before the event reaches surrounding UI elements.
  */
 public interface LDLib2FancyCustomMouseWheelAction {

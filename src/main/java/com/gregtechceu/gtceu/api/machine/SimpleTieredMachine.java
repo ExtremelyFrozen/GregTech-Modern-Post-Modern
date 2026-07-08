@@ -30,9 +30,9 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
-import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
+import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.Util;
 import net.minecraft.core.component.DataComponentMap;

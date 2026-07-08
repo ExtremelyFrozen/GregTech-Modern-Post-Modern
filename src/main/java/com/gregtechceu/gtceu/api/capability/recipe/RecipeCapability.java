@@ -229,8 +229,7 @@ public abstract class RecipeCapability<T> {
                                        int index,
                                        boolean isXEI,
                                        IO io,
-                                       @Nullable("null when storage == null")
-                                       GTRecipeTypeUI.RecipeHolder recipeHolder,
+                                       @Nullable("null when storage == null") GTRecipeTypeUI.RecipeHolder recipeHolder,
                                        @NotNull GTRecipeType recipeType,
                                        @Nullable("null when content == null") GTRecipeDefinition recipe,
                                        @Nullable Content content,

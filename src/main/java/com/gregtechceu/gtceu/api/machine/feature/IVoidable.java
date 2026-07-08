@@ -6,9 +6,8 @@ import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancySelectorConfigurator;
-
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancySelectorConfigurator;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;

@@ -16,7 +16,8 @@ import java.util.function.Function;
 /**
  * Describes a collapsed Fancy configurator that reacts to a local LDLib2 click instead of opening a body.
  *
- * <p>Implementations that need to mutate server state must dispatch a GTM action packet from the click handler.
+ * <p>
+ * Implementations that need to mutate server state must dispatch a GTM action packet from the click handler.
  */
 public interface LDLib2FancyConfiguratorButton extends LDLib2FancyConfigurator {
 
@@ -44,7 +45,8 @@ public interface LDLib2FancyConfiguratorButton extends LDLib2FancyConfigurator {
     /**
      * LDLib2 Fancy toggle button that renders from a supplied state and delegates click handling to the caller.
      *
-     * <p>The toggle does not own synchronization. Callers that mutate business state must send a GTM field update or
+     * <p>
+     * The toggle does not own synchronization. Callers that mutate business state must send a GTM field update or
      * action packet from the click handler.
      */
     class Toggle implements LDLib2FancyConfiguratorButton {
@@ -58,10 +60,10 @@ public interface LDLib2FancyConfiguratorButton extends LDLib2FancyConfigurator {
         /**
          * Creates a toggle button with separate textures for inactive and active states.
          *
-         * @param base texture shown when the supplied state is false.
-         * @param pressed texture shown when the supplied state is true.
+         * @param base          texture shown when the supplied state is false.
+         * @param pressed       texture shown when the supplied state is true.
          * @param stateSupplier supplies the current client-visible state.
-         * @param onClick handles local clicks with the requested next state.
+         * @param onClick       handles local clicks with the requested next state.
          */
         public Toggle(IGuiTexture base, IGuiTexture pressed, BooleanSupplier stateSupplier,
                       BiConsumer<UIEvent, Boolean> onClick) {

@@ -24,12 +24,12 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
 import com.gregtechceu.gtceu.common.valueprovider.*;
 import com.gregtechceu.gtceu.config.ConfigHolder;
+import com.gregtechceu.gtceu.integration.xei.GTRecipeXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.item.ItemTagList;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
-import com.gregtechceu.gtceu.integration.xei.GTRecipeXEIHelper;
 import com.gregtechceu.gtceu.utils.*;
 
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
@@ -527,11 +527,9 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                                        int index,
                                        boolean isXEI,
                                        IO io,
-                                       GTRecipeTypeUI.@UnknownNullability("null when storage == null")
-                                       RecipeHolder recipeHolder,
+                                       GTRecipeTypeUI.@UnknownNullability("null when storage == null") RecipeHolder recipeHolder,
                                        @NotNull GTRecipeType recipeType,
-                                       @UnknownNullability("null when content == null")
-                                       GTRecipeDefinition recipe,
+                                       @UnknownNullability("null when content == null") GTRecipeDefinition recipe,
                                        @Nullable Content content,
                                        @Nullable Object storage, int recipeTier, int chanceTier) {
         if (element instanceof GTItemSlotElement slot) {
@@ -574,8 +572,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
     }
 
     private void applyLDLib2ResearchSlot(GTItemSlotElement slot,
-                                         GTRecipeTypeUI.@UnknownNullability("null when storage == null")
-                                         RecipeHolder recipeHolder,
+                                         GTRecipeTypeUI.@UnknownNullability("null when storage == null") RecipeHolder recipeHolder,
                                          GTRecipeType recipeType) {
         if (!ConfigHolder.INSTANCE.machines.enableResearch) {
             return;
@@ -610,7 +607,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
 
     private void appendCountRangeTooltip(IntProvider countProvider, List<Component> tooltips) {
         tooltips.add(Component.translatable("gtpm.gui.content.count_range",
-                        countProvider.getMinValue(), countProvider.getMaxValue())
+                countProvider.getMinValue(), countProvider.getMaxValue())
                 .withStyle(ChatFormatting.GOLD));
     }
 

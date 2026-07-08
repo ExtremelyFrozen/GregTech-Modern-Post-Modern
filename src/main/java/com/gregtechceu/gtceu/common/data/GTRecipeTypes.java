@@ -21,17 +21,17 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.FusionReactorMac
 import com.gregtechceu.gtceu.common.machine.trait.customlogic.*;
 import com.gregtechceu.gtceu.common.recipe.condition.AdjacentFluidCondition;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidHolderSetList;
-import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
-import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.utils.LocalizationUtils;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.HolderSet;
@@ -44,14 +44,13 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import lombok.experimental.ExtensionMethod;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import dev.vfyjxf.taffy.style.TaffyPosition;
 
 import static com.gregtechceu.gtceu.api.gui.texture.ProgressTexture.FillDirection.*;
 
@@ -496,8 +495,7 @@ public class GTRecipeTypes {
                 }
                 return "";
             })
-            .setLDLib2UiBuilder((recipe, root, rootSize) ->
-                    addLDLib2HeatingCoilSlot(recipe, root, rootSize, 32))
+            .setLDLib2UiBuilder((recipe, root, rootSize) -> addLDLib2HeatingCoilSlot(recipe, root, rootSize, 32))
             .setSound(GTSoundEntries.FURNACE);
 
     public final static GTRecipeType DISTILLATION_RECIPES = register("distillation_tower", MULTIBLOCK)

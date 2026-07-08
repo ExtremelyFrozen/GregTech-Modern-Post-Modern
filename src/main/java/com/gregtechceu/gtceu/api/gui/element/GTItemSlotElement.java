@@ -10,13 +10,13 @@ import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler
 import com.lowdragmc.lowdraglib2.gui.slot.ItemHandlerSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
-import com.lowdragmc.lowdraglib2.utils.ColorUtils;
 import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
+import com.lowdragmc.lowdraglib2.utils.ColorUtils;
 import com.lowdragmc.lowdraglib2.utils.XmlUtils;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -27,10 +27,9 @@ import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Element;
 import org.lwjgl.opengl.GL11;
+import org.w3c.dom.Element;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -39,6 +38,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 item slot element for GTM recipe XML metadata.
@@ -175,7 +176,7 @@ public class GTItemSlotElement extends ItemSlot {
     }
 
     public GTItemSlotElement setOnAddedTooltips(
-            BiConsumer<GTItemSlotElement, List<Component>> onAddedTooltips) {
+                                                BiConsumer<GTItemSlotElement, List<Component>> onAddedTooltips) {
         this.onAddedTooltips = onAddedTooltips;
         return this;
     }

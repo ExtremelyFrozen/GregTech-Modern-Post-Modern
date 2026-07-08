@@ -11,7 +11,8 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Creates an LDLib2 held item UI through GTM's stable held item holder contract.
  *
- * <p>Implementing this provider automatically opts the item into LDLib2's {@link HeldItemUIMenuType} held item menu.
+ * <p>
+ * Implementing this provider automatically opts the item into LDLib2's {@link HeldItemUIMenuType} held item menu.
  * The bridge still adapts LDLib2's native holder into GTM's {@link HeldItemUIHolder}, so item business code continues
  * to receive the GTM holder contract.
  */
@@ -45,7 +46,8 @@ public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI 
     /**
      * Returns whether this item should use LDLib2 for the provided held item context.
      *
-     * <p>Composite items can implement the provider globally while using this method to route only components that
+     * <p>
+     * Composite items can implement the provider globally while using this method to route only components that
      * own a held item UI for the opened stack.
      */
     default boolean canCreateLDLib2UI(Player player, HeldItemUIHolder holder) {
@@ -55,7 +57,8 @@ public interface LDLib2HeldItemUIProvider extends HeldItemUIMenuType.HeldItemUI 
     /**
      * Returns whether the currently held stack still belongs to this opened LDLib2 UI.
      *
-     * <p>The default keeps strict stack matching. Mutable item UIs can override this through their component provider
+     * <p>
+     * The default keeps strict stack matching. Mutable item UIs can override this through their component provider
      * and validate action payloads server-side.
      */
     default boolean isLDLib2UIStillValid(Player player, HeldItemUIHolder holder) {

@@ -108,7 +108,8 @@ public class Predicates {
         return new TraceabilityPredicate(new PredicateFluidTag(tag));
     }
 
-    public static TraceabilityPredicate custom(Predicate<MultiblockState> predicate, Supplier<MultiblockBlockInfo[]> candidates) {
+    public static TraceabilityPredicate custom(Predicate<MultiblockState> predicate,
+                                               Supplier<MultiblockBlockInfo[]> candidates) {
         return fromBlockInfos(predicate, candidates);
     }
 

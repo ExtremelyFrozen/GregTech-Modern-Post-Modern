@@ -13,10 +13,10 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.world.item.ItemStack;
 
+import dev.vfyjxf.taffy.style.TaffyPosition;
+
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import dev.vfyjxf.taffy.style.TaffyPosition;
 
 public class GTProgrammedCircuitWidget {
 

@@ -48,7 +48,8 @@ public class LDLib2VoidingModeFancyConfiguratorActionTest {
         TestFancyVoidableHolder holder = new TestFancyVoidableHolder(IVoidable.VoidingMode.VOID_NONE);
         triggerActionRegistration(holder);
 
-        boolean result = dispatch(helper, holder, payload(new JsonPrimitive(IVoidable.VoidingMode.VOID_ITEMS.ordinal())));
+        boolean result = dispatch(helper, holder,
+                payload(new JsonPrimitive(IVoidable.VoidingMode.VOID_ITEMS.ordinal())));
 
         helper.assertTrue(result, "valid voiding-mode action was rejected");
         helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_ITEMS,
@@ -63,7 +64,8 @@ public class LDLib2VoidingModeFancyConfiguratorActionTest {
         TestVoidableOnlyHolder holder = new TestVoidableOnlyHolder(IVoidable.VoidingMode.VOID_NONE);
         triggerActionRegistration(holder);
 
-        boolean result = dispatch(helper, holder, payload(new JsonPrimitive(IVoidable.VoidingMode.VOID_ITEMS.ordinal())));
+        boolean result = dispatch(helper, holder,
+                payload(new JsonPrimitive(IVoidable.VoidingMode.VOID_ITEMS.ordinal())));
 
         helper.assertTrue(!result, "non-fancy voidable holder was accepted");
         helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_NONE,

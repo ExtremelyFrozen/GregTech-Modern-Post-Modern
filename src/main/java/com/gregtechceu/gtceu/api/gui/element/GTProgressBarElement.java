@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.gui.element;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.texture.GuiTextureMetadata;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+
 import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ProgressBar;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
@@ -11,9 +12,10 @@ import net.minecraft.MethodsReturnNonnullByDefault;
 
 import org.w3c.dom.Element;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * LDLib2 progress bar element that preserves GTM recipe texture metadata.

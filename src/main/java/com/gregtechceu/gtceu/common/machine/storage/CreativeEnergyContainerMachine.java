@@ -32,8 +32,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -511,7 +511,7 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     }
 
     private static SyncActionData createSetCreativeEnergyAction(ResourceLocation actionId, ResourceLocation field,
-                                                               JsonPrimitive value, int sequence) {
+                                                                JsonPrimitive value, int sequence) {
         DataComponentMap payload = DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
                         .put(field, value)

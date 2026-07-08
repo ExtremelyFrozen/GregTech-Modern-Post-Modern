@@ -2,9 +2,8 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part.hpca;
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
-
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
 
 public class HPCAEmptyPartMachine extends HPCAComponentPartMachine {
 

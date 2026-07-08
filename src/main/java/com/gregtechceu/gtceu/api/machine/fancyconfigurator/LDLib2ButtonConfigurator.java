@@ -14,7 +14,8 @@ import java.util.function.Consumer;
 /**
  * LDLib2 Fancy collapsed button configurator with caller-owned click behavior.
  *
- * <p>Callers that mutate business state must dispatch a GTM action packet from the click handler.
+ * <p>
+ * Callers that mutate business state must dispatch a GTM action packet from the click handler.
  */
 public class LDLib2ButtonConfigurator implements LDLib2FancyConfiguratorButton {
 

@@ -94,8 +94,9 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
 
     @Override
     public boolean supportsBatchMode() {
-        return getDefinition().getRecipeModifier() instanceof RecipeModifierList list && Arrays.stream(list.getModifiers())
-                .anyMatch(modifier -> modifier == GTRecipeModifiers.BATCH_MODE);
+        return getDefinition().getRecipeModifier() instanceof RecipeModifierList list &&
+                Arrays.stream(list.getModifiers())
+                        .anyMatch(modifier -> modifier == GTRecipeModifiers.BATCH_MODE);
     }
 
     @Override
