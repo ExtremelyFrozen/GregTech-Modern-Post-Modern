@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
+import com.gregtechceu.gtceu.api.machine.feature.AutoOutputMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -663,10 +664,6 @@ public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIP
         new LDLib2FluidClickTarget(cache.getStorages()[0], true, true).click(player, shiftDown);
     }
 
-    private void setLDLib2AutoOutputFluids(boolean enabled) {
-        autoOutput.setAllowAutoOutputFluids(enabled);
-    }
-
     private static SyncActionData createClickPumpFluidSlotAction(boolean shiftDown) {
         DataComponentMap payload = DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
@@ -830,7 +827,8 @@ public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIP
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof PumpMachine;
+            AutoOutputMachine machine = readAutoOutputMachine(context);
+            return machine != null && machine.supportsAutoOutputFluids();
         }
 
         @Override
@@ -846,11 +844,27 @@ public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIP
 
         @Override
         public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof PumpMachine machine)) {
-                throw new IllegalStateException("Pump auto output action received a non-pump machine.");
-            }
-            machine.setLDLib2AutoOutputFluids(requireBoolean(context.payload(), AUTO_OUTPUT_FLUIDS_FIELD));
+            AutoOutputMachine machine = requireAutoOutputFluidsMachine(context);
+            machine.setAllowAutoOutputFluids(requireBoolean(context.payload(), AUTO_OUTPUT_FLUIDS_FIELD));
         }
+    }
+
+    private static @Nullable AutoOutputMachine readAutoOutputMachine(SyncActionContext context) {
+        if (context.holder() instanceof AutoOutputMachine autoOutputMachine) {
+            return autoOutputMachine;
+        }
+        if (context.holder() instanceof PumpMachine machine) {
+            return machine.autoOutput;
+        }
+        return null;
+    }
+
+    private static AutoOutputMachine requireAutoOutputFluidsMachine(SyncActionContext context) {
+        AutoOutputMachine machine = readAutoOutputMachine(context);
+        if (machine == null || !machine.supportsAutoOutputFluids()) {
+            throw new IllegalStateException("Pump auto output action received an invalid holder.");
+        }
+        return machine;
     }
 
     private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
