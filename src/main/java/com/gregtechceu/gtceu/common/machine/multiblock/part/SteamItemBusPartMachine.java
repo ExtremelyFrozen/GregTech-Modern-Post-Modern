@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.SteamItemBus;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -37,7 +38,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.Nullable;
 
-public class SteamItemBusPartMachine extends ItemBusPartMachine implements LDLib2MachineUIProvider {
+public class SteamItemBusPartMachine extends ItemBusPartMachine implements LDLib2MachineUIProvider, SteamItemBus {
 
     private static final ResourceLocation SET_STEAM_ITEM_BUS_CONFIG_ACTION = GTCEu
             .id("set_steam_item_bus_config");
@@ -162,7 +163,7 @@ public class SteamItemBusPartMachine extends ItemBusPartMachine implements LDLib
 
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof SteamItemBusPartMachine;
+            return context.holder() instanceof SteamItemBus;
         }
 
         @Override
@@ -178,11 +179,10 @@ public class SteamItemBusPartMachine extends ItemBusPartMachine implements LDLib
 
         @Override
         public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof SteamItemBusPartMachine machine)) {
-                throw new IllegalStateException(
-                        "Steam item bus config action received a non-steam-item-bus machine.");
+            if (!(context.holder() instanceof SteamItemBus steamItemBus)) {
+                throw new IllegalStateException("Steam item bus config action received an invalid holder.");
             }
-            machine.setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
+            steamItemBus.setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
         }
     }
 
