@@ -109,6 +109,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/item/behavior/ItemMagnetBehavior.java',
                 'src/main/java/com/gregtechceu/gtceu/common/item/behavior/ProspectorScannerBehavior.java',
                 'src/main/java/com/gregtechceu/gtceu/common/item/tool/behavior/AOEConfigUIBehavior.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/BatteryBufferMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/electric/PumpMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/MultiblockTankMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/DataAccessHatchMachine.java',
