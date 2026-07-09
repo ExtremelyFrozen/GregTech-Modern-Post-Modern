@@ -123,10 +123,25 @@ public final class LDLib2VoidingModeFancyConfigurator {
         if (!(element instanceof JsonPrimitive primitive) || !primitive.isNumber()) {
             return null;
         }
-        int ordinal = primitive.getAsInt();
+        Integer ordinal = readExactInt(primitive);
+        if (ordinal == null) {
+            return null;
+        }
         if (ordinal < 0 || ordinal >= IVoidable.VoidingMode.VALUES.length) {
             return null;
         }
         return IVoidable.VoidingMode.VALUES[ordinal];
+    }
+
+    private static @Nullable Integer readExactInt(JsonPrimitive primitive) {
+        try {
+            long value = primitive.getAsBigDecimal().longValueExact();
+            if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+                return (int) value;
+            }
+        } catch (ArithmeticException | NumberFormatException e) {
+            GTCEu.LOGGER.warn("Invalid voiding-mode integer action payload.", e);
+        }
+        return null;
     }
 }

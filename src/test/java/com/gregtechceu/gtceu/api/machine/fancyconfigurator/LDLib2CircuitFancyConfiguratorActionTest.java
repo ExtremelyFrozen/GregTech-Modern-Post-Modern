@@ -98,6 +98,12 @@ public class LDLib2CircuitFancyConfiguratorActionTest {
 
         boolean stringResult = dispatch(helper, holder, payload(new JsonPrimitive("7")));
         helper.assertTrue(circuitConfiguration(holder) == 0, "string payload changed holder state");
+        boolean decimalResult = dispatch(helper, holder, payload(new JsonPrimitive(7.5D)));
+        helper.assertTrue(circuitConfiguration(holder) == 0, "decimal payload changed holder state");
+        boolean tooLargeResult = dispatch(helper, holder, payload(new JsonPrimitive(Long.MAX_VALUE)));
+        helper.assertTrue(circuitConfiguration(holder) == 0, "overflowing positive payload changed holder state");
+        boolean tooSmallResult = dispatch(helper, holder, payload(new JsonPrimitive(Long.MIN_VALUE)));
+        helper.assertTrue(circuitConfiguration(holder) == 0, "overflowing negative payload changed holder state");
         boolean outOfRangeResult = dispatch(helper, holder,
                 payload(new JsonPrimitive(IntCircuitBehaviour.CIRCUIT_MAX + 1)));
         helper.assertTrue(circuitConfiguration(holder) == 0, "out-of-range payload changed holder state");
@@ -107,6 +113,9 @@ public class LDLib2CircuitFancyConfiguratorActionTest {
         helper.assertTrue(circuitConfiguration(holder) == 0, "missing-field payload changed holder state");
 
         helper.assertTrue(!stringResult, "string circuit configuration payload was accepted");
+        helper.assertTrue(!decimalResult, "decimal circuit configuration payload was accepted");
+        helper.assertTrue(!tooLargeResult, "overflowing positive circuit configuration payload was accepted");
+        helper.assertTrue(!tooSmallResult, "overflowing negative circuit configuration payload was accepted");
         helper.assertTrue(!outOfRangeResult, "out-of-range circuit configuration payload was accepted");
         helper.assertTrue(!negativeResult, "negative circuit configuration payload was accepted");
         helper.assertTrue(!missingFieldResult, "payload without circuit configuration field was accepted");

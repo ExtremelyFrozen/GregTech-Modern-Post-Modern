@@ -330,7 +330,19 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
     private static @Nullable Integer readCircuitConfiguration(SyncFieldData fields) {
         JsonElement element = fields.get(CIRCUIT_CONFIGURATION_FIELD);
         if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
+            return readExactInt(primitive);
+        }
+        return null;
+    }
+
+    private static @Nullable Integer readExactInt(JsonPrimitive primitive) {
+        try {
+            long value = primitive.getAsBigDecimal().longValueExact();
+            if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+                return (int) value;
+            }
+        } catch (ArithmeticException | NumberFormatException e) {
+            GTCEu.LOGGER.warn("Invalid machine circuit integer action payload.", e);
         }
         return null;
     }

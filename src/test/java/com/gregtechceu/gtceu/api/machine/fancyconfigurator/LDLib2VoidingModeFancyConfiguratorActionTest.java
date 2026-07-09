@@ -98,12 +98,24 @@ public class LDLib2VoidingModeFancyConfiguratorActionTest {
         triggerActionRegistration(holder);
 
         boolean stringResult = dispatch(helper, holder, payload(new JsonPrimitive("VOID_ITEMS")));
+        boolean decimalResult = dispatch(helper, holder, payload(new JsonPrimitive(1.5D)));
+        helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_NONE,
+                "decimal payload changed holder state");
+        boolean tooLargeResult = dispatch(helper, holder, payload(new JsonPrimitive(Long.MAX_VALUE)));
+        helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_NONE,
+                "overflowing positive payload changed holder state");
+        boolean tooSmallResult = dispatch(helper, holder, payload(new JsonPrimitive(Long.MIN_VALUE)));
+        helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_NONE,
+                "overflowing negative payload changed holder state");
         boolean outOfRangeResult = dispatch(helper, holder,
                 payload(new JsonPrimitive(IVoidable.VoidingMode.VALUES.length)));
         boolean missingFieldResult = dispatch(helper, holder, payload(OTHER_FIELD,
                 new JsonPrimitive(IVoidable.VoidingMode.VOID_ITEMS.ordinal())));
 
         helper.assertTrue(!stringResult, "string voiding-mode payload was accepted");
+        helper.assertTrue(!decimalResult, "decimal voiding-mode payload was accepted");
+        helper.assertTrue(!tooLargeResult, "overflowing positive voiding-mode payload was accepted");
+        helper.assertTrue(!tooSmallResult, "overflowing negative voiding-mode payload was accepted");
         helper.assertTrue(!outOfRangeResult, "out-of-range voiding-mode payload was accepted");
         helper.assertTrue(!missingFieldResult, "payload without voiding-mode field was accepted");
         helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_NONE,

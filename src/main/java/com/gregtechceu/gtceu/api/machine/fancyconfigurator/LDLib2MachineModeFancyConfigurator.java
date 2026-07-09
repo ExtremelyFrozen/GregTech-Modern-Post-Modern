@@ -177,7 +177,7 @@ public class LDLib2MachineModeFancyConfigurator implements LDLib2FancyUIProvider
 
         @Override
         public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            if (!(context.holder() instanceof IRecipeLogicMachine machine)) {
+            if (player.isSpectator() || !(context.holder() instanceof IRecipeLogicMachine machine)) {
                 return false;
             }
             Integer activeRecipeType = readActiveRecipeType(context.payload());
@@ -219,7 +219,19 @@ public class LDLib2MachineModeFancyConfigurator implements LDLib2FancyUIProvider
     private static @Nullable Integer readActiveRecipeType(SyncFieldData fields) {
         JsonElement element = fields.get(ACTIVE_RECIPE_TYPE_FIELD);
         if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
+            return readExactInt(primitive);
+        }
+        return null;
+    }
+
+    private static @Nullable Integer readExactInt(JsonPrimitive primitive) {
+        try {
+            long value = primitive.getAsBigDecimal().longValueExact();
+            if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+                return (int) value;
+            }
+        } catch (ArithmeticException | NumberFormatException e) {
+            GTCEu.LOGGER.warn("Invalid machine-mode integer action payload.", e);
         }
         return null;
     }

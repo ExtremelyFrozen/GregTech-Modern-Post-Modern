@@ -27,6 +27,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -102,15 +103,41 @@ public class LDLib2MachineModeFancyConfiguratorActionTest {
         triggerActionRegistration(holder);
 
         boolean stringResult = dispatch(helper, holder, payload(new JsonPrimitive("1")));
+        boolean decimalResult = dispatch(helper, holder, payload(new JsonPrimitive(1.5D)));
+        helper.assertTrue(holder.getActiveRecipeType() == 0, "decimal payload changed holder state");
+        boolean tooLargeResult = dispatch(helper, holder, payload(new JsonPrimitive(Long.MAX_VALUE)));
+        helper.assertTrue(holder.getActiveRecipeType() == 0, "overflowing positive payload changed holder state");
+        boolean tooSmallResult = dispatch(helper, holder, payload(new JsonPrimitive(Long.MIN_VALUE)));
+        helper.assertTrue(holder.getActiveRecipeType() == 0, "overflowing negative payload changed holder state");
         boolean negativeResult = dispatch(helper, holder, payload(new JsonPrimitive(-1)));
         boolean outOfRangeResult = dispatch(helper, holder, payload(new JsonPrimitive(RECIPE_TYPES.length)));
         boolean missingFieldResult = dispatch(helper, holder, payload(OTHER_FIELD, new JsonPrimitive(1)));
 
         helper.assertTrue(!stringResult, "string machine-mode payload was accepted");
+        helper.assertTrue(!decimalResult, "decimal machine-mode payload was accepted");
+        helper.assertTrue(!tooLargeResult, "overflowing positive machine-mode payload was accepted");
+        helper.assertTrue(!tooSmallResult, "overflowing negative machine-mode payload was accepted");
         helper.assertTrue(!negativeResult, "negative machine-mode payload was accepted");
         helper.assertTrue(!outOfRangeResult, "out-of-range machine-mode payload was accepted");
         helper.assertTrue(!missingFieldResult, "payload without machine-mode field was accepted");
         helper.assertTrue(holder.getActiveRecipeType() == 0, "invalid payload changed holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2MachineModeFancyConfiguratorAction")
+    public static void dispatcherRejectsSpectator(GameTestHelper helper) {
+        TestFancyRecipeLogicHolder holder = new TestFancyRecipeLogicHolder(0);
+        triggerActionRegistration(holder);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        player.setGameMode(GameType.SPECTATOR);
+
+        boolean result = dispatch(player, holder, payload(new JsonPrimitive(1)));
+        player.setGameMode(GameType.SURVIVAL);
+
+        helper.assertTrue(!result, "machine-mode action accepted a spectator");
+        helper.assertTrue(holder.getActiveRecipeType() == 0, "spectator action changed holder state");
         helper.succeed();
     }
 
@@ -120,6 +147,10 @@ public class LDLib2MachineModeFancyConfiguratorActionTest {
 
     private static boolean dispatch(GameTestHelper helper, Object holder, DataComponentMap payload) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        return dispatch(player, holder, payload);
+    }
+
+    private static boolean dispatch(ServerPlayer player, Object holder, DataComponentMap payload) {
         SyncActionData action = new SyncActionData(SET_MACHINE_MODE_ACTION, 1, payload);
         SyncActionContext context = new SyncActionContext(player, holder, action, BlockPos.ZERO, null, null, null);
         return SyncActionDispatchers.server().dispatch(context);
