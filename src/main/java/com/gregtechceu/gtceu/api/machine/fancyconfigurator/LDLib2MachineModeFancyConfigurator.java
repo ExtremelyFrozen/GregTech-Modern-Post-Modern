@@ -12,7 +12,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -166,7 +166,7 @@ public class LDLib2MachineModeFancyConfigurator implements LDLib2FancyUIProvider
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
             return context.holder() instanceof IRecipeLogicMachine &&
-                    context.holder() instanceof LDLib2FancyUIMachine;
+                    context.holder() instanceof LDLib2FancyActionMachine;
         }
 
         @Override

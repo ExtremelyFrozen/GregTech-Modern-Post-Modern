@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.BatchModeMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
@@ -52,6 +53,20 @@ public class LDLib2BatchModeFancyConfiguratorActionTest {
 
         helper.assertTrue(result, "valid batch-enabled action was rejected");
         helper.assertTrue(holder.isBatchEnabled(), "valid batch-enabled action did not update holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2BatchModeFancyConfiguratorAction")
+    public static void dispatcherExecutesBatchEnabledActionForFancyActionMarkerHolder(GameTestHelper helper) {
+        TestFancyActionBatchModeHolder holder = new TestFancyActionBatchModeHolder(true, false);
+        triggerActionRegistration(holder);
+
+        boolean result = dispatch(helper, holder, payload(new JsonPrimitive(true)));
+
+        helper.assertTrue(result, "batch-enabled action rejected marker-only holder");
+        helper.assertTrue(holder.isBatchEnabled(), "marker-only holder state was not updated");
         helper.succeed();
     }
 
@@ -168,6 +183,14 @@ public class LDLib2BatchModeFancyConfiguratorActionTest {
         @Override
         public Component getTitle() {
             return Component.literal("test fancy batch holder");
+        }
+    }
+
+    private static final class TestFancyActionBatchModeHolder extends TestBatchModeHolder
+                                                              implements LDLib2FancyActionMachine {
+
+        private TestFancyActionBatchModeHolder(boolean supportsBatchMode, boolean batchEnabled) {
+            super(supportsBatchMode, batchEnabled);
         }
     }
 

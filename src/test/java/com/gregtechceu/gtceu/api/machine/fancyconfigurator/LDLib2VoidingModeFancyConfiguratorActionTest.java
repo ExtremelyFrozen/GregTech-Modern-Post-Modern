@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IVoidable;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -54,6 +55,22 @@ public class LDLib2VoidingModeFancyConfiguratorActionTest {
         helper.assertTrue(result, "valid voiding-mode action was rejected");
         helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_ITEMS,
                 "valid voiding-mode action did not update holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2VoidingModeFancyConfiguratorAction")
+    public static void dispatcherExecutesVoidingModeActionForFancyActionMarkerHolder(GameTestHelper helper) {
+        TestFancyActionVoidableHolder holder = new TestFancyActionVoidableHolder(IVoidable.VoidingMode.VOID_NONE);
+        triggerActionRegistration(holder);
+
+        boolean result = dispatch(helper, holder,
+                payload(new JsonPrimitive(IVoidable.VoidingMode.VOID_ITEMS.ordinal())));
+
+        helper.assertTrue(result, "voiding-mode action rejected marker-only holder");
+        helper.assertTrue(holder.getVoidingMode() == IVoidable.VoidingMode.VOID_ITEMS,
+                "marker-only holder state was not updated");
         helper.succeed();
     }
 
@@ -152,7 +169,7 @@ public class LDLib2VoidingModeFancyConfiguratorActionTest {
         }
     }
 
-    private static final class TestVoidableOnlyHolder implements IVoidable {
+    private static class TestVoidableOnlyHolder implements IVoidable {
 
         private IVoidable.VoidingMode voidingMode;
 
@@ -168,6 +185,14 @@ public class LDLib2VoidingModeFancyConfiguratorActionTest {
         @Override
         public void setVoidingMode(IVoidable.VoidingMode mode) {
             voidingMode = mode;
+        }
+    }
+
+    private static final class TestFancyActionVoidableHolder extends TestVoidableOnlyHolder
+                                                             implements LDLib2FancyActionMachine {
+
+        private TestFancyActionVoidableHolder(IVoidable.VoidingMode voidingMode) {
+            super(voidingMode);
         }
     }
 

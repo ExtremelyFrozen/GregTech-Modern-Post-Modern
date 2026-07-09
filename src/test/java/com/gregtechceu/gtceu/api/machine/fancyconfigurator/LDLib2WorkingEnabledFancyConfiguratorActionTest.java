@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -51,6 +52,20 @@ public class LDLib2WorkingEnabledFancyConfiguratorActionTest {
 
         helper.assertTrue(result, "valid working-enabled action was rejected");
         helper.assertTrue(holder.isWorkingEnabled(), "valid working-enabled action did not update holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2WorkingEnabledFancyConfiguratorAction")
+    public static void dispatcherExecutesWorkingEnabledActionForFancyActionMarkerHolder(GameTestHelper helper) {
+        TestFancyActionControllableHolder holder = new TestFancyActionControllableHolder(false);
+        triggerActionRegistration(holder);
+
+        boolean result = dispatch(helper, holder, payload(new JsonPrimitive(true)));
+
+        helper.assertTrue(result, "working-enabled action rejected marker-only holder");
+        helper.assertTrue(holder.isWorkingEnabled(), "marker-only holder state was not updated");
         helper.succeed();
     }
 
@@ -141,7 +156,7 @@ public class LDLib2WorkingEnabledFancyConfiguratorActionTest {
         }
     }
 
-    private static final class TestControllableOnlyHolder implements IControllable {
+    private static class TestControllableOnlyHolder implements IControllable {
 
         private boolean workingEnabled;
 
@@ -157,6 +172,14 @@ public class LDLib2WorkingEnabledFancyConfiguratorActionTest {
         @Override
         public void setWorkingEnabled(boolean isWorkingAllowed) {
             workingEnabled = isWorkingAllowed;
+        }
+    }
+
+    private static final class TestFancyActionControllableHolder extends TestControllableOnlyHolder
+                                                                 implements LDLib2FancyActionMachine {
+
+        private TestFancyActionControllableHolder(boolean workingEnabled) {
+            super(workingEnabled);
         }
     }
 

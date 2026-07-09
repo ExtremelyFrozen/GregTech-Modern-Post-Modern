@@ -8,7 +8,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.AutoOutputMachine;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -207,7 +207,7 @@ public final class LDLib2AutoOutputFancyConfigurator {
     }
 
     private static @Nullable AutoOutputMachine readAutoOutputMachine(SyncActionContext context) {
-        if (!(context.holder() instanceof LDLib2FancyUIMachine)) {
+        if (!(context.holder() instanceof LDLib2FancyActionMachine)) {
             return null;
         }
         if (context.holder() instanceof AutoOutputMachine autoOutputMachine) {

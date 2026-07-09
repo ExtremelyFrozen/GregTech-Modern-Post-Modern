@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
@@ -57,6 +58,20 @@ public class LDLib2CircuitFancyConfiguratorActionTest {
         helper.assertTrue(result, "valid circuit configuration action was rejected");
         helper.assertTrue(circuitConfiguration(holder) == 7,
                 "valid circuit configuration action did not update holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2CircuitFancyConfiguratorAction")
+    public static void dispatcherExecutesCircuitActionForFancyActionMarkerHolder(GameTestHelper helper) {
+        TestFancyActionCircuitHolder holder = new TestFancyActionCircuitHolder();
+        triggerActionRegistration(holder);
+
+        boolean result = dispatch(helper, holder, payload(new JsonPrimitive(7)));
+
+        helper.assertTrue(result, "circuit action rejected marker-only holder");
+        helper.assertTrue(circuitConfiguration(holder) == 7, "marker-only holder state was not updated");
         helper.succeed();
     }
 
@@ -157,6 +172,9 @@ public class LDLib2CircuitFancyConfiguratorActionTest {
             return Component.literal("test fancy circuit holder");
         }
     }
+
+    private static final class TestFancyActionCircuitHolder extends TestCircuitHolder
+                                                            implements LDLib2FancyActionMachine {}
 
     private static final class TestMachineUIHolder implements MachineUIHolder {
 

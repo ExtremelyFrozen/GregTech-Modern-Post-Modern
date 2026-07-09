@@ -4,7 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.machine.feature.IVoidable;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -79,7 +79,7 @@ public final class LDLib2VoidingModeFancyConfigurator {
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
             return context.holder() instanceof IVoidable &&
-                    context.holder() instanceof LDLib2FancyUIMachine;
+                    context.holder() instanceof LDLib2FancyActionMachine;
         }
 
         @Override

@@ -13,7 +13,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyCustomMiddleClickAction;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyCustomMouseWheelAction;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -302,7 +302,7 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
 
     private static @Nullable IHasCircuitSlot readCircuitHolder(SyncActionContext context) {
         if (!(context.holder() instanceof IHasCircuitSlot circuitHolder) ||
-                !(context.holder() instanceof LDLib2FancyUIMachine)) {
+                !(context.holder() instanceof LDLib2FancyActionMachine)) {
             return null;
         }
         if (!hasUsableCircuitSlot(circuitHolder)) {

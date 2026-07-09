@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.BatchModeMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -89,7 +89,7 @@ public final class LDLib2BatchModeFancyConfigurator {
         @Override
         public boolean acceptsHolder(@NotNull SyncActionContext context) {
             return context.holder() instanceof BatchModeMachine machine &&
-                    context.holder() instanceof LDLib2FancyUIMachine &&
+                    context.holder() instanceof LDLib2FancyActionMachine &&
                     machine.supportsBatchMode();
         }
 
@@ -107,7 +107,7 @@ public final class LDLib2BatchModeFancyConfigurator {
         @Override
         public void execute(@NotNull SyncActionContext context) {
             if (!(context.holder() instanceof BatchModeMachine machine) ||
-                    !(context.holder() instanceof LDLib2FancyUIMachine) ||
+                    !(context.holder() instanceof LDLib2FancyActionMachine) ||
                     !machine.supportsBatchMode()) {
                 throw new IllegalStateException("Batch mode action received an invalid holder.");
             }

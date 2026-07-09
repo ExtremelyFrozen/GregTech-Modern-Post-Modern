@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -59,6 +60,27 @@ public class LDLib2AutoStockingFancyConfiguratorActionTest {
         helper.assertTrue(result, "valid auto-stocking min stack size action was rejected");
         helper.assertTrue(holder.getMinStackSize() == 16,
                 "valid auto-stocking min stack size action did not update holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2AutoStockingFancyConfiguratorAction")
+    public static void dispatcherExecutesAutoStockingActionsForFancyActionMarkerHolder(GameTestHelper helper) {
+        int updateIntervals = ConfigHolder.INSTANCE.compat.ae2.updateIntervals;
+        TestFancyActionAutoStockingHolder holder = new TestFancyActionAutoStockingHolder(1, updateIntervals);
+        triggerActionRegistration(holder);
+
+        boolean minStackSizeResult = dispatch(helper, holder, SET_AUTO_STOCKING_MIN_STACK_SIZE_ACTION,
+                payload(MIN_STACK_SIZE_FIELD, new JsonPrimitive(16)));
+        boolean ticksPerCycleResult = dispatch(helper, holder, SET_AUTO_STOCKING_TICKS_PER_CYCLE_ACTION,
+                payload(TICKS_PER_CYCLE_FIELD, new JsonPrimitive(updateIntervals + 5)));
+
+        helper.assertTrue(minStackSizeResult, "min stack size action rejected marker-only holder");
+        helper.assertTrue(ticksPerCycleResult, "ticks per cycle action rejected marker-only holder");
+        helper.assertTrue(holder.getMinStackSize() == 16, "marker-only holder min stack size was not updated");
+        helper.assertTrue(holder.getTicksPerCycle() == updateIntervals + 5,
+                "marker-only holder ticks per cycle was not updated");
         helper.succeed();
     }
 
@@ -202,6 +224,14 @@ public class LDLib2AutoStockingFancyConfiguratorActionTest {
         @Override
         public Component getTitle() {
             return Component.literal("test fancy auto-stocking holder");
+        }
+    }
+
+    private static final class TestFancyActionAutoStockingHolder extends TestAutoStockingHolder
+                                                                 implements LDLib2FancyActionMachine {
+
+        private TestFancyActionAutoStockingHolder(int minStackSize, int ticksPerCycle) {
+            super(minStackSize, ticksPerCycle);
         }
     }
 

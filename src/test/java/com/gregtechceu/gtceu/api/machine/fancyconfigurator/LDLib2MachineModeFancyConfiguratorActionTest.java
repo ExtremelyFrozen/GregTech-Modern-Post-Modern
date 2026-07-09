@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
@@ -62,6 +63,20 @@ public class LDLib2MachineModeFancyConfiguratorActionTest {
 
         helper.assertTrue(result, "valid machine-mode action was rejected");
         helper.assertTrue(holder.getActiveRecipeType() == 1, "valid machine-mode action did not update holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2MachineModeFancyConfiguratorAction")
+    public static void dispatcherExecutesMachineModeActionForFancyActionMarkerHolder(GameTestHelper helper) {
+        TestFancyActionRecipeLogicHolder holder = new TestFancyActionRecipeLogicHolder(0);
+        triggerActionRegistration(holder);
+
+        boolean result = dispatch(helper, holder, payload(new JsonPrimitive(1)));
+
+        helper.assertTrue(result, "machine-mode action rejected marker-only holder");
+        helper.assertTrue(holder.getActiveRecipeType() == 1, "marker-only holder state was not updated");
         helper.succeed();
     }
 
@@ -191,6 +206,14 @@ public class LDLib2MachineModeFancyConfiguratorActionTest {
         @Override
         public Component getTitle() {
             return Component.literal("test fancy recipe logic holder");
+        }
+    }
+
+    private static final class TestFancyActionRecipeLogicHolder extends TestRecipeLogicHolder
+                                                                implements LDLib2FancyActionMachine {
+
+        private TestFancyActionRecipeLogicHolder(int activeRecipeType) {
+            super(activeRecipeType);
         }
     }
 }

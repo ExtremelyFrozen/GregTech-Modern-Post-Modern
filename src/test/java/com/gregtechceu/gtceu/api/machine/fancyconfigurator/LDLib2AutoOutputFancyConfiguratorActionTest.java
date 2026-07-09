@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.AutoOutputMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -56,6 +57,25 @@ public class LDLib2AutoOutputFancyConfiguratorActionTest {
         helper.assertTrue(result, "valid item auto-output action was rejected");
         helper.assertTrue(holder.isAutoOutputItems(), "valid item auto-output action did not update item state");
         helper.assertTrue(!holder.isAutoOutputFluids(), "item auto-output action changed fluid state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2AutoOutputFancyConfiguratorAction")
+    public static void dispatcherExecutesAutoOutputActionsForFancyActionMarkerHolder(GameTestHelper helper) {
+        TestFancyActionAutoOutputHolder holder = new TestFancyActionAutoOutputHolder(true, true, false, false);
+        triggerActionRegistration(holder);
+
+        boolean itemResult = dispatch(helper, holder, SET_AUTO_OUTPUT_ITEMS_ACTION,
+                payload(AUTO_OUTPUT_ITEMS_FIELD, new JsonPrimitive(true)));
+        boolean fluidResult = dispatch(helper, holder, SET_AUTO_OUTPUT_FLUIDS_ACTION,
+                payload(AUTO_OUTPUT_FLUIDS_FIELD, new JsonPrimitive(true)));
+
+        helper.assertTrue(itemResult, "item auto-output action rejected marker-only holder");
+        helper.assertTrue(fluidResult, "fluid auto-output action rejected marker-only holder");
+        helper.assertTrue(holder.isAutoOutputItems(), "marker-only holder item state was not updated");
+        helper.assertTrue(holder.isAutoOutputFluids(), "marker-only holder fluid state was not updated");
         helper.succeed();
     }
 
@@ -225,6 +245,15 @@ public class LDLib2AutoOutputFancyConfiguratorActionTest {
         @Override
         public Component getTitle() {
             return Component.literal("test fancy auto-output holder");
+        }
+    }
+
+    private static final class TestFancyActionAutoOutputHolder extends TestAutoOutputHolder
+                                                               implements LDLib2FancyActionMachine {
+
+        private TestFancyActionAutoOutputHolder(boolean supportsItems, boolean supportsFluids, boolean autoOutputItems,
+                                                boolean autoOutputFluids) {
+            super(supportsItems, supportsFluids, autoOutputItems, autoOutputFluids);
         }
     }
 

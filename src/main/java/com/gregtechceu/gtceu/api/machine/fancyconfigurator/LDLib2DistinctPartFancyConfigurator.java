@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.DistinctPart;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -88,7 +88,7 @@ public final class LDLib2DistinctPartFancyConfigurator {
         @Override
         public boolean acceptsHolder(@NotNull SyncActionContext context) {
             return context.holder() instanceof DistinctPart &&
-                    context.holder() instanceof LDLib2FancyUIMachine;
+                    context.holder() instanceof LDLib2FancyActionMachine;
         }
 
         @Override

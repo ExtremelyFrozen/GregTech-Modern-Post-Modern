@@ -9,7 +9,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfigurator;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -167,7 +167,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
             return context.holder() instanceof AutoStockingPart &&
-                    context.holder() instanceof LDLib2FancyUIMachine;
+                    context.holder() instanceof LDLib2FancyActionMachine;
         }
 
         @Override
@@ -204,7 +204,7 @@ public final class LDLib2AutoStockingFancyConfigurator implements LDLib2FancyCon
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
             return context.holder() instanceof AutoStockingPart &&
-                    context.holder() instanceof LDLib2FancyUIMachine;
+                    context.holder() instanceof LDLib2FancyActionMachine;
         }
 
         @Override

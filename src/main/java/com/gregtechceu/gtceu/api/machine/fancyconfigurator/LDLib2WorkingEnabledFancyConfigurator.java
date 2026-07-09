@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -79,7 +79,7 @@ public class LDLib2WorkingEnabledFancyConfigurator extends LDLib2FancyConfigurat
         @Override
         public boolean acceptsHolder(SyncActionContext context) {
             return context.holder() instanceof IControllable &&
-                    context.holder() instanceof LDLib2FancyUIMachine;
+                    context.holder() instanceof LDLib2FancyActionMachine;
         }
 
         @Override

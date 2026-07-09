@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.DistinctPart;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
@@ -52,6 +53,20 @@ public class LDLib2DistinctPartFancyConfiguratorActionTest {
 
         helper.assertTrue(result, "valid distinct action was rejected");
         helper.assertTrue(holder.isDistinct(), "valid distinct action did not update holder state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DistinctPartFancyConfiguratorAction")
+    public static void dispatcherExecutesDistinctActionForFancyActionMarkerHolder(GameTestHelper helper) {
+        TestFancyActionDistinctHolder holder = new TestFancyActionDistinctHolder(false);
+        triggerActionRegistration(holder);
+
+        boolean result = dispatch(helper, holder, payload(new JsonPrimitive(true)));
+
+        helper.assertTrue(result, "distinct action rejected marker-only holder");
+        helper.assertTrue(holder.isDistinct(), "marker-only holder state was not updated");
         helper.succeed();
     }
 
@@ -143,7 +158,7 @@ public class LDLib2DistinctPartFancyConfiguratorActionTest {
         }
     }
 
-    private static final class TestDistinctOnlyHolder implements DistinctPart {
+    private static class TestDistinctOnlyHolder implements DistinctPart {
 
         private boolean distinct;
 
@@ -159,6 +174,14 @@ public class LDLib2DistinctPartFancyConfiguratorActionTest {
         @Override
         public void setDistinct(boolean isDistinct) {
             distinct = isDistinct;
+        }
+    }
+
+    private static final class TestFancyActionDistinctHolder extends TestDistinctOnlyHolder
+                                                             implements LDLib2FancyActionMachine {
+
+        private TestFancyActionDistinctHolder(boolean distinct) {
+            super(distinct);
         }
     }
 

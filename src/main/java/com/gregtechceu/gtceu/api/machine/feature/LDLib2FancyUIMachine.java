@@ -37,7 +37,8 @@ import java.util.List;
  * This interface lets machines opt into the LDLib2 Fancy shell one call site at a time while the legacy
  * {@link IFancyUIMachine} contract remains available for machines that still depend on old LDLib widgets.
  */
-public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2MachineUIProvider, LDLib2FancyUIProvider {
+public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2FancyActionMachine, LDLib2MachineUIProvider,
+                                      LDLib2FancyUIProvider {
 
     /**
      * Builds the machine's concrete LDLib2 Fancy page body.
