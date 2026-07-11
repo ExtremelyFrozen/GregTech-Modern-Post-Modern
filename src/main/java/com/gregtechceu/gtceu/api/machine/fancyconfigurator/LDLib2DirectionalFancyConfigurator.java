@@ -18,6 +18,7 @@ import com.gregtechceu.gtceu.client.gui.fancy.LDLib2DirectionalSceneElement;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 
 import net.minecraft.core.Direction;
@@ -48,8 +49,10 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     private static final int SCENE_HEIGHT = PAGE_HEIGHT - SCENE_MARGIN * 2;
     private static final int CONTROL_SIZE = 18;
     private static final int CONTROL_GAP = 1;
+    private static final int CONTROL_ROW_GAP = 3;
     private static final int CONTROL_GROUP_WIDTH = CONTROL_SIZE * 2 + CONTROL_GAP;
     private static final int ITEM_COLOR = 0xffff6e0f;
+    private static final int FLUID_COLOR = 0xff00b4ff;
 
     private static final IGuiTexture ITEM_MODE_OFF = GuiTextures.group(
             GuiTextures.VANILLA_BUTTON,
@@ -60,6 +63,15 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     private static final IGuiTexture ITEM_MODE_AUTO = GuiTextures.group(
             GuiTextures.VANILLA_BUTTON,
             GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f));
+    private static final IGuiTexture FLUID_MODE_OFF = GuiTextures.group(
+            GuiTextures.VANILLA_BUTTON,
+            GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 0, 1, 1 / 3f));
+    private static final IGuiTexture FLUID_MODE_OUTPUT = GuiTextures.group(
+            GuiTextures.VANILLA_BUTTON,
+            GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 1 / 3f, 1, 1 / 3f));
+    private static final IGuiTexture FLUID_MODE_AUTO = GuiTextures.group(
+            GuiTextures.VANILLA_BUTTON,
+            GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f));
 
     private final DirectionalAutoOutputMachine output;
     private final MachineUIHolder pageHolder;
@@ -68,7 +80,7 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     @Nullable
     private Direction selectedSide;
 
-    enum ItemOutputMode {
+    enum OutputMode {
         OFF,
         OUTPUT,
         AUTO,
@@ -81,8 +93,8 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
 
     LDLib2DirectionalFancyConfigurator(DirectionalAutoOutputMachine output, MachineUIHolder pageHolder,
                                        BiConsumer<MachineUIHolder, SyncActionData> actionSender) {
-        if (!output.supportsAutoOutputItems()) {
-            throw new IllegalArgumentException("Item directional page requires item auto-output support.");
+        if (!output.supportsAutoOutputItems() && !output.supportsAutoOutputFluids()) {
+            throw new IllegalArgumentException("Directional page requires item or fluid auto-output support.");
         }
         this.output = output;
         this.pageHolder = pageHolder;
@@ -105,12 +117,22 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         sceneContainer.style(style -> style.backgroundTexture(ColorPattern.BLACK.rectTexture()));
         root.addChild(sceneContainer);
 
-        root.addChild(new ItemAutoOutputLabel());
-        root.addChild(createItemControls());
+        if (output.supportsAutoOutputItems()) {
+            root.addChild(new ItemAutoOutputLabel());
+        }
+        if (output.supportsAutoOutputFluids()) {
+            root.addChild(new FluidAutoOutputLabel());
+        }
+        if (output.supportsAutoOutputItems()) {
+            root.addChild(createItemControls());
+        }
+        if (output.supportsAutoOutputFluids()) {
+            root.addChild(createFluidControls());
+        }
 
         if (machine.isRemote()) {
             RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> () -> LDLib2DirectionalSceneElement.attachItemScene(sceneContainer, machine, output,
+                    () -> () -> LDLib2DirectionalSceneElement.attachScene(sceneContainer, machine, output,
                             SCENE_WIDTH, SCENE_HEIGHT, this::handleSceneFaceClick));
         }
         return root;
@@ -146,13 +168,15 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
             selectedSide = side;
             return true;
         }
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && output.supportsAutoOutputItems()) {
             sendAction(LDLib2DirectionalAutoOutputActions.createConfigureItemOutputSideAction(side));
+        } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && output.supportsAutoOutputFluids()) {
+            sendAction(LDLib2DirectionalAutoOutputActions.createConfigureFluidOutputSideAction(side));
         }
         return true;
     }
 
-    boolean configureSelectedOutputSide() {
+    boolean configureSelectedItemOutputSide() {
         Direction side = selectedSide;
         if (side == null) {
             return false;
@@ -161,16 +185,37 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         return true;
     }
 
-    void setAllowInputFromOutputSide(boolean allow) {
+    boolean configureSelectedFluidOutputSide() {
+        Direction side = selectedSide;
+        if (side == null) {
+            return false;
+        }
+        sendAction(LDLib2DirectionalAutoOutputActions.createConfigureFluidOutputSideAction(side));
+        return true;
+    }
+
+    void setAllowItemInputFromOutputSide(boolean allow) {
         sendAction(LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(allow));
     }
 
-    ItemOutputMode getItemOutputMode() {
+    void setAllowFluidInputFromOutputSide(boolean allow) {
+        sendAction(LDLib2DirectionalAutoOutputActions.createSetFluidInputFromOutputSideAction(allow));
+    }
+
+    OutputMode getItemOutputMode() {
         Direction side = selectedSide;
         if (side == null || output.getItemOutputDirection() != side) {
-            return ItemOutputMode.OFF;
+            return OutputMode.OFF;
         }
-        return output.isAutoOutputItems() ? ItemOutputMode.AUTO : ItemOutputMode.OUTPUT;
+        return output.isAutoOutputItems() ? OutputMode.AUTO : OutputMode.OUTPUT;
+    }
+
+    OutputMode getFluidOutputMode() {
+        Direction side = selectedSide;
+        if (side == null || output.getFluidOutputDirection() != side) {
+            return OutputMode.OFF;
+        }
+        return output.isAutoOutputFluids() ? OutputMode.AUTO : OutputMode.OUTPUT;
     }
 
     private UIElement createItemControls() {
@@ -179,9 +224,25 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         controls.addChild(new ItemOutputModeButton());
         controls.addChild(new GTToggleButtonElement(CONTROL_SIZE + CONTROL_GAP, 0, CONTROL_SIZE, CONTROL_SIZE,
                 GuiTextures.BUTTON_ITEM_OUTPUT,
-                output::allowsItemInputFromOutputSide, this::setAllowInputFromOutputSide)
+                output::allowsItemInputFromOutputSide, this::setAllowItemInputFromOutputSide)
                 .setShouldUseBaseBackground()
                 .setTooltipText("gtpm.gui.item_auto_output.allow_input"));
+        return controls;
+    }
+
+    private UIElement createFluidControls() {
+        int y = PAGE_HEIGHT - SCENE_MARGIN - CONTROL_SIZE;
+        if (output.supportsAutoOutputItems()) {
+            y -= CONTROL_SIZE + CONTROL_ROW_GAP;
+        }
+        UIElement controls = UITemplate.setLDLib2Bounds(new UIElement(), 6, y,
+                CONTROL_GROUP_WIDTH, CONTROL_SIZE);
+        controls.addChild(new FluidOutputModeButton());
+        controls.addChild(new GTToggleButtonElement(CONTROL_SIZE + CONTROL_GAP, 0, CONTROL_SIZE, CONTROL_SIZE,
+                GuiTextures.BUTTON_FLUID_OUTPUT,
+                output::allowsFluidInputFromOutputSide, this::setAllowFluidInputFromOutputSide)
+                .setShouldUseBaseBackground()
+                .setTooltipText("gtpm.gui.fluid_auto_output.allow_input"));
         return controls;
     }
 
@@ -209,6 +270,26 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         };
     }
 
+    private List<Component> getFluidModeTooltips() {
+        Direction side = selectedSide;
+        if (side == null) {
+            return List.copyOf(LangHandler.getMultiLang("gtpm.gui.fluid_auto_output.unselected"));
+        }
+        if (output.getFluidOutputDirection() != side) {
+            return List.copyOf(LangHandler.getMultiLang("gtpm.gui.fluid_auto_output.other_direction"));
+        }
+        return List.of(Component.translatable(output.isAutoOutputFluids() ?
+                "gtpm.gui.fluid_auto_output.enabled" : "gtpm.gui.fluid_auto_output.disabled"));
+    }
+
+    private IGuiTexture getFluidModeTexture() {
+        return switch (getFluidOutputMode()) {
+            case OFF -> FLUID_MODE_OFF;
+            case OUTPUT -> FLUID_MODE_OUTPUT;
+            case AUTO -> FLUID_MODE_AUTO;
+        };
+    }
+
     private final class ItemOutputModeButton extends GTButtonElement {
 
         private ItemOutputModeButton() {
@@ -231,10 +312,32 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         }
     }
 
+    private final class FluidOutputModeButton extends GTButtonElement {
+
+        private FluidOutputModeButton() {
+            super(0, 0, CONTROL_SIZE, CONTROL_SIZE, FLUID_MODE_OFF,
+                    LDLib2DirectionalFancyConfigurator.this::onFluidOutputModeClick);
+            noText();
+            refreshState();
+        }
+
+        @Override
+        public void screenTick() {
+            refreshState();
+            super.screenTick();
+        }
+
+        private void refreshState() {
+            setButtonTexture(getFluidModeTexture());
+            List<Component> tooltips = getFluidModeTooltips();
+            style(style -> style.tooltips(tooltips.toArray(Component[]::new)));
+        }
+    }
+
     private final class ItemAutoOutputLabel extends GTLabelElement {
 
         private ItemAutoOutputLabel() {
-            super(SCENE_MARGIN, SCENE_MARGIN, SCENE_WIDTH, 9,
+            super(SCENE_MARGIN, SCENE_MARGIN, SCENE_WIDTH / 2, 9,
                     Component.translatable("gtpm.gui.auto_output.name"));
             setTextColor(ITEM_COLOR);
             setTextShadow(false);
@@ -253,8 +356,38 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         }
     }
 
+    private final class FluidAutoOutputLabel extends GTLabelElement {
+
+        private FluidAutoOutputLabel() {
+            super(SCENE_MARGIN + SCENE_WIDTH / 2, SCENE_MARGIN, SCENE_WIDTH / 2, 9,
+                    Component.translatable("gtpm.gui.auto_output.name"));
+            setTextColor(FLUID_COLOR);
+            setTextShadow(false);
+            setTextAlignHorizontal(Horizontal.RIGHT);
+            setAllowHitTest(false);
+            refreshVisibility();
+        }
+
+        @Override
+        public void screenTick() {
+            refreshVisibility();
+            super.screenTick();
+        }
+
+        private void refreshVisibility() {
+            setVisible(output.isAutoOutputFluids() && output.getFluidOutputDirection() != null);
+        }
+    }
+
     private void onItemOutputModeClick(UIEvent event) {
-        if (configureSelectedOutputSide()) {
+        if (configureSelectedItemOutputSide()) {
+            event.stopImmediatePropagation();
+            event.hasHandler = true;
+        }
+    }
+
+    private void onFluidOutputModeClick(UIEvent event) {
+        if (configureSelectedFluidOutputSide()) {
             event.stopImmediatePropagation();
             event.hasHandler = true;
         }

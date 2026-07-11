@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2DirectionalFaceClickTracker;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.machine.SimpleTieredMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.machine.electric.ItemCollectorMachine;
@@ -41,8 +42,12 @@ public class LDLib2DirectionalFancyConfiguratorTest {
 
     private static final ResourceLocation CONFIGURE_ITEM_OUTPUT_SIDE_ACTION = GTCEu
             .id("configure_item_output_side");
+    private static final ResourceLocation CONFIGURE_FLUID_OUTPUT_SIDE_ACTION = GTCEu
+            .id("configure_fluid_output_side");
     private static final ResourceLocation SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION = GTCEu
             .id("set_item_input_from_output_side");
+    private static final ResourceLocation SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION = GTCEu
+            .id("set_fluid_input_from_output_side");
 
     @TestHolder
     @EmptyTemplate
@@ -117,7 +122,7 @@ public class LDLib2DirectionalFancyConfiguratorTest {
 
         helper.assertTrue(rootHolder != pageHolder, "test requires different root and page machine holders");
 
-        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.ItemOutputMode.OFF,
+        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
                 "item mode should be off before selecting a side");
         clickButton(outputModeButton);
         helper.assertTrue(capturedActions.isEmpty(), "unselected item mode button sent an action");
@@ -131,10 +136,10 @@ public class LDLib2DirectionalFancyConfiguratorTest {
 
         output.setItemOutputDirection(Direction.EAST);
         output.setAllowAutoOutputItems(false);
-        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.ItemOutputMode.OUTPUT,
+        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OUTPUT,
                 "selected item output side should use output mode when auto-output is disabled");
         output.setAllowAutoOutputItems(true);
-        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.ItemOutputMode.AUTO,
+        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.AUTO,
                 "selected item output side should use auto mode when auto-output is enabled");
 
         page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
@@ -150,7 +155,7 @@ public class LDLib2DirectionalFancyConfiguratorTest {
 
         page.handleSceneFaceClick(Direction.SOUTH, GLFW.GLFW_MOUSE_BUTTON_LEFT);
         helper.assertTrue(capturedActions.size() == 3, "selecting a different face must not send an action");
-        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.ItemOutputMode.OFF,
+        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
                 "a selected side different from item output should use off mode");
         clickButton(outputModeButton);
         assertAction(helper, capturedActions, 3, pageHolder, CONFIGURE_ITEM_OUTPUT_SIDE_ACTION,
@@ -159,6 +164,79 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         output.setAllowItemInputFromOutputSide(true);
         clickButton(allowInputButton);
         assertAction(helper, capturedActions, 4, pageHolder, SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION, 0);
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void combinedPageRoutesFluidRightClicksAndControls(GameTestHelper helper) {
+        SimpleTieredMachine machine = createSimpleMachine(helper);
+        machine.setFrontFacing(Direction.NORTH);
+        AutoOutputTrait output = machine.autoOutput;
+        helper.assertTrue(output.supportsAutoOutputItems() && output.supportsAutoOutputFluids(),
+                "simple machine must expose both directional output modes for this test");
+
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineUIHolder pageHolder = new MachineUIHolderContext(player, machine);
+        MachineUIHolder rootHolder = new MachineUIHolderContext(player, machine);
+        List<CapturedAction> capturedActions = new ArrayList<>();
+        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(
+                output, pageHolder, (holder, action) -> capturedActions.add(new CapturedAction(holder, action)));
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
+                rootHolder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
+        UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
+        UIElement fluidLabel = pageRoot.getChildren().get(2);
+        UIElement fluidControls = pageRoot.getChildren().get(4);
+        UIElement fluidModeButton = fluidControls.getChildren().getFirst();
+        UIElement allowFluidInputButton = fluidControls.getChildren().get(1);
+
+        helper.assertTrue(rootHolder != pageHolder, "test requires different root and page machine holders");
+        helper.assertTrue(pageRoot.getChildren().size() == 5,
+                "combined page should contain one scene, two labels, and two control rows");
+        helper.assertFalse(fluidLabel.isAllowHitTest(),
+                "fluid auto-output label must not block pointer input to the scene beneath it");
+        helper.assertTrue(page.getFluidOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
+                "fluid mode should be off before selecting a side");
+
+        clickButton(fluidModeButton);
+        helper.assertTrue(capturedActions.isEmpty(), "unselected fluid mode button sent an action");
+        clickButton(allowFluidInputButton);
+        assertAction(helper, capturedActions, 0, pageHolder, SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION, 1);
+
+        page.handleSceneFaceClick(Direction.UP, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        helper.assertTrue(capturedActions.size() == 1, "first fluid face click must only select the side");
+
+        output.setFluidOutputDirection(Direction.UP);
+        output.setAllowAutoOutputFluids(false);
+        helper.assertTrue(page.getFluidOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OUTPUT,
+                "selected fluid output side should use output mode when auto-output is disabled");
+        output.setAllowAutoOutputFluids(true);
+        helper.assertTrue(page.getFluidOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.AUTO,
+                "selected fluid output side should use auto mode when auto-output is enabled");
+
+        page.handleSceneFaceClick(Direction.UP, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        assertAction(helper, capturedActions, 1, pageHolder, CONFIGURE_ITEM_OUTPUT_SIDE_ACTION,
+                Direction.UP.get3DDataValue());
+        page.handleSceneFaceClick(Direction.UP, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        assertAction(helper, capturedActions, 2, pageHolder, CONFIGURE_FLUID_OUTPUT_SIDE_ACTION,
+                Direction.UP.get3DDataValue());
+
+        clickButton(fluidModeButton);
+        assertAction(helper, capturedActions, 3, pageHolder, CONFIGURE_FLUID_OUTPUT_SIDE_ACTION,
+                Direction.UP.get3DDataValue());
+
+        page.handleSceneFaceClick(Direction.DOWN, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        helper.assertTrue(capturedActions.size() == 4, "selecting a different fluid face must not send an action");
+        helper.assertTrue(page.getFluidOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
+                "a selected side different from fluid output should use off mode");
+        clickButton(fluidModeButton);
+        assertAction(helper, capturedActions, 4, pageHolder, CONFIGURE_FLUID_OUTPUT_SIDE_ACTION,
+                Direction.DOWN.get3DDataValue());
+
+        output.setAllowFluidInputFromOutputSide(true);
+        clickButton(allowFluidInputButton);
+        assertAction(helper, capturedActions, 5, pageHolder, SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION, 0);
         helper.succeed();
     }
 
@@ -193,6 +271,11 @@ public class LDLib2DirectionalFancyConfiguratorTest {
     private static ItemCollectorMachine createItemCollector(GameTestHelper helper) {
         return (ItemCollectorMachine) TestUtils.setMachine(helper, new BlockPos(1, 1, 1),
                 GTMachines.ITEM_COLLECTOR[GTValues.LV]);
+    }
+
+    private static SimpleTieredMachine createSimpleMachine(GameTestHelper helper) {
+        return (SimpleTieredMachine) TestUtils.setMachine(helper, new BlockPos(1, 1, 1),
+                GTMachines.ARC_FURNACE[GTValues.LV]);
     }
 
     private static AutoOutputTrait requireAutoOutputTrait(ItemCollectorMachine machine) {

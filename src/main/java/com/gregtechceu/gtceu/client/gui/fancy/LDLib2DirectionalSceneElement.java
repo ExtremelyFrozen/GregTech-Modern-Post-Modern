@@ -36,15 +36,17 @@ public final class LDLib2DirectionalSceneElement {
 
     private static final int ITEM_AUTO_OUTPUT_COLOR = 0xffff6e0f;
     private static final int ITEM_OUTPUT_COLOR = 0x8fff6e0f;
+    private static final int FLUID_AUTO_OUTPUT_COLOR = 0xff00b4ff;
+    private static final int FLUID_OUTPUT_COLOR = 0x8f00b4ff;
 
     private LDLib2DirectionalSceneElement() {}
 
     /**
-     * Attaches an item-output scene to a common-side placeholder element.
+     * Attaches a directional output scene to a common-side placeholder element.
      */
-    public static void attachItemScene(UIElement sceneContainer, MetaMachine machine,
-                                       DirectionalAutoOutputMachine output, int width, int height,
-                                       BiPredicate<Direction, Integer> faceClickHandler) {
+    public static void attachScene(UIElement sceneContainer, MetaMachine machine,
+                                   DirectionalAutoOutputMachine output, int width, int height,
+                                   BiPredicate<Direction, Integer> faceClickHandler) {
         BlockPos machinePos = machine.getBlockPos();
         DirectionalScene scene = new DirectionalScene(machinePos, faceClickHandler);
         scene.createScene(machine.getLevel())
@@ -62,7 +64,7 @@ public final class LDLib2DirectionalSceneElement {
         }
         dummyWorld.setBlockFilter(pos -> pos.equals(machinePos) || adjacentPositions.contains(pos));
         renderer.addRenderedBlocks(adjacentPositions, new AdditiveRenderHook());
-        scene.setAfterWorldRender(ignored -> renderItemOutput(scene, machinePos, output));
+        scene.setAfterWorldRender(ignored -> renderOutputs(scene, machinePos, output));
 
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
@@ -77,6 +79,11 @@ public final class LDLib2DirectionalSceneElement {
         return List.of(pos.above(), pos.below(), pos.north(), pos.south(), pos.east(), pos.west());
     }
 
+    private static void renderOutputs(Scene scene, BlockPos machinePos, DirectionalAutoOutputMachine output) {
+        renderItemOutput(scene, machinePos, output);
+        renderFluidOutput(scene, machinePos, output);
+    }
+
     private static void renderItemOutput(Scene scene, BlockPos machinePos, DirectionalAutoOutputMachine output) {
         Direction outputDirection = output.getItemOutputDirection();
         if (outputDirection == null) {
@@ -84,6 +91,15 @@ public final class LDLib2DirectionalSceneElement {
         }
         int color = output.isAutoOutputItems() ? ITEM_AUTO_OUTPUT_COLOR : ITEM_OUTPUT_COLOR;
         scene.drawFacingBorder(new PoseStack(), new BlockPosFace(machinePos, outputDirection), color, 1);
+    }
+
+    private static void renderFluidOutput(Scene scene, BlockPos machinePos, DirectionalAutoOutputMachine output) {
+        Direction outputDirection = output.getFluidOutputDirection();
+        if (outputDirection == null) {
+            return;
+        }
+        int color = output.isAutoOutputFluids() ? FLUID_AUTO_OUTPUT_COLOR : FLUID_OUTPUT_COLOR;
+        scene.drawFacingBorder(new PoseStack(), new BlockPosFace(machinePos, outputDirection), color, 2);
     }
 
     private static final class AdditiveRenderHook implements ISceneBlockRenderHook {
