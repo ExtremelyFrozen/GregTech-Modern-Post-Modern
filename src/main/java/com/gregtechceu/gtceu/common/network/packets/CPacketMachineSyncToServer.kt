@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.common.network.packets
 
 import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.machine.MetaMachine
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData
 import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncBlockEntity
 import com.gregtechceu.gtceu.common.machine.owner.MachineOwner
 
@@ -19,18 +18,47 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
+import io.netty.handler.codec.DecoderException
+import io.netty.handler.codec.EncoderException
+
 open class CPacketMachineSyncToServer(private val pos: BlockPos, private val blockEntityTypeId: ResourceLocation, private val data: DataComponentMap) : CustomPacketPayload {
 
-	constructor(buffer: RegistryFriendlyByteBuf) : this(
-		buffer.readBlockPos(),
-		buffer.readResourceLocation(),
-		SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buffer),
-	)
+	constructor(buffer: RegistryFriendlyByteBuf) : this(decode(buffer))
+
+	private constructor(decoded: DecodedPacket) : this(decoded.pos, decoded.blockEntityTypeId, decoded.data)
 
 	open fun encode(buffer: RegistryFriendlyByteBuf) {
-		buffer.writeBlockPos(pos)
-		buffer.writeResourceLocation(blockEntityTypeId)
-		SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buffer, data)
+		val temporary = RegistryFriendlyByteBuf(
+			buffer.alloc().buffer(INITIAL_BUFFER_CAPACITY, MachineSyncPayloadCodec.MAX_BODY_LENGTH),
+			buffer.registryAccess(),
+			buffer.getConnectionType(),
+		)
+		try {
+			try {
+				temporary.writeBlockPos(pos)
+				temporary.writeResourceLocation(blockEntityTypeId)
+				MachineSyncPayloadCodec.encode(temporary, data)
+			} catch (exception: EncoderException) {
+				throw exception
+			} catch (exception: IndexOutOfBoundsException) {
+				throw EncoderException(
+					"Machine sync payload exceeds the maximum body length of ${MachineSyncPayloadCodec.MAX_BODY_LENGTH} bytes",
+					exception,
+				)
+			} catch (exception: RuntimeException) {
+				throw EncoderException("Machine sync payload could not be encoded", exception)
+			}
+
+			val writerIndex = buffer.writerIndex()
+			try {
+				buffer.writeBytes(temporary, temporary.readerIndex(), temporary.readableBytes())
+			} catch (exception: RuntimeException) {
+				buffer.writerIndex(writerIndex)
+				throw EncoderException("Machine sync payload could not be copied to the destination buffer", exception)
+			}
+		} finally {
+			temporary.release()
+		}
 	}
 
 	open fun execute(context: IPayloadContext) {
@@ -104,6 +132,8 @@ open class CPacketMachineSyncToServer(private val pos: BlockPos, private val blo
 	override fun type(): Type<CPacketMachineSyncToServer> = TYPE
 
 	companion object {
+		private const val INITIAL_BUFFER_CAPACITY = 256
+
 		@JvmField
 		val ID: ResourceLocation = GTCEu.id("machine_sync_to_server")
 
@@ -115,5 +145,31 @@ open class CPacketMachineSyncToServer(private val pos: BlockPos, private val blo
 			StreamCodec.ofMember(CPacketMachineSyncToServer::encode, ::CPacketMachineSyncToServer)
 
 		private const val MAX_INTERACTION_DISTANCE = 8.0
+
+		private fun decode(buffer: RegistryFriendlyByteBuf): DecodedPacket {
+			val bodyLength = buffer.readableBytes()
+			if (bodyLength > MachineSyncPayloadCodec.MAX_BODY_LENGTH) {
+				throw DecoderException(
+					"Machine sync payload body length $bodyLength exceeds the maximum of ${MachineSyncPayloadCodec.MAX_BODY_LENGTH} bytes",
+				)
+			}
+			try {
+				val decoded = DecodedPacket(
+					buffer.readBlockPos(),
+					buffer.readResourceLocation(),
+					MachineSyncPayloadCodec.decode(buffer),
+				)
+				if (buffer.isReadable) {
+					throw DecoderException("Machine sync payload contains ${buffer.readableBytes()} trailing bytes")
+				}
+				return decoded
+			} catch (exception: DecoderException) {
+				throw exception
+			} catch (exception: RuntimeException) {
+				throw DecoderException("Machine sync payload is malformed", exception)
+			}
+		}
 	}
+
+	private class DecodedPacket(val pos: BlockPos, val blockEntityTypeId: ResourceLocation, val data: DataComponentMap)
 }
