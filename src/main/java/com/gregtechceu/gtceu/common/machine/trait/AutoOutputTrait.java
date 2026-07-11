@@ -4,7 +4,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.AutoOutputMachine;
+import com.gregtechceu.gtceu.api.machine.feature.DirectionalAutoOutputMachine;
 import com.gregtechceu.gtceu.api.machine.trait.*;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IFrontFacingTrait;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IInteractionTrait;
@@ -38,7 +38,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class AutoOutputTrait extends MachineTrait implements AutoOutputMachine, IRenderingTrait, IInteractionTrait,
+public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutputMachine, IRenderingTrait,
+                             IInteractionTrait,
                              IFrontFacingTrait {
 
     public static final MachineTraitType<AutoOutputTrait> TYPE = new MachineTraitType<>(AutoOutputTrait.class);
@@ -164,30 +165,37 @@ public class AutoOutputTrait extends MachineTrait implements AutoOutputMachine, 
         updateFluidOutputSubscription();
     }
 
+    @Override
     public boolean supportsAutoOutputItems() {
         return !itemHandlers.isEmpty();
     }
 
+    @Override
     public boolean supportsAutoOutputFluids() {
         return !fluidHandlers.isEmpty();
     }
 
+    @Override
     public @Nullable Direction getItemOutputDirection() {
         return supportsAutoOutputItems() ? itemOutputDirection : null;
     }
 
+    @Override
     public @Nullable Direction getFluidOutputDirection() {
         return supportsAutoOutputFluids() ? fluidOutputDirection : null;
     }
 
+    @Override
     public boolean allowsItemInputFromOutputSide() {
         return allowItemInputFromOutputSide;
     }
 
+    @Override
     public boolean allowsFluidInputFromOutputSide() {
         return allowFluidInputFromOutputSide;
     }
 
+    @Override
     public void setAllowAutoOutputItems(boolean allow) {
         if (supportsAutoOutputItems()) {
             this.autoOutputItems = allow;
@@ -196,6 +204,7 @@ public class AutoOutputTrait extends MachineTrait implements AutoOutputMachine, 
         }
     }
 
+    @Override
     public void setAllowAutoOutputFluids(boolean allow) {
         if (supportsAutoOutputFluids()) {
             this.autoOutputFluids = allow;
@@ -204,22 +213,30 @@ public class AutoOutputTrait extends MachineTrait implements AutoOutputMachine, 
         }
     }
 
+    @Override
+    public boolean canSetFluidOutputDirection(@Nullable Direction outputFacing) {
+        return supportsAutoOutputFluids() && fluidOutputDirectionValidator.test(outputFacing) &&
+                (!getMachine().hasFrontFacing() || getMachine().getFrontFacing() != outputFacing);
+    }
+
+    @Override
     public void setFluidOutputDirection(@Nullable Direction outputFacing) {
-        if (supportsAutoOutputFluids()) {
-            if (!fluidOutputDirectionValidator.test(outputFacing) ||
-                    (getMachine().hasFrontFacing() && getMachine().getFrontFacing() == outputFacing))
-                return;
+        if (canSetFluidOutputDirection(outputFacing)) {
             this.fluidOutputDirection = outputFacing;
             syncDataHolder.markClientSyncFieldDirty("outputFacingFluids");
             updateFluidOutputSubscription();
         }
     }
 
+    @Override
+    public boolean canSetItemOutputDirection(@Nullable Direction outputFacing) {
+        return supportsAutoOutputItems() && itemOutputDirectionValidator.test(outputFacing) &&
+                (!getMachine().hasFrontFacing() || getMachine().getFrontFacing() != outputFacing);
+    }
+
+    @Override
     public void setItemOutputDirection(@Nullable Direction outputFacing) {
-        if (supportsAutoOutputItems()) {
-            if (!itemOutputDirectionValidator.test(outputFacing) ||
-                    (getMachine().hasFrontFacing() && getMachine().getFrontFacing() == outputFacing))
-                return;
+        if (canSetItemOutputDirection(outputFacing)) {
             this.itemOutputDirection = outputFacing;
             syncDataHolder.markClientSyncFieldDirty("outputFacingItems");
             updateItemOutputSubscription();
