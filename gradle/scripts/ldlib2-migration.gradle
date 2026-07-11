@@ -73,6 +73,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/item/IGTTool.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/component/IItemUIFactory.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/tool/behavior/IToolUIBehavior.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2FancyActionMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2FancyUIMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2PreviewFancyUIMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2RecipeFancyUIMachine.java',
