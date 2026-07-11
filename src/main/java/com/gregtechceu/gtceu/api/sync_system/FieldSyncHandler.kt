@@ -11,6 +11,8 @@ import com.mojang.serialization.JsonOps
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 
+import java.math.BigDecimal
+
 @ApiStatus.Internal
 object FieldSyncHandler {
 	@Suppress("UNCHECKED_CAST")
@@ -78,6 +80,7 @@ object FieldSyncHandler {
 			)
 
 		return try {
+			validateDefaultScalarIntegralCandidate(field, codec, savedValue)
 			(codec as Codec<Any>)
 				.parse(registries.createSerializationContext(JsonOps.INSTANCE), savedValue)
 				.getOrThrow()
@@ -93,6 +96,27 @@ object FieldSyncHandler {
 				"Sync: Invalid server candidate for field ${field.fieldName} of type ${field.type}",
 				e,
 			)
+		}
+	}
+
+	private fun validateDefaultScalarIntegralCandidate(field: FieldSyncData, codec: Codec<*>, savedValue: JsonElement) {
+		if (
+			codec !== Codec.BYTE && codec !== Codec.SHORT &&
+			codec !== Codec.INT && codec !== Codec.LONG
+		) {
+			return
+		}
+
+		if (!savedValue.isJsonPrimitive || !savedValue.asJsonPrimitive.isNumber) {
+			throw IllegalArgumentException("Sync: Integral server candidate for field ${field.fieldName} must be a JSON number")
+		}
+
+		val candidate: BigDecimal = savedValue.asJsonPrimitive.asBigDecimal
+		when {
+			codec === Codec.BYTE -> candidate.byteValueExact()
+			codec === Codec.SHORT -> candidate.shortValueExact()
+			codec === Codec.INT -> candidate.intValueExact()
+			codec === Codec.LONG -> candidate.longValueExact()
 		}
 	}
 

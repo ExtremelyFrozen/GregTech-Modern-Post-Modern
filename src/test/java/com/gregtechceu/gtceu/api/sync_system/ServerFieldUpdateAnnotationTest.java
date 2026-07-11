@@ -24,6 +24,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
+
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
 public class ServerFieldUpdateAnnotationTest {
@@ -121,6 +123,97 @@ public class ServerFieldUpdateAnnotationTest {
         helper.assertTrue(target.first == 1, "ordinary field committed before contextual-only rejection");
         helper.assertTrue(target.second.equals(new ContextualOnlyValue("old")),
                 "contextual-only decoder mutated the server field");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void defaultScalarIntegralCandidatesAcceptPrimitiveAndBoxedBoundaries(GameTestHelper helper) {
+        DefaultScalarIntegralTarget target = new DefaultScalarIntegralTarget();
+        SyncFieldData fields = SyncFieldData.builder()
+                .put(SyncFieldData.key("primitiveByte"), new JsonPrimitive(Byte.MIN_VALUE))
+                .put(SyncFieldData.key("boxedByte"), new JsonPrimitive(Byte.MAX_VALUE))
+                .put(SyncFieldData.key("primitiveShort"), new JsonPrimitive(Short.MIN_VALUE))
+                .put(SyncFieldData.key("boxedShort"), new JsonPrimitive(Short.MAX_VALUE))
+                .put(SyncFieldData.key("primitiveInt"), new JsonPrimitive(Integer.MIN_VALUE))
+                .put(SyncFieldData.key("boxedInt"), new JsonPrimitive(Integer.MAX_VALUE))
+                .put(SyncFieldData.key("primitiveLong"), new JsonPrimitive(Long.MIN_VALUE))
+                .put(SyncFieldData.key("boxedLong"), new JsonPrimitive(Long.MAX_VALUE))
+                .build();
+
+        ServerFieldUpdateResult result = target.getSyncDataHolder().tryApplyServerNetworkUpdate(
+                helper.getLevel().registryAccess(), payload(fields));
+
+        helper.assertTrue(result.getAccepted() && result.getChanged(),
+                "valid default scalar integral boundary batch was rejected");
+        helper.assertTrue(target.hasBoundaryValues(),
+                "valid default scalar integral boundary batch did not commit exact primitive and boxed values");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void defaultScalarIntegralCandidatesRejectLossyPrimitiveAndBoxedValues(GameTestHelper helper) {
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "primitiveByte",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(128),
+                new JsonPrimitive(-129),
+                new JsonPrimitive("1"));
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "boxedByte",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(128),
+                new JsonPrimitive(-129),
+                new JsonPrimitive("1"));
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "primitiveShort",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(32_768),
+                new JsonPrimitive(-32_769),
+                new JsonPrimitive("1"));
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "boxedShort",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(32_768),
+                new JsonPrimitive(-32_769),
+                new JsonPrimitive("1"));
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "primitiveInt",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(2_147_483_648L),
+                new JsonPrimitive(-2_147_483_649L),
+                new JsonPrimitive("1"));
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "boxedInt",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(2_147_483_648L),
+                new JsonPrimitive(-2_147_483_649L),
+                new JsonPrimitive("1"));
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "primitiveLong",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(new BigDecimal("9223372036854775808")),
+                new JsonPrimitive(new BigDecimal("-9223372036854775809")),
+                new JsonPrimitive("1"));
+        assertDefaultScalarIntegralCandidatesRejected(helper, registries, "boxedLong",
+                new JsonPrimitive(1.5),
+                new JsonPrimitive(new BigDecimal("9223372036854775808")),
+                new JsonPrimitive(new BigDecimal("-9223372036854775809")),
+                new JsonPrimitive("1"));
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void customIntegralCodecBypassesDefaultScalarIntegralValidation(GameTestHelper helper) {
+        ClassSyncData.getClassData(CustomIntegralCodecTarget.class)
+                .setCustomCodecForField("value", CustomIntegralCodecTarget.NAMED_INTEGER_CODEC);
+        CustomIntegralCodecTarget target = new CustomIntegralCodecTarget(1);
+
+        ServerFieldUpdateResult result = target.getSyncDataHolder().tryApplyServerNetworkUpdate(
+                helper.getLevel().registryAccess(), payload("value", new JsonPrimitive("forty-two")));
+
+        helper.assertTrue(result.getAccepted() && result.getChanged(),
+                "custom integral codec wire representation was rejected by default integer validation");
+        helper.assertTrue(target.value == 42, "custom integral codec did not commit its decoded value");
         helper.succeed();
     }
 
@@ -229,6 +322,21 @@ public class ServerFieldUpdateAnnotationTest {
         return DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), fields)
                 .build();
+    }
+
+    private static void assertDefaultScalarIntegralCandidatesRejected(GameTestHelper helper,
+                                                                      RegistryAccess registries, String fieldName,
+                                                                      JsonElement... candidates) {
+        for (JsonElement candidate : candidates) {
+            DefaultScalarIntegralTarget target = new DefaultScalarIntegralTarget();
+            ServerFieldUpdateResult result = target.getSyncDataHolder().tryApplyServerNetworkUpdate(
+                    registries, payload(fieldName, candidate));
+
+            helper.assertTrue(!result.getAccepted(),
+                    fieldName + " accepted lossy default scalar integral candidate " + candidate);
+            helper.assertTrue(target.hasInitialValues(),
+                    fieldName + " changed the holder after rejecting " + candidate);
+        }
     }
 
     private static void assertMetadataRejected(GameTestHelper helper, String name, Class<?> targetClass) {
@@ -371,6 +479,60 @@ public class ServerFieldUpdateAnnotationTest {
         private @Nullable ContextualOnlyValue value;
 
         private NullableContextualOnlyTarget(ContextualOnlyValue value) {
+            this.value = value;
+            initializeSyncDataHolder();
+        }
+    }
+
+    private static final class DefaultScalarIntegralTarget extends TestSyncTarget {
+
+        @SyncToServer
+        private byte primitiveByte = 1;
+        @SyncToServer
+        private Byte boxedByte = 2;
+        @SyncToServer
+        private short primitiveShort = 3;
+        @SyncToServer
+        private Short boxedShort = 4;
+        @SyncToServer
+        private int primitiveInt = 5;
+        @SyncToServer
+        private Integer boxedInt = 6;
+        @SyncToServer
+        private long primitiveLong = 7;
+        @SyncToServer
+        private Long boxedLong = 8L;
+
+        private DefaultScalarIntegralTarget() {
+            initializeSyncDataHolder();
+        }
+
+        private boolean hasInitialValues() {
+            return primitiveByte == 1 && boxedByte == 2 &&
+                    primitiveShort == 3 && boxedShort == 4 &&
+                    primitiveInt == 5 && boxedInt == 6 &&
+                    primitiveLong == 7 && boxedLong == 8;
+        }
+
+        private boolean hasBoundaryValues() {
+            return primitiveByte == Byte.MIN_VALUE && boxedByte == Byte.MAX_VALUE &&
+                    primitiveShort == Short.MIN_VALUE && boxedShort == Short.MAX_VALUE &&
+                    primitiveInt == Integer.MIN_VALUE && boxedInt == Integer.MAX_VALUE &&
+                    primitiveLong == Long.MIN_VALUE && boxedLong == Long.MAX_VALUE;
+        }
+    }
+
+    private static final class CustomIntegralCodecTarget extends TestSyncTarget {
+
+        private static final Codec<Integer> NAMED_INTEGER_CODEC = Codec.STRING.comapFlatMap(
+                value -> "forty-two".equals(value) ?
+                        DataResult.success(42) : DataResult.error(() -> "unsupported named integer"),
+                value -> "forty-two");
+
+        @SyncToServer
+        private int value;
+
+        private CustomIntegralCodecTarget(int value) {
             this.value = value;
             initializeSyncDataHolder();
         }
