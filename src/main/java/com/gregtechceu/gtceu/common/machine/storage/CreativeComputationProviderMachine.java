@@ -10,34 +10,25 @@ import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
-import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.trait.DirectComputationPortTrait;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,26 +39,14 @@ public class CreativeComputationProviderMachine extends MetaMachine
                                                 implements LDLib2MachineUIProvider, IOpticalComputationProvider,
                                                 ComputationProducer {
 
-    private static final ResourceLocation SET_CREATIVE_COMPUTATION_MAX_CWUT_ACTION = GTCEu
-            .id("set_creative_computation_max_cwut");
-    private static final ResourceLocation SET_CREATIVE_COMPUTATION_ACTIVE_ACTION = GTCEu
-            .id("set_creative_computation_active");
-    private static final ResourceLocation MAX_CWUT_FIELD = SyncFieldData.key("maxCWUt");
-    private static final ResourceLocation ACTIVE_FIELD = SyncFieldData.key("active");
-
-    static {
-        SyncActionDispatchers.server().register(new CreativeComputationMaxCWUtActionHandler());
-        SyncActionDispatchers.server().register(new CreativeComputationActiveActionHandler());
-    }
-
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int maxCWUt;
     @SyncToClient
     private int lastRequestedCWUt;
     private int requestedCWUPerSec;
     @SaveField
-    @SyncToClient
+    @SyncBoth
     @Getter
     private boolean active;
     @Nullable
@@ -136,8 +115,15 @@ public class CreativeComputationProviderMachine extends MetaMachine
     }
 
     public void setActive(boolean active) {
+        if (this.active == active) {
+            return;
+        }
         this.active = active;
-        syncDataHolder.markClientSyncFieldDirty("active");
+        updateComputationSubscription();
+    }
+
+    @ServerFieldChangeListener(fieldName = "active")
+    private void onActiveChanged(boolean oldActive, boolean newActive) {
         updateComputationSubscription();
     }
 
@@ -152,11 +138,11 @@ public class CreativeComputationProviderMachine extends MetaMachine
         UITemplate.setLDLib2Bounds(root, 0, 0, 140, 95);
         root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
         root.addChild(createLDLib2Label(7, 7, 126, 10, Component.literal("CWUt")));
-        root.addChild(createLDLib2MaxCWUtField(player, holder));
+        root.addChild(createLDLib2MaxCWUtField());
         root.addChild(createLDLib2Label(7, 42, 126, 10,
                 Component.translatable("gtpm.creative.computation.average")));
         root.addChild(createLDLib2LastRequestedCWUtLabel());
-        root.addChild(createLDLib2ActivityButton(player, holder));
+        root.addChild(createLDLib2ActivityButton());
         return UI.of(root);
     }
 
@@ -170,7 +156,7 @@ public class CreativeComputationProviderMachine extends MetaMachine
         return label;
     }
 
-    private GTTextFieldElement createLDLib2MaxCWUtField(Player player, MachineUIHolder holder) {
+    private GTTextFieldElement createLDLib2MaxCWUtField() {
         GTTextFieldElement field = new GTTextFieldElement(9, 20, 122, 16) {
 
             @Override
@@ -186,7 +172,7 @@ public class CreativeComputationProviderMachine extends MetaMachine
         field.textFieldStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false));
-        field.setTextResponder(value -> setLDLib2MaxCWUt(player, holder, value));
+        field.setTextResponder(this::setLDLib2MaxCWUt);
         return field;
     }
 
@@ -208,9 +194,9 @@ public class CreativeComputationProviderMachine extends MetaMachine
         return label;
     }
 
-    private GTButtonElement createLDLib2ActivityButton(Player player, MachineUIHolder holder) {
+    private GTButtonElement createLDLib2ActivityButton() {
         return new GTButtonElement(9, 66, 122, 20, createLDLib2ActivityButtonTexture(),
-                event -> setLDLib2Active(player, holder, !isActive())) {
+                event -> setLDLib2Active(!isActive())) {
 
             @Override
             public void screenTick() {
@@ -225,7 +211,7 @@ public class CreativeComputationProviderMachine extends MetaMachine
                 GuiTextures.text(active ? "gtpm.creative.activity.on" : "gtpm.creative.activity.off"));
     }
 
-    private void setLDLib2MaxCWUt(Player player, MachineUIHolder holder, String value) {
+    private void setLDLib2MaxCWUt(String value) {
         if (value.isEmpty()) {
             return;
         }
@@ -237,152 +223,28 @@ public class CreativeComputationProviderMachine extends MetaMachine
             throw e;
         }
         setMaxCWUt(parsedValue);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeComputationMaxCWUtAction(parsedValue));
-        }
+        sendServerSyncChanges();
     }
 
-    private void setLDLib2Active(Player player, MachineUIHolder holder, boolean active) {
+    private void setLDLib2Active(boolean active) {
         setActive(active);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeComputationActiveAction(active));
-        }
+        sendServerSyncChanges();
     }
 
     private void setMaxCWUt(int maxCWUt) {
-        this.maxCWUt = Math.max(0, maxCWUt);
-        syncDataHolder.markClientSyncFieldDirty("maxCWUt");
+        this.maxCWUt = normalizeMaxCWUt(maxCWUt);
+    }
+
+    @ServerFieldNormalizer(fieldName = "maxCWUt")
+    private int normalizeMaxCWUt(int maxCWUt) {
+        if (maxCWUt < 0) {
+            throw new IllegalArgumentException("Creative computation max CWUt cannot be negative.");
+        }
+        return maxCWUt;
     }
 
     private void setLastRequestedCWUt(int lastRequestedCWUt) {
         this.lastRequestedCWUt = lastRequestedCWUt;
         syncDataHolder.markClientSyncFieldDirty("lastRequestedCWUt");
-    }
-
-    private static SyncActionData createSetCreativeComputationMaxCWUtAction(int maxCWUt) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(MAX_CWUT_FIELD, new JsonPrimitive(maxCWUt))
-                        .build())
-                .build();
-        return new SyncActionData(SET_CREATIVE_COMPUTATION_MAX_CWUT_ACTION, maxCWUt, payload);
-    }
-
-    private static SyncActionData createSetCreativeComputationActiveAction(boolean active) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(ACTIVE_FIELD, new JsonPrimitive(active))
-                        .build())
-                .build();
-        return new SyncActionData(SET_CREATIVE_COMPUTATION_ACTIVE_ACTION, active ? 1 : 0, payload);
-    }
-
-    private static final class CreativeComputationMaxCWUtActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_COMPUTATION_MAX_CWUT_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof CreativeComputationProviderMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readNonNegativeInteger(fields, MAX_CWUT_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof CreativeComputationProviderMachine machine)) {
-                throw new IllegalStateException(
-                        "Creative computation max CWUt action received a non-computation-provider machine.");
-            }
-            machine.setMaxCWUt(requireNonNegativeInteger(context.payload(), MAX_CWUT_FIELD));
-        }
-    }
-
-    private static final class CreativeComputationActiveActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_COMPUTATION_ACTIVE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof CreativeComputationProviderMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, ACTIVE_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof CreativeComputationProviderMachine machine)) {
-                throw new IllegalStateException(
-                        "Creative computation active action received a non-computation-provider machine.");
-            }
-            machine.setActive(requireBoolean(context.payload(), ACTIVE_FIELD));
-        }
-    }
-
-    private static int requireNonNegativeInteger(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Creative computation action payload is missing field data.");
-        }
-        Integer value = readNonNegativeInteger(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Creative computation action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Creative computation action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Creative computation action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readNonNegativeInteger(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            int value = primitive.getAsInt();
-            if (value >= 0) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 }
