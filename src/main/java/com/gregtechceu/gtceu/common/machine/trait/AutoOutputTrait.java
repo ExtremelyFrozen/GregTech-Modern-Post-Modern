@@ -63,11 +63,11 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     @SyncToClient
     @RerenderOnChanged
     protected boolean autoOutputFluids = false;
-    @Setter
     @SaveField
+    @SyncToClient
     protected boolean allowItemInputFromOutputSide = false;
-    @Setter
     @SaveField
+    @SyncToClient
     protected boolean allowFluidInputFromOutputSide = false;
 
     @Setter
@@ -193,6 +193,18 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     @Override
     public boolean allowsFluidInputFromOutputSide() {
         return allowFluidInputFromOutputSide;
+    }
+
+    @Override
+    public void setAllowItemInputFromOutputSide(boolean allow) {
+        this.allowItemInputFromOutputSide = allow;
+        syncDataHolder.markClientSyncFieldDirty("allowItemInputFromOutputSide");
+    }
+
+    @Override
+    public void setAllowFluidInputFromOutputSide(boolean allow) {
+        this.allowFluidInputFromOutputSide = allow;
+        syncDataHolder.markClientSyncFieldDirty("allowFluidInputFromOutputSide");
     }
 
     @Override

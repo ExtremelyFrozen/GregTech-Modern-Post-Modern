@@ -40,7 +40,12 @@ public class LDLib2DirectionalAutoOutputActionsTest {
             .id("configure_item_output_side");
     private static final ResourceLocation CONFIGURE_FLUID_OUTPUT_SIDE_ACTION = GTCEu
             .id("configure_fluid_output_side");
+    private static final ResourceLocation SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION = GTCEu
+            .id("set_item_input_from_output_side");
+    private static final ResourceLocation SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION = GTCEu
+            .id("set_fluid_input_from_output_side");
     private static final ResourceLocation OUTPUT_DIRECTION_FIELD = SyncFieldData.key("outputDirection");
+    private static final ResourceLocation ALLOW_INPUT_FIELD = SyncFieldData.key("allowInput");
     private static final ResourceLocation OTHER_FIELD = SyncFieldData.key("otherField");
 
     @TestHolder
@@ -208,6 +213,124 @@ public class LDLib2DirectionalAutoOutputActionsTest {
                 "custom validator rejection changed item output direction");
         helper.assertTrue(trait.isAutoOutputItems(),
                 "custom validator rejection partially changed auto-output state");
+
+        boolean allowInput = dispatch(helper, machine,
+                LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(true));
+        helper.assertTrue(allowInput, "MetaMachine item output-side input action was rejected");
+        helper.assertTrue(trait.allowsItemInputFromOutputSide(),
+                "MetaMachine item output-side input policy was not updated");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalAutoOutputActions")
+    public static void dispatcherUpdatesOutputSideInputPolicies(GameTestHelper helper) {
+        TestFancyDirectionalHolder holder = TestFancyDirectionalHolder.supportingBoth();
+        registerActions();
+
+        boolean itemResult = dispatch(helper, holder,
+                LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(true));
+        helper.assertTrue(itemResult, "valid item output-side input action was rejected");
+        helper.assertTrue(holder.allowsItemInputFromOutputSide(), "item output-side input policy was not updated");
+        helper.assertTrue(!holder.allowsFluidInputFromOutputSide(), "item input policy action changed fluid state");
+
+        boolean fluidResult = dispatch(helper, holder,
+                LDLib2DirectionalAutoOutputActions.createSetFluidInputFromOutputSideAction(true));
+
+        helper.assertTrue(fluidResult, "valid fluid output-side input action was rejected");
+        helper.assertTrue(holder.allowsFluidInputFromOutputSide(), "fluid output-side input policy was not updated");
+        helper.assertTrue(holder.allowsItemInputFromOutputSide(), "fluid input policy action changed item state");
+
+        boolean itemDisabled = dispatch(helper, holder,
+                LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(false));
+        boolean fluidDisabled = dispatch(helper, holder,
+                LDLib2DirectionalAutoOutputActions.createSetFluidInputFromOutputSideAction(false));
+
+        helper.assertTrue(itemDisabled, "item output-side input disable action was rejected");
+        helper.assertTrue(fluidDisabled, "fluid output-side input disable action was rejected");
+        helper.assertTrue(!holder.allowsItemInputFromOutputSide(), "item output-side input policy was not disabled");
+        helper.assertTrue(!holder.allowsFluidInputFromOutputSide(),
+                "fluid output-side input policy was not disabled");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalAutoOutputActions")
+    public static void dispatcherRejectsInvalidOutputSideInputPayloads(GameTestHelper helper) {
+        TestFancyDirectionalHolder holder = TestFancyDirectionalHolder.supportingBoth();
+        registerActions();
+
+        boolean itemWrongType = dispatch(helper, holder, action(SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION,
+                payload(ALLOW_INPUT_FIELD, new JsonPrimitive("true"))));
+        boolean itemMissing = dispatch(helper, holder, action(SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION,
+                payload(OTHER_FIELD, new JsonPrimitive(true))));
+        boolean fluidWrongType = dispatch(helper, holder, action(SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION,
+                payload(ALLOW_INPUT_FIELD, new JsonPrimitive(1))));
+        boolean fluidMissing = dispatch(helper, holder, action(SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION,
+                payload(OTHER_FIELD, new JsonPrimitive(true))));
+
+        helper.assertTrue(!itemWrongType, "string item output-side input payload was accepted");
+        helper.assertTrue(!itemMissing, "item output-side input payload without state was accepted");
+        helper.assertTrue(!fluidWrongType, "numeric fluid output-side input payload was accepted");
+        helper.assertTrue(!fluidMissing, "fluid output-side input payload without state was accepted");
+        helper.assertTrue(!holder.allowsItemInputFromOutputSide(), "invalid payload changed item input policy");
+        helper.assertTrue(!holder.allowsFluidInputFromOutputSide(), "invalid payload changed fluid input policy");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalAutoOutputActions")
+    public static void dispatcherRejectsUnauthorizedOutputSideInputHolders(GameTestHelper helper) {
+        TestFancyDirectionalHolder unsupported = new TestFancyDirectionalHolder(false, false);
+        TestDirectionalHolder unmarked = new TestDirectionalHolder(true, true);
+        registerActions();
+
+        boolean unsupportedItem = dispatch(helper, unsupported,
+                LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(true));
+        boolean unsupportedFluid = dispatch(helper, unsupported,
+                LDLib2DirectionalAutoOutputActions.createSetFluidInputFromOutputSideAction(true));
+        boolean unmarkedItem = dispatch(helper, unmarked,
+                LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(true));
+        boolean unmarkedFluid = dispatch(helper, unmarked,
+                LDLib2DirectionalAutoOutputActions.createSetFluidInputFromOutputSideAction(true));
+
+        helper.assertTrue(!unsupportedItem, "unsupported item input policy holder was accepted");
+        helper.assertTrue(!unsupportedFluid, "unsupported fluid input policy holder was accepted");
+        helper.assertTrue(!unmarkedItem, "unmarked item input policy holder was accepted");
+        helper.assertTrue(!unmarkedFluid, "unmarked fluid input policy holder was accepted");
+        helper.assertTrue(!unsupported.allowsItemInputFromOutputSide(),
+                "rejected unsupported holder changed item input policy");
+        helper.assertTrue(!unsupported.allowsFluidInputFromOutputSide(),
+                "rejected unsupported holder changed fluid input policy");
+        helper.assertTrue(!unmarked.allowsItemInputFromOutputSide(),
+                "rejected unmarked holder changed item input policy");
+        helper.assertTrue(!unmarked.allowsFluidInputFromOutputSide(),
+                "rejected unmarked holder changed fluid input policy");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalAutoOutputActions")
+    public static void dispatcherRejectsSpectatorOutputSideInputPolicy(GameTestHelper helper) {
+        TestFancyDirectionalHolder holder = TestFancyDirectionalHolder.supportingBoth();
+        registerActions();
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        GameType originalGameType = player.gameMode.getGameModeForPlayer();
+        try {
+            player.setGameMode(GameType.SPECTATOR);
+            boolean result = dispatch(player, holder,
+                    LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(true));
+
+            helper.assertTrue(!result, "spectator output-side input action was accepted");
+            helper.assertTrue(!holder.allowsItemInputFromOutputSide(),
+                    "spectator action changed output-side input policy");
+        } finally {
+            player.setGameMode(originalGameType);
+        }
         helper.succeed();
     }
 
