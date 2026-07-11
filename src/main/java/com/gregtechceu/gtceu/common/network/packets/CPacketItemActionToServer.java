@@ -51,11 +51,6 @@ public class CPacketItemActionToServer implements CustomPacketPayload {
             return;
         }
 
-        if (action.payload().isEmpty()) {
-            GTCEu.LOGGER.warn("Sync action: rejecting item action {} because payload is empty", action.actionId());
-            return;
-        }
-
         if (player.isSpectator()) {
             GTCEu.LOGGER.warn("Sync action: rejecting item action {} from {} because interaction is not allowed",
                     action.actionId(), player.getGameProfile().getName());

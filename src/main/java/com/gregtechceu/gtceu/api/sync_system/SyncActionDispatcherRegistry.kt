@@ -47,15 +47,6 @@ open class SyncActionDispatcherRegistry : SyncActionDispatcher {
 			return false
 		}
 
-		if (context.payload().isEmpty) {
-			GTCEu.LOGGER.warn(
-				"Sync action: rejecting action {} from {} because payload is missing",
-				actionId,
-				context.player.gameProfile.name,
-			)
-			return false
-		}
-
 		try {
 			if (!handler.acceptsPayload(context.payload())) {
 				GTCEu.LOGGER.warn(

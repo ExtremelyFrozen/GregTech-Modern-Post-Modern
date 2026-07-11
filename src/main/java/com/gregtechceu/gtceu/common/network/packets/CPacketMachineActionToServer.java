@@ -57,11 +57,6 @@ public class CPacketMachineActionToServer implements CustomPacketPayload {
             return;
         }
 
-        if (action.payload().isEmpty()) {
-            GTCEu.LOGGER.warn("Sync action: rejecting machine action {} because payload is empty", action.actionId());
-            return;
-        }
-
         Level level = player.level();
         if (!level.isLoaded(pos)) {
             GTCEu.LOGGER.warn("Sync action: rejecting machine action {} from {} because {} is not loaded",

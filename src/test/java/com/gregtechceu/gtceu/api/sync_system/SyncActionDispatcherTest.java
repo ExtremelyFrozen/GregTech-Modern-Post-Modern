@@ -20,6 +20,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -67,18 +68,40 @@ public class SyncActionDispatcherTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "SyncActionDispatcher")
-    public static void dispatcherRejectsEmptyPayloadWithoutExecuting(GameTestHelper helper) {
-        RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true, true, true);
+    public static void dispatcherExecutesZeroArgumentActionWithEmptyPayload(GameTestHelper helper) {
+        RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true,
+                DataComponentMap::isEmpty, true);
         SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
 
-        boolean result = dispatcher.dispatch(context(helper, ACTION_ID, DataComponentMap.builder().build()));
+        boolean result = dispatcher.dispatch(context(helper, ACTION_ID, DataComponentMap.EMPTY));
 
-        helper.assertTrue(!result, "empty payload was accepted");
-        helper.assertTrue(handler.executions == 0, "empty payload executed");
-        helper.assertTrue(handler.holderChecks == 1, "holder was not checked before empty payload rejection");
-        helper.assertTrue(handler.payloadChecks == 0, "empty payload reached payload validation");
-        helper.assertTrue(handler.permissionChecks == 0, "empty payload reached permission validation");
-        helper.assertTrue(handler.phases.equals(List.of("holder")), "empty payload ran unexpected stages");
+        helper.assertTrue(result, "zero-argument action rejected an empty payload");
+        helper.assertTrue(handler.executions == 1, "zero-argument action did not execute once");
+        helper.assertTrue(handler.holderChecks == 1, "holder was not checked once");
+        helper.assertTrue(handler.payloadChecks == 1, "empty payload did not reach payload validation");
+        helper.assertTrue(handler.permissionChecks == 1, "permission was not checked once");
+        helper.assertTrue(handler.phases.equals(List.of("holder", "payload", "permission", "execute")),
+                "zero-argument action stages ran in the wrong order");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncActionDispatcher")
+    public static void dispatcherRejectsMissingRequiredPayloadWithoutExecuting(GameTestHelper helper) {
+        RecordingSyncActionHandler handler = new RecordingSyncActionHandler(ACTION_ID, true,
+                payload -> payload.has(DataComponents.CUSTOM_NAME), true);
+        SyncActionDispatcherRegistry dispatcher = dispatcherWith(handler);
+
+        boolean result = dispatcher.dispatch(context(helper, ACTION_ID, DataComponentMap.EMPTY));
+
+        helper.assertTrue(!result, "action accepted a payload without its required component");
+        helper.assertTrue(handler.executions == 0, "action executed without its required component");
+        helper.assertTrue(handler.holderChecks == 1, "holder was not checked once");
+        helper.assertTrue(handler.payloadChecks == 1, "missing payload did not reach payload validation");
+        helper.assertTrue(handler.permissionChecks == 0, "missing payload reached permission validation");
+        helper.assertTrue(handler.phases.equals(List.of("holder", "payload")),
+                "missing payload ran unexpected stages");
         helper.succeed();
     }
 
@@ -177,7 +200,7 @@ public class SyncActionDispatcherTest {
 
         private final ResourceLocation actionId;
         private final boolean acceptsHolder;
-        private final boolean acceptsPayload;
+        private final Predicate<DataComponentMap> payloadAcceptance;
         private final boolean mayExecute;
         private final List<String> phases = new ArrayList<>();
         private int holderChecks;
@@ -187,9 +210,14 @@ public class SyncActionDispatcherTest {
 
         private RecordingSyncActionHandler(ResourceLocation actionId, boolean acceptsHolder, boolean acceptsPayload,
                                            boolean mayExecute) {
+            this(actionId, acceptsHolder, payload -> acceptsPayload, mayExecute);
+        }
+
+        private RecordingSyncActionHandler(ResourceLocation actionId, boolean acceptsHolder,
+                                           Predicate<DataComponentMap> payloadAcceptance, boolean mayExecute) {
             this.actionId = actionId;
             this.acceptsHolder = acceptsHolder;
-            this.acceptsPayload = acceptsPayload;
+            this.payloadAcceptance = payloadAcceptance;
             this.mayExecute = mayExecute;
         }
 
@@ -209,7 +237,7 @@ public class SyncActionDispatcherTest {
         public boolean acceptsPayload(DataComponentMap payload) {
             payloadChecks++;
             phases.add("payload");
-            return acceptsPayload;
+            return payloadAcceptance.test(payload);
         }
 
         @Override
