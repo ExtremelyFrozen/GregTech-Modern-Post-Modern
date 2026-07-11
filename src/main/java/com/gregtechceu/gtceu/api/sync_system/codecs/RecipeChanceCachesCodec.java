@@ -26,12 +26,7 @@ public final class RecipeChanceCachesCodec
     public JsonElement serializeField(IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> value,
                                       Context<IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>>> context) {
         JsonObject chanceCache = new JsonObject();
-        IdentityHashMap<RecipeCapability<?>, Object2IntMap<?>> currentValue = context.currentValue();
-        if (currentValue == null) {
-            return chanceCache;
-        }
-
-        for (var entry : currentValue.entrySet()) {
+        for (var entry : value.entrySet()) {
             RecipeCapability<?> capability = entry.getKey();
             JsonArray cacheJson = new JsonArray();
             for (Object2IntMap.Entry<?> cacheEntry : entry.getValue().object2IntEntrySet()) {
