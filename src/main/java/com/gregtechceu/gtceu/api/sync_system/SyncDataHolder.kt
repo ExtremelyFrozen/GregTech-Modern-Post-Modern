@@ -20,6 +20,19 @@ import java.lang.invoke.MethodHandle
 import java.lang.invoke.WrongMethodTypeException
 
 /**
+ * Result of validating and transactionally applying one client-to-server field update batch.
+ */
+data class ServerFieldUpdateResult(val accepted: Boolean, val changed: Boolean, @field:Nullable val rejectionReason: String?) {
+	companion object {
+		@JvmStatic
+		fun accepted(changed: Boolean): ServerFieldUpdateResult = ServerFieldUpdateResult(true, changed, null)
+
+		@JvmStatic
+		fun rejected(reason: String): ServerFieldUpdateResult = ServerFieldUpdateResult(false, false, reason)
+	}
+}
+
+/**
  * Class that holds all sync info for an [com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged] object.
  */
 class SyncDataHolder(private val holder: ISyncManaged) {
@@ -237,13 +250,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 			}
 			changes.put(
 				field.componentKey,
-				FieldSyncHandler.serializeFieldData(
-					registries,
-					holder,
-					field,
-					writeClientFields = false,
-					fullSync = false,
-				),
+				FieldSyncHandler.encodeDetachedServerCandidate(registries, holder, field),
 			)
 			cachedServerValues[field] = currentValue
 			wroteAny = true
@@ -289,7 +296,11 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 			FieldSyncHandler.deserializeFieldData(registries, holder, field, savedValue, readingClientFields, parseExplicitNull)
 
 			if (readingClientFields) {
-				cachedClientValues[field] = field.handle.get(holder)
+				val currentValue = field.handle.get(holder)
+				cachedClientValues[field] = currentValue
+				if (field.hasSyncBoth) {
+					cachedServerValues[field] = currentValue
+				}
 				invokeClientChangeListeners(field)
 
 				if (field.triggerClientRerender) holder.scheduleRenderUpdate()
@@ -298,18 +309,79 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	}
 
 	fun applyServerNetworkUpdate(registries: RegistryAccess, components: DataComponentMap) {
+		val result = tryApplyServerNetworkUpdate(registries, components)
+		if (!result.accepted) {
+			throw IllegalArgumentException(result.rejectionReason ?: "Sync: Server field update was rejected")
+		}
+	}
+
+	/**
+	 * Applies a client field-update batch without exposing partially decoded or normalized values to the holder.
+	 */
+	fun tryApplyServerNetworkUpdate(registries: RegistryAccess, components: DataComponentMap): ServerFieldUpdateResult {
 		if (components.isEmpty) {
-			return
+			return ServerFieldUpdateResult.accepted(false)
 		}
 
-		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get()) ?: return
-		for (field in syncData.getServerUpdateFields()) {
-			if (!changes.fields().containsKey(field.componentKey)) {
-				continue
-			}
-			val value = changes.get(field.componentKey) ?: JsonNull.INSTANCE
-			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, false, parseExplicitNull = true)
+		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get())
+			?: return ServerFieldUpdateResult.rejected("Sync: Server field update is missing sync field data")
+		if (changes.isEmpty) {
+			return ServerFieldUpdateResult.rejected("Sync: Server field update contains empty sync field data")
 		}
+
+		val serverFields = syncData.getOrderedServerUpdateFields()
+		val selectedFields = serverFields.filter { field -> changes.fields().containsKey(field.componentKey) }
+		val selectedKeys = selectedFields.mapTo(HashSet()) { field -> field.componentKey }
+		val rejectedKeys = changes.fields().keys.filterNot(selectedKeys::contains)
+		if (rejectedKeys.isNotEmpty()) {
+			requestAuthoritativeServerAcks(selectedFields)
+			return ServerFieldUpdateResult.rejected(
+				"Sync: Server field update contains unknown or non-server-updatable fields: ${rejectedKeys.sortedBy { key -> key.toString() }}",
+			)
+		}
+		if (selectedFields.isEmpty()) {
+			return ServerFieldUpdateResult.rejected("Sync: Server field update contains no server-updatable fields")
+		}
+
+		val pendingUpdates = ArrayList<PendingServerFieldUpdate>(selectedFields.size)
+		try {
+			// Decode every candidate without consulting or mutating the holder.
+			for (field in selectedFields) {
+				val encodedValue = changes.get(field.componentKey) ?: JsonNull.INSTANCE
+				val candidate = FieldSyncHandler.decodeDetachedServerCandidate(registries, holder, field, encodedValue)
+				pendingUpdates.add(PendingServerFieldUpdate(field, candidate))
+			}
+
+			// Snapshot every old value before a normalizer is allowed to run.
+			for (update in pendingUpdates) {
+				update.oldValue = update.field.handle.get(holder)
+				validateServerCandidateType(update.field, update.decodedCandidate)
+			}
+
+			// Normalize the complete decoded batch before committing any field.
+			for (update in pendingUpdates) {
+				update.normalizedCandidate = normalizeServerCandidate(update)
+			}
+			for (update in pendingUpdates) {
+				validateServerCandidateType(update.field, update.normalizedCandidate)
+			}
+
+			commitServerUpdates(pendingUpdates)
+		} catch (e: RuntimeException) {
+			requestAuthoritativeServerAcks(selectedFields)
+			return ServerFieldUpdateResult.rejected(
+				e.message ?: "Sync: Server field update failed with ${e.javaClass.simpleName}",
+			)
+		}
+
+		requestAuthoritativeServerAcks(selectedFields)
+		val changed = pendingUpdates.any { update -> update.oldValue != update.normalizedCandidate }
+		for (update in pendingUpdates) {
+			if (update.oldValue != update.normalizedCandidate) {
+				invokeServerChangeListener(update)
+			}
+		}
+		return ServerFieldUpdateResult.accepted(changed)
 	}
 
 	fun applyClientNetworkUpdate(registries: RegistryAccess, components: DataComponentMap) {
@@ -324,7 +396,11 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 			}
 			val value = changes.get(field.componentKey) ?: JsonNull.INSTANCE
 			FieldSyncHandler.deserializeFieldData(registries, holder, field, value, true, parseExplicitNull = true)
-			cachedClientValues[field] = field.handle.get(holder)
+			val currentValue = field.handle.get(holder)
+			cachedClientValues[field] = currentValue
+			if (field.hasSyncBoth) {
+				cachedServerValues[field] = currentValue
+			}
 			invokeClientChangeListeners(field)
 			if (field.triggerClientRerender) holder.scheduleRenderUpdate()
 		}
@@ -343,6 +419,99 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		}
 	}
 
+	private fun normalizeServerCandidate(update: PendingServerFieldUpdate): Any? {
+		val normalizer = update.field.serverNormalizerHandle ?: return update.decodedCandidate
+		return try {
+			normalizer.invoke(holder, update.decodedCandidate)
+		} catch (e: Throwable) {
+			throw IllegalArgumentException(
+				"Sync: Server normalizer rejected field ${update.field.fieldName} of type ${update.field.type}",
+				e,
+			)
+		}
+	}
+
+	private fun validateServerCandidateType(field: FieldSyncData, @Nullable candidate: Any?) {
+		val fieldType = field.handle.varType()
+		if (candidate == null) {
+			if (fieldType.isPrimitive) {
+				throw IllegalArgumentException(
+					"Sync: Server candidate for primitive field ${field.fieldName} of type ${field.type} was null",
+				)
+			}
+			return
+		}
+		if (!boxedType(fieldType).isInstance(candidate)) {
+			throw IllegalArgumentException(
+				"Sync: Server candidate for field ${field.fieldName} expected ${fieldType.typeName} but decoded ${candidate.javaClass.name}",
+			)
+		}
+	}
+
+	private fun commitServerUpdates(updates: List<PendingServerFieldUpdate>) {
+		var committed = 0
+		try {
+			for (update in updates) {
+				update.field.handle.set(holder, update.normalizedCandidate)
+				committed++
+			}
+		} catch (e: Throwable) {
+			for (index in committed - 1 downTo 0) {
+				val update = updates[index]
+				try {
+					update.field.handle.set(holder, update.oldValue)
+				} catch (rollbackFailure: Throwable) {
+					GTCEu.LOGGER.error(
+						"Sync: Failed to roll back field {} of type {} after server batch commit failure",
+						update.field.fieldName,
+						update.field.type,
+						rollbackFailure,
+					)
+				}
+			}
+			throw IllegalStateException("Sync: Failed to commit server field update batch", e)
+		}
+	}
+
+	private fun requestAuthoritativeServerAcks(fields: Collection<FieldSyncData>) {
+		var marked = false
+		for (field in fields) {
+			if (field.hasSyncBoth) {
+				dirtySyncFields.add(field.fieldName)
+				marked = true
+			}
+		}
+		if (marked) {
+			holder.markAsChanged()
+		}
+	}
+
+	private fun invokeServerChangeListener(update: PendingServerFieldUpdate) {
+		val listener = update.field.serverChangeListenerHandle ?: return
+		try {
+			listener.invoke(holder, update.oldValue, update.normalizedCandidate)
+		} catch (e: Throwable) {
+			GTCEu.LOGGER.error(
+				"Sync: Error while invoking server change listener for field {} of type {}",
+				update.field.fieldName,
+				update.field.type,
+				e,
+			)
+		}
+	}
+
+	private fun boxedType(type: Class<*>): Class<*> = when (type) {
+		Boolean::class.javaPrimitiveType -> Boolean::class.javaObjectType
+		Byte::class.javaPrimitiveType -> Byte::class.javaObjectType
+		Char::class.javaPrimitiveType -> Char::class.javaObjectType
+		Short::class.javaPrimitiveType -> Short::class.javaObjectType
+		Int::class.javaPrimitiveType -> Int::class.javaObjectType
+		Long::class.javaPrimitiveType -> Long::class.javaObjectType
+		Float::class.javaPrimitiveType -> Float::class.javaObjectType
+		Double::class.javaPrimitiveType -> Double::class.javaObjectType
+		else -> type
+	}
+
 	private fun itemFieldKey(field: FieldSyncData) = field.itemDataKey
 		?: throw IllegalArgumentException("Sync: @ItemSave field ${field.fieldName} has no item data component key")
 
@@ -354,6 +523,13 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 			.set(GTDataComponents.SYNC_FIELD_DATA.get(), fieldData)
 			.build()
 	}
+
+	private data class PendingServerFieldUpdate(
+		val field: FieldSyncData,
+		@field:Nullable val decodedCandidate: Any?,
+		@field:Nullable var oldValue: Any? = null,
+		@field:Nullable var normalizedCandidate: Any? = null,
+	)
 
 	companion object {
 		@JvmField

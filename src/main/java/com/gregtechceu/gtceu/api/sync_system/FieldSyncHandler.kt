@@ -61,6 +61,75 @@ object FieldSyncHandler {
 		throw IllegalArgumentException(message)
 	}
 
+	/**
+	 * Decodes an untrusted client candidate without consulting the current field value or a contextual codec.
+	 *
+	 * Server field updates must remain detached until every field in the batch has decoded and normalized successfully.
+	 */
+	@Suppress("UNCHECKED_CAST")
+	@JvmStatic
+	fun decodeDetachedServerCandidate(registries: HolderLookup.Provider, holder: Any, field: FieldSyncData, savedValue: JsonElement): Any? {
+		if (field.codec == null) {
+			field.setCodec(FieldCodecs.get(field.type.rawType))
+		}
+		val codec = field.codec
+			?: throw IllegalArgumentException(
+				"Sync: Server update for field ${field.fieldName} of type ${field.type} requires a detached ordinary Codec; contextual-only codecs are not accepted",
+			)
+
+		return try {
+			(codec as Codec<Any>)
+				.parse(registries.createSerializationContext(JsonOps.INSTANCE), savedValue)
+				.getOrThrow()
+		} catch (e: RuntimeException) {
+			GTCEu.LOGGER.warn(
+				"Sync: Failed to decode detached server candidate for field {} of type {} in {}",
+				field.fieldName,
+				field.type,
+				holder.javaClass.name,
+				e,
+			)
+			throw IllegalArgumentException(
+				"Sync: Invalid server candidate for field ${field.fieldName} of type ${field.type}",
+				e,
+			)
+		}
+	}
+
+	/**
+	 * Encodes a client-to-server field candidate with the same ordinary Codec required by detached server decoding.
+	 */
+	@Suppress("UNCHECKED_CAST")
+	@JvmStatic
+	fun encodeDetachedServerCandidate(registries: HolderLookup.Provider, holder: Any, field: FieldSyncData): JsonElement {
+		if (field.codec == null) {
+			field.setCodec(FieldCodecs.get(field.type.rawType))
+		}
+		val codec = field.codec
+			?: throw IllegalArgumentException(
+				"Sync: Server update for field ${field.fieldName} of type ${field.type} requires a detached ordinary Codec; contextual-only codecs are not accepted",
+			)
+		val currentValue = field.handle.get(holder) ?: return JsonNull.INSTANCE
+
+		return try {
+			(codec as Codec<Any>)
+				.encodeStart(registries.createSerializationContext(JsonOps.INSTANCE), currentValue)
+				.getOrThrow()
+		} catch (e: RuntimeException) {
+			GTCEu.LOGGER.error(
+				"Sync: Failed to encode detached server candidate for field {} of type {} in {}",
+				field.fieldName,
+				field.type,
+				holder.javaClass.name,
+				e,
+			)
+			throw IllegalArgumentException(
+				"Sync: Invalid client candidate for field ${field.fieldName} of type ${field.type}",
+				e,
+			)
+		}
+	}
+
 	@Suppress("UNCHECKED_CAST")
 	@JvmOverloads
 	@JvmStatic

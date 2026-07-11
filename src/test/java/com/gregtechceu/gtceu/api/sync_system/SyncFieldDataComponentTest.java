@@ -35,6 +35,7 @@ public class SyncFieldDataComponentTest {
 
     static {
         FieldCodecs.registerContextual(NullParsedValue.class, NullParsedValueCodec.INSTANCE);
+        FieldCodecs.register(NullParsedValue.class, NullParsedValue.CODEC);
         FieldCodecs.register(RegularNullParsedValue.class, RegularNullParsedValue.CODEC);
     }
 
@@ -151,8 +152,8 @@ public class SyncFieldDataComponentTest {
                 "server network explicit null was not parsed by regular codec");
         helper.assertTrue("clientParsed:null".equals(target.clientParsed.value),
                 "client network explicit null did not use the contextual field codec result");
-        helper.assertTrue("serverParsed:null".equals(target.serverParsed.value),
-                "server network explicit null did not use the contextual field codec result");
+        helper.assertTrue("ordinary:null".equals(target.serverParsed.value),
+                "server network explicit null did not use the detached ordinary field codec result");
         helper.assertTrue("regular:null".equals(target.clientRegularParsed.value),
                 "client network explicit null did not use the regular field codec result");
         helper.assertTrue("regular:null".equals(target.serverRegularParsed.value),
@@ -271,7 +272,23 @@ public class SyncFieldDataComponentTest {
         private int shared;
     }
 
-    private record NullParsedValue(String value) {}
+    private record NullParsedValue(String value) {
+
+        private static final Codec<NullParsedValue> CODEC = ExtraCodecs.JSON.xmap(
+                NullParsedValue::fromJson,
+                NullParsedValue::toJson);
+
+        private static NullParsedValue fromJson(JsonElement value) {
+            if (value.isJsonNull()) {
+                return new NullParsedValue("ordinary:null");
+            }
+            return new NullParsedValue(value.getAsString());
+        }
+
+        private JsonElement toJson() {
+            return new JsonPrimitive(value);
+        }
+    }
 
     private record RegularNullParsedValue(String value) {
 
