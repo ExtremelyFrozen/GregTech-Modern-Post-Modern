@@ -19,8 +19,6 @@ import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -28,21 +26,12 @@ import java.util.function.UnaryOperator;
 
 public class MonitorGroup {
 
-    @Getter
     private final Set<BlockPos> monitorPositions = new HashSet<>();
-    @Getter
     private final String name;
-    @Getter
     private final CustomItemStackHandler itemStackHandler;
-    @Getter
     private final CustomItemStackHandler placeholderSlotsHandler;
-    @Setter
     private @Nullable BlockPos target;
-    @Setter
-    @Getter
     private @Nullable Direction targetCoverSide;
-    @Setter
-    @Getter
     private int dataSlot = 0;
 
     public static boolean isModule(ItemStack stack) {
@@ -69,6 +58,42 @@ public class MonitorGroup {
         this.itemStackHandler = handler;
         this.itemStackHandler.setFilter(MonitorGroup::isModule);
         this.placeholderSlotsHandler = placeholderSlotsHandler;
+    }
+
+    public Set<BlockPos> getMonitorPositions() {
+        return monitorPositions;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public CustomItemStackHandler getItemStackHandler() {
+        return itemStackHandler;
+    }
+
+    public CustomItemStackHandler getPlaceholderSlotsHandler() {
+        return placeholderSlotsHandler;
+    }
+
+    public void setTarget(@Nullable BlockPos target) {
+        this.target = target;
+    }
+
+    public @Nullable Direction getTargetCoverSide() {
+        return targetCoverSide;
+    }
+
+    public void setTargetCoverSide(@Nullable Direction targetCoverSide) {
+        this.targetCoverSide = targetCoverSide;
+    }
+
+    public int getDataSlot() {
+        return dataSlot;
+    }
+
+    public void setDataSlot(int dataSlot) {
+        this.dataSlot = dataSlot;
     }
 
     public void add(BlockPos pos) {
