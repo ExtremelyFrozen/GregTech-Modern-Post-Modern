@@ -52,6 +52,11 @@ public final class LDLib2DirectionalAutoOutputActions {
     private LDLib2DirectionalAutoOutputActions() {}
 
     /**
+     * Triggers common-side class initialization; handler registration remains owned by the static initializer.
+     */
+    public static void initialize() {}
+
+    /**
      * Creates the item output-face action used by the item mode button and scene left-click shortcut.
      */
     public static SyncActionData createConfigureItemOutputSideAction(Direction direction) {
