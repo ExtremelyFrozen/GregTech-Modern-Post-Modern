@@ -12,13 +12,18 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * LDLib2 tab strip used by the Fancy shell for local page navigation.
@@ -31,6 +36,7 @@ public class LDLib2FancyTabsElement extends UIElement {
     private final Consumer<LDLib2FancyUIProvider> onTabClick;
     private final boolean vertical;
     private final List<LDLib2FancyUIProvider> subTabs = new ArrayList<>();
+    private final Map<LDLib2FancyUIProvider, Map<ResourceLocation, LDLib2FancyUIProvider>> subTabCache = new IdentityHashMap<>();
 
     @Nullable
     private LDLib2FancyUIProvider mainTab;
@@ -91,6 +97,37 @@ public class LDLib2FancyTabsElement extends UIElement {
     public void attachSubTab(LDLib2FancyUIProvider subTab) {
         subTabs.add(subTab);
         rebuildTabs();
+    }
+
+    /**
+     * Attaches a sub-tab provider that remains stable for the current home page and cache key.
+     *
+     * <p>
+     * The Fancy shell caches pages by provider identity. Reusing the provider prevents repeated home-page setup from
+     * creating duplicate cached pages while keeping identical keys isolated between different home providers.
+     *
+     * @return the provider created for this home page and key, or the previously cached instance.
+     */
+    public LDLib2FancyUIProvider attachCachedSubTab(
+                                                    ResourceLocation key,
+                                                    Supplier<? extends LDLib2FancyUIProvider> factory) {
+        LDLib2FancyUIProvider homeTab = mainTab;
+        if (homeTab == null) {
+            throw new IllegalStateException("Cannot cache a Fancy sub-tab before setting the main tab.");
+        }
+
+        Map<ResourceLocation, LDLib2FancyUIProvider> homeCache = subTabCache.computeIfAbsent(homeTab,
+                ignored -> new HashMap<>());
+        LDLib2FancyUIProvider subTab = homeCache.get(key);
+        if (subTab == null) {
+            subTab = factory.get();
+            if (subTab == null) {
+                throw new IllegalStateException("Fancy sub-tab factory returned null for " + key + ".");
+            }
+            homeCache.put(key, subTab);
+        }
+        attachSubTab(subTab);
+        return subTab;
     }
 
     public void selectTab(LDLib2FancyUIProvider selectedTab) {

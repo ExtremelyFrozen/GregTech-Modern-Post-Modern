@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @GameTestHolder(GTCEu.MOD_ID)
 public class LDLib2FancyMachineUIElementTest {
 
+    private static final ResourceLocation CACHED_SUB_TAB_KEY = GTCEu.id("cached_sub_tab_test");
+
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "LDLib2FancyMachineUIElement")
@@ -71,6 +73,46 @@ public class LDLib2FancyMachineUIElementTest {
         assertPageState(helper, subElement, false, false, "sub page after back navigation");
         assertShellChromeCounts(helper, shell, 1, 1, "main page shell chrome after back navigation");
         assertPagesCreatedOnce(helper, mainPage, subPage, "back navigation should reuse cached pages");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2FancyMachineUIElement")
+    public static void shellReusesFactorySubTabsPerHomePage(GameTestHelper helper) {
+        CachedFactoryFancyPage secondHome = new CachedFactoryFancyPage("second", List.of());
+        CachedFactoryFancyPage mainPage = new CachedFactoryFancyPage("main", List.of(secondHome));
+        Inventory inventory = FakePlayerFactory.getMinecraft(helper.getLevel()).getInventory();
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(
+                mainPage, inventory, new TestMachineUIHolder(), 176, 166);
+        UIElement pageContainer = shell.getChildren().getFirst();
+
+        LDLib2FancyUIProvider firstMainSubTab = mainPage.cachedSubTab();
+        helper.assertTrue(mainPage.factoryCalls() == 1, "main home sub-tab factory should run once during setup");
+        shell.navigate(firstMainSubTab);
+        helper.assertTrue(pageContainer.getChildren().size() == 3,
+                "first main sub-tab navigation should add one cached page");
+        shell.navigateBack();
+
+        shell.switchPage(secondHome);
+        LDLib2FancyUIProvider firstSecondSubTab = secondHome.cachedSubTab();
+        helper.assertTrue(secondHome.factoryCalls() == 1, "second home sub-tab factory should run once during setup");
+        helper.assertTrue(firstSecondSubTab != firstMainSubTab,
+                "the same cache key must not share providers between home pages");
+        shell.navigate(firstSecondSubTab);
+        helper.assertTrue(pageContainer.getChildren().size() == 4,
+                "second home sub-tab navigation should add its own cached page");
+        shell.navigateBack();
+
+        shell.switchPage(mainPage);
+        LDLib2FancyUIProvider secondMainSubTab = mainPage.cachedSubTab();
+        helper.assertTrue(secondMainSubTab == firstMainSubTab,
+                "returning to a home page should reuse its cached sub-tab provider");
+        helper.assertTrue(mainPage.factoryCalls() == 1,
+                "returning to a home page must not invoke its sub-tab factory again");
+        shell.navigate(secondMainSubTab);
+        helper.assertTrue(pageContainer.getChildren().size() == 4,
+                "revisiting a cached sub-tab must not grow the shell page cache");
         helper.succeed();
     }
 
@@ -173,6 +215,38 @@ public class LDLib2FancyMachineUIElementTest {
 
         private int createCalls() {
             return createCalls.get();
+        }
+    }
+
+    private static final class CachedFactoryFancyPage extends TestFancyPage {
+
+        private final String cachedSubTabTitle;
+        private final AtomicInteger factoryCalls = new AtomicInteger();
+        @Nullable
+        private LDLib2FancyUIProvider cachedSubTab;
+
+        private CachedFactoryFancyPage(String title, List<LDLib2FancyUIProvider> homePages) {
+            super(title, 0, 0, homePages);
+            this.cachedSubTabTitle = title + " cached sub-tab";
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            cachedSubTab = tabs.attachCachedSubTab(CACHED_SUB_TAB_KEY, () -> {
+                factoryCalls.incrementAndGet();
+                return new TestFancyPage(cachedSubTabTitle, 0, 0, List.of());
+            });
+        }
+
+        private LDLib2FancyUIProvider cachedSubTab() {
+            if (cachedSubTab == null) {
+                throw new IllegalStateException("Cached sub-tab has not been attached.");
+            }
+            return cachedSubTab;
+        }
+
+        private int factoryCalls() {
+            return factoryCalls.get();
         }
     }
 
