@@ -149,7 +149,7 @@ abstract class ManagedSyncBlockEntity :
 		val changes = syncDataHolder.collectServerNetworkChanges(level!!.registryAccess())
 		if (!changes.isEmpty) {
 			PacketDistributor.sendToServer(
-				CPacketMachineSyncToServer(blockPos, BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type), changes),
+				CPacketMachineSyncToServer(blockPos, BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type)!!, changes),
 			)
 		}
 	}
