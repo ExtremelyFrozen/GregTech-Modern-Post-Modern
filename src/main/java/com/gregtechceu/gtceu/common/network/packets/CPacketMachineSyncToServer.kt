@@ -122,7 +122,30 @@ open class CPacketMachineSyncToServer(private val pos: BlockPos, private val blo
 			return
 		}
 
-		blockEntity.getSyncDataHolder().applyServerNetworkUpdate(level.registryAccess(), data)
+		val updateResult = try {
+			blockEntity.getSyncDataHolder().tryApplyServerNetworkUpdate(level.registryAccess(), data)
+		} catch (exception: RuntimeException) {
+			GTCEu.LOGGER.error(
+				"Sync: unexpected failure while applying block entity field update from {} at {} to {}",
+				player.gameProfile.name,
+				pos,
+				blockEntity.javaClass.name,
+				exception,
+			)
+			return
+		}
+		if (!updateResult.accepted) {
+			GTCEu.LOGGER.warn(
+				"Sync: rejecting block entity field update from {} at {} because {}",
+				player.gameProfile.name,
+				pos,
+				updateResult.rejectionReason,
+			)
+			return
+		}
+		if (!updateResult.changed) {
+			return
+		}
 		blockEntity.markAsChanged()
 		blockEntity.setChanged()
 	}
