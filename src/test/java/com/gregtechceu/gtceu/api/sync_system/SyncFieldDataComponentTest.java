@@ -160,6 +160,37 @@ public class SyncFieldDataComponentTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void serverUpdateComponentKeysRejectAliasesAndHiddenFields(GameTestHelper helper) {
+        assertServerUpdateComponentKeyRejected(helper, AliasedServerUpdateFields.class,
+                "AliasedServerUpdateFields.aliased", "AliasedServerUpdateFields.shared");
+        assertServerUpdateComponentKeyRejected(helper, HiddenServerUpdateFields.class,
+                "ParentServerUpdateFields.shared", "HiddenServerUpdateFields.shared");
+        helper.succeed();
+    }
+
+    private static void assertServerUpdateComponentKeyRejected(GameTestHelper helper, Class<?> targetClass,
+                                                               String firstField, String secondField) {
+        try {
+            ClassSyncData.getClassData(targetClass);
+        } catch (IllegalArgumentException exception) {
+            String message = exception.getMessage();
+            if (message == null) {
+                throw new GameTestAssertException("server update component key conflict had no message");
+            }
+            helper.assertTrue(message.contains(SyncFieldData.key("shared").toString()),
+                    "conflict message omitted the server update component key");
+            helper.assertTrue(message.contains(firstField),
+                    "conflict message omitted field " + firstField);
+            helper.assertTrue(message.contains(secondField),
+                    "conflict message omitted field " + secondField);
+            return;
+        }
+        throw new GameTestAssertException("duplicate server update component key was accepted");
+    }
+
     private static DataComponentMap networkRoundTrip(GameTestHelper helper, DataComponentMap components) {
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
                 helper.getLevel().registryAccess(), ConnectionType.OTHER);
@@ -196,6 +227,48 @@ public class SyncFieldDataComponentTest {
         public @Nullable ISyncManaged getParentSyncObject() {
             return null;
         }
+    }
+
+    private abstract static class MetadataSyncTarget implements ISyncManaged {
+
+        private final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
+
+        @Override
+        public final SyncDataHolder getSyncDataHolder() {
+            return syncDataHolder;
+        }
+
+        @Override
+        public final @Nullable ISyncManaged getParentSyncObject() {
+            return null;
+        }
+
+        @Override
+        public final void markAsChanged() {}
+
+        @Override
+        public final void scheduleRenderUpdate() {}
+    }
+
+    private static final class AliasedServerUpdateFields extends MetadataSyncTarget {
+
+        @SaveField(nbtKey = "shared")
+        @SyncToServer
+        private int aliased;
+        @SyncToServer
+        private int shared;
+    }
+
+    private static class ParentServerUpdateFields extends MetadataSyncTarget {
+
+        @SyncToServer
+        private int shared;
+    }
+
+    private static final class HiddenServerUpdateFields extends ParentServerUpdateFields {
+
+        @SyncToServer
+        private int shared;
     }
 
     private record NullParsedValue(String value) {}
