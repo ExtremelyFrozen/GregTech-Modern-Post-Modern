@@ -1,53 +1,35 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
-import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.ParallelHatch;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 
-public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib2MachineUIProvider, ParallelHatch {
+public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib2MachineUIProvider {
 
     private static final int MIN_PARALLEL = 1;
-    private static final ResourceLocation SET_PARALLEL_HATCH_CURRENT_PARALLEL_ACTION = GTCEu
-            .id("set_parallel_hatch_current_parallel");
-    private static final ResourceLocation CURRENT_PARALLEL_FIELD = SyncFieldData.key("currentParallel");
-
-    static {
-        SyncActionDispatchers.server().register(new ParallelHatchCurrentParallelActionHandler());
-    }
 
     private final int maxParallel;
 
     @SaveField
+    @SyncBoth
     @Getter
     private int currentParallel = 1;
 
@@ -57,9 +39,26 @@ public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib
         this.currentParallel = maxParallel;
     }
 
-    @Override
     public void setCurrentParallel(int parallelAmount) {
-        this.currentParallel = Mth.clamp(parallelAmount, MIN_PARALLEL, this.maxParallel);
+        int normalizedParallel = normalizeCurrentParallel(parallelAmount);
+        if (this.currentParallel == normalizedParallel) {
+            return;
+        }
+        this.currentParallel = normalizedParallel;
+        markControllerRecipesDirty();
+    }
+
+    @ServerFieldNormalizer(fieldName = "currentParallel")
+    private int normalizeCurrentParallel(int parallelAmount) {
+        return Mth.clamp(parallelAmount, MIN_PARALLEL, this.maxParallel);
+    }
+
+    @ServerFieldChangeListener(fieldName = "currentParallel")
+    private void onCurrentParallelChanged(int oldParallel, int newParallel) {
+        markControllerRecipesDirty();
+    }
+
+    protected void markControllerRecipesDirty() {
         for (MultiblockControllerMachine controller : this.getControllers()) {
             if (controller instanceof IRecipeLogicMachine rlm) {
                 rlm.getRecipeLogic().markLastRecipeDirty();
@@ -77,85 +76,15 @@ public class ParallelHatchPartMachine extends TieredPartMachine implements LDLib
         UIElement root = new UIElement();
         UITemplate.setLDLib2Bounds(root, 0, 0, 100, 20);
         root.addChild(new GTIntInputElement(0, 0, 100, 20, this::getCurrentParallel,
-                value -> setLDLib2CurrentParallel(player, holder, value))
+                this::setLDLib2CurrentParallel)
                 .setMin(MIN_PARALLEL)
                 .setMax(maxParallel));
         return UI.of(root);
     }
 
-    private void setLDLib2CurrentParallel(Player player, MachineUIHolder holder, int value) {
+    private void setLDLib2CurrentParallel(int value) {
         setCurrentParallel(value);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetParallelHatchCurrentParallelAction(value));
-        }
-    }
-
-    private static SyncActionData createSetParallelHatchCurrentParallelAction(int value) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(CURRENT_PARALLEL_FIELD, new JsonPrimitive(value))
-                        .build())
-                .build();
-        return new SyncActionData(SET_PARALLEL_HATCH_CURRENT_PARALLEL_ACTION, value, payload);
-    }
-
-    private static final class ParallelHatchCurrentParallelActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_PARALLEL_HATCH_CURRENT_PARALLEL_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ParallelHatch;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readInt(fields, CURRENT_PARALLEL_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ParallelHatch parallelHatch)) {
-                throw new IllegalStateException("Parallel hatch action received an invalid holder.");
-            }
-            parallelHatch.setCurrentParallel(requireInt(context.payload(), CURRENT_PARALLEL_FIELD));
-        }
-    }
-
-    private static int requireInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Parallel hatch action payload is missing field data.");
-        }
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Parallel hatch action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            try {
-                long value = primitive.getAsBigDecimal().longValueExact();
-                if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
-                    return (int) value;
-                }
-            } catch (ArithmeticException | NumberFormatException e) {
-                GTCEu.LOGGER.warn("Invalid parallel hatch integer action payload.", e);
-            }
-        }
-        return null;
+        sendServerSyncChanges();
     }
 
     @Override
