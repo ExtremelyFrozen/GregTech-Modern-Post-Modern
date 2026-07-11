@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable
 
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.WrongMethodTypeException
-import java.util.Objects
 
 /**
  * Class that holds all sync info for an [com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged] object.
@@ -233,7 +232,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		for (field in fields) {
 			val currentValue = field.handle.get(holder)
 			val previousValue = cachedServerValues[field]
-			if (Objects.equals(currentValue, previousValue)) {
+			if (currentValue == previousValue) {
 				continue
 			}
 			changes.put(

@@ -18,7 +18,6 @@ import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.Modifier
 import java.util.Comparator
-import java.util.Objects
 
 /**
  * Static data for [com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged] classes.
@@ -193,7 +192,7 @@ class ClassSyncData private constructor(clazz: Class<*>) {
 	 */
 	fun setCustomCodecForField(fieldName: String, codec: Codec<*>) {
 		managedFields.stream()
-			.filter { f -> Objects.equals(f.fieldName, fieldName) }
+			.filter { f -> f.fieldName == fieldName }
 			.findFirst()
 			.ifPresent { fieldData -> fieldData.setCodec(codec) }
 	}
@@ -206,7 +205,7 @@ class ClassSyncData private constructor(clazz: Class<*>) {
 	 */
 	fun setCustomContextualCodecForField(fieldName: String, codec: ContextualFieldCodec<*>) {
 		managedFields.stream()
-			.filter { f -> Objects.equals(f.fieldName, fieldName) }
+			.filter { f -> f.fieldName == fieldName }
 			.findFirst()
 			.ifPresent { fieldData -> fieldData.setContextualCodec(codec) }
 	}
