@@ -1,28 +1,36 @@
 package com.gregtechceu.gtceu.api.machine.fancyconfigurator;
 
+import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.gui.ColorPattern;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.DirectionalAutoOutputMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.client.gui.fancy.LDLib2DirectionalSceneElement;
+import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 
 import com.tterrag.registrate.util.RegistrateDistExecutor;
@@ -72,7 +80,12 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     private static final IGuiTexture FLUID_MODE_AUTO = GuiTextures.group(
             GuiTextures.VANILLA_BUTTON,
             GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f));
+    private static final IGuiTexture COVER_CONFIG_TEXTURE = GuiTextures.group(GuiTextures.IO_CONFIG_COVER_SETTINGS);
 
+    private final MetaMachine machine;
+    private final Player player;
+    private final MachineCoverContainer coverContainer;
+    @Nullable
     private final DirectionalAutoOutputMachine output;
     private final MachineUIHolder pageHolder;
     private final BiConsumer<MachineUIHolder, SyncActionData> actionSender;
@@ -86,27 +99,52 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         AUTO,
     }
 
-    public LDLib2DirectionalFancyConfigurator(DirectionalAutoOutputMachine output,
-                                              MachineUIHolder pageHolder) {
-        this(output, pageHolder, MachineUIHelper::sendAction);
+    /**
+     * Creates a cover-capable directional page and discovers optional auto-output controls from the machine.
+     *
+     * @param machine    machine rendered and configured by this page
+     * @param player     player whose cursor and cover permissions drive the page controls
+     * @param pageHolder stable holder used for every machine action sent by the page
+     */
+    public LDLib2DirectionalFancyConfigurator(MetaMachine machine, Player player, MachineUIHolder pageHolder) {
+        this(machine, player, pageHolder, MachineUIHelper::sendAction);
     }
 
-    LDLib2DirectionalFancyConfigurator(DirectionalAutoOutputMachine output, MachineUIHolder pageHolder,
+    LDLib2DirectionalFancyConfigurator(MetaMachine machine, Player player, MachineUIHolder pageHolder,
                                        BiConsumer<MachineUIHolder, SyncActionData> actionSender) {
-        if (!output.supportsAutoOutputItems() && !output.supportsAutoOutputFluids()) {
-            throw new IllegalArgumentException("Directional page requires item or fluid auto-output support.");
-        }
-        this.output = output;
+        requireMatchingMachine(machine, pageHolder);
+        this.machine = machine;
+        this.player = player;
+        this.coverContainer = machine.getCoverContainer();
+        this.output = findDirectionalOutput(machine);
         this.pageHolder = pageHolder;
         this.actionSender = actionSender;
-        LDLib2DirectionalAutoOutputActions.initialize();
+        LDLib2DirectionalCoverActions.initialize();
+        if (output != null) {
+            LDLib2DirectionalAutoOutputActions.initialize();
+        }
+    }
+
+    private static void requireMatchingMachine(MetaMachine machine, MachineUIHolder pageHolder) {
+        MetaMachine heldMachine = pageHolder.getMachine();
+        if (heldMachine != machine) {
+            throw new IllegalArgumentException("Directional page holder must resolve the configured machine.");
+        }
+    }
+
+    private static @Nullable DirectionalAutoOutputMachine findDirectionalOutput(MetaMachine machine) {
+        DirectionalAutoOutputMachine output = machine instanceof DirectionalAutoOutputMachine directOutput ?
+                directOutput : machine.getTrait(AutoOutputTrait.TYPE);
+        if (output == null || (!output.supportsAutoOutputItems() && !output.supportsAutoOutputFluids())) {
+            return null;
+        }
+        return output;
     }
 
     @Override
     public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
-        MetaMachine machine = pageHolder.getMachine();
-        if (machine == null) {
-            throw new IllegalStateException("Item directional page holder no longer resolves a machine.");
+        if (pageHolder.getMachine() != machine) {
+            throw new IllegalStateException("Directional page holder no longer resolves its opened machine.");
         }
 
         UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
@@ -117,18 +155,19 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         sceneContainer.style(style -> style.backgroundTexture(ColorPattern.BLACK.rectTexture()));
         root.addChild(sceneContainer);
 
-        if (output.supportsAutoOutputItems()) {
+        if (supportsItemOutput()) {
             root.addChild(new ItemAutoOutputLabel());
         }
-        if (output.supportsAutoOutputFluids()) {
+        if (supportsFluidOutput()) {
             root.addChild(new FluidAutoOutputLabel());
         }
-        if (output.supportsAutoOutputItems()) {
+        if (supportsItemOutput()) {
             root.addChild(createItemControls());
         }
-        if (output.supportsAutoOutputFluids()) {
+        if (supportsFluidOutput()) {
             root.addChild(createFluidControls());
         }
+        root.addChild(createCoverControls());
 
         if (machine.isRemote()) {
             RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT,
@@ -168,9 +207,9 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
             selectedSide = side;
             return true;
         }
-        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && output.supportsAutoOutputItems()) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && supportsItemOutput()) {
             sendAction(LDLib2DirectionalAutoOutputActions.createConfigureItemOutputSideAction(side));
-        } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && output.supportsAutoOutputFluids()) {
+        } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && supportsFluidOutput()) {
             sendAction(LDLib2DirectionalAutoOutputActions.createConfigureFluidOutputSideAction(side));
         }
         return true;
@@ -178,7 +217,7 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
 
     boolean configureSelectedItemOutputSide() {
         Direction side = selectedSide;
-        if (side == null) {
+        if (side == null || !supportsItemOutput()) {
             return false;
         }
         sendAction(LDLib2DirectionalAutoOutputActions.createConfigureItemOutputSideAction(side));
@@ -187,7 +226,7 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
 
     boolean configureSelectedFluidOutputSide() {
         Direction side = selectedSide;
-        if (side == null) {
+        if (side == null || !supportsFluidOutput()) {
             return false;
         }
         sendAction(LDLib2DirectionalAutoOutputActions.createConfigureFluidOutputSideAction(side));
@@ -203,22 +242,25 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     }
 
     OutputMode getItemOutputMode() {
+        DirectionalAutoOutputMachine output = this.output;
         Direction side = selectedSide;
-        if (side == null || output.getItemOutputDirection() != side) {
+        if (output == null || side == null || output.getItemOutputDirection() != side) {
             return OutputMode.OFF;
         }
         return output.isAutoOutputItems() ? OutputMode.AUTO : OutputMode.OUTPUT;
     }
 
     OutputMode getFluidOutputMode() {
+        DirectionalAutoOutputMachine output = this.output;
         Direction side = selectedSide;
-        if (side == null || output.getFluidOutputDirection() != side) {
+        if (output == null || side == null || output.getFluidOutputDirection() != side) {
             return OutputMode.OFF;
         }
         return output.isAutoOutputFluids() ? OutputMode.AUTO : OutputMode.OUTPUT;
     }
 
     private UIElement createItemControls() {
+        DirectionalAutoOutputMachine output = requireOutput();
         UIElement controls = UITemplate.setLDLib2Bounds(new UIElement(), 6,
                 PAGE_HEIGHT - SCENE_MARGIN - CONTROL_SIZE, CONTROL_GROUP_WIDTH, CONTROL_SIZE);
         controls.addChild(new ItemOutputModeButton());
@@ -231,6 +273,7 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     }
 
     private UIElement createFluidControls() {
+        DirectionalAutoOutputMachine output = requireOutput();
         int y = PAGE_HEIGHT - SCENE_MARGIN - CONTROL_SIZE;
         if (output.supportsAutoOutputItems()) {
             y -= CONTROL_SIZE + CONTROL_ROW_GAP;
@@ -246,11 +289,47 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         return controls;
     }
 
+    private UIElement createCoverControls() {
+        UIElement controls = UITemplate.setLDLib2Bounds(new UIElement(),
+                PAGE_WIDTH - SCENE_MARGIN - CONTROL_GROUP_WIDTH,
+                PAGE_HEIGHT - SCENE_MARGIN - CONTROL_SIZE,
+                CONTROL_GROUP_WIDTH, CONTROL_SIZE);
+        controls.addChild(new CoverConfigButton());
+        CoverSlotElement coverSlot = new CoverSlotElement();
+        UITemplate.setLDLib2Bounds(coverSlot, CONTROL_SIZE + CONTROL_GAP, 0, CONTROL_SIZE, CONTROL_SIZE);
+        controls.addChild(coverSlot);
+        return controls;
+    }
+
     private void sendAction(SyncActionData action) {
         actionSender.accept(pageHolder, action);
     }
 
+    private boolean supportsItemOutput() {
+        DirectionalAutoOutputMachine output = this.output;
+        return output != null && output.supportsAutoOutputItems();
+    }
+
+    private boolean supportsFluidOutput() {
+        DirectionalAutoOutputMachine output = this.output;
+        return output != null && output.supportsAutoOutputFluids();
+    }
+
+    private DirectionalAutoOutputMachine requireOutput() {
+        DirectionalAutoOutputMachine output = this.output;
+        if (output == null) {
+            throw new IllegalStateException("Cover-only directional page has no auto-output controls.");
+        }
+        return output;
+    }
+
+    private @Nullable CoverBehavior getSelectedCover() {
+        Direction side = selectedSide;
+        return side == null ? null : coverContainer.getCoverAtSide(side);
+    }
+
     private List<Component> getItemModeTooltips() {
+        DirectionalAutoOutputMachine output = requireOutput();
         Direction side = selectedSide;
         if (side == null) {
             return List.copyOf(LangHandler.getMultiLang("gtpm.gui.item_auto_output.unselected"));
@@ -271,6 +350,7 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     }
 
     private List<Component> getFluidModeTooltips() {
+        DirectionalAutoOutputMachine output = requireOutput();
         Direction side = selectedSide;
         if (side == null) {
             return List.copyOf(LangHandler.getMultiLang("gtpm.gui.fluid_auto_output.unselected"));
@@ -352,6 +432,7 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         }
 
         private void refreshVisibility() {
+            DirectionalAutoOutputMachine output = requireOutput();
             setVisible(output.isAutoOutputItems() && output.getItemOutputDirection() != null);
         }
     }
@@ -375,7 +456,56 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         }
 
         private void refreshVisibility() {
+            DirectionalAutoOutputMachine output = requireOutput();
             setVisible(output.isAutoOutputFluids() && output.getFluidOutputDirection() != null);
+        }
+    }
+
+    private final class CoverConfigButton extends GTButtonElement {
+
+        private CoverConfigButton() {
+            super(0, 0, CONTROL_SIZE, CONTROL_SIZE, COVER_CONFIG_TEXTURE,
+                    LDLib2DirectionalFancyConfigurator.this::onCoverConfigClick);
+            noText();
+            refreshState();
+        }
+
+        @Override
+        public void screenTick() {
+            refreshState();
+            super.screenTick();
+        }
+
+        private void refreshState() {
+            CoverBehavior cover = getSelectedCover();
+            boolean configurable = cover != null && CoverUIHelper.canOpenLDLib2(cover, player);
+            setVisible(configurable);
+            setActive(configurable);
+        }
+    }
+
+    private final class CoverSlotElement extends GTItemSlotElement {
+
+        private CoverSlotElement() {
+            setCanPutItems(false);
+            setCanTakeItems(false);
+            setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.IO_CONFIG_COVER_SLOT_OVERLAY));
+            addEventListener(UIEvents.MOUSE_DOWN, LDLib2DirectionalFancyConfigurator.this::onCoverSlotClick);
+            refreshState();
+        }
+
+        @Override
+        public void screenTick() {
+            refreshState();
+            super.screenTick();
+        }
+
+        private void refreshState() {
+            Direction side = selectedSide;
+            setVisible(side != null);
+            setActive(side != null);
+            CoverBehavior cover = getSelectedCover();
+            setItem(cover == null ? ItemStack.EMPTY : cover.getAttachItem().copy(), false);
         }
     }
 
@@ -391,5 +521,30 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
             event.stopImmediatePropagation();
             event.hasHandler = true;
         }
+    }
+
+    private void onCoverSlotClick(UIEvent event) {
+        Direction side = selectedSide;
+        if (side == null || (event.button != GLFW.GLFW_MOUSE_BUTTON_LEFT &&
+                event.button != GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
+            return;
+        }
+        SyncActionData action = player.containerMenu.getCarried().isEmpty() && getSelectedCover() != null ?
+                LDLib2DirectionalCoverActions.createRemoveCoverAction(side) :
+                LDLib2DirectionalCoverActions.createPlaceCoverAction(side);
+        sendAction(action);
+        event.stopImmediatePropagation();
+        event.hasHandler = true;
+    }
+
+    private void onCoverConfigClick(UIEvent event) {
+        Direction side = selectedSide;
+        CoverBehavior cover = getSelectedCover();
+        if (side == null || cover == null || !CoverUIHelper.canOpenLDLib2(cover, player)) {
+            return;
+        }
+        sendAction(LDLib2DirectionalCoverActions.createOpenCoverAction(side));
+        event.stopImmediatePropagation();
+        event.hasHandler = true;
     }
 }

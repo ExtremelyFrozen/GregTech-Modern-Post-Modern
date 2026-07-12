@@ -24,6 +24,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -42,10 +43,10 @@ public final class LDLib2DirectionalSceneElement {
     private LDLib2DirectionalSceneElement() {}
 
     /**
-     * Attaches a directional output scene to a common-side placeholder element.
+     * Attaches a directional machine scene with optional auto-output overlays to a common-side placeholder element.
      */
     public static void attachScene(UIElement sceneContainer, MetaMachine machine,
-                                   DirectionalAutoOutputMachine output, int width, int height,
+                                   @Nullable DirectionalAutoOutputMachine output, int width, int height,
                                    BiPredicate<Direction, Integer> faceClickHandler) {
         BlockPos machinePos = machine.getBlockPos();
         DirectionalScene scene = new DirectionalScene(machinePos, faceClickHandler);
@@ -64,7 +65,9 @@ public final class LDLib2DirectionalSceneElement {
         }
         dummyWorld.setBlockFilter(pos -> pos.equals(machinePos) || adjacentPositions.contains(pos));
         renderer.addRenderedBlocks(adjacentPositions, new AdditiveRenderHook());
-        scene.setAfterWorldRender(ignored -> renderOutputs(scene, machinePos, output));
+        if (output != null) {
+            scene.setAfterWorldRender(ignored -> renderOutputs(scene, machinePos, output));
+        }
 
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {

@@ -2,17 +2,25 @@ package com.gregtechceu.gtceu.api.machine.fancyconfigurator;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.cover.CoverBehavior;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2DirectionalFaceClickTracker;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.machine.SimpleTieredMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
+import com.gregtechceu.gtceu.common.data.GTCovers;
+import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMachines;
+import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
 import com.gregtechceu.gtceu.common.machine.electric.ItemCollectorMachine;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.gametest.util.TestUtils;
 
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
@@ -25,6 +33,8 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -48,6 +58,9 @@ public class LDLib2DirectionalFancyConfiguratorTest {
             .id("set_item_input_from_output_side");
     private static final ResourceLocation SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION = GTCEu
             .id("set_fluid_input_from_output_side");
+    private static final ResourceLocation PLACE_DIRECTIONAL_COVER_ACTION = GTCEu.id("place_directional_cover");
+    private static final ResourceLocation REMOVE_DIRECTIONAL_COVER_ACTION = GTCEu.id("remove_directional_cover");
+    private static final ResourceLocation OPEN_DIRECTIONAL_COVER_ACTION = GTCEu.id("open_directional_cover");
 
     @TestHolder
     @EmptyTemplate
@@ -103,6 +116,148 @@ public class LDLib2DirectionalFancyConfiguratorTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void coverOnlyPageBuildsWithoutAutoOutputOrClientScene(GameTestHelper helper) {
+        BatteryBufferMachine machine = createCoverOnlyMachine(helper);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineUIHolder pageHolder = new MachineUIHolderContext(player, machine);
+        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(machine, player, pageHolder);
+
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
+                pageHolder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
+        UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
+        UIElement sceneHost = pageRoot.getChildren().getFirst();
+        UIElement coverControls = pageRoot.getChildren().get(1);
+
+        helper.assertTrue(machine.getTrait(AutoOutputTrait.TYPE) == null,
+                "cover-only page test machine unexpectedly exposes auto-output");
+        helper.assertTrue(pageRoot.getChildren().size() == 2,
+                "cover-only directional page should contain only the scene and cover controls");
+        helper.assertTrue(coverControls.getChildren().size() == 2 &&
+                coverControls.getChildren().get(1) instanceof GTItemSlotElement,
+                "cover-only directional page did not build its config button and local cover slot");
+        helper.assertTrue(sceneHost.getChildren().isEmpty(),
+                "server-side cover-only page must not construct a client Scene");
+        helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF &&
+                page.getFluidOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
+                "cover-only directional page exposed an auto-output mode");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void pageRejectsHolderForDifferentMachine(GameTestHelper helper) {
+        BatteryBufferMachine machine = createCoverOnlyMachine(helper);
+        BatteryBufferMachine otherMachine = (BatteryBufferMachine) TestUtils.setMachine(helper,
+                new BlockPos(3, 1, 1), GTMachines.BATTERY_BUFFER_4[GTValues.LV]);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineUIHolder wrongHolder = new MachineUIHolderContext(player, otherMachine);
+        IllegalArgumentException rejection = null;
+
+        try {
+            new LDLib2DirectionalFancyConfigurator(machine, player, wrongHolder);
+        } catch (IllegalArgumentException exception) {
+            rejection = exception;
+        }
+
+        helper.assertTrue(rejection != null,
+                "directional page accepted a holder that resolves a different machine");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void coverControlsUsePageHolderAndRefreshFromSyncedCoverState(GameTestHelper helper) {
+        BatteryBufferMachine machine = createCoverOnlyMachine(helper);
+        machine.setFrontFacing(Direction.NORTH);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineUIHolder pageHolder = new MachineUIHolderContext(player, machine);
+        MachineUIHolder rootHolder = new MachineUIHolderContext(player, machine);
+        List<CapturedAction> capturedActions = new ArrayList<>();
+        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(
+                machine, player, pageHolder,
+                (holder, action) -> capturedActions.add(new CapturedAction(holder, action)));
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
+                rootHolder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
+        UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
+        UIElement coverControls = pageRoot.getChildren().get(1);
+        UIElement configButton = coverControls.getChildren().getFirst();
+        UIElement coverSlot = coverControls.getChildren().get(1);
+
+        helper.assertTrue(rootHolder != pageHolder, "test requires different root and page machine holders");
+        helper.assertFalse(coverSlot.isVisible(), "cover slot should remain hidden before selecting a face");
+
+        helper.assertTrue(page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT),
+                "first cover-only face click should select the side");
+        coverSlot.screenTick();
+        helper.assertTrue(capturedActions.isEmpty(), "first cover-only face click sent an action");
+        helper.assertTrue(coverSlot.isVisible() && coverSlot.isActive(),
+                "cover slot did not activate after selecting a face");
+
+        page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        helper.assertTrue(capturedActions.isEmpty(),
+                "repeated cover-only scene click sent an auto-output action");
+
+        player.containerMenu.setCarried(GTItems.COVER_MACHINE_CONTROLLER.asStack());
+        clickElement(coverSlot, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        assertAction(helper, capturedActions, 0, pageHolder, PLACE_DIRECTIONAL_COVER_ACTION,
+                Direction.EAST.get3DDataValue());
+
+        player.containerMenu.setCarried(ItemStack.EMPTY);
+        TestUtils.placeCover(helper, machine, GTItems.COVER_MACHINE_CONTROLLER.asStack(), Direction.EAST);
+        coverSlot.screenTick();
+        configButton.screenTick();
+        GTItemSlotElement localCoverSlot = (GTItemSlotElement) coverSlot;
+        helper.assertTrue(localCoverSlot.getValue().is(GTItems.COVER_MACHINE_CONTROLLER.get()),
+                "cover slot did not refresh from the machine cover container's synced state");
+        helper.assertTrue(configButton.isVisible() && configButton.isActive(),
+                "configurable cover did not activate its open button");
+
+        clickElement(configButton, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        assertAction(helper, capturedActions, 1, pageHolder, OPEN_DIRECTIONAL_COVER_ACTION,
+                Direction.EAST.get3DDataValue());
+        clickElement(coverSlot, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        assertAction(helper, capturedActions, 2, pageHolder, REMOVE_DIRECTIONAL_COVER_ACTION,
+                Direction.EAST.get3DDataValue());
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void deniedCoverDoesNotExposeConfigAction(GameTestHelper helper) {
+        BatteryBufferMachine machine = createCoverOnlyMachine(helper);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineUIHolder pageHolder = new MachineUIHolderContext(player, machine);
+        List<CapturedAction> capturedActions = new ArrayList<>();
+        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(
+                machine, player, pageHolder,
+                (holder, action) -> capturedActions.add(new CapturedAction(holder, action)));
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
+                pageHolder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
+        UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
+        UIElement configButton = pageRoot.getChildren().get(1).getChildren().getFirst();
+
+        DeniedLDLib2Cover deniedCover = new DeniedLDLib2Cover(machine, Direction.EAST);
+        deniedCover.onAttached(GTItems.COVER_MACHINE_CONTROLLER.asStack(), player);
+        machine.getCoverContainer().setCoverAtSide(deniedCover, Direction.EAST);
+        page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        configButton.screenTick();
+
+        helper.assertFalse(configButton.isVisible(),
+                "cover that denies this player must keep its config button hidden");
+        helper.assertFalse(configButton.isActive(),
+                "cover that denies this player must keep its config button inactive");
+        clickElement(configButton, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        helper.assertTrue(capturedActions.isEmpty(),
+                "cover that denies this player must not send an open action");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
     public static void itemPageUsesItsHolderAndRequiresARepeatedLeftClick(GameTestHelper helper) {
         ItemCollectorMachine machine = createItemCollector(helper);
         machine.setFrontFacing(Direction.NORTH);
@@ -112,7 +267,8 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         MachineUIHolder rootHolder = new MachineUIHolderContext(player, machine);
         List<CapturedAction> capturedActions = new ArrayList<>();
         LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(
-                output, pageHolder, (holder, action) -> capturedActions.add(new CapturedAction(holder, action)));
+                machine, player, pageHolder,
+                (holder, action) -> capturedActions.add(new CapturedAction(holder, action)));
         LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
                 rootHolder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
         UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
@@ -182,7 +338,8 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         MachineUIHolder rootHolder = new MachineUIHolderContext(player, machine);
         List<CapturedAction> capturedActions = new ArrayList<>();
         LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(
-                output, pageHolder, (holder, action) -> capturedActions.add(new CapturedAction(holder, action)));
+                machine, player, pageHolder,
+                (holder, action) -> capturedActions.add(new CapturedAction(holder, action)));
         LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
                 rootHolder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
         UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
@@ -192,8 +349,8 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         UIElement allowFluidInputButton = fluidControls.getChildren().get(1);
 
         helper.assertTrue(rootHolder != pageHolder, "test requires different root and page machine holders");
-        helper.assertTrue(pageRoot.getChildren().size() == 5,
-                "combined page should contain one scene, two labels, and two control rows");
+        helper.assertTrue(pageRoot.getChildren().size() == 6,
+                "combined page should contain one scene, two labels, two output control rows, and cover controls");
         helper.assertFalse(fluidLabel.isAllowHitTest(),
                 "fluid auto-output label must not block pointer input to the scene beneath it");
         helper.assertTrue(page.getFluidOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
@@ -248,7 +405,7 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         AutoOutputTrait output = requireAutoOutputTrait(machine);
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         MachineUIHolder pageHolder = new MachineUIHolderContext(player, machine);
-        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(output, pageHolder);
+        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(machine, player, pageHolder);
 
         LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
                 pageHolder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
@@ -257,8 +414,8 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         UIElement sceneHost = pageRoot.getChildren().getFirst();
         UIElement autoOutputLabel = pageRoot.getChildren().get(1);
 
-        helper.assertTrue(pageRoot.getChildren().size() == 3,
-                "item directional page should keep scene, label, and controls in stable order");
+        helper.assertTrue(pageRoot.getChildren().size() == 4,
+                "item directional page should keep scene, label, output controls, and cover controls in stable order");
         helper.assertTrue(sceneHost.getChildren().isEmpty(),
                 "server-side directional page must not construct a client Scene");
         helper.assertFalse(autoOutputLabel.isAllowHitTest(),
@@ -276,6 +433,11 @@ public class LDLib2DirectionalFancyConfiguratorTest {
     private static SimpleTieredMachine createSimpleMachine(GameTestHelper helper) {
         return (SimpleTieredMachine) TestUtils.setMachine(helper, new BlockPos(1, 1, 1),
                 GTMachines.ARC_FURNACE[GTValues.LV]);
+    }
+
+    private static BatteryBufferMachine createCoverOnlyMachine(GameTestHelper helper) {
+        return (BatteryBufferMachine) TestUtils.setMachine(helper, new BlockPos(1, 1, 1),
+                GTMachines.BATTERY_BUFFER_4[GTValues.LV]);
     }
 
     private static AutoOutputTrait requireAutoOutputTrait(ItemCollectorMachine machine) {
@@ -300,10 +462,31 @@ public class LDLib2DirectionalFancyConfiguratorTest {
     }
 
     private static void clickButton(UIElement button) {
+        clickElement(button, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+    }
+
+    private static void clickElement(UIElement element, int button) {
         UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
-        event.target = button;
-        event.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        event.target = element;
+        event.button = button;
         UIEventDispatcher.dispatchEvent(event, false, false, false);
+    }
+
+    private static final class DeniedLDLib2Cover extends CoverBehavior implements LDLib2CoverUIProvider {
+
+        private DeniedLDLib2Cover(BatteryBufferMachine machine, Direction side) {
+            super(GTCovers.MACHINE_CONTROLLER, machine.getCoverContainer(), side);
+        }
+
+        @Override
+        public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+            return false;
+        }
+
+        @Override
+        public UI createLDLib2UI(Player player, UICoverHolder holder) {
+            throw new IllegalStateException("Denied test cover must never create an LDLib2 UI.");
+        }
     }
 
     private record CapturedAction(MachineUIHolder holder, SyncActionData action) {}
