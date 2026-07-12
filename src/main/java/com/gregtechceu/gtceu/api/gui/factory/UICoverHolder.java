@@ -8,8 +8,10 @@ import net.minecraft.resources.ResourceLocation;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 /**
- * Holds the stable cover identity used to open and validate a cover UI.
+ * Holds the stable cover identity and action session used to validate a cover UI.
  *
  * <p>
  * The holder keeps cover screens from depending on a {@link CoverBehavior} instance as the UI factory payload while
@@ -33,7 +35,16 @@ public interface UICoverHolder {
     ResourceLocation getCoverDefinitionId();
 
     /**
-     * Resolves the current cover instance and rejects replacements with a different definition id.
+     * Returns the opaque session id assigned when this cover menu opened.
+     *
+     * <p>
+     * The id correlates client actions with the current server menu. It is not an authorization decision by itself.
+     */
+    UUID getActionSessionId();
+
+    /**
+     * Resolves the current cover instance. Server-side opened holders reject any replacement, including one with the
+     * same definition id.
      */
     @Nullable
     CoverBehavior getCover();

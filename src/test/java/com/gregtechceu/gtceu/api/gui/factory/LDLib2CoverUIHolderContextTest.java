@@ -18,11 +18,17 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
+
+import com.mojang.authlib.GameProfile;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 import static com.gregtechceu.gtceu.api.GTValues.LV;
 
@@ -39,8 +45,8 @@ public class LDLib2CoverUIHolderContextTest {
     public static void serverCloseNotifiesOpenedCoverOnce(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         CloseTrackingCover cover = installCover(machine, false);
-        ServerPlayer player = preparePlayer(helper);
-        GTCoverUIContainerMenu menu = openMenu(helper, player, cover);
+        ServerPlayer player = preparePlayer(helper, machine, "close_once");
+        GTCoverUIContainerMenu menu = openMenu(player, cover, 1);
 
         player.closeContainer();
         menu.removed(player);
@@ -55,8 +61,8 @@ public class LDLib2CoverUIHolderContextTest {
     public static void replacementDoesNotReceiveOpenedCoverClose(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         CloseTrackingCover openedCover = installCover(machine, false);
-        ServerPlayer player = preparePlayer(helper);
-        GTCoverUIContainerMenu menu = openMenu(helper, player, openedCover);
+        ServerPlayer player = preparePlayer(helper, machine, "close_replace");
+        GTCoverUIContainerMenu menu = openMenu(player, openedCover, 2);
         CloseTrackingCover replacement = installCover(machine, false);
 
         player.closeContainer();
@@ -73,8 +79,8 @@ public class LDLib2CoverUIHolderContextTest {
     public static void closeFailureIsLoggedAndNotRetried(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         CloseTrackingCover cover = installCover(machine, true);
-        ServerPlayer player = preparePlayer(helper);
-        GTCoverUIContainerMenu menu = openMenu(helper, player, cover);
+        ServerPlayer player = preparePlayer(helper, machine, "close_failure");
+        GTCoverUIContainerMenu menu = openMenu(player, cover, 3);
 
         player.closeContainer();
         menu.removed(player);
@@ -93,17 +99,19 @@ public class LDLib2CoverUIHolderContextTest {
         return cover;
     }
 
-    private static ServerPlayer preparePlayer(GameTestHelper helper) {
-        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+    private static ServerPlayer preparePlayer(GameTestHelper helper, BufferMachine machine, String name) {
+        UUID profileId = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+        ServerPlayer player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(profileId, name));
         player.closeContainer();
         player.setGameMode(GameType.SURVIVAL);
+        player.moveTo(Vec3.atCenterOf(machine.getBlockPos()));
         return player;
     }
 
-    private static GTCoverUIContainerMenu openMenu(GameTestHelper helper, ServerPlayer player,
-                                                   CloseTrackingCover cover) {
-        helper.assertTrue(CoverUIHelper.open(cover, player), "cover UI did not open");
-        if (player.containerMenu instanceof GTCoverUIContainerMenu menu) {
+    private static GTCoverUIContainerMenu openMenu(ServerPlayer player, CloseTrackingCover cover, int containerId) {
+        LDLib2CoverUIHolderContext holder = new LDLib2CoverUIHolderContext(player, cover);
+        if (holder.createMenu(containerId, player.getInventory(), player) instanceof GTCoverUIContainerMenu menu) {
+            player.containerMenu = menu;
             return menu;
         }
         throw new GameTestAssertException("cover UI did not use the dedicated container menu");

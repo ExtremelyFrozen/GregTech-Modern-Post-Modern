@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.network.packets
 import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper
 import com.gregtechceu.gtceu.api.cover.CoverBehavior
+import com.gregtechceu.gtceu.api.gui.factory.GTCoverUIContainerMenu
 import com.gregtechceu.gtceu.api.machine.MetaMachine
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData
@@ -20,13 +21,21 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.Level
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
-open class CPacketCoverActionToServer(private val pos: BlockPos, private val side: Direction, private val coverDefinitionId: ResourceLocation, private val action: SyncActionData) :
-	CustomPacketPayload {
+import java.util.UUID
+
+open class CPacketCoverActionToServer(
+	private val pos: BlockPos,
+	private val side: Direction,
+	private val coverDefinitionId: ResourceLocation,
+	private val actionSessionId: UUID,
+	private val action: SyncActionData,
+) : CustomPacketPayload {
 
 	constructor(buffer: RegistryFriendlyByteBuf) : this(
 		buffer.readBlockPos(),
 		buffer.readEnum(Direction::class.java),
 		buffer.readResourceLocation(),
+		buffer.readUUID(),
 		SyncActionData.STREAM_CODEC.decode(buffer),
 	)
 
@@ -34,6 +43,7 @@ open class CPacketCoverActionToServer(private val pos: BlockPos, private val sid
 		buffer.writeBlockPos(pos)
 		buffer.writeEnum(side)
 		buffer.writeResourceLocation(coverDefinitionId)
+		buffer.writeUUID(actionSessionId)
 		SyncActionData.STREAM_CODEC.encode(buffer, action)
 	}
 
@@ -41,6 +51,41 @@ open class CPacketCoverActionToServer(private val pos: BlockPos, private val sid
 		val player = context.player()
 		if (player !is ServerPlayer) {
 			GTCEu.LOGGER.warn("Sync action: rejecting cover action {} without server player", action.actionId)
+			return
+		}
+
+		val menu = player.containerMenu
+		if (menu !is GTCoverUIContainerMenu) {
+			GTCEu.LOGGER.warn(
+				"Sync action: rejecting cover action {} from {} because no cover UI menu is open",
+				action.actionId,
+				player.gameProfile.name,
+			)
+			return
+		}
+		val matchesActionSession = try {
+			menu.matchesActionSession(player, pos, side, coverDefinitionId, actionSessionId)
+		} catch (exception: RuntimeException) {
+			GTCEu.LOGGER.error(
+				"Sync action: failed to validate cover action {} from {} for {} {} {}",
+				action.actionId,
+				player.gameProfile.name,
+				pos,
+				side,
+				coverDefinitionId,
+				exception,
+			)
+			return
+		}
+		if (!matchesActionSession) {
+			GTCEu.LOGGER.warn(
+				"Sync action: rejecting cover action {} from {} because the active cover UI session for {} {} {} does not match",
+				action.actionId,
+				player.gameProfile.name,
+				pos,
+				side,
+				coverDefinitionId,
+			)
 			return
 		}
 

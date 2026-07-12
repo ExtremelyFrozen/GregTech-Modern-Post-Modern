@@ -15,6 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +23,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 
 import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -37,27 +40,31 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
     private final Direction side;
     private final ResourceLocation coverDefinitionId;
     @Nullable
-    private final LDLib2CoverUIProvider openedProvider;
+    private final CoverBehavior openedCover;
+    @Nullable
+    private UUID actionSessionId;
     private boolean serverCloseNotified;
 
     public LDLib2CoverUIHolderContext(Player player, CoverBehavior cover) {
         this(player, cover.coverHolder.getBlockPos(), cover.attachedSide, cover.coverDefinition.getId(),
-                requireProvider(cover));
+                requireProvider(cover), null);
     }
 
     public LDLib2CoverUIHolderContext(Player player, BlockPos pos, Direction side,
-                                      ResourceLocation coverDefinitionId) {
-        this(player, pos, side, coverDefinitionId, null);
+                                      ResourceLocation coverDefinitionId, UUID actionSessionId) {
+        this(player, pos, side, coverDefinitionId, null, actionSessionId);
     }
 
     private LDLib2CoverUIHolderContext(Player player, BlockPos pos, Direction side,
                                        ResourceLocation coverDefinitionId,
-                                       @Nullable LDLib2CoverUIProvider openedProvider) {
+                                       @Nullable CoverBehavior openedCover,
+                                       @Nullable UUID actionSessionId) {
         this.player = player;
         this.pos = pos;
         this.side = side;
         this.coverDefinitionId = coverDefinitionId;
-        this.openedProvider = openedProvider;
+        this.openedCover = openedCover;
+        this.actionSessionId = actionSessionId;
     }
 
     @Override
@@ -75,6 +82,15 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
         return coverDefinitionId;
     }
 
+    @Override
+    public UUID getActionSessionId() {
+        UUID sessionId = actionSessionId;
+        if (sessionId == null) {
+            throw new IllegalStateException("Cover UI holder is not bound to an open action session.");
+        }
+        return sessionId;
+    }
+
     @Nullable
     @Override
     public CoverBehavior getCover() {
@@ -90,6 +106,9 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
 
         CoverBehavior cover = coverable.getCoverAtSide(side);
         if (cover == null || !cover.coverDefinition.getId().equals(coverDefinitionId)) {
+            return null;
+        }
+        if (openedCover != null && cover != openedCover) {
             return null;
         }
         return cover;
@@ -112,6 +131,13 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
 
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        if (!(player instanceof ServerPlayer) || this.player != player) {
+            throw new IllegalStateException("Cover UI menu must be created for its original server player.");
+        }
+        if (actionSessionId != null) {
+            throw new IllegalStateException("Cover UI holder cannot create more than one menu session.");
+        }
+        actionSessionId = UUID.randomUUID();
         return new GTCoverUIContainerMenu(GTMenuTypes.COVER_UI.get(), containerId, playerInventory, this);
     }
 
@@ -120,6 +146,7 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
         buffer.writeBlockPos(pos);
         buffer.writeEnum(side);
         buffer.writeResourceLocation(coverDefinitionId);
+        buffer.writeUUID(getActionSessionId());
     }
 
     @Override
@@ -142,7 +169,7 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
             return;
         }
         serverCloseNotified = true;
-        if (openedProvider == null) {
+        if (!(openedCover instanceof LDLib2CoverUIProvider openedProvider)) {
             return;
         }
         try {
@@ -153,9 +180,17 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
         }
     }
 
-    private static LDLib2CoverUIProvider requireProvider(CoverBehavior cover) {
-        if (cover instanceof LDLib2CoverUIProvider provider) {
-            return provider;
+    boolean matchesActionSession(ServerPlayer player, BlockPos pos, Direction side,
+                                 ResourceLocation coverDefinitionId, UUID actionSessionId) {
+        return openedCover != null && !serverCloseNotified && this.player == player && this.pos.equals(pos) &&
+                this.side == side && this.coverDefinitionId.equals(coverDefinitionId) &&
+                actionSessionId.equals(this.actionSessionId) && isStillValid(player) && !serverCloseNotified &&
+                getCover() == openedCover;
+    }
+
+    private static CoverBehavior requireProvider(CoverBehavior cover) {
+        if (cover instanceof LDLib2CoverUIProvider) {
+            return cover;
         }
         throw new IllegalArgumentException("Cover does not expose an LDLib2 UI.");
     }

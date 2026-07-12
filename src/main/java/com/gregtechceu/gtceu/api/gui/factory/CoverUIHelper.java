@@ -47,6 +47,6 @@ public final class CoverUIHelper {
      */
     public static void sendAction(UICoverHolder holder, SyncActionData action) {
         PacketDistributor.sendToServer(new CPacketCoverActionToServer(holder.getPos(), holder.getSide(),
-                holder.getCoverDefinitionId(), action));
+                holder.getCoverDefinitionId(), holder.getActionSessionId(), action));
     }
 }
