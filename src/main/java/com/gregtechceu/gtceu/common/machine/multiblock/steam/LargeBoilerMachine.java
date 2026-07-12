@@ -15,7 +15,6 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDisplayUIMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -39,7 +38,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
@@ -62,8 +60,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LargeBoilerMachine extends WorkableMultiblockMachine
-                                implements IDisplayUIMachine, LDLib2MachineUIProvider {
+public class LargeBoilerMachine extends WorkableMultiblockMachine implements LDLib2MachineUIProvider {
 
     public static final int TICKS_PER_STEAM_GENERATION = 5;
     private static final int THROTTLE_STEP = 5;
@@ -232,7 +229,9 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine
     }
 
     public void addDisplayText(List<Component> textList) {
-        IDisplayUIMachine.super.addDisplayText(textList);
+        for (var part : getParts()) {
+            part.addMultiText(textList);
+        }
         if (isFormed()) {
             textList.add(Component.translatable("gtpm.multiblock.large_boiler.temperature",
                     currentTemperature + 274, maxTemperature + 274));
@@ -254,13 +253,6 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine
         }
     }
 
-    public void handleDisplayClick(String componentData, ClickData clickData) {
-        if (!clickData.isRemote) {
-            adjustThrottle(readThrottleButtonDirection(componentData));
-        }
-    }
-
-    @Override
     public IGuiTexture getScreenTexture() {
         return GuiTextures.DISPLAY_STEAM.get(maxTemperature > 800);
     }
