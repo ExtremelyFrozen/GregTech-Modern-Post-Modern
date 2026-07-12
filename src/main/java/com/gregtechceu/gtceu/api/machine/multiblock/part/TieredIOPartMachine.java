@@ -5,7 +5,8 @@ import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ public class TieredIOPartMachine extends TieredPartMachine implements IControlla
      */
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     @RerenderOnChanged
     protected boolean workingEnabled;
 
@@ -32,8 +33,18 @@ public class TieredIOPartMachine extends TieredPartMachine implements IControlla
     @Override
     public void setWorkingEnabled(boolean workingEnabled) {
         this.workingEnabled = workingEnabled;
-        syncDataHolder.markClientSyncFieldDirty("workingEnabled");
+        onWorkingEnabledChanged();
     }
+
+    @ServerFieldChangeListener(fieldName = "workingEnabled")
+    private void onWorkingEnabledUpdatedByClient(boolean oldValue, boolean newValue) {
+        onWorkingEnabledChanged();
+    }
+
+    /**
+     * Rebuilds subclass runtime state after either a direct setter call or an accepted client update.
+     */
+    protected void onWorkingEnabledChanged() {}
 
     //////////////////////////////////////
     // ***** Initialization ******//

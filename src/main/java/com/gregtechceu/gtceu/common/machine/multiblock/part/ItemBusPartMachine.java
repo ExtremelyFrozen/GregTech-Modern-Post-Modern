@@ -235,8 +235,8 @@ public class ItemBusPartMachine extends TieredIOPartMachine
     }
 
     @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        super.setWorkingEnabled(workingEnabled);
+    protected void onWorkingEnabledChanged() {
+        super.onWorkingEnabledChanged();
         updateInventorySubscription();
     }
 

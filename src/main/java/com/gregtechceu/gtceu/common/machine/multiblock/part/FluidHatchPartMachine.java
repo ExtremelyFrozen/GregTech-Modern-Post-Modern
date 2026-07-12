@@ -197,8 +197,8 @@ public class FluidHatchPartMachine extends TieredIOPartMachine implements IHasCi
     }
 
     @Override
-    public void setWorkingEnabled(boolean workingEnabled) {
-        super.setWorkingEnabled(workingEnabled);
+    protected void onWorkingEnabledChanged() {
+        super.onWorkingEnabledChanged();
         updateTankSubscription();
     }
 
