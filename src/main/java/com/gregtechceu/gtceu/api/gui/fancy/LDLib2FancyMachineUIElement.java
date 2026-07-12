@@ -37,6 +37,10 @@ public class LDLib2FancyMachineUIElement extends UIElement {
     private final LDLib2ConfiguratorPanelElement configuratorPanel;
     private final LDLib2FancyTooltipsPanelElement tooltipsPanel;
     private final LDLib2FancyPageSwitcher pageSwitcher;
+    /**
+     * Holds side pages that belong to this opened UI context, such as pages that capture its validated holder.
+     */
+    private final List<LDLib2FancyUIProvider> contextualSubTabs;
     private final Map<LDLib2FancyUIProvider, UIElement> pageCache = new IdentityHashMap<>();
     private final Deque<NavigationEntry> previousPages = new ArrayDeque<>();
 
@@ -52,8 +56,18 @@ public class LDLib2FancyMachineUIElement extends UIElement {
 
     public LDLib2FancyMachineUIElement(LDLib2FancyUIProvider mainPage, Inventory inventory, MachineUIHolder holder,
                                        int width, int height) {
+        this(mainPage, inventory, holder, width, height, List.of());
+    }
+
+    /**
+     * Creates a Fancy shell with side pages scoped to this opened holder rather than shared machine state.
+     */
+    public LDLib2FancyMachineUIElement(LDLib2FancyUIProvider mainPage, Inventory inventory, MachineUIHolder holder,
+                                       int width, int height,
+                                       List<? extends LDLib2FancyUIProvider> contextualSubTabs) {
         this.mainPage = mainPage;
         this.holder = holder;
+        this.contextualSubTabs = List.copyOf(contextualSubTabs);
         UITemplate.setLDLib2Bounds(this, 0, 0, width, height);
         style(style -> style
                 .backgroundTexture(GuiTextures.BACKGROUND)
@@ -242,6 +256,9 @@ public class LDLib2FancyMachineUIElement extends UIElement {
         sideTabsElement.setMainTab(homePage);
         sideTabsElement.clearSubTabs();
         homePage.attachSideTabs(sideTabsElement);
+        if (homePage == mainPage) {
+            contextualSubTabs.forEach(sideTabsElement::attachSubTab);
+        }
     }
 
     private void setupInventoryPosition(boolean showInventory, int contentWidth, int contentHeight) {

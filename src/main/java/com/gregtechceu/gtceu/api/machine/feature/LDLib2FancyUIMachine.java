@@ -14,6 +14,7 @@ import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2AutoOutputFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2BatchModeFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DistinctPartFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2MachineModeFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2VoidingModeFancyConfigurator;
@@ -64,7 +65,14 @@ public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2FancyAction
     @Override
     default UI createLDLib2UI(Player player, MachineUIHolder holder) {
         return UI.of(new LDLib2FancyMachineUIElement(this, player.getInventory(), holder, getLDLib2PageWidth(),
-                getLDLib2PageHeight()));
+                getLDLib2PageHeight(), createLDLib2ContextualSubTabs(player, holder)));
+    }
+
+    /**
+     * Creates side pages that must capture the player and validated holder for this particular menu opening.
+     */
+    default List<LDLib2FancyUIProvider> createLDLib2ContextualSubTabs(Player player, MachineUIHolder holder) {
+        return List.of(new LDLib2DirectionalFancyConfigurator(self(), player, holder));
     }
 
     /**

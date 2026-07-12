@@ -451,6 +451,36 @@ public class LDLib2DirectionalFancyConfiguratorTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void fancyMachineShellAddsHolderScopedDirectionalPage(GameTestHelper helper) {
+        BatteryBufferMachine machine = createCoverOnlyMachine(helper);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineUIHolder holder = new MachineUIHolderContext(player, machine);
+
+        UI ui = machine.createLDLib2UI(player, holder);
+        helper.assertTrue(ui.getRootElement() instanceof LDLib2FancyMachineUIElement,
+                "migrated Fancy machine did not create the LDLib2 Fancy shell");
+        LDLib2FancyMachineUIElement shell = (LDLib2FancyMachineUIElement) ui.getRootElement();
+        UIElement pageContainer = shell.getChildren().getFirst();
+
+        helper.assertTrue(shell.getSideTabsElement().getChildren().size() == 2,
+                "migrated Fancy machine should expose its main and directional tabs");
+        helper.assertTrue(pageContainer.getChildren().size() == 1,
+                "holder-scoped directional page should be created lazily");
+
+        UIElement directionalTab = shell.getSideTabsElement().getChildren().get(1);
+        clickButton(directionalTab);
+
+        helper.assertTrue(pageContainer.getChildren().size() == 2,
+                "opening the directional tab should cache one holder-scoped page");
+        UIElement directionalRoot = pageContainer.getChildren().get(1);
+        helper.assertTrue(directionalRoot.getChildren().size() == 2,
+                "cover-only directional page should contain its scene host and cover controls");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
     public static void serverPageKeepsClientSceneHostEmpty(GameTestHelper helper) {
         ItemCollectorMachine machine = createItemCollector(helper);
         AutoOutputTrait output = requireAutoOutputTrait(machine);
