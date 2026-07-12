@@ -19,7 +19,8 @@ import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifierList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.ParallelHatchPartMachine;
 
@@ -46,7 +47,7 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
     @Getter
     protected int tier;
     @SaveField
-    @SyncToClient
+    @SyncBoth
     @Getter
     protected boolean batchEnabled;
 
@@ -101,7 +102,14 @@ public class WorkableElectricMultiblockMachine extends WorkableMultiblockMachine
     @Override
     public void setBatchEnabled(boolean batchEnabled) {
         this.batchEnabled = batchEnabled;
-        syncDataHolder.markClientSyncFieldDirty("batchEnabled");
+    }
+
+    @ServerFieldNormalizer(fieldName = "batchEnabled")
+    private boolean normalizeBatchEnabled(boolean candidate) {
+        if (!supportsBatchMode()) {
+            throw new IllegalArgumentException("Machine does not support batch mode.");
+        }
+        return candidate;
     }
 
     //////////////////////////////////////
