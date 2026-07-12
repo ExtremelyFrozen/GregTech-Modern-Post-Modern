@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.electric;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
@@ -10,21 +9,15 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
-import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
@@ -34,12 +27,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.ItemStack;
@@ -52,8 +42,6 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +54,6 @@ import org.jetbrains.annotations.Nullable;
 public class FisherMachine extends TieredEnergyMachine
                            implements LDLib2FancyUIMachine, IWorkable {
 
-    private static final ResourceLocation SET_FISHER_JUNK_ENABLED_ACTION = GTCEu.id("set_fisher_junk_enabled");
-    private static final ResourceLocation JUNK_ENABLED_FIELD = SyncFieldData.key("junkEnabled");
     private static final int SLOT_SIZE = 18;
     private static final int TEMPLATE_PADDING = 8;
     private static final int OUTPUT_SLOT_X_OFFSET = 24;
@@ -85,10 +71,6 @@ public class FisherMachine extends TieredEnergyMachine
     private static final int BAIT_SLOT_X = 4;
     private static final int JUNK_BUTTON_X = 4;
     private static final int JUNK_BUTTON_BOTTOM_MARGIN = 4;
-
-    static {
-        SyncActionDispatchers.server().register(new FisherJunkEnabledActionHandler());
-    }
 
     @SaveField
     protected final NotifiableItemStackHandler cache;
@@ -131,7 +113,7 @@ public class FisherMachine extends TieredEnergyMachine
 
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     protected boolean junkEnabled = true;
     @SaveField
     @SyncToClient
@@ -162,9 +144,6 @@ public class FisherMachine extends TieredEnergyMachine
 
     public void setJunkEnabled(boolean enabled) {
         junkEnabled = enabled;
-        if (!isRemote()) {
-            syncDataHolder.markClientSyncFieldDirty("junkEnabled");
-        }
     }
 
     @Override
@@ -340,7 +319,7 @@ public class FisherMachine extends TieredEnergyMachine
         }
 
         template.addChild(createLDLib2BaitSlot(BAIT_SLOT_X, getLDLib2BaitSlotY()));
-        template.addChild(createLDLib2JunkButton(shell, JUNK_BUTTON_X, getLDLib2JunkButtonY()));
+        template.addChild(createLDLib2JunkButton(JUNK_BUTTON_X, getLDLib2JunkButtonY()));
         root.addChild(template);
         return root;
     }
@@ -384,20 +363,20 @@ public class FisherMachine extends TieredEnergyMachine
         return UITemplate.setLDLib2Bounds(slot, x, y, SLOT_SIZE, SLOT_SIZE);
     }
 
-    private GTToggleButtonElement createLDLib2JunkButton(LDLib2FancyMachineUIElement shell, int x, int y) {
+    GTToggleButtonElement createLDLib2JunkButton(int x, int y) {
         GTToggleButtonElement button = new GTToggleButtonElement(x, y, SLOT_SIZE, SLOT_SIZE,
                 GuiTextures.itemStack(Items.NAME_TAG).scale(0.9F), this::isJunkEnabled,
-                enabled -> requestLDLib2JunkEnabled(shell, enabled))
+                this::requestLDLib2JunkEnabled)
                 .setShouldUseBaseBackground();
         button.style(style -> style.tooltips(LangHandler.getMultiLang("gtpm.gui.fisher_mode.tooltip",
                 GTValues.VNF[getTier()], GTValues.VNF[getTier()]).toArray(Component[]::new)));
         return button;
     }
 
-    private void requestLDLib2JunkEnabled(LDLib2FancyMachineUIElement shell, boolean enabled) {
+    private void requestLDLib2JunkEnabled(boolean enabled) {
         setJunkEnabled(enabled);
         if (isRemote()) {
-            MachineUIHelper.sendAction(shell.getHolder(), createSetFisherJunkEnabledAction(enabled));
+            sendServerSyncChanges();
         }
     }
 
@@ -440,70 +419,5 @@ public class FisherMachine extends TieredEnergyMachine
 
     private int getLDLib2JunkButtonY() {
         return getLDLib2TemplateHeight() - SLOT_SIZE - JUNK_BUTTON_BOTTOM_MARGIN;
-    }
-
-    private static SyncActionData createSetFisherJunkEnabledAction(boolean enabled) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(JUNK_ENABLED_FIELD, new JsonPrimitive(enabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_FISHER_JUNK_ENABLED_ACTION, enabled ? 1 : 0, payload);
-    }
-
-    private static final class FisherJunkEnabledActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_FISHER_JUNK_ENABLED_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof FisherMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, JUNK_ENABLED_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof FisherMachine machine)) {
-                throw new IllegalStateException("Fisher junk action received a non-fisher machine.");
-            }
-            machine.setJunkEnabled(requireBoolean(context.payload(), JUNK_ENABLED_FIELD));
-        }
-    }
-
-    private static SyncFieldData requireFieldData(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Fisher junk action payload is missing field data.");
-        }
-        return fields;
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        Boolean value = readBoolean(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Fisher junk action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 }
