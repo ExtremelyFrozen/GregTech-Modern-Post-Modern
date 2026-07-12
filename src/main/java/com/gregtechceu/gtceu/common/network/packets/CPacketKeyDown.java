@@ -15,6 +15,8 @@ import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+
 public class CPacketKeyDown implements CustomPacketPayload {
 
     public static final ResourceLocation ID = GTCEu.id("key_down");
@@ -33,11 +35,29 @@ public class CPacketKeyDown implements CustomPacketPayload {
         if (!(context.player() instanceof ServerPlayer player)) {
             return;
         }
-        for (var entry : updateKeys.int2BooleanEntrySet()) {
-            SyncedKeyMapping keyMapping = SyncedKeyMapping.getFromSyncId(entry.getIntKey());
-            keyMapping.serverActivate(entry.getBooleanValue(), player);
-        }
+        applyUpdates(updateKeys, player);
     }
+
+    static boolean applyUpdates(Int2BooleanMap updates, ServerPlayer player) {
+        var resolvedUpdates = new ArrayList<ResolvedKeyUpdate>(updates.size());
+        for (var entry : updates.int2BooleanEntrySet()) {
+            int syncId = entry.getIntKey();
+            SyncedKeyMapping keyMapping = SyncedKeyMapping.getFromSyncId(syncId);
+            if (keyMapping == null) {
+                GTCEu.LOGGER.warn("Input sync: rejecting unknown key mapping id {} from {}", syncId,
+                        player.getGameProfile().getName());
+                return false;
+            }
+            resolvedUpdates.add(new ResolvedKeyUpdate(keyMapping, entry.getBooleanValue()));
+        }
+
+        for (ResolvedKeyUpdate update : resolvedUpdates) {
+            update.keyMapping().serverActivate(update.keyDown(), player);
+        }
+        return true;
+    }
+
+    private record ResolvedKeyUpdate(SyncedKeyMapping keyMapping, boolean keyDown) {}
 
     @Override
     public @NotNull Type<CPacketKeyDown> type() {
