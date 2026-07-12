@@ -77,7 +77,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public class QuantumChestMachine extends TieredMachine implements IControllable,
-                                  LDLib2MachineUIProvider {
+                                 LDLib2MachineUIProvider {
 
     /**
      * Sourced from FunctionalStorage's
@@ -471,7 +471,7 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
     }
 
     private LDLib2FancyConfiguratorButton.Toggle createLDLib2WorkingEnabledConfigurator(Player player,
-                                                                                       MachineUIHolder holder) {
+                                                                                        MachineUIHolder holder) {
         return new LDLib2FancyConfiguratorButton.Toggle(
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0, 1, 0.5),
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0.5, 1, 0.5),

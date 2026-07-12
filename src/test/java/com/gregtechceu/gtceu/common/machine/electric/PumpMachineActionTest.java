@@ -44,7 +44,8 @@ public class PumpMachineActionTest {
         boolean result = dispatch(helper, holder, payload(AUTO_OUTPUT_FLUIDS_FIELD, new JsonPrimitive(true)));
 
         helper.assertTrue(result, "valid pump fluid auto-output action was rejected");
-        helper.assertTrue(holder.isAutoOutputFluids(), "valid pump fluid auto-output action did not update fluid state");
+        helper.assertTrue(holder.isAutoOutputFluids(),
+                "valid pump fluid auto-output action did not update fluid state");
         helper.assertTrue(!holder.isAutoOutputItems(), "pump fluid auto-output action changed item state");
         helper.succeed();
     }

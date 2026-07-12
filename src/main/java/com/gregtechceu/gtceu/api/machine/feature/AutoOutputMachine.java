@@ -3,7 +3,8 @@ package com.gregtechceu.gtceu.api.machine.feature;
 /**
  * Exposes auto-output toggle state independently of the concrete machine trait implementation.
  *
- * <p>LDLib2 Fancy auto-output actions use this narrow capability so dispatch validation and mutation can share one
+ * <p>
+ * LDLib2 Fancy auto-output actions use this narrow capability so dispatch validation and mutation can share one
  * contract between real auto-output traits and test holders.
  */
 public interface AutoOutputMachine {

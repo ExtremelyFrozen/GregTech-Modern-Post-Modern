@@ -82,7 +82,8 @@ import java.util.function.Predicate;
 public class QuantumTankMachine extends TieredMachine implements IControllable,
                                 LDLib2MachineUIProvider {
 
-    public static Object2LongMap<MachineDefinition> TANK_CAPACITY = Util.make(new Object2LongArrayMap<>(), map -> map.defaultReturnValue(-1L));
+    public static Object2LongMap<MachineDefinition> TANK_CAPACITY = Util.make(new Object2LongArrayMap<>(),
+            map -> map.defaultReturnValue(-1L));
 
     private static final int PAGE_WIDTH = 90;
     private static final int PAGE_HEIGHT = 63;
