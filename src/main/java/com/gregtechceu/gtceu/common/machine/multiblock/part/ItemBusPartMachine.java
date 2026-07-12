@@ -18,6 +18,9 @@ import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
@@ -62,7 +65,7 @@ public class ItemBusPartMachine extends TieredIOPartMachine
     protected final NotifiableItemStackHandler circuitInventory;
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private boolean isDistinct = false;
     @SaveField
     @SyncToClient
@@ -135,9 +138,18 @@ public class ItemBusPartMachine extends TieredIOPartMachine
 
     @Override
     public void setDistinct(boolean distinct) {
-        isDistinct = (io != IO.OUT && distinct);
-        syncDataHolder.markClientSyncFieldDirty("isDistinct");
+        isDistinct = normalizeDistinct(distinct);
         getHandlerList().setDistinctAndNotify(isDistinct);
+    }
+
+    @ServerFieldNormalizer(fieldName = "isDistinct")
+    private boolean normalizeDistinct(boolean distinct) {
+        return io != IO.OUT && distinct;
+    }
+
+    @ServerFieldChangeListener(fieldName = "isDistinct")
+    private void onDistinctChanged(boolean oldDistinct, boolean newDistinct) {
+        getHandlerList().setDistinctAndNotify(newDistinct);
     }
 
     @Override
