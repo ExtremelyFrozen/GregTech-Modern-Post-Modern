@@ -55,7 +55,6 @@ public class ObjectHolderMachine extends MultiblockPartMachine implements LDLib2
 
     public void setLocked(boolean locked) {
         isLocked = locked;
-        syncDataHolder.markClientSyncFieldDirty("isLocked");
     }
 
     public boolean isLocked() {
