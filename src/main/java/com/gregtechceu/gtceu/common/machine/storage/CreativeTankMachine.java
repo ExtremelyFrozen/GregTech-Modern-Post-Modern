@@ -69,17 +69,13 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
             .id("set_creative_tank_mb_per_cycle");
     private static final ResourceLocation SET_CREATIVE_TANK_TICKS_PER_CYCLE_ACTION = GTCEu
             .id("set_creative_tank_ticks_per_cycle");
-    private static final ResourceLocation SET_CREATIVE_TANK_WORKING_ENABLED_ACTION = GTCEu
-            .id("set_creative_tank_working_enabled");
     private static final ResourceLocation MB_PER_CYCLE_FIELD = SyncFieldData.key("mBPerCycle");
     private static final ResourceLocation TICKS_PER_CYCLE_FIELD = SyncFieldData.key("ticksPerCycle");
-    private static final ResourceLocation WORKING_ENABLED_FIELD = SyncFieldData.key("workingEnabled");
 
     static {
         SyncActionDispatchers.server().register(new CreativeTankFluidActionHandler());
         SyncActionDispatchers.server().register(new CreativeTankMBPerCycleActionHandler());
         SyncActionDispatchers.server().register(new CreativeTankTicksPerCycleActionHandler());
-        SyncActionDispatchers.server().register(new CreativeTankWorkingEnabledActionHandler());
     }
 
     @Getter
@@ -200,7 +196,7 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         root.addChild(new GTImageElement(7, 82, 154, 14, GuiTextures.DISPLAY));
         root.addChild(createLDLib2TicksPerCycleField(player, holder));
         root.addChild(createLDLib2Label(7, 65, 162, 10, "gtpm.creative.tank.tpc"));
-        root.addChild(createLDLib2ActivityButton(player, holder));
+        root.addChild(createLDLib2ActivityButton());
         return root;
     }
 
@@ -284,9 +280,9 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         return field;
     }
 
-    private GTButtonElement createLDLib2ActivityButton(Player player, MachineUIHolder holder) {
+    private GTButtonElement createLDLib2ActivityButton() {
         return new GTButtonElement(7, 101, 162, 20, createLDLib2ActivityButtonTexture(),
-                event -> setLDLib2WorkingEnabled(player, holder, !isWorkingEnabled())) {
+                event -> setLDLib2WorkingEnabled(!isWorkingEnabled())) {
 
             @Override
             public void screenTick() {
@@ -301,14 +297,13 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
                 GuiTextures.text(isWorkingEnabled() ? "gtpm.creative.activity.on" : "gtpm.creative.activity.off"));
     }
 
-    private LDLib2FancyConfiguratorButton.Toggle createLDLib2WorkingEnabledConfigurator(Player player,
-                                                                                        MachineUIHolder holder) {
+    LDLib2FancyConfiguratorButton.Toggle createLDLib2WorkingEnabledConfigurator() {
         return new LDLib2FancyConfiguratorButton.Toggle(
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0, 1, 0.5),
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0.5, 1, 0.5),
                 this::isWorkingEnabled,
                 (event, pressed) -> {
-                    setLDLib2WorkingEnabled(player, holder, pressed);
+                    setLDLib2WorkingEnabled(pressed);
                     event.stopImmediatePropagation();
                     event.hasHandler = true;
                 })
@@ -345,10 +340,10 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         }
     }
 
-    private void setLDLib2WorkingEnabled(Player player, MachineUIHolder holder, boolean workingEnabled) {
+    private void setLDLib2WorkingEnabled(boolean workingEnabled) {
         setWorkingEnabled(workingEnabled);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeTankWorkingEnabledAction(workingEnabled));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
@@ -381,15 +376,6 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
     private static SyncActionData createSetCreativeTankTicksPerCycleAction(int ticksPerCycle) {
         return createSetCreativeTankIntAction(SET_CREATIVE_TANK_TICKS_PER_CYCLE_ACTION, TICKS_PER_CYCLE_FIELD,
                 ticksPerCycle);
-    }
-
-    private static SyncActionData createSetCreativeTankWorkingEnabledAction(boolean workingEnabled) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(WORKING_ENABLED_FIELD, new JsonPrimitive(workingEnabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_CREATIVE_TANK_WORKING_ENABLED_ACTION, workingEnabled ? 1 : 0, payload);
     }
 
     private static SyncActionData createSetCreativeTankIntAction(ResourceLocation actionId, ResourceLocation field,
@@ -455,7 +441,7 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
 
         @Override
         public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
-            configuratorPanel.attachConfigurators(createLDLib2WorkingEnabledConfigurator(player, holder));
+            configuratorPanel.attachConfigurators(createLDLib2WorkingEnabledConfigurator());
         }
 
         @Override
@@ -549,25 +535,6 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         }
     }
 
-    private static final class CreativeTankWorkingEnabledActionHandler extends CreativeTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_TANK_WORKING_ENABLED_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, WORKING_ENABLED_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
-        }
-    }
-
     private static SyncFieldData requireFieldData(DataComponentMap payload) {
         SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
         if (fields == null) {
@@ -591,14 +558,6 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         return value;
     }
 
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        Boolean value = readBoolean(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative tank action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
     private static @Nullable Integer readPositiveInteger(SyncFieldData fields, ResourceLocation field) {
         JsonElement element = fields.get(field);
         if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
@@ -606,14 +565,6 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
             if (value > 0L && value <= Integer.MAX_VALUE) {
                 return (int) value;
             }
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
         }
         return null;
     }

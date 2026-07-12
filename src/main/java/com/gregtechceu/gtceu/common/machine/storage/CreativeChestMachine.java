@@ -62,17 +62,13 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
             .id("set_creative_chest_items_per_cycle");
     private static final ResourceLocation SET_CREATIVE_CHEST_TICKS_PER_CYCLE_ACTION = GTCEu
             .id("set_creative_chest_ticks_per_cycle");
-    private static final ResourceLocation SET_CREATIVE_CHEST_WORKING_ENABLED_ACTION = GTCEu
-            .id("set_creative_chest_working_enabled");
     private static final ResourceLocation ITEMS_PER_CYCLE_FIELD = SyncFieldData.key("itemsPerCycle");
     private static final ResourceLocation TICKS_PER_CYCLE_FIELD = SyncFieldData.key("ticksPerCycle");
-    private static final ResourceLocation WORKING_ENABLED_FIELD = SyncFieldData.key("workingEnabled");
 
     static {
         SyncActionDispatchers.server().register(new CreativeChestItemActionHandler());
         SyncActionDispatchers.server().register(new CreativeChestItemsPerCycleActionHandler());
         SyncActionDispatchers.server().register(new CreativeChestTicksPerCycleActionHandler());
-        SyncActionDispatchers.server().register(new CreativeChestWorkingEnabledActionHandler());
     }
 
     @Getter
@@ -160,7 +156,7 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         root.addChild(new GTImageElement(7, 85, 154, 14, GuiTextures.DISPLAY));
         root.addChild(createLDLib2TicksPerCycleField(player, holder));
         root.addChild(createLDLib2Label(7, 65, 162, 10, "gtpm.creative.chest.tpc"));
-        root.addChild(createLDLib2ActivityButton(player, holder));
+        root.addChild(createLDLib2ActivityButton());
         return root;
     }
 
@@ -239,9 +235,9 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         return field;
     }
 
-    private GTButtonElement createLDLib2ActivityButton(Player player, MachineUIHolder holder) {
+    private GTButtonElement createLDLib2ActivityButton() {
         return new GTButtonElement(7, 101, 162, 20, createLDLib2ActivityButtonTexture(),
-                event -> setLDLib2WorkingEnabled(player, holder, !isWorkingEnabled())) {
+                event -> setLDLib2WorkingEnabled(!isWorkingEnabled())) {
 
             @Override
             public void screenTick() {
@@ -256,14 +252,13 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
                 GuiTextures.text(isWorkingEnabled() ? "gtpm.creative.activity.on" : "gtpm.creative.activity.off"));
     }
 
-    private LDLib2FancyConfiguratorButton.Toggle createLDLib2WorkingEnabledConfigurator(Player player,
-                                                                                        MachineUIHolder holder) {
+    LDLib2FancyConfiguratorButton.Toggle createLDLib2WorkingEnabledConfigurator() {
         return new LDLib2FancyConfiguratorButton.Toggle(
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0, 1, 0.5),
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0.5, 1, 0.5),
                 this::isWorkingEnabled,
                 (event, pressed) -> {
-                    setLDLib2WorkingEnabled(player, holder, pressed);
+                    setLDLib2WorkingEnabled(pressed);
                     event.stopImmediatePropagation();
                     event.hasHandler = true;
                 })
@@ -300,10 +295,10 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         }
     }
 
-    private void setLDLib2WorkingEnabled(Player player, MachineUIHolder holder, boolean workingEnabled) {
+    private void setLDLib2WorkingEnabled(boolean workingEnabled) {
         setWorkingEnabled(workingEnabled);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeChestWorkingEnabledAction(workingEnabled));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
@@ -337,15 +332,6 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
     private static SyncActionData createSetCreativeChestTicksPerCycleAction(int ticksPerCycle) {
         return createSetCreativeChestIntAction(SET_CREATIVE_CHEST_TICKS_PER_CYCLE_ACTION, TICKS_PER_CYCLE_FIELD,
                 ticksPerCycle);
-    }
-
-    private static SyncActionData createSetCreativeChestWorkingEnabledAction(boolean workingEnabled) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(WORKING_ENABLED_FIELD, new JsonPrimitive(workingEnabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_CREATIVE_CHEST_WORKING_ENABLED_ACTION, workingEnabled ? 1 : 0, payload);
     }
 
     private static SyncActionData createSetCreativeChestIntAction(ResourceLocation actionId, ResourceLocation field,
@@ -395,7 +381,7 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
 
         @Override
         public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
-            configuratorPanel.attachConfigurators(createLDLib2WorkingEnabledConfigurator(player, holder));
+            configuratorPanel.attachConfigurators(createLDLib2WorkingEnabledConfigurator());
         }
 
         @Override
@@ -489,25 +475,6 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         }
     }
 
-    private static final class CreativeChestWorkingEnabledActionHandler extends CreativeChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_CHEST_WORKING_ENABLED_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, WORKING_ENABLED_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
-        }
-    }
-
     private static SyncFieldData requireFieldData(DataComponentMap payload) {
         SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
         if (fields == null) {
@@ -531,14 +498,6 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         return value;
     }
 
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        Boolean value = readBoolean(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative chest action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
     private static @Nullable Integer readPositiveInteger(SyncFieldData fields, ResourceLocation field) {
         JsonElement element = fields.get(field);
         if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
@@ -546,14 +505,6 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
             if (value > 0L && value <= Integer.MAX_VALUE) {
                 return (int) value;
             }
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
         }
         return null;
     }
