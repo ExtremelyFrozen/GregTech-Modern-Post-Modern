@@ -52,14 +52,10 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib
 
     private static final ResourceLocation CLICK_PUMP_HATCH_FLUID_SLOT_ACTION = GTCEu
             .id("click_pump_hatch_fluid_slot");
-    private static final ResourceLocation SET_PUMP_HATCH_CONFIG_ACTION = GTCEu
-            .id("set_pump_hatch_config");
     private static final ResourceLocation SHIFT_FIELD = SyncFieldData.key("shift");
-    private static final ResourceLocation WORKING_ENABLED_FIELD = SyncFieldData.key("workingEnabled");
 
     static {
         SyncActionDispatchers.server().register(new PumpHatchFluidSlotActionHandler());
-        SyncActionDispatchers.server().register(new PumpHatchConfigActionHandler());
     }
 
     public PumpHatchPartMachine(BlockEntityCreationInfo info) {
@@ -87,13 +83,16 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib
         root.addChild(createLDLib2FluidAmountValueLabel());
         root.addChild(createLDLib2TitleLabel());
         root.addChild(createLDLib2FluidSlot(player, holder));
-        root.addChild(new GTToggleButtonElement(7, 53, 18, 18,
-                GuiTextures.BUTTON_FLUID_OUTPUT, this::isWorkingEnabled,
-                enabled -> setLDLib2WorkingEnabled(player, holder, enabled))
-                .setShouldUseBaseBackground()
-                .setTooltipText("gtpm.gui.fluid_auto_input.tooltip"));
+        root.addChild(createLDLib2WorkingEnabledToggle());
         root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 84, true));
         return UI.of(root);
+    }
+
+    GTToggleButtonElement createLDLib2WorkingEnabledToggle() {
+        return new GTToggleButtonElement(7, 53, 18, 18,
+                GuiTextures.BUTTON_FLUID_OUTPUT, this::isWorkingEnabled, this::setLDLib2WorkingEnabled)
+                .setShouldUseBaseBackground()
+                .setTooltipText("gtpm.gui.fluid_auto_input.tooltip");
     }
 
     private GTLabelElement createLDLib2TitleLabel() {
@@ -157,10 +156,10 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib
         return UITemplate.setLDLib2Bounds(fluidSlot, 90, 35, 18, 18);
     }
 
-    private void setLDLib2WorkingEnabled(Player player, MachineUIHolder holder, boolean enabled) {
+    private void setLDLib2WorkingEnabled(boolean enabled) {
         setWorkingEnabled(enabled);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetPumpHatchConfigAction(enabled));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
@@ -175,15 +174,6 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib
                         .build())
                 .build();
         return new SyncActionData(CLICK_PUMP_HATCH_FLUID_SLOT_ACTION, shiftDown ? 1 : 0, payload);
-    }
-
-    private static SyncActionData createSetPumpHatchConfigAction(boolean enabled) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(WORKING_ENABLED_FIELD, new JsonPrimitive(enabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_PUMP_HATCH_CONFIG_ACTION, enabled ? 1 : 0, payload);
     }
 
     private record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
@@ -319,38 +309,6 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine implements LDLib
                 throw new IllegalStateException("Pump hatch fluid slot action received a non-pump-hatch machine.");
             }
             machine.clickLDLib2FluidSlot(context.player(), requireBoolean(context.payload(), SHIFT_FIELD));
-        }
-    }
-
-    private static final class PumpHatchConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_PUMP_HATCH_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof PumpHatch;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, WORKING_ENABLED_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof PumpHatch pumpHatch)) {
-                throw new IllegalStateException("Pump hatch config action received an invalid holder.");
-            }
-            pumpHatch.setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
         }
     }
 
