@@ -9,18 +9,19 @@ import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
 import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfiguratorButton;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.gui.widget.GhostCircuitSlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CircuitFancyConfigurator;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2AutoOutputFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2RecipeFancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
+import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI.LDLib2RecipeUISize;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
@@ -32,7 +33,7 @@ import com.gregtechceu.gtceu.utils.ISubscription;
 
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
-import com.lowdragmc.lowdraglib2.gui.util.ClickData;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.Util;
 import net.minecraft.core.component.DataComponentMap;
@@ -45,13 +46,13 @@ import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BiFunction;
 
 /**
  * All simple single machines are implemented here.
  */
 public class SimpleTieredMachine extends WorkableTieredMachine
-                                 implements IFancyUIMachine, IHasCircuitSlot {
+                                 implements LDLib2RecipeFancyUIMachine, IHasCircuitSlot {
 
     @Getter
     @SaveField
@@ -148,60 +149,28 @@ public class SimpleTieredMachine extends WorkableTieredMachine
     //////////////////////////////////////
 
     @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        IFancyUIMachine.super.attachConfigurators(configuratorPanel);
+    public SimpleTieredMachine getLDLib2RecipeMachine() {
+        return this;
+    }
 
-        if (autoOutput.supportsAutoOutputFluids()) {
-            configuratorPanel.attachConfigurators(createAutoOutputFluidConfigurator());
-        }
-        if (autoOutput.supportsAutoOutputItems()) {
-            configuratorPanel.attachConfigurators(createAutoOutputItemConfigurator());
-        }
-
+    @Override
+    public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+        configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(
+                this, configuratorPanel.getHolder()));
+        LDLib2AutoOutputFancyConfigurator.attachConfigurators(configuratorPanel, autoOutput);
         if (isCircuitSlotEnabled()) {
-            configuratorPanel.attachConfigurators(new CircuitFancyConfigurator(circuitInventory.storage));
+            configuratorPanel.attachConfigurators(new LDLib2CircuitFancyConfigurator(
+                    this, configuratorPanel.getHolder()));
         }
     }
 
-    private IFancyConfigurator createAutoOutputFluidConfigurator() {
-        return createAutoOutputConfigurator(
-                GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 1 / 3f, 1, 1 / 3f),
-                GuiTextures.IO_CONFIG_FLUID_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f),
-                "gtpm.gui.fluid_auto_output",
-                this.autoOutput::isAutoOutputFluids,
-                (cd, nextState) -> this.autoOutput.setAllowAutoOutputFluids(nextState));
-    }
-
-    private IFancyConfigurator createAutoOutputItemConfigurator() {
-        return createAutoOutputConfigurator(
-                GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON.getSubTexture(0, 1 / 3f, 1, 1 / 3f),
-                GuiTextures.IO_CONFIG_ITEM_MODES_BUTTON.getSubTexture(0, 2 / 3f, 1, 1 / 3f),
-                "gtpm.gui.item_auto_output",
-                this.autoOutput::isAutoOutputItems,
-                (cd, nextState) -> this.autoOutput.setAllowAutoOutputItems(nextState));
-    }
-
-    private IFancyConfigurator createAutoOutputConfigurator(IGuiTexture disabledModesTexture,
-                                                            IGuiTexture enabledModesTexture,
-                                                            String tooltipBaseLangKey,
-                                                            BooleanSupplier stateSupplier,
-                                                            BiConsumer<ClickData, Boolean> onToggle) {
-        var toggle = new IFancyConfiguratorButton.Toggle(
-                GuiTextures.group(
-                        GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0, 1, 0.5),
-                        disabledModesTexture),
-                GuiTextures.group(
-                        GuiTextures.TOGGLE_BUTTON_BACK.getSubTexture(0, 0.5, 1, 0.5),
-                        enabledModesTexture),
-                stateSupplier,
-                onToggle);
-
-        toggle.setTooltipsSupplier(enabled -> {
-            var key = tooltipBaseLangKey + '.' + (enabled ? "enabled" : "disabled");
-            return List.of(Component.translatable(key));
-        });
-
-        return toggle;
+    @Override
+    public void attachLDLib2RecipePageElements(UIElement root, WorkableTieredMachine machine,
+                                               LDLib2RecipeUISize recipeSize) {
+        GTItemSlotElement batterySlot = createLDLib2BatterySlot();
+        UITemplate.setLDLib2Bounds(batterySlot, recipeSize.width() / 2 - 9,
+                getLDLib2PageHeight() - 18, 18, 18);
+        root.addChild(batterySlot);
     }
 
     @SuppressWarnings("UnstableApiUsage")
