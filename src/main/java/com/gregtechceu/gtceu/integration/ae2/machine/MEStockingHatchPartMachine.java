@@ -9,6 +9,8 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
@@ -52,12 +54,12 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
 
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int minStackSize = 1;
 
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int ticksPerCycle = 40;
 
     @Setter
@@ -143,13 +145,27 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     @Override
     public void setMinStackSize(int minStackSize) {
         this.minStackSize = minStackSize;
-        syncDataHolder.markClientSyncFieldDirty("minStackSize");
     }
 
     @Override
     public void setTicksPerCycle(int ticksPerCycle) {
         this.ticksPerCycle = ticksPerCycle;
-        syncDataHolder.markClientSyncFieldDirty("ticksPerCycle");
+    }
+
+    @ServerFieldNormalizer(fieldName = "minStackSize")
+    private int normalizeMinStackSize(int candidate) {
+        if (candidate < 1) {
+            throw new IllegalArgumentException("Auto-stocking minimum stack size must be at least one.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "ticksPerCycle")
+    private int normalizeTicksPerCycle(int candidate) {
+        if (candidate < ConfigHolder.INSTANCE.compat.ae2.updateIntervals) {
+            throw new IllegalArgumentException("Auto-stocking ticks per cycle is below the configured minimum.");
+        }
+        return candidate;
     }
 
     @Override
