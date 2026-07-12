@@ -9,6 +9,9 @@ import com.gregtechceu.gtceu.api.machine.trait.*;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.machine.trait.CleanroomReceiverTrait;
 import com.gregtechceu.gtceu.utils.GTUtil;
@@ -34,6 +37,7 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
     @Getter
     @Setter
     @SaveField
+    @SyncBoth
     public int activeRecipeType;
     @Getter
     protected final CleanroomReceiverTrait cleanroomReceiver;
@@ -220,5 +224,20 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
         }
         setActiveRecipeType(recipeIndex);
         recipeLogic.updateTickSubscription();
+    }
+
+    @ServerFieldNormalizer(fieldName = "activeRecipeType")
+    private int normalizeActiveRecipeType(int candidate) {
+        if (candidate < 0 || candidate >= recipeTypes.length) {
+            throw new IllegalArgumentException("Active recipe type index is out of range.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldChangeListener(fieldName = "activeRecipeType")
+    private void onActiveRecipeTypeChanged(int oldIndex, int newIndex) {
+        if (!keepSubscribing()) {
+            recipeLogic.updateTickSubscription();
+        }
     }
 }

@@ -53,6 +53,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     @Getter
     @Setter
     @SaveField
+    @SyncBoth
     private int activeRecipeType;
     @Getter
     protected final Map<IO, List<RecipeHandlerList>> capabilitiesProxy;
@@ -346,6 +347,21 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         }
         setActiveRecipeType(recipeIndex);
         recipeLogic.updateTickSubscription();
+    }
+
+    @ServerFieldNormalizer(fieldName = "activeRecipeType")
+    private int normalizeActiveRecipeType(int candidate) {
+        if (candidate < 0 || candidate >= recipeTypes.length) {
+            throw new IllegalArgumentException("Active recipe type index is out of range.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldChangeListener(fieldName = "activeRecipeType")
+    private void onActiveRecipeTypeChanged(int oldIndex, int newIndex) {
+        if (!keepSubscribing()) {
+            recipeLogic.updateTickSubscription();
+        }
     }
 
     @Override
