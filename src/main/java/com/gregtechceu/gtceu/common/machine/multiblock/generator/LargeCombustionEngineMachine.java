@@ -104,6 +104,11 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
         return isExtreme() ? 2.0 : 1.5;
     }
 
+    void setOxygenBoosted(boolean oxygenBoosted) {
+        if (this.isOxygenBoosted == oxygenBoosted) return;
+        this.isOxygenBoosted = oxygenBoosted;
+    }
+
     /**
      * Recipe Modifier for <b>Combustion Engine Multiblocks</b> - can be used as a valid {@link RecipeModifier}
      * <p>
@@ -153,10 +158,9 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
         // check boost fluid
         if (isBoostAllowed()) {
             var boosterRecipe = getBoostRecipe();
-            this.isOxygenBoosted = RecipeHelper.matchRecipe(this, boosterRecipe).isSuccess() &&
+            setOxygenBoosted(RecipeHelper.matchRecipe(this, boosterRecipe).isSuccess() &&
                     RecipeHelper.handleRecipeIO(this, boosterRecipe, IO.IN, this.recipeLogic.getChanceCaches())
-                            .isSuccess();
-            syncDataHolder.markClientSyncFieldDirty("isOxygenBoosted");
+                            .isSuccess());
         }
 
         runningTimer++;
