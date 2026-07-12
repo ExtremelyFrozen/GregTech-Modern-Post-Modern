@@ -3,8 +3,12 @@ package com.gregtechceu.gtceu.api.machine;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
+import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2RecipeFancyUIMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
@@ -12,12 +16,14 @@ import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
 import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
+import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI.LDLib2RecipeUISize;
 import com.gregtechceu.gtceu.common.data.GTMedicalConditions;
 import com.gregtechceu.gtceu.common.machine.trait.hazard.EnvironmentalHazardEmitterTrait;
 
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.Util;
 import net.minecraft.core.component.DataComponentMap;
@@ -34,7 +40,15 @@ import java.util.LinkedHashMap;
 import java.util.function.BiFunction;
 
 public class SimpleGeneratorMachine extends WorkableTieredMachine
-                                    implements IFancyUIMachine {
+                                    implements LDLib2RecipeFancyUIMachine {
+
+    private static final int ENERGY_BAR_WIDTH = 18;
+    private static final int ENERGY_BAR_HEIGHT = 60;
+    private static final int RECIPE_ENERGY_GAP = 4;
+    private static final int PAGE_HORIZONTAL_PADDING = 8;
+    private static final int PAGE_VERTICAL_PADDING = 8;
+    private static final int MIN_PAGE_WIDTH = 172;
+    private static final int ENERGY_BAR_X = 3;
 
     @Getter
     private final EnvironmentalHazardEmitterTrait hazardEmitter;
@@ -126,6 +140,47 @@ public class SimpleGeneratorMachine extends WorkableTieredMachine
     //////////////////////////////////////
     // *********** GUI ***********//
     //////////////////////////////////////
+
+    @Override
+    public SimpleGeneratorMachine getLDLib2RecipeMachine() {
+        return this;
+    }
+
+    @Override
+    public int getLDLib2PageWidth() {
+        LDLib2RecipeUISize recipeSize = getLDLib2RecipeUISize(this);
+        return Math.max(ENERGY_BAR_WIDTH + RECIPE_ENERGY_GAP + recipeSize.width() + PAGE_HORIZONTAL_PADDING,
+                MIN_PAGE_WIDTH);
+    }
+
+    @Override
+    public int getLDLib2PageHeight() {
+        LDLib2RecipeUISize recipeSize = getLDLib2RecipeUISize(this);
+        return Math.max(recipeSize.height() + PAGE_VERTICAL_PADDING,
+                ENERGY_BAR_HEIGHT + PAGE_VERTICAL_PADDING);
+    }
+
+    @Override
+    public int getLDLib2RecipeTemplateX(WorkableTieredMachine machine, LDLib2RecipeUISize recipeSize) {
+        return (getLDLib2PageWidth() - ENERGY_BAR_WIDTH - RECIPE_ENERGY_GAP - recipeSize.width()) / 2 +
+                ENERGY_BAR_WIDTH + RECIPE_ENERGY_GAP;
+    }
+
+    @Override
+    public void attachLDLib2RecipePageElements(UIElement root, WorkableTieredMachine machine,
+                                               LDLib2RecipeUISize recipeSize) {
+        GTProgressBarElement energyBar = createLDLib2EnergyBar();
+        UITemplate.setLDLib2Bounds(energyBar, ENERGY_BAR_X,
+                (getLDLib2PageHeight() - ENERGY_BAR_HEIGHT) / 2,
+                ENERGY_BAR_WIDTH, ENERGY_BAR_HEIGHT);
+        root.addChild(energyBar);
+    }
+
+    @Override
+    public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+        configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(
+                this, configuratorPanel.getHolder()));
+    }
 
     @SuppressWarnings("UnstableApiUsage")
     public static BiFunction<ResourceLocation, GTRecipeType, EditableMachineUI> EDITABLE_UI_CREATOR = Util

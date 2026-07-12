@@ -58,8 +58,8 @@ public interface LDLib2RecipeFancyUIMachine extends LDLib2FancyUIMachine {
                 false,
                 false);
         UITemplate.setLDLib2Bounds(recipeTemplate.rootElement,
-                (pageWidth - recipeSize.width()) / 2,
-                (pageHeight - recipeSize.height()) / 2,
+                getLDLib2RecipeTemplateX(machine, recipeSize),
+                getLDLib2RecipeTemplateY(machine, recipeSize),
                 recipeSize.width(),
                 recipeSize.height());
 
@@ -104,6 +104,28 @@ public interface LDLib2RecipeFancyUIMachine extends LDLib2FancyUIMachine {
      */
     default LDLib2RecipeUISize getLDLib2RecipeUISize(WorkableTieredMachine machine) {
         return machine.getRecipeType().getRecipeUI().getLDLib2RecipeUISize(false, false);
+    }
+
+    /**
+     * Returns the recipe template's horizontal position inside the concrete page layout.
+     *
+     * @param machine    tiered recipe machine that owns the page.
+     * @param recipeSize active recipe template dimensions.
+     * @return recipe template x coordinate in page pixels.
+     */
+    default int getLDLib2RecipeTemplateX(WorkableTieredMachine machine, LDLib2RecipeUISize recipeSize) {
+        return (getLDLib2PageWidth() - recipeSize.width()) / 2;
+    }
+
+    /**
+     * Returns the recipe template's vertical position inside the concrete page layout.
+     *
+     * @param machine    tiered recipe machine that owns the page.
+     * @param recipeSize active recipe template dimensions.
+     * @return recipe template y coordinate in page pixels.
+     */
+    default int getLDLib2RecipeTemplateY(WorkableTieredMachine machine, LDLib2RecipeUISize recipeSize) {
+        return (getLDLib2PageHeight() - recipeSize.height()) / 2;
     }
 
     /**
