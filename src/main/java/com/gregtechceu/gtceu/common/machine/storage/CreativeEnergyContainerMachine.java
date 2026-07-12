@@ -23,6 +23,7 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -54,16 +55,12 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
             .id("set_creative_energy_voltage");
     private static final ResourceLocation SET_CREATIVE_ENERGY_TIER_ACTION = GTCEu
             .id("set_creative_energy_tier");
-    private static final ResourceLocation SET_CREATIVE_ENERGY_SOURCE_ACTION = GTCEu
-            .id("set_creative_energy_source");
     private static final ResourceLocation VOLTAGE_FIELD = SyncFieldData.key("voltage");
     private static final ResourceLocation TIER_FIELD = SyncFieldData.key("setTier");
-    private static final ResourceLocation SOURCE_FIELD = SyncFieldData.key("source");
 
     static {
         SyncActionDispatchers.server().register(new CreativeEnergyVoltageActionHandler());
         SyncActionDispatchers.server().register(new CreativeEnergyTierActionHandler());
-        SyncActionDispatchers.server().register(new CreativeEnergySourceActionHandler());
     }
 
     @SaveField
@@ -79,7 +76,7 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     @SyncBoth
     private boolean active = false;
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private boolean source = true;
     @SaveField
     private long energyIOPerSec = 0;
@@ -246,7 +243,19 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     }
 
     private void setSource(boolean source) {
+        if (this.source == source) {
+            return;
+        }
         this.source = source;
+        applySourceMode(source);
+    }
+
+    @ServerFieldChangeListener(fieldName = "source")
+    private void onSourceChanged(boolean oldSource, boolean newSource) {
+        applySourceMode(newSource);
+    }
+
+    private void applySourceMode(boolean source) {
         if (source) {
             this.voltage = 0;
             this.amps = 0;
@@ -256,9 +265,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
             this.amps = Integer.MAX_VALUE;
             this.setTier = 14;
         }
-        syncDataHolder.markClientSyncFieldDirty("source");
-        syncDataHolder.markClientSyncFieldDirty("voltage");
-        syncDataHolder.markClientSyncFieldDirty("setTier");
     }
 
     private void setTier(String tierName) {
@@ -291,7 +297,7 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         root.addChild(createLDLib2AmpsIncreaseButton());
         root.addChild(createLDLib2AverageIOLabel());
         root.addChild(createLDLib2ActiveButton());
-        root.addChild(createLDLib2SourceButton(player, holder));
+        root.addChild(createLDLib2SourceButton());
         return UI.of(root);
     }
 
@@ -400,9 +406,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         };
     }
 
-    private GTButtonElement createLDLib2SourceButton(Player player, MachineUIHolder holder) {
+    private GTButtonElement createLDLib2SourceButton() {
         return new GTButtonElement(85, 139, 77, 20, createLDLib2SourceButtonTexture(),
-                event -> setLDLib2Source(player, holder, !source)) {
+                event -> setLDLib2Source(!source)) {
 
             @Override
             public void screenTick() {
@@ -471,11 +477,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         sendServerSyncChanges();
     }
 
-    private void setLDLib2Source(Player player, MachineUIHolder holder, boolean source) {
+    private void setLDLib2Source(boolean source) {
         setSource(source);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeEnergySourceAction(source));
-        }
+        sendServerSyncChanges();
     }
 
     private static int getTierIndex(String tierName) {
@@ -495,11 +499,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     private static SyncActionData createSetCreativeEnergyTierAction(int tier) {
         return createSetCreativeEnergyAction(SET_CREATIVE_ENERGY_TIER_ACTION, TIER_FIELD, new JsonPrimitive(tier),
                 tier);
-    }
-
-    private static SyncActionData createSetCreativeEnergySourceAction(boolean source) {
-        return createSetCreativeEnergyAction(SET_CREATIVE_ENERGY_SOURCE_ACTION, SOURCE_FIELD,
-                new JsonPrimitive(source), source ? 1 : 0);
     }
 
     private static SyncActionData createSetCreativeEnergyAction(ResourceLocation actionId, ResourceLocation field,
@@ -571,25 +570,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         }
     }
 
-    private static final class CreativeEnergySourceActionHandler extends CreativeEnergyActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_ENERGY_SOURCE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, SOURCE_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setSource(requireBoolean(context.payload(), SOURCE_FIELD));
-        }
-    }
-
     private static SyncFieldData requireFieldData(DataComponentMap payload) {
         SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
         if (fields == null) {
@@ -608,14 +588,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
 
     private static int requireTierIndex(DataComponentMap payload, ResourceLocation field) {
         Integer value = readTierIndex(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative energy action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        Boolean value = readBoolean(requireFieldData(payload), field);
         if (value == null) {
             throw new IllegalStateException("Creative energy action payload is missing " + field + ".");
         }
@@ -648,14 +620,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         Integer value = readNonNegativeInteger(fields, field);
         if (value != null && value < GTValues.VNF.length) {
             return value;
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
         }
         return null;
     }
