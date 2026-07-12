@@ -136,6 +136,42 @@ public interface ICoverable extends ITickSubscription, ISyncManaged, ICopyable {
         return true;
     }
 
+    /**
+     * Replaces an expected cover with a replacement whose placement rules have already been validated.
+     * <p>
+     * This conditional exchange exists for slot-style interactions that must return the old cover separately instead
+     * of dropping it. The caller must invoke {@link #canPlaceCoverOnSide(CoverDefinition, Direction)} and
+     * {@link CoverBehavior#canAttach()} before this method. Their results are intentionally not recomputed after the
+     * old cover is removed.
+     *
+     * @param side             side whose cover is exchanged
+     * @param expectedCover    exact cover that was present during validation
+     * @param replacementCover pre-created and pre-validated replacement behavior
+     * @param itemStack        stack used to initialize the replacement behavior
+     * @param player           player performing the exchange, or {@code null} for a non-player operation
+     * @return {@code true} when the expected cover was still present and the exchange completed, otherwise
+     *         {@code false} without changing cover state
+     */
+    @ApiStatus.Internal
+    default boolean replaceCoverOnSide(Direction side, CoverBehavior expectedCover, CoverBehavior replacementCover,
+                                       ItemStack itemStack, @Nullable ServerPlayer player) {
+        if (replacementCover.coverHolder != this || replacementCover.attachedSide != side) {
+            throw new IllegalArgumentException("Replacement cover belongs to a different holder or side.");
+        }
+        if (getCoverAtSide(side) != expectedCover) {
+            return false;
+        }
+        if (!removeCover(false, side, player)) {
+            throw new IllegalStateException("Expected cover could not be removed during a validated exchange.");
+        }
+        replacementCover.onAttached(itemStack, player);
+        replacementCover.onLoad();
+        setCoverAtSide(replacementCover, side);
+        notifyBlockUpdate();
+        scheduleNeighborShapeUpdate();
+        return true;
+    }
+
     default boolean removeCover(boolean dropItself, Direction side, @Nullable Player player) {
         CoverBehavior coverBehavior = getCoverAtSide(side);
         if (coverBehavior == null) {

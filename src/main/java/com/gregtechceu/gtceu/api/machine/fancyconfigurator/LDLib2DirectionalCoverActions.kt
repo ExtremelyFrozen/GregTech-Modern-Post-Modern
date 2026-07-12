@@ -2,6 +2,8 @@ package com.gregtechceu.gtceu.api.machine.fancyconfigurator
 
 import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.capability.ICoverable
+import com.gregtechceu.gtceu.api.cover.CoverBehavior
+import com.gregtechceu.gtceu.api.cover.CoverDefinition
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper
 import com.gregtechceu.gtceu.api.machine.MachineCoverContainer
 import com.gregtechceu.gtceu.api.machine.MetaMachine
@@ -18,6 +20,7 @@ import net.minecraft.core.Direction
 import net.minecraft.core.component.DataComponentMap
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.item.ItemStack
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
@@ -112,22 +115,33 @@ class LDLib2DirectionalCoverActions private constructor() {
 
 			override fun actionId(): ResourceLocation = PLACE_DIRECTIONAL_COVER_ACTION
 
-			override fun canExecute(player: ServerPlayer, coverable: ICoverable, side: Direction): Boolean {
-				val definition = CoverPlaceBehavior.findCoverDefinition(player.containerMenu.carried) ?: return false
-				return coverable.canPlaceCoverOnSide(definition, side) &&
-					definition.createCoverBehavior(coverable, side).canAttach()
-			}
+			override fun canExecute(player: ServerPlayer, coverable: ICoverable, side: Direction): Boolean = readPlacementRequest(player, coverable, side) != null
 
 			override fun executeValidated(player: ServerPlayer, coverable: ICoverable, side: Direction) {
 				val carried = player.containerMenu.carried
-				val definition = CoverPlaceBehavior.findCoverDefinition(carried)
-					?: throw IllegalStateException("Directional cover placement lost its server-carried cover item.")
-				if (!coverable.placeCoverOnSide(side, carried, definition, player)) {
-					throw IllegalStateException("Validated directional cover placement was rejected during execution.")
+				val placement = readPlacementRequest(player, coverable, side)
+					?: throw IllegalStateException("Validated directional cover placement became invalid before execution.")
+				val previousCover = placement.previousCover
+				if (previousCover == null) {
+					if (!coverable.placeCoverOnSide(side, carried, placement.definition, player)) {
+						throw IllegalStateException("Directional cover placement was rejected during execution.")
+					}
+					if (!player.isCreative) {
+						carried.shrink(1)
+					}
+					player.containerMenu.broadcastChanges()
+					return
 				}
-				if (!player.isCreative) {
-					carried.shrink(1)
+
+				val replacementCover = placement.definition.createCoverBehavior(coverable, side)
+				if (!coverable.canPlaceCoverOnSide(placement.definition, side) || !replacementCover.canAttach()) {
+					throw IllegalStateException("Directional cover replacement failed its placement rules.")
 				}
+				val previousAttachItem = previousCover.pickItem.copy()
+				if (!coverable.replaceCoverOnSide(side, previousCover, replacementCover, carried, player)) {
+					throw IllegalStateException("Directional cover replacement detected changed cover state before execution.")
+				}
+				player.containerMenu.setCarried(previousAttachItem)
 				player.containerMenu.broadcastChanges()
 			}
 		}
@@ -136,12 +150,19 @@ class LDLib2DirectionalCoverActions private constructor() {
 
 			override fun actionId(): ResourceLocation = REMOVE_DIRECTIONAL_COVER_ACTION
 
-			override fun canExecute(player: ServerPlayer, coverable: ICoverable, side: Direction): Boolean = coverable.getCoverAtSide(side) != null
+			override fun canExecute(player: ServerPlayer, coverable: ICoverable, side: Direction): Boolean = player.containerMenu.carried.isEmpty && coverable.getCoverAtSide(side) != null
 
 			override fun executeValidated(player: ServerPlayer, coverable: ICoverable, side: Direction) {
-				if (!coverable.removeCover(side, player)) {
+				if (!player.containerMenu.carried.isEmpty) {
+					throw IllegalStateException("Validated directional cover removal found an occupied server cursor.")
+				}
+				val cover = coverable.getCoverAtSide(side)
+					?: throw IllegalStateException("Validated directional cover removal lost its selected cover.")
+				val attachItem = cover.pickItem.copy()
+				if (!coverable.removeCover(false, side, player)) {
 					throw IllegalStateException("Validated directional cover removal was rejected during execution.")
 				}
+				player.containerMenu.setCarried(attachItem)
 				player.containerMenu.broadcastChanges()
 			}
 		}
@@ -174,6 +195,18 @@ class LDLib2DirectionalCoverActions private constructor() {
 
 		private fun requireMachine(context: SyncActionContext): MetaMachine = readMachine(context)
 			?: throw IllegalStateException("Directional cover action received an unauthorized machine holder.")
+
+		private data class CoverPlacement(val definition: CoverDefinition, val previousCover: CoverBehavior?)
+
+		private fun readPlacementRequest(player: ServerPlayer, coverable: ICoverable, side: Direction): CoverPlacement? {
+			val carried = player.containerMenu.carried
+			val definition = CoverPlaceBehavior.findCoverDefinition(carried) ?: return null
+			val previousCover = coverable.getCoverAtSide(side) ?: return CoverPlacement(definition, null)
+			if (carried.count != 1 || ItemStack.isSameItemSameComponents(carried, previousCover.pickItem)) {
+				return null
+			}
+			return CoverPlacement(definition, previousCover)
+		}
 
 		private fun requireSide(payload: DataComponentMap): Direction = readSide(payload) ?: throw IllegalStateException("Directional cover action payload has no valid side.")
 

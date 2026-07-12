@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.machine.fancyconfigurator;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIHolderContext;
@@ -127,12 +128,12 @@ public class LDLib2DirectionalCoverActionsTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
-    public static void dispatcherReplacesCoverAndReturnsThePreviousCover(GameTestHelper helper) {
+    public static void dispatcherReplacesSingleCoverAndReturnsPreviousCoverToCursor(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         CoverBehavior previousCover = TestUtils.placeCover(helper, machine, GTItems.COVER_SHUTTER.asStack(),
                 Direction.EAST);
         ServerPlayer player = preparePlayer(helper);
-        player.containerMenu.setCarried(GTItems.CONVEYOR_MODULE_LV.asStack(2));
+        player.containerMenu.setCarried(GTItems.CONVEYOR_MODULE_LV.asStack());
 
         boolean result = dispatch(player, machine,
                 LDLib2DirectionalCoverActions.createPlaceCoverAction(Direction.EAST));
@@ -142,11 +143,158 @@ public class LDLib2DirectionalCoverActionsTest {
         helper.assertTrue(replacement != null && replacement != previousCover &&
                 replacement.getAttachItem().is(GTItems.CONVEYOR_MODULE_LV.get()),
                 "directional cover replacement did not install the requested cover");
+        helper.assertTrue(player.containerMenu.getCarried().is(GTItems.COVER_SHUTTER.get()) &&
+                player.containerMenu.getCarried().getCount() == 1,
+                "directional cover replacement did not swap the previous cover into the cursor");
+        helper.assertTrue(player.getInventory().countItem(GTItems.COVER_SHUTTER.get()) == 0,
+                "directional cover replacement duplicated the previous cover into the inventory");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
+    public static void dispatcherRejectsStackedReplacementAtomically(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        CoverBehavior previousCover = TestUtils.placeCover(helper, machine, GTItems.COVER_SHUTTER.asStack(),
+                Direction.EAST);
+        ServerPlayer player = preparePlayer(helper);
+        player.containerMenu.setCarried(GTItems.CONVEYOR_MODULE_LV.asStack(2));
+
+        boolean result = dispatch(player, machine,
+                LDLib2DirectionalCoverActions.createPlaceCoverAction(Direction.EAST));
+
+        helper.assertTrue(!result, "directional action accepted a stacked replacement");
+        helper.assertTrue(machine.getCoverContainer().getCoverAtSide(Direction.EAST) == previousCover,
+                "rejected stacked replacement changed the installed cover");
+        helper.assertTrue(player.containerMenu.getCarried().is(GTItems.CONVEYOR_MODULE_LV.get()) &&
+                player.containerMenu.getCarried().getCount() == 2,
+                "rejected stacked replacement changed the carried stack");
+        helper.assertTrue(player.getInventory().countItem(GTItems.COVER_SHUTTER.get()) == 0,
+                "rejected stacked replacement duplicated the installed cover");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
+    public static void dispatcherRejectsSameCoverReplacementAtomically(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        CoverBehavior previousCover = TestUtils.placeCover(helper, machine, GTItems.CONVEYOR_MODULE_LV.asStack(),
+                Direction.EAST);
+        ServerPlayer player = preparePlayer(helper);
+        player.containerMenu.setCarried(GTItems.CONVEYOR_MODULE_LV.asStack());
+
+        boolean result = dispatch(player, machine,
+                LDLib2DirectionalCoverActions.createPlaceCoverAction(Direction.EAST));
+
+        helper.assertTrue(!result, "directional action replaced a cover with the same carried cover");
+        helper.assertTrue(machine.getCoverContainer().getCoverAtSide(Direction.EAST) == previousCover,
+                "rejected same-cover replacement changed the installed cover");
         helper.assertTrue(player.containerMenu.getCarried().is(GTItems.CONVEYOR_MODULE_LV.get()) &&
                 player.containerMenu.getCarried().getCount() == 1,
-                "directional cover replacement did not consume exactly one new cover");
-        helper.assertTrue(player.getInventory().countItem(GTItems.COVER_SHUTTER.get()) == 1,
-                "directional cover replacement did not return the previous cover");
+                "rejected same-cover replacement changed the carried stack");
+        helper.assertTrue(player.getInventory().countItem(GTItems.CONVEYOR_MODULE_LV.get()) == 0,
+                "rejected same-cover replacement duplicated the installed cover");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
+    public static void dispatcherCreativeReplacementReturnsPreviousCoverToCursor(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        CoverBehavior previousCover = TestUtils.placeCover(helper, machine, GTItems.COVER_SHUTTER.asStack(),
+                Direction.EAST);
+        ServerPlayer player = preparePlayer(helper);
+        player.setGameMode(GameType.CREATIVE);
+        player.containerMenu.setCarried(GTItems.CONVEYOR_MODULE_LV.asStack());
+
+        try {
+            boolean result = dispatch(player, machine,
+                    LDLib2DirectionalCoverActions.createPlaceCoverAction(Direction.EAST));
+
+            CoverBehavior replacement = machine.getCoverContainer().getCoverAtSide(Direction.EAST);
+            helper.assertTrue(result, "creative directional cover replacement was rejected");
+            helper.assertTrue(replacement != null && replacement != previousCover &&
+                    replacement.getAttachItem().is(GTItems.CONVEYOR_MODULE_LV.get()),
+                    "creative directional cover replacement did not install the requested cover");
+            helper.assertTrue(player.containerMenu.getCarried().is(GTItems.COVER_SHUTTER.get()) &&
+                    player.containerMenu.getCarried().getCount() == 1,
+                    "creative directional cover replacement did not return the previous cover to the cursor");
+            helper.assertTrue(player.getInventory().countItem(GTItems.COVER_SHUTTER.get()) == 0,
+                    "creative directional cover replacement duplicated the previous cover into the inventory");
+        } finally {
+            player.setGameMode(GameType.SURVIVAL);
+        }
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
+    public static void prevalidatedReplacementDoesNotRepeatMutableAttachmentCheck(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        CoverBehavior previousCover = TestUtils.placeCover(helper, machine, GTItems.COVER_SHUTTER.asStack(),
+                Direction.EAST);
+        ServerPlayer player = preparePlayer(helper);
+        ItemStack candidateStack = GTItems.CONVEYOR_MODULE_LV.asStack();
+        player.containerMenu.setCarried(candidateStack);
+        CoverDefinition candidateDefinition = CoverPlaceBehavior.findCoverDefinition(candidateStack);
+        helper.assertTrue(candidateDefinition != null,
+                "conveyor test item did not expose its cover definition");
+        SingleAttachmentCheckCover replacement = new SingleAttachmentCheckCover(candidateDefinition,
+                machine.getCoverContainer(), Direction.EAST);
+        helper.assertTrue(machine.getCoverContainer().canPlaceCoverOnSide(candidateDefinition, Direction.EAST) &&
+                replacement.canAttach(), "replacement test fixture did not pass its first placement validation");
+
+        boolean result = machine.getCoverContainer().replaceCoverOnSide(Direction.EAST, previousCover, replacement,
+                candidateStack, player);
+
+        helper.assertTrue(result, "prevalidated replacement was rejected");
+        helper.assertTrue(machine.getCoverContainer().getCoverAtSide(Direction.EAST) == replacement,
+                "prevalidated replacement did not become the installed cover");
+        helper.assertTrue(replacement.getAttachmentCheckCount() == 1,
+                "cover exchange repeated the mutable canAttach validation");
+        helper.assertTrue(player.containerMenu.getCarried() == candidateStack && candidateStack.getCount() == 1,
+                "cover exchange unexpectedly changed the caller-owned cursor stack");
+        helper.assertTrue(player.getInventory().countItem(GTItems.COVER_SHUTTER.get()) == 0,
+                "cover exchange dropped the previous cover into the inventory");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
+    public static void prevalidatedReplacementRejectsStaleExpectedCoverWithoutMutation(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        CoverBehavior installedCover = TestUtils.placeCover(helper, machine, GTItems.COVER_SHUTTER.asStack(),
+                Direction.EAST);
+        ServerPlayer player = preparePlayer(helper);
+        ItemStack candidateStack = GTItems.CONVEYOR_MODULE_LV.asStack();
+        player.containerMenu.setCarried(candidateStack);
+        CoverDefinition candidateDefinition = CoverPlaceBehavior.findCoverDefinition(candidateStack);
+        helper.assertTrue(candidateDefinition != null,
+                "conveyor test item did not expose its cover definition");
+        SingleAttachmentCheckCover replacement = new SingleAttachmentCheckCover(candidateDefinition,
+                machine.getCoverContainer(), Direction.EAST);
+        helper.assertTrue(machine.getCoverContainer().canPlaceCoverOnSide(candidateDefinition, Direction.EAST) &&
+                replacement.canAttach(), "stale-state test fixture did not pass its placement validation");
+        CoverBehavior staleExpectedCover = installedCover.coverDefinition.createCoverBehavior(
+                machine.getCoverContainer(), Direction.EAST);
+
+        boolean result = machine.getCoverContainer().replaceCoverOnSide(Direction.EAST, staleExpectedCover,
+                replacement, candidateStack, player);
+
+        helper.assertTrue(!result, "cover exchange accepted a stale expected cover");
+        helper.assertTrue(machine.getCoverContainer().getCoverAtSide(Direction.EAST) == installedCover,
+                "stale cover exchange changed the installed cover");
+        helper.assertTrue(replacement.getAttachmentCheckCount() == 1 && replacement.getAttachItem().isEmpty(),
+                "stale cover exchange revalidated or attached the replacement");
+        helper.assertTrue(player.containerMenu.getCarried() == candidateStack && candidateStack.getCount() == 1,
+                "stale cover exchange changed the cursor stack");
+        helper.assertTrue(player.getInventory().countItem(GTItems.COVER_SHUTTER.get()) == 0,
+                "stale cover exchange changed the player inventory");
         helper.succeed();
     }
 
@@ -158,7 +306,7 @@ public class LDLib2DirectionalCoverActionsTest {
         CoverBehavior previousCover = TestUtils.placeCover(helper, machine, GTItems.CONVEYOR_MODULE_LV.asStack(),
                 Direction.EAST);
         ServerPlayer player = preparePlayer(helper);
-        ItemStack candidateStack = GTItems.COVER_MACHINE_CONTROLLER.asStack(2);
+        ItemStack candidateStack = GTItems.COVER_MACHINE_CONTROLLER.asStack();
         CoverDefinition candidateDefinition = CoverPlaceBehavior.findCoverDefinition(candidateStack);
         helper.assertTrue(candidateDefinition != null,
                 "machine controller test item did not expose its cover definition");
@@ -173,7 +321,7 @@ public class LDLib2DirectionalCoverActionsTest {
         helper.assertTrue(machine.getCoverContainer().getCoverAtSide(Direction.EAST) == previousCover,
                 "failed directional replacement removed or replaced the existing cover");
         helper.assertTrue(player.containerMenu.getCarried().is(GTItems.COVER_MACHINE_CONTROLLER.get()) &&
-                player.containerMenu.getCarried().getCount() == 2,
+                player.containerMenu.getCarried().getCount() == 1,
                 "failed directional replacement changed the carried candidate stack");
         helper.assertTrue(player.getInventory().countItem(GTItems.CONVEYOR_MODULE_LV.get()) == 0,
                 "failed directional replacement returned the still-installed cover to the player");
@@ -183,7 +331,7 @@ public class LDLib2DirectionalCoverActionsTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
-    public static void dispatcherRemovesCoverAndReturnsItOnlyOnce(GameTestHelper helper) {
+    public static void dispatcherRemovesCoverToEmptyCursorOnlyOnce(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         TestUtils.placeCover(helper, machine, GTItems.CONVEYOR_MODULE_LV.asStack(), Direction.EAST);
         ServerPlayer player = preparePlayer(helper);
@@ -197,8 +345,35 @@ public class LDLib2DirectionalCoverActionsTest {
         helper.assertTrue(!secondResult, "directional action removed the same cover twice");
         helper.assertTrue(machine.getCoverContainer().getCoverAtSide(Direction.EAST) == null,
                 "directional cover removal left the cover installed");
-        helper.assertTrue(player.getInventory().countItem(GTItems.CONVEYOR_MODULE_LV.get()) == 1,
-                "directional cover removal did not return exactly one cover");
+        helper.assertTrue(player.containerMenu.getCarried().is(GTItems.CONVEYOR_MODULE_LV.get()) &&
+                player.containerMenu.getCarried().getCount() == 1,
+                "directional cover removal did not return the cover to the cursor");
+        helper.assertTrue(player.getInventory().countItem(GTItems.CONVEYOR_MODULE_LV.get()) == 0,
+                "directional cover removal duplicated the removed cover into the inventory");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalCoverActions")
+    public static void dispatcherRejectsRemovalWithOccupiedCursor(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        CoverBehavior installedCover = TestUtils.placeCover(helper, machine, GTItems.CONVEYOR_MODULE_LV.asStack(),
+                Direction.EAST);
+        ServerPlayer player = preparePlayer(helper);
+        player.containerMenu.setCarried(GTItems.COVER_SHUTTER.asStack());
+
+        boolean result = dispatch(player, machine,
+                LDLib2DirectionalCoverActions.createRemoveCoverAction(Direction.EAST));
+
+        helper.assertTrue(!result, "directional action removed a cover while the cursor was occupied");
+        helper.assertTrue(machine.getCoverContainer().getCoverAtSide(Direction.EAST) == installedCover,
+                "rejected occupied-cursor removal changed the installed cover");
+        helper.assertTrue(player.containerMenu.getCarried().is(GTItems.COVER_SHUTTER.get()) &&
+                player.containerMenu.getCarried().getCount() == 1,
+                "rejected occupied-cursor removal changed the carried stack");
+        helper.assertTrue(player.getInventory().countItem(GTItems.CONVEYOR_MODULE_LV.get()) == 0,
+                "rejected occupied-cursor removal duplicated the installed cover");
         helper.succeed();
     }
 
@@ -338,5 +513,24 @@ public class LDLib2DirectionalCoverActionsTest {
                         .put(SIDE_FIELD, side)
                         .build())
                 .build();
+    }
+
+    private static final class SingleAttachmentCheckCover extends CoverBehavior {
+
+        private int attachmentCheckCount;
+
+        private SingleAttachmentCheckCover(CoverDefinition definition, ICoverable coverHolder, Direction attachedSide) {
+            super(definition, coverHolder, attachedSide);
+        }
+
+        @Override
+        public boolean canAttach() {
+            attachmentCheckCount++;
+            return attachmentCheckCount == 1 && super.canAttach();
+        }
+
+        private int getAttachmentCheckCount() {
+            return attachmentCheckCount;
+        }
     }
 }
