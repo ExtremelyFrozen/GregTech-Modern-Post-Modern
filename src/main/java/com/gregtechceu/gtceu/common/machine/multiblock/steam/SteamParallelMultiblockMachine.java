@@ -12,7 +12,6 @@ import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDisplayUIMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.steam.SteamEnergyRecipeHandler;
@@ -49,8 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine
-                                            implements IDisplayUIMachine, LDLib2MachineUIProvider {
+public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine implements LDLib2MachineUIProvider {
 
     @Getter
     @Setter
@@ -135,9 +133,10 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine
                 .build();
     }
 
-    @Override
     public void addDisplayText(List<Component> textList) {
-        IDisplayUIMachine.super.addDisplayText(textList);
+        for (var part : getParts()) {
+            part.addMultiText(textList);
+        }
         if (isFormed()) {
             var workLogic = getWorkLogic();
             if (steamEnergy != null && steamEnergy.getCapacity() > 0) {
@@ -169,7 +168,6 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine
         }
     }
 
-    @Override
     public IGuiTexture getScreenTexture() {
         return GuiTextures.DISPLAY_STEAM.get(ConfigHolder.INSTANCE.machines.steelSteamMultiblocks);
     }
