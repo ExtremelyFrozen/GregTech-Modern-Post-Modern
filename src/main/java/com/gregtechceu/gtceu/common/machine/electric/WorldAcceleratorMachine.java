@@ -93,20 +93,18 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
     public void updateSubscription() {
         if (isWorkingEnabled && drainEnergy(true)) {
             tickSubs = subscribeServerTick(tickSubs, this::update);
-            setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_ACTIVE, true));
-            if (!active) {
-                active = true;
-                syncDataHolder.markClientSyncFieldDirty("active");
-            }
+            setActive(true);
         } else if (tickSubs != null) {
             tickSubs.unsubscribe();
             tickSubs = null;
-            setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_ACTIVE, false));
-            if (active) {
-                active = false;
-                syncDataHolder.markClientSyncFieldDirty("active");
-            }
+            setActive(false);
         }
+    }
+
+    private void setActive(boolean active) {
+        if (this.active == active) return;
+        setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_ACTIVE, active));
+        this.active = active;
     }
 
     public void update() {
@@ -209,10 +207,16 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
     }
 
     public void setWorkingEnabled(boolean workingEnabled) {
+        if (isWorkingEnabled == workingEnabled) return;
         isWorkingEnabled = workingEnabled;
         setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_WORKING_ENABLED, isWorkingEnabled));
-        syncDataHolder.markClientSyncFieldDirty("isWorkingEnabled");
         updateSubscription();
+    }
+
+    void setRandomTickMode(boolean randomTickMode) {
+        if (isRandomTickMode == randomTickMode) return;
+        isRandomTickMode = randomTickMode;
+        setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_RANDOM_TICK_MODE, randomTickMode));
     }
 
     @Override
@@ -227,9 +231,7 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
     @Override
     protected InteractionResult onScrewdriverClick(ExtendedUseOnContext context) {
         if (!isRemote()) {
-            isRandomTickMode = !isRandomTickMode;
-            setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_RANDOM_TICK_MODE, isRandomTickMode));
-            syncDataHolder.markClientSyncFieldDirty("isRandomTickMode");
+            setRandomTickMode(!isRandomTickMode);
             context.getPlayer().sendSystemMessage(Component.translatable(isRandomTickMode ?
                     "gtpm.machine.world_accelerator.mode_entity" : "gtpm.machine.world_accelerator.mode_tile"));
             scheduleRenderUpdate();
