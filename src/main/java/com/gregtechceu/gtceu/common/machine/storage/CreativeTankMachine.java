@@ -26,9 +26,10 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
@@ -52,11 +53,8 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -65,26 +63,18 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
     private static final int PAGE_WIDTH = 176;
     private static final int PAGE_HEIGHT = 131;
     private static final ResourceLocation SET_CREATIVE_TANK_FLUID_ACTION = GTCEu.id("set_creative_tank_fluid");
-    private static final ResourceLocation SET_CREATIVE_TANK_MB_PER_CYCLE_ACTION = GTCEu
-            .id("set_creative_tank_mb_per_cycle");
-    private static final ResourceLocation SET_CREATIVE_TANK_TICKS_PER_CYCLE_ACTION = GTCEu
-            .id("set_creative_tank_ticks_per_cycle");
-    private static final ResourceLocation MB_PER_CYCLE_FIELD = SyncFieldData.key("mBPerCycle");
-    private static final ResourceLocation TICKS_PER_CYCLE_FIELD = SyncFieldData.key("ticksPerCycle");
 
     static {
         SyncActionDispatchers.server().register(new CreativeTankFluidActionHandler());
-        SyncActionDispatchers.server().register(new CreativeTankMBPerCycleActionHandler());
-        SyncActionDispatchers.server().register(new CreativeTankTicksPerCycleActionHandler());
     }
 
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int mBPerCycle = 1000;
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int ticksPerCycle = 1;
 
     public CreativeTankMachine(BlockEntityCreationInfo info) {
@@ -115,21 +105,41 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
     }
 
     private void setTicksPerCycle(int ticksPerCycle) {
-        if (ticksPerCycle <= 0) {
-            throw new IllegalArgumentException("Ticks per cycle must be positive: " + ticksPerCycle);
-        }
-        this.ticksPerCycle = ticksPerCycle;
-        autoOutput.setTicksPerCycle(ticksPerCycle);
-        syncDataHolder.markClientSyncFieldDirty("ticksPerCycle");
+        int normalizedTicksPerCycle = normalizeTicksPerCycle(ticksPerCycle);
+        this.ticksPerCycle = normalizedTicksPerCycle;
+        autoOutput.setTicksPerCycle(normalizedTicksPerCycle);
         onFluidChanged();
     }
 
     private void setMillibucketsPerCycle(int mBPerCycle) {
-        if (mBPerCycle <= 0) {
-            throw new IllegalArgumentException("Millibuckets per cycle must be positive: " + mBPerCycle);
+        this.mBPerCycle = normalizeMillibucketsPerCycle(mBPerCycle);
+        onFluidChanged();
+    }
+
+    @ServerFieldNormalizer(fieldName = "mBPerCycle")
+    private int normalizeMillibucketsPerCycle(int candidate) {
+        if (candidate <= 0) {
+            throw new IllegalArgumentException("Millibuckets per cycle must be positive: " + candidate);
         }
-        this.mBPerCycle = mBPerCycle;
-        syncDataHolder.markClientSyncFieldDirty("mBPerCycle");
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "ticksPerCycle")
+    private int normalizeTicksPerCycle(int candidate) {
+        if (candidate <= 0) {
+            throw new IllegalArgumentException("Ticks per cycle must be positive: " + candidate);
+        }
+        return candidate;
+    }
+
+    @ServerFieldChangeListener(fieldName = "mBPerCycle")
+    private void onMillibucketsPerCycleChanged(int oldValue, int newValue) {
+        onFluidChanged();
+    }
+
+    @ServerFieldChangeListener(fieldName = "ticksPerCycle")
+    private void onTicksPerCycleChanged(int oldValue, int newValue) {
+        autoOutput.setTicksPerCycle(newValue);
         onFluidChanged();
     }
 
@@ -191,10 +201,10 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         root.addChild(createLDLib2StoredFluidSlot(player, holder));
         root.addChild(createLDLib2Label(7, 9, 162, 10, "gtpm.creative.tank.fluid"));
         root.addChild(new GTImageElement(7, 45, 154, 14, GuiTextures.DISPLAY));
-        root.addChild(createLDLib2MillibucketsPerCycleField(player, holder));
+        root.addChild(createLDLib2MillibucketsPerCycleField());
         root.addChild(createLDLib2Label(7, 28, 162, 10, "gtpm.creative.tank.mbpc"));
         root.addChild(new GTImageElement(7, 82, 154, 14, GuiTextures.DISPLAY));
-        root.addChild(createLDLib2TicksPerCycleField(player, holder));
+        root.addChild(createLDLib2TicksPerCycleField());
         root.addChild(createLDLib2Label(7, 65, 162, 10, "gtpm.creative.tank.tpc"));
         root.addChild(createLDLib2ActivityButton());
         return root;
@@ -240,7 +250,7 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         return label;
     }
 
-    private GTTextFieldElement createLDLib2MillibucketsPerCycleField(Player player, MachineUIHolder holder) {
+    GTTextFieldElement createLDLib2MillibucketsPerCycleField() {
         GTTextFieldElement field = new GTTextFieldElement(9, 47, 152, 10) {
 
             @Override
@@ -256,11 +266,11 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         field.textFieldStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false));
-        field.setTextResponder(value -> setLDLib2MillibucketsPerCycle(player, holder, value));
+        field.setTextResponder(this::setLDLib2MillibucketsPerCycle);
         return field;
     }
 
-    private GTTextFieldElement createLDLib2TicksPerCycleField(Player player, MachineUIHolder holder) {
+    GTTextFieldElement createLDLib2TicksPerCycleField() {
         GTTextFieldElement field = new GTTextFieldElement(9, 84, 152, 10) {
 
             @Override
@@ -276,7 +286,7 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         field.textFieldStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false));
-        field.setTextResponder(value -> setLDLib2TicksPerCycle(player, holder, value));
+        field.setTextResponder(this::setLDLib2TicksPerCycle);
         return field;
     }
 
@@ -318,25 +328,25 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         }
     }
 
-    private void setLDLib2MillibucketsPerCycle(Player player, MachineUIHolder holder, String value) {
+    private void setLDLib2MillibucketsPerCycle(String value) {
         if (value.isEmpty()) {
             return;
         }
         int parsedValue = parsePositiveInteger(value, "creative tank millibuckets per cycle");
         setMillibucketsPerCycle(parsedValue);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeTankMBPerCycleAction(parsedValue));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
-    private void setLDLib2TicksPerCycle(Player player, MachineUIHolder holder, String value) {
+    private void setLDLib2TicksPerCycle(String value) {
         if (value.isEmpty()) {
             return;
         }
         int parsedValue = parsePositiveInteger(value, "creative tank ticks per cycle");
         setTicksPerCycle(parsedValue);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeTankTicksPerCycleAction(parsedValue));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
@@ -367,25 +377,6 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
                 .build();
         int sequence = FluidStack.hashFluidAndComponents(storedFluid) * 31 + storedFluid.getAmount();
         return new SyncActionData(SET_CREATIVE_TANK_FLUID_ACTION, sequence, payload);
-    }
-
-    private static SyncActionData createSetCreativeTankMBPerCycleAction(int mBPerCycle) {
-        return createSetCreativeTankIntAction(SET_CREATIVE_TANK_MB_PER_CYCLE_ACTION, MB_PER_CYCLE_FIELD, mBPerCycle);
-    }
-
-    private static SyncActionData createSetCreativeTankTicksPerCycleAction(int ticksPerCycle) {
-        return createSetCreativeTankIntAction(SET_CREATIVE_TANK_TICKS_PER_CYCLE_ACTION, TICKS_PER_CYCLE_FIELD,
-                ticksPerCycle);
-    }
-
-    private static SyncActionData createSetCreativeTankIntAction(ResourceLocation actionId, ResourceLocation field,
-                                                                 int value) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(field, new JsonPrimitive(value))
-                        .build())
-                .build();
-        return new SyncActionData(actionId, value, payload);
     }
 
     @Override
@@ -497,76 +488,11 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         }
     }
 
-    private static final class CreativeTankMBPerCycleActionHandler extends CreativeTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_TANK_MB_PER_CYCLE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readPositiveInteger(fields, MB_PER_CYCLE_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setMillibucketsPerCycle(requirePositiveInteger(context.payload(), MB_PER_CYCLE_FIELD));
-        }
-    }
-
-    private static final class CreativeTankTicksPerCycleActionHandler extends CreativeTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_TANK_TICKS_PER_CYCLE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readPositiveInteger(fields, TICKS_PER_CYCLE_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setTicksPerCycle(requirePositiveInteger(context.payload(), TICKS_PER_CYCLE_FIELD));
-        }
-    }
-
-    private static SyncFieldData requireFieldData(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Creative tank action payload is missing field data.");
-        }
-        return fields;
-    }
-
     private static FluidStack requireFluidStack(DataComponentMap payload) {
         if (!payload.has(GTDataComponents.FLUID_CONTENT.get())) {
             throw new IllegalStateException("Creative tank fluid action payload is missing fluid stack.");
         }
         return payload.getOrDefault(GTDataComponents.FLUID_CONTENT.get(), SimpleFluidContent.EMPTY).copy();
-    }
-
-    private static int requirePositiveInteger(DataComponentMap payload, ResourceLocation field) {
-        Integer value = readPositiveInteger(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative tank action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readPositiveInteger(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            long value = primitive.getAsLong();
-            if (value > 0L && value <= Integer.MAX_VALUE) {
-                return (int) value;
-            }
-        }
-        return null;
     }
 
     private class InfiniteCache extends FluidCache {

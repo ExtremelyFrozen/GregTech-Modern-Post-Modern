@@ -26,9 +26,10 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
@@ -46,10 +47,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -58,26 +56,18 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
     private static final int PAGE_WIDTH = 176;
     private static final int PAGE_HEIGHT = 131;
     private static final ResourceLocation SET_CREATIVE_CHEST_ITEM_ACTION = GTCEu.id("set_creative_chest_item");
-    private static final ResourceLocation SET_CREATIVE_CHEST_ITEMS_PER_CYCLE_ACTION = GTCEu
-            .id("set_creative_chest_items_per_cycle");
-    private static final ResourceLocation SET_CREATIVE_CHEST_TICKS_PER_CYCLE_ACTION = GTCEu
-            .id("set_creative_chest_ticks_per_cycle");
-    private static final ResourceLocation ITEMS_PER_CYCLE_FIELD = SyncFieldData.key("itemsPerCycle");
-    private static final ResourceLocation TICKS_PER_CYCLE_FIELD = SyncFieldData.key("ticksPerCycle");
 
     static {
         SyncActionDispatchers.server().register(new CreativeChestItemActionHandler());
-        SyncActionDispatchers.server().register(new CreativeChestItemsPerCycleActionHandler());
-        SyncActionDispatchers.server().register(new CreativeChestTicksPerCycleActionHandler());
     }
 
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int itemsPerCycle;
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int ticksPerCycle = 1;
 
     public CreativeChestMachine(BlockEntityCreationInfo info) {
@@ -101,21 +91,41 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
     }
 
     private void setTicksPerCycle(int ticksPerCycle) {
-        if (ticksPerCycle <= 0) {
-            throw new IllegalArgumentException("Ticks per cycle must be positive: " + ticksPerCycle);
-        }
-        this.ticksPerCycle = ticksPerCycle;
-        autoOutput.setTicksPerCycle(ticksPerCycle);
-        syncDataHolder.markClientSyncFieldDirty("ticksPerCycle");
+        int normalizedTicksPerCycle = normalizeTicksPerCycle(ticksPerCycle);
+        this.ticksPerCycle = normalizedTicksPerCycle;
+        autoOutput.setTicksPerCycle(normalizedTicksPerCycle);
         onItemChanged();
     }
 
     private void setItemsPerCycle(int itemsPerCycle) {
-        if (itemsPerCycle <= 0) {
-            throw new IllegalArgumentException("Items per cycle must be positive: " + itemsPerCycle);
+        this.itemsPerCycle = normalizeItemsPerCycle(itemsPerCycle);
+        onItemChanged();
+    }
+
+    @ServerFieldNormalizer(fieldName = "itemsPerCycle")
+    private int normalizeItemsPerCycle(int candidate) {
+        if (candidate <= 0) {
+            throw new IllegalArgumentException("Items per cycle must be positive: " + candidate);
         }
-        this.itemsPerCycle = itemsPerCycle;
-        syncDataHolder.markClientSyncFieldDirty("itemsPerCycle");
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "ticksPerCycle")
+    private int normalizeTicksPerCycle(int candidate) {
+        if (candidate <= 0) {
+            throw new IllegalArgumentException("Ticks per cycle must be positive: " + candidate);
+        }
+        return candidate;
+    }
+
+    @ServerFieldChangeListener(fieldName = "itemsPerCycle")
+    private void onItemsPerCycleChanged(int oldValue, int newValue) {
+        onItemChanged();
+    }
+
+    @ServerFieldChangeListener(fieldName = "ticksPerCycle")
+    private void onTicksPerCycleChanged(int oldValue, int newValue) {
+        autoOutput.setTicksPerCycle(newValue);
         onItemChanged();
     }
 
@@ -151,10 +161,10 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         root.addChild(createLDLib2StoredItemSlot(player, holder));
         root.addChild(createLDLib2Label(7, 9, 162, 10, "gtpm.creative.chest.item"));
         root.addChild(new GTImageElement(7, 48, 154, 14, GuiTextures.DISPLAY));
-        root.addChild(createLDLib2ItemsPerCycleField(player, holder));
+        root.addChild(createLDLib2ItemsPerCycleField());
         root.addChild(createLDLib2Label(7, 28, 162, 10, "gtpm.creative.chest.ipc"));
         root.addChild(new GTImageElement(7, 85, 154, 14, GuiTextures.DISPLAY));
-        root.addChild(createLDLib2TicksPerCycleField(player, holder));
+        root.addChild(createLDLib2TicksPerCycleField());
         root.addChild(createLDLib2Label(7, 65, 162, 10, "gtpm.creative.chest.tpc"));
         root.addChild(createLDLib2ActivityButton());
         return root;
@@ -195,7 +205,7 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         return label;
     }
 
-    private GTTextFieldElement createLDLib2ItemsPerCycleField(Player player, MachineUIHolder holder) {
+    GTTextFieldElement createLDLib2ItemsPerCycleField() {
         GTTextFieldElement field = new GTTextFieldElement(9, 50, 152, 10) {
 
             @Override
@@ -211,11 +221,11 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         field.textFieldStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false));
-        field.setTextResponder(value -> setLDLib2ItemsPerCycle(player, holder, value));
+        field.setTextResponder(this::setLDLib2ItemsPerCycle);
         return field;
     }
 
-    private GTTextFieldElement createLDLib2TicksPerCycleField(Player player, MachineUIHolder holder) {
+    GTTextFieldElement createLDLib2TicksPerCycleField() {
         GTTextFieldElement field = new GTTextFieldElement(9, 87, 152, 10) {
 
             @Override
@@ -231,7 +241,7 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         field.textFieldStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false));
-        field.setTextResponder(value -> setLDLib2TicksPerCycle(player, holder, value));
+        field.setTextResponder(this::setLDLib2TicksPerCycle);
         return field;
     }
 
@@ -273,25 +283,25 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         }
     }
 
-    private void setLDLib2ItemsPerCycle(Player player, MachineUIHolder holder, String value) {
+    private void setLDLib2ItemsPerCycle(String value) {
         if (value.isEmpty()) {
             return;
         }
         int parsedValue = parsePositiveInteger(value, "creative chest items per cycle");
         setItemsPerCycle(parsedValue);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeChestItemsPerCycleAction(parsedValue));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
-    private void setLDLib2TicksPerCycle(Player player, MachineUIHolder holder, String value) {
+    private void setLDLib2TicksPerCycle(String value) {
         if (value.isEmpty()) {
             return;
         }
         int parsedValue = parsePositiveInteger(value, "creative chest ticks per cycle");
         setTicksPerCycle(parsedValue);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeChestTicksPerCycleAction(parsedValue));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
@@ -322,26 +332,6 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
                 .build();
         return new SyncActionData(SET_CREATIVE_CHEST_ITEM_ACTION,
                 ItemStack.hashItemAndComponents(storedItem), payload);
-    }
-
-    private static SyncActionData createSetCreativeChestItemsPerCycleAction(int itemsPerCycle) {
-        return createSetCreativeChestIntAction(SET_CREATIVE_CHEST_ITEMS_PER_CYCLE_ACTION, ITEMS_PER_CYCLE_FIELD,
-                itemsPerCycle);
-    }
-
-    private static SyncActionData createSetCreativeChestTicksPerCycleAction(int ticksPerCycle) {
-        return createSetCreativeChestIntAction(SET_CREATIVE_CHEST_TICKS_PER_CYCLE_ACTION, TICKS_PER_CYCLE_FIELD,
-                ticksPerCycle);
-    }
-
-    private static SyncActionData createSetCreativeChestIntAction(ResourceLocation actionId, ResourceLocation field,
-                                                                  int value) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(field, new JsonPrimitive(value))
-                        .build())
-                .build();
-        return new SyncActionData(actionId, value, payload);
     }
 
     private final class CreativeChestLDLib2Page implements LDLib2FancyUIProvider {
@@ -437,76 +427,11 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         }
     }
 
-    private static final class CreativeChestItemsPerCycleActionHandler extends CreativeChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_CHEST_ITEMS_PER_CYCLE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readPositiveInteger(fields, ITEMS_PER_CYCLE_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setItemsPerCycle(requirePositiveInteger(context.payload(), ITEMS_PER_CYCLE_FIELD));
-        }
-    }
-
-    private static final class CreativeChestTicksPerCycleActionHandler extends CreativeChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_CHEST_TICKS_PER_CYCLE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readPositiveInteger(fields, TICKS_PER_CYCLE_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setTicksPerCycle(requirePositiveInteger(context.payload(), TICKS_PER_CYCLE_FIELD));
-        }
-    }
-
-    private static SyncFieldData requireFieldData(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Creative chest action payload is missing field data.");
-        }
-        return fields;
-    }
-
     private static ItemStack requireItemStack(DataComponentMap payload) {
         if (!payload.has(GTDataComponents.PLACEHOLDER_ITEM_STACK.get())) {
             throw new IllegalStateException("Creative chest item action payload is missing item stack.");
         }
         return payload.getOrDefault(GTDataComponents.PLACEHOLDER_ITEM_STACK.get(), ItemStack.EMPTY);
-    }
-
-    private static int requirePositiveInteger(DataComponentMap payload, ResourceLocation field) {
-        Integer value = readPositiveInteger(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative chest action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readPositiveInteger(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            long value = primitive.getAsLong();
-            if (value > 0L && value <= Integer.MAX_VALUE) {
-                return (int) value;
-            }
-        }
-        return null;
     }
 
     @Override
