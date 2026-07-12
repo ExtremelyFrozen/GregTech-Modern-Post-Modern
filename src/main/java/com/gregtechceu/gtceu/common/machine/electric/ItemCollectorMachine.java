@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.electric;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
@@ -11,23 +10,19 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
-import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -37,9 +32,6 @@ import com.gregtechceu.gtceu.utils.ISubscription;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -47,8 +39,6 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +52,6 @@ import java.util.List;
 public class ItemCollectorMachine extends TieredEnergyMachine
                                   implements LDLib2FancyUIMachine, IWorkable {
 
-    private static final ResourceLocation SET_ITEM_COLLECTOR_RANGE_ACTION = GTCEu.id("set_item_collector_range");
-    private static final ResourceLocation RANGE_FIELD = SyncFieldData.key("range");
     private static final int MIN_RANGE = 1;
     private static final int SLOT_SIZE = 18;
     private static final int TEMPLATE_PADDING = 8;
@@ -88,10 +76,6 @@ public class ItemCollectorMachine extends TieredEnergyMachine
     private static final double MOTION_MULTIPLIER = 0.04;
     private static final int BASE_EU_CONSUMPTION = 6;
 
-    static {
-        SyncActionDispatchers.server().register(new ItemCollectorRangeActionHandler());
-    }
-
     @SaveField
     protected final NotifiableItemStackHandler output;
 
@@ -113,7 +97,7 @@ public class ItemCollectorMachine extends TieredEnergyMachine
 
     @SaveField
     @Getter
-    @SyncToClient
+    @SyncBoth
     private int range;
 
     private boolean rangeDirty = false;
@@ -322,8 +306,29 @@ public class ItemCollectorMachine extends TieredEnergyMachine
     }
 
     public void setRange(int range) {
-        this.range = range;
-        syncDataHolder.markClientSyncFieldDirty("range");
+        int normalizedRange = normalizeRange(range);
+        if (this.range == normalizedRange) {
+            return;
+        }
+        this.range = normalizedRange;
+        invalidateCollectionBounds();
+    }
+
+    @ServerFieldNormalizer(fieldName = "range")
+    private int normalizeRange(int range) {
+        if (range < MIN_RANGE || range > maxRange) {
+            throw new IllegalArgumentException("Item collector range must be between " + MIN_RANGE + " and " +
+                    maxRange + ": " + range);
+        }
+        return range;
+    }
+
+    @ServerFieldChangeListener(fieldName = "range")
+    private void onRangeChanged(int oldRange, int newRange) {
+        invalidateCollectionBounds();
+    }
+
+    protected void invalidateCollectionBounds() {
         rangeDirty = true;
     }
 
@@ -364,7 +369,7 @@ public class ItemCollectorMachine extends TieredEnergyMachine
 
         template.addChild(createLDLib2FilterSlot(FILTER_SLOT_X, getLDLib2FilterSlotY()));
         root.addChild(template);
-        root.addChild(createLDLib2RangeInput(shell, getLDLib2RangeInputX(), RANGE_INPUT_Y));
+        root.addChild(createLDLib2RangeInput(getLDLib2RangeInputX(), RANGE_INPUT_Y));
         return root;
     }
 
@@ -407,18 +412,16 @@ public class ItemCollectorMachine extends TieredEnergyMachine
         return UITemplate.setLDLib2Bounds(slot, x, y, SLOT_SIZE, SLOT_SIZE);
     }
 
-    private GTIntInputElement createLDLib2RangeInput(LDLib2FancyMachineUIElement shell, int x, int y) {
+    private GTIntInputElement createLDLib2RangeInput(int x, int y) {
         return new GTIntInputElement(x, y, RANGE_INPUT_WIDTH, RANGE_INPUT_HEIGHT, this::getRange,
-                value -> setLDLib2Range(shell, value))
+                this::setLDLib2Range)
                 .setMin(MIN_RANGE)
                 .setMax(maxRange);
     }
 
-    private void setLDLib2Range(LDLib2FancyMachineUIElement shell, int value) {
+    private void setLDLib2Range(int value) {
         setRange(value);
-        if (isRemote()) {
-            MachineUIHelper.sendAction(shell.getHolder(), createSetItemCollectorRangeAction(value));
-        }
+        sendServerSyncChanges();
     }
 
     private int getLDLib2EnergyGroupWidth() {
@@ -460,82 +463,5 @@ public class ItemCollectorMachine extends TieredEnergyMachine
 
     private int getLDLib2RangeInputX() {
         return (getLDLib2PageWidth() - RANGE_INPUT_WIDTH) / 2;
-    }
-
-    private static SyncActionData createSetItemCollectorRangeAction(int range) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(RANGE_FIELD, new JsonPrimitive(range))
-                        .build())
-                .build();
-        return new SyncActionData(SET_ITEM_COLLECTOR_RANGE_ACTION, range, payload);
-    }
-
-    private static final class ItemCollectorRangeActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_ITEM_COLLECTOR_RANGE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ItemCollectorMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readInt(fields, RANGE_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ItemCollectorMachine machine)) {
-                throw new IllegalStateException("Item collector range action received a non-item collector machine.");
-            }
-
-            int requestedRange = requireInt(context.payload(), RANGE_FIELD);
-            if (requestedRange < MIN_RANGE || requestedRange > machine.maxRange) {
-                throw new IllegalArgumentException("Item collector range action value out of bounds: " +
-                        requestedRange);
-            }
-            machine.setRange(requestedRange);
-        }
-    }
-
-    private static int requireInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Item collector range action payload is missing field data.");
-        }
-
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Item collector range action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (!(element instanceof JsonPrimitive primitive) || !primitive.isNumber()) {
-            return null;
-        }
-
-        try {
-            long value = primitive.getAsBigDecimal().longValueExact();
-            if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                return null;
-            }
-            return (int) value;
-        } catch (ArithmeticException | NumberFormatException e) {
-            return null;
-        }
     }
 }
