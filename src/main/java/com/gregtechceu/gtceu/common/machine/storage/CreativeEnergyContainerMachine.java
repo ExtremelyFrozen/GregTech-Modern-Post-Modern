@@ -23,6 +23,7 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
@@ -51,20 +52,16 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
 
     private static final ResourceLocation SET_CREATIVE_ENERGY_VOLTAGE_ACTION = GTCEu
             .id("set_creative_energy_voltage");
-    private static final ResourceLocation SET_CREATIVE_ENERGY_AMPS_ACTION = GTCEu
-            .id("set_creative_energy_amps");
     private static final ResourceLocation SET_CREATIVE_ENERGY_TIER_ACTION = GTCEu
             .id("set_creative_energy_tier");
     private static final ResourceLocation SET_CREATIVE_ENERGY_SOURCE_ACTION = GTCEu
             .id("set_creative_energy_source");
     private static final ResourceLocation VOLTAGE_FIELD = SyncFieldData.key("voltage");
-    private static final ResourceLocation AMPS_FIELD = SyncFieldData.key("amps");
     private static final ResourceLocation TIER_FIELD = SyncFieldData.key("setTier");
     private static final ResourceLocation SOURCE_FIELD = SyncFieldData.key("source");
 
     static {
         SyncActionDispatchers.server().register(new CreativeEnergyVoltageActionHandler());
-        SyncActionDispatchers.server().register(new CreativeEnergyAmpsActionHandler());
         SyncActionDispatchers.server().register(new CreativeEnergyTierActionHandler());
         SyncActionDispatchers.server().register(new CreativeEnergySourceActionHandler());
     }
@@ -73,7 +70,7 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     @SyncToClient
     private long voltage = 0;
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private int amps = 1;
     @SaveField
     @SyncToClient
@@ -226,8 +223,19 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     }
 
     private void setAmps(int amps) {
-        this.amps = Math.max(0, amps);
-        syncDataHolder.markClientSyncFieldDirty("amps");
+        int normalizedAmps = normalizeAmps(amps);
+        if (this.amps == normalizedAmps) {
+            return;
+        }
+        this.amps = normalizedAmps;
+    }
+
+    @ServerFieldNormalizer(fieldName = "amps")
+    private int normalizeAmps(int amps) {
+        if (amps < 0) {
+            throw new IllegalArgumentException("Creative energy amperage cannot be negative.");
+        }
+        return amps;
     }
 
     private void setActive(boolean active) {
@@ -250,7 +258,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         }
         syncDataHolder.markClientSyncFieldDirty("source");
         syncDataHolder.markClientSyncFieldDirty("voltage");
-        syncDataHolder.markClientSyncFieldDirty("amps");
         syncDataHolder.markClientSyncFieldDirty("setTier");
     }
 
@@ -279,9 +286,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         root.addChild(createLDLib2Label(7, 32, 162, 10, Component.translatable("gtpm.creative.energy.voltage")));
         root.addChild(createLDLib2VoltageField(player, holder));
         root.addChild(createLDLib2Label(7, 74, 162, 10, Component.translatable("gtpm.creative.energy.amperage")));
-        root.addChild(createLDLib2AmpsDecreaseButton(player, holder));
-        root.addChild(createLDLib2AmpsField(player, holder));
-        root.addChild(createLDLib2AmpsIncreaseButton(player, holder));
+        root.addChild(createLDLib2AmpsDecreaseButton());
+        root.addChild(createLDLib2AmpsField());
+        root.addChild(createLDLib2AmpsIncreaseButton());
         root.addChild(createLDLib2AverageIOLabel());
         root.addChild(createLDLib2ActiveButton());
         root.addChild(createLDLib2SourceButton(player, holder));
@@ -323,7 +330,7 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         return field;
     }
 
-    private GTTextFieldElement createLDLib2AmpsField(Player player, MachineUIHolder holder) {
+    private GTTextFieldElement createLDLib2AmpsField() {
         GTTextFieldElement field = new GTTextFieldElement(31, 89, 114, 16) {
 
             @Override
@@ -339,22 +346,22 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         field.textFieldStyle(style -> style
                 .textColor(0x404040)
                 .textShadow(false));
-        field.setTextResponder(value -> setLDLib2Amps(player, holder, value));
+        field.setTextResponder(this::setLDLib2Amps);
         return field;
     }
 
-    private GTButtonElement createLDLib2AmpsDecreaseButton(Player player, MachineUIHolder holder) {
+    private GTButtonElement createLDLib2AmpsDecreaseButton() {
         return new GTButtonElement(7, 87, 20, 20,
                 GuiTextures.group(GuiTextures.BUTTON, GuiTextures.text("-")),
-                event -> setLDLib2Amps(player, holder, Math.max(0, amps - 1)));
+                event -> setLDLib2Amps(Math.max(0, amps - 1)));
     }
 
-    private GTButtonElement createLDLib2AmpsIncreaseButton(Player player, MachineUIHolder holder) {
+    private GTButtonElement createLDLib2AmpsIncreaseButton() {
         return new GTButtonElement(149, 87, 20, 20,
                 GuiTextures.group(GuiTextures.BUTTON, GuiTextures.text("+")),
                 event -> {
                     if (amps < Integer.MAX_VALUE) {
-                        setLDLib2Amps(player, holder, amps + 1);
+                        setLDLib2Amps(amps + 1);
                     }
                 });
     }
@@ -432,7 +439,7 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         }
     }
 
-    private void setLDLib2Amps(Player player, MachineUIHolder holder, String value) {
+    private void setLDLib2Amps(String value) {
         if (value.isEmpty()) {
             return;
         }
@@ -443,14 +450,12 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
             GTCEu.LOGGER.error("Invalid creative energy amperage input: {}", value, e);
             throw e;
         }
-        setLDLib2Amps(player, holder, parsedValue);
+        setLDLib2Amps(parsedValue);
     }
 
-    private void setLDLib2Amps(Player player, MachineUIHolder holder, int value) {
+    private void setLDLib2Amps(int value) {
         setAmps(value);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeEnergyAmpsAction(amps));
-        }
+        sendServerSyncChanges();
     }
 
     private void setLDLib2Tier(Player player, MachineUIHolder holder, String tierName) {
@@ -485,11 +490,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
     private static SyncActionData createSetCreativeEnergyVoltageAction(long voltage) {
         return createSetCreativeEnergyAction(SET_CREATIVE_ENERGY_VOLTAGE_ACTION, VOLTAGE_FIELD,
                 new JsonPrimitive(voltage), Long.hashCode(voltage));
-    }
-
-    private static SyncActionData createSetCreativeEnergyAmpsAction(int amps) {
-        return createSetCreativeEnergyAction(SET_CREATIVE_ENERGY_AMPS_ACTION, AMPS_FIELD, new JsonPrimitive(amps),
-                amps);
     }
 
     private static SyncActionData createSetCreativeEnergyTierAction(int tier) {
@@ -551,25 +551,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         }
     }
 
-    private static final class CreativeEnergyAmpsActionHandler extends CreativeEnergyActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_ENERGY_AMPS_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readNonNegativeInteger(fields, AMPS_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setAmps(requireNonNegativeInteger(context.payload(), AMPS_FIELD));
-        }
-    }
-
     private static final class CreativeEnergyTierActionHandler extends CreativeEnergyActionHandler {
 
         @Override
@@ -619,14 +600,6 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
 
     private static long requireNonNegativeLong(DataComponentMap payload, ResourceLocation field) {
         Long value = readNonNegativeLong(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative energy action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static int requireNonNegativeInteger(DataComponentMap payload, ResourceLocation field) {
-        Integer value = readNonNegativeInteger(requireFieldData(payload), field);
         if (value == null) {
             throw new IllegalStateException("Creative energy action payload is missing " + field + ".");
         }
