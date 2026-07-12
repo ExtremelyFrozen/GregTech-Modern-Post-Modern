@@ -110,12 +110,12 @@ internal object MachineSyncPayloadCodec : StreamCodec<RegistryFriendlyByteBuf, D
 	}
 
 	private fun encodeFields(buffer: RegistryFriendlyByteBuf, value: SyncFieldData) {
-		val fieldCount = value.fields().size
+		val fieldCount = value.fields.size
 		if (fieldCount > MAX_FIELD_COUNT) {
 			throw EncoderException("Machine sync field count $fieldCount exceeds the maximum of $MAX_FIELD_COUNT")
 		}
 		buffer.writeVarInt(fieldCount)
-		for ((key, fieldValue) in value.fields()) {
+		for ((key, fieldValue) in value.fields) {
 			ResourceLocation.STREAM_CODEC.encode(buffer, key)
 			val rawJson = gson.toJson(fieldValue)
 			if (rawJson.length > MAX_FIELD_JSON_LENGTH) {

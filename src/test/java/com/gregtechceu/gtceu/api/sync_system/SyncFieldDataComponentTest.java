@@ -14,6 +14,7 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -21,13 +22,19 @@ import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import io.netty.buffer.Unpooled;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -64,6 +71,111 @@ public class SyncFieldDataComponentTest {
                 "non-null field did not round-trip");
         helper.assertTrue(decoded.get(SyncFieldData.key("cleared")).isJsonNull(),
                 "explicit null field did not round-trip");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void constructorSnapshotsNullValuesAndExposesUnmodifiableFields(GameTestHelper helper) {
+        ResourceLocation presentKey = SyncFieldData.key("present");
+        ResourceLocation clearedKey = SyncFieldData.key("cleared");
+        ResourceLocation laterKey = SyncFieldData.key("later");
+        Map<ResourceLocation, JsonElement> source = new LinkedHashMap<>();
+        source.put(presentKey, new JsonPrimitive("initial"));
+        source.put(clearedKey, null);
+
+        SyncFieldData fieldData = new SyncFieldData(source);
+        source.put(presentKey, new JsonPrimitive("mutated"));
+        source.remove(clearedKey);
+        source.put(laterKey, new JsonPrimitive("later"));
+
+        helper.assertTrue(fieldData.get(presentKey).getAsString().equals("initial"),
+                "constructor did not isolate fields from later source map changes");
+        helper.assertTrue(fieldData.get(clearedKey).isJsonNull(),
+                "constructor did not normalize a null map value to JsonNull");
+        helper.assertTrue(!fieldData.contains(laterKey),
+                "constructor exposed a field added to the source map after construction");
+
+        boolean mutationRejected = false;
+        try {
+            fieldData.fields().put(laterKey, new JsonPrimitive("rejected"));
+        } catch (UnsupportedOperationException exception) {
+            mutationRejected = true;
+        }
+        helper.assertTrue(mutationRejected, "fields accessor returned a modifiable map");
+
+        SyncFieldData equalData = new SyncFieldData(fieldData.fields());
+        helper.assertTrue(fieldData.equals(equalData) && fieldData.hashCode() == equalData.hashCode(),
+                "Kotlin class did not retain record equality and hash code semantics");
+        helper.assertTrue(fieldData.toString().equals("SyncFieldData[fields=" + fieldData.fields() + "]"),
+                "Kotlin class did not retain the record string representation");
+
+        SyncFieldData builderNull = SyncFieldData.builder()
+                .put(clearedKey, (JsonElement) null)
+                .build();
+        helper.assertTrue(builderNull.get(clearedKey).isJsonNull(),
+                "builder did not normalize a null value to JsonNull");
+        helper.assertTrue(SyncFieldData.builder().build() == SyncFieldData.EMPTY,
+                "empty builder did not return the EMPTY singleton");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void keyPreservesNamespacedValuesAndEscapesInvalidPathCharacters(GameTestHelper helper) {
+        ResourceLocation namespaced = ResourceLocation.parse("example:already_valid");
+
+        helper.assertTrue(SyncFieldData.key(namespaced.toString()).equals(namespaced),
+                "namespaced sync field key was changed");
+        helper.assertTrue(SyncFieldData.key("Current Parallel")
+                .equals(GTCEu.id("_u0043urrent_u0020_u0050arallel")),
+                "unqualified sync field key did not retain UTF-16 path escaping");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void jsonAndStreamCodecsRoundTripAllFieldValueForms(GameTestHelper helper) {
+        ResourceLocation stringKey = SyncFieldData.key("string");
+        ResourceLocation objectKey = SyncFieldData.key("object");
+        ResourceLocation clearedKey = SyncFieldData.key("cleared");
+        SyncFieldData original = SyncFieldData.builder()
+                .put(stringKey, new JsonPrimitive("{\"looksLikeJson\":true}"))
+                .put(objectKey, JsonParser.parseString("{\"enabled\":true,\"amount\":4}"))
+                .put(clearedKey, JsonNull.INSTANCE)
+                .build();
+
+        SyncFieldData jsonDecoded = SyncFieldData.fromJson(original.toJson());
+        SyncFieldData streamDecoded = fieldRoundTrip(helper, original);
+        DataComponentMap componentDecoded = networkRoundTrip(helper,
+                original.toComponentMap(GTDataComponents.SYNC_FIELD_DATA.get()));
+
+        helper.assertTrue(jsonDecoded.equals(original), "persistent codec changed sync field values");
+        helper.assertTrue(streamDecoded.equals(original), "field stream codec changed sync field values");
+        helper.assertTrue(original.equals(componentDecoded.get(GTDataComponents.SYNC_FIELD_DATA.get())),
+                "data component map stream codec changed sync field values");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void codecsRetainLastDuplicateFieldValue(GameTestHelper helper) {
+        ResourceLocation duplicateKey = SyncFieldData.key("duplicate");
+        JsonArray entries = new JsonArray();
+        entries.add(fieldEntry(duplicateKey, new JsonPrimitive(1)));
+        entries.add(fieldEntry(duplicateKey, new JsonPrimitive(2)));
+
+        SyncFieldData jsonDecoded = SyncFieldData.fromJson(entries);
+        SyncFieldData streamDecoded = duplicateFieldStreamDecode(helper, duplicateKey);
+
+        helper.assertTrue(jsonDecoded.fields().size() == 1 && jsonDecoded.get(duplicateKey).getAsInt() == 2,
+                "persistent codec did not retain the last duplicate field value");
+        helper.assertTrue(streamDecoded.fields().size() == 1 && streamDecoded.get(duplicateKey).getAsInt() == 2,
+                "field stream codec did not retain the last duplicate field value");
         helper.succeed();
     }
 
@@ -198,6 +310,39 @@ public class SyncFieldDataComponentTest {
         try {
             SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buffer, components);
             return SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buffer);
+        } finally {
+            buffer.release();
+        }
+    }
+
+    private static SyncFieldData fieldRoundTrip(GameTestHelper helper, SyncFieldData fieldData) {
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess(), ConnectionType.OTHER);
+        try {
+            SyncFieldData.STREAM_CODEC.encode(buffer, fieldData);
+            return SyncFieldData.STREAM_CODEC.decode(buffer);
+        } finally {
+            buffer.release();
+        }
+    }
+
+    private static JsonObject fieldEntry(ResourceLocation key, JsonElement value) {
+        JsonObject entry = new JsonObject();
+        entry.addProperty("key", key.toString());
+        entry.add("value", value);
+        return entry;
+    }
+
+    private static SyncFieldData duplicateFieldStreamDecode(GameTestHelper helper, ResourceLocation key) {
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess(), ConnectionType.OTHER);
+        try {
+            buffer.writeVarInt(2);
+            ResourceLocation.STREAM_CODEC.encode(buffer, key);
+            buffer.writeUtf("1");
+            ResourceLocation.STREAM_CODEC.encode(buffer, key);
+            buffer.writeUtf("2");
+            return SyncFieldData.STREAM_CODEC.decode(buffer);
         } finally {
             buffer.release();
         }

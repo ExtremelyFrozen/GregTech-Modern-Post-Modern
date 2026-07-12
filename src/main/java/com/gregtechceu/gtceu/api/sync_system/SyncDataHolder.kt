@@ -277,7 +277,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 
 	fun deserializeItemFieldData(registries: HolderLookup.Provider, fieldData: SyncFieldData) {
 		for (field in syncData.getItemSaveFields()) {
-			if (!fieldData.fields().containsKey(itemFieldKey(field))) {
+			if (!fieldData.fields.containsKey(itemFieldKey(field))) {
 				continue
 			}
 			val savedValue = fieldData.get(itemFieldKey(field)) ?: JsonNull.INSTANCE
@@ -289,7 +289,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	fun deserializeFieldData(registries: HolderLookup.Provider, fieldData: SyncFieldData, readingClientFields: Boolean, parseExplicitNull: Boolean = false) {
 		val fieldsToCheck = if (readingClientFields) syncData.getClientSyncFields() else syncData.getServerSaveFields()
 		for (field in fieldsToCheck) {
-			if (!fieldData.fields().containsKey(field.componentKey)) {
+			if (!fieldData.fields.containsKey(field.componentKey)) {
 				continue
 			}
 			val savedValue = fieldData.get(field.componentKey) ?: JsonNull.INSTANCE
@@ -325,14 +325,14 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 
 		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get())
 			?: return ServerFieldUpdateResult.rejected("Sync: Server field update is missing sync field data")
-		if (changes.isEmpty) {
+		if (changes.isEmpty()) {
 			return ServerFieldUpdateResult.rejected("Sync: Server field update contains empty sync field data")
 		}
 
 		val serverFields = syncData.getOrderedServerUpdateFields()
-		val selectedFields = serverFields.filter { field -> changes.fields().containsKey(field.componentKey) }
+		val selectedFields = serverFields.filter { field -> changes.fields.containsKey(field.componentKey) }
 		val selectedKeys = selectedFields.mapTo(HashSet()) { field -> field.componentKey }
-		val rejectedKeys = changes.fields().keys.filterNot(selectedKeys::contains)
+		val rejectedKeys = changes.fields.keys.filterNot(selectedKeys::contains)
 		if (rejectedKeys.isNotEmpty()) {
 			requestAuthoritativeServerAcks(selectedFields)
 			return ServerFieldUpdateResult.rejected(
@@ -391,7 +391,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 
 		val changes = components.get(GTDataComponents.SYNC_FIELD_DATA.get()) ?: return
 		for (field in syncData.getClientSyncFields()) {
-			if (!changes.fields().containsKey(field.componentKey)) {
+			if (!changes.fields.containsKey(field.componentKey)) {
 				continue
 			}
 			val value = changes.get(field.componentKey) ?: JsonNull.INSTANCE
@@ -516,7 +516,7 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		?: throw IllegalArgumentException("Sync: @ItemSave field ${field.fieldName} has no item data component key")
 
 	private fun componentsOf(fieldData: SyncFieldData): DataComponentMap {
-		if (fieldData.isEmpty) {
+		if (fieldData.isEmpty()) {
 			return DataComponentMap.EMPTY
 		}
 		return DataComponentMap.builder()
