@@ -99,12 +99,9 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
             .id("set_quantum_chest_locked");
     private static final ResourceLocation SET_QUANTUM_CHEST_VOIDING_ACTION = GTCEu
             .id("set_quantum_chest_voiding");
-    private static final ResourceLocation SET_QUANTUM_CHEST_AUTO_OUTPUT_ITEMS_ACTION = GTCEu
-            .id("set_quantum_chest_auto_output_items");
     private static final ResourceLocation RIGHT_CLICK_FIELD = SyncFieldData.key("rightClick");
     private static final ResourceLocation LOCKED_FIELD = SyncFieldData.key("locked");
     private static final ResourceLocation VOIDING_FIELD = SyncFieldData.key("voiding");
-    private static final ResourceLocation AUTO_OUTPUT_ITEMS_FIELD = SyncFieldData.key("autoOutputItems");
 
     static {
         SyncActionDispatchers.server().register(new QuantumChestImportSlotActionHandler());
@@ -112,7 +109,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         SyncActionDispatchers.server().register(new QuantumChestLockedItemActionHandler());
         SyncActionDispatchers.server().register(new QuantumChestLockedActionHandler());
         SyncActionDispatchers.server().register(new QuantumChestVoidingActionHandler());
-        SyncActionDispatchers.server().register(new QuantumChestAutoOutputItemsActionHandler());
     }
 
     @SaveField
@@ -342,7 +338,7 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         root.addChild(createLDLib2LockedItemSlot(player, holder));
         root.addChild(new GTToggleButtonElement(4, 41, 18, 18,
                 GuiTextures.BUTTON_ITEM_OUTPUT, this.autoOutput::isAutoOutputItems,
-                enabled -> setLDLib2AutoOutputItems(player, holder, enabled))
+                enabled -> setLDLib2AutoOutputItems(player, enabled))
                 .setShouldUseBaseBackground()
                 .setTooltipText("gtpm.gui.item_auto_output.tooltip"));
         root.addChild(new GTToggleButtonElement(22, 41, 18, 18,
@@ -477,7 +473,7 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0.5, 1, 0.5),
                 this::isWorkingEnabled,
                 (event, pressed) -> {
-                    setLDLib2AutoOutputItems(player, holder, pressed);
+                    setLDLib2AutoOutputItems(player, pressed);
                     event.stopImmediatePropagation();
                     event.hasHandler = true;
                 })
@@ -506,10 +502,10 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         }
     }
 
-    private void setLDLib2AutoOutputItems(Player player, MachineUIHolder holder, boolean enabled) {
+    private void setLDLib2AutoOutputItems(Player player, boolean enabled) {
         setWorkingEnabled(enabled);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetQuantumChestAutoOutputItemsAction(enabled));
+            sendServerSyncChanges();
         }
     }
 
@@ -589,15 +585,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
                         .build())
                 .build();
         return new SyncActionData(SET_QUANTUM_CHEST_VOIDING_ACTION, voiding ? 1 : 0, payload);
-    }
-
-    private static SyncActionData createSetQuantumChestAutoOutputItemsAction(boolean enabled) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(AUTO_OUTPUT_ITEMS_FIELD, new JsonPrimitive(enabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_QUANTUM_CHEST_AUTO_OUTPUT_ITEMS_ACTION, enabled ? 1 : 0, payload);
     }
 
     //////////////////////////////////////
@@ -780,25 +767,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         @Override
         public void execute(SyncActionContext context) {
             getMachine(context).setVoiding(requireBoolean(context.payload(), VOIDING_FIELD));
-        }
-    }
-
-    private static final class QuantumChestAutoOutputItemsActionHandler extends QuantumChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_QUANTUM_CHEST_AUTO_OUTPUT_ITEMS_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, AUTO_OUTPUT_ITEMS_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setWorkingEnabled(requireBoolean(context.payload(), AUTO_OUTPUT_ITEMS_FIELD));
         }
     }
 

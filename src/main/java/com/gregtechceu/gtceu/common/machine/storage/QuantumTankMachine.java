@@ -95,19 +95,15 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
             .id("set_quantum_tank_locked");
     private static final ResourceLocation SET_QUANTUM_TANK_VOIDING_ACTION = GTCEu
             .id("set_quantum_tank_voiding");
-    private static final ResourceLocation SET_QUANTUM_TANK_AUTO_OUTPUT_FLUIDS_ACTION = GTCEu
-            .id("set_quantum_tank_auto_output_fluids");
     private static final ResourceLocation SHIFT_FIELD = SyncFieldData.key("shift");
     private static final ResourceLocation LOCKED_FIELD = SyncFieldData.key("locked");
     private static final ResourceLocation VOIDING_FIELD = SyncFieldData.key("voiding");
-    private static final ResourceLocation AUTO_OUTPUT_FLUIDS_FIELD = SyncFieldData.key("autoOutputFluids");
 
     static {
         SyncActionDispatchers.server().register(new QuantumTankFluidSlotActionHandler());
         SyncActionDispatchers.server().register(new QuantumTankLockedFluidActionHandler());
         SyncActionDispatchers.server().register(new QuantumTankLockedActionHandler());
         SyncActionDispatchers.server().register(new QuantumTankVoidingActionHandler());
-        SyncActionDispatchers.server().register(new QuantumTankAutoOutputFluidsActionHandler());
     }
 
     @SaveField
@@ -262,7 +258,7 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
         root.addChild(createLDLib2LockedFluidSlot(player, holder));
         root.addChild(new GTToggleButtonElement(4, 41, 18, 18,
                 GuiTextures.BUTTON_FLUID_OUTPUT, this.autoOutput::isAutoOutputFluids,
-                enabled -> setLDLib2AutoOutputFluids(player, holder, enabled))
+                enabled -> setLDLib2AutoOutputFluids(player, enabled))
                 .setShouldUseBaseBackground()
                 .setTooltipText("gtpm.gui.fluid_auto_output.tooltip"));
         root.addChild(new GTToggleButtonElement(22, 41, 18, 18,
@@ -361,7 +357,7 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
                 GuiTextures.BUTTON_POWER.getSubTexture(0, 0.5, 1, 0.5),
                 this::isWorkingEnabled,
                 (event, pressed) -> {
-                    setLDLib2AutoOutputFluids(player, holder, pressed);
+                    setLDLib2AutoOutputFluids(player, pressed);
                     event.stopImmediatePropagation();
                     event.hasHandler = true;
                 })
@@ -390,10 +386,10 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
         }
     }
 
-    private void setLDLib2AutoOutputFluids(Player player, MachineUIHolder holder, boolean enabled) {
+    private void setLDLib2AutoOutputFluids(Player player, boolean enabled) {
         autoOutput.setAllowAutoOutputFluids(enabled);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetQuantumTankAutoOutputFluidsAction(enabled));
+            sendServerSyncChanges();
         }
     }
 
@@ -435,15 +431,6 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
                         .build())
                 .build();
         return new SyncActionData(SET_QUANTUM_TANK_VOIDING_ACTION, voiding ? 1 : 0, payload);
-    }
-
-    private static SyncActionData createSetQuantumTankAutoOutputFluidsAction(boolean enabled) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(AUTO_OUTPUT_FLUIDS_FIELD, new JsonPrimitive(enabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_QUANTUM_TANK_AUTO_OUTPUT_FLUIDS_ACTION, enabled ? 1 : 0, payload);
     }
 
     private final class QuantumTankLDLib2Page implements LDLib2FancyUIProvider {
@@ -697,26 +684,6 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
         @Override
         public void execute(SyncActionContext context) {
             getMachine(context).setVoiding(requireBoolean(context.payload(), VOIDING_FIELD));
-        }
-    }
-
-    private static final class QuantumTankAutoOutputFluidsActionHandler extends QuantumTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_QUANTUM_TANK_AUTO_OUTPUT_FLUIDS_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, AUTO_OUTPUT_FLUIDS_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).autoOutput.setAllowAutoOutputFluids(requireBoolean(context.payload(),
-                    AUTO_OUTPUT_FLUIDS_FIELD));
         }
     }
 
