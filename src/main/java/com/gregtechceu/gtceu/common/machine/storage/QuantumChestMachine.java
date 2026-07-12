@@ -34,6 +34,7 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
@@ -97,22 +98,18 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
             .id("set_quantum_chest_locked_item");
     private static final ResourceLocation SET_QUANTUM_CHEST_LOCKED_ACTION = GTCEu
             .id("set_quantum_chest_locked");
-    private static final ResourceLocation SET_QUANTUM_CHEST_VOIDING_ACTION = GTCEu
-            .id("set_quantum_chest_voiding");
     private static final ResourceLocation RIGHT_CLICK_FIELD = SyncFieldData.key("rightClick");
     private static final ResourceLocation LOCKED_FIELD = SyncFieldData.key("locked");
-    private static final ResourceLocation VOIDING_FIELD = SyncFieldData.key("voiding");
 
     static {
         SyncActionDispatchers.server().register(new QuantumChestImportSlotActionHandler());
         SyncActionDispatchers.server().register(new QuantumChestExportItemActionHandler());
         SyncActionDispatchers.server().register(new QuantumChestLockedItemActionHandler());
         SyncActionDispatchers.server().register(new QuantumChestLockedActionHandler());
-        SyncActionDispatchers.server().register(new QuantumChestVoidingActionHandler());
     }
 
     @SaveField
-    @SyncToClient
+    @SyncBoth
     private boolean isVoiding;
 
     private final long maxAmount;
@@ -302,9 +299,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
 
     private void setVoiding(boolean voiding) {
         isVoiding = voiding;
-        if (!isRemote()) {
-            syncDataHolder.markClientSyncFieldDirty("isVoiding");
-        }
     }
 
     public ItemStack getLockedItem() {
@@ -346,11 +340,7 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
                 locked -> setLDLib2Locked(player, holder, locked))
                 .setShouldUseBaseBackground()
                 .setTooltipText("gtpm.gui.item_lock.tooltip"));
-        root.addChild(new GTToggleButtonElement(40, 41, 18, 18,
-                GuiTextures.BUTTON_VOID, () -> isVoiding,
-                voiding -> setLDLib2Voiding(player, holder, voiding))
-                .setShouldUseBaseBackground()
-                .setTooltipText("gtpm.gui.item_voiding_partial.tooltip"));
+        root.addChild(createLDLib2VoidingButton());
         return root;
     }
 
@@ -495,10 +485,17 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         }
     }
 
-    private void setLDLib2Voiding(Player player, MachineUIHolder holder, boolean voiding) {
+    GTToggleButtonElement createLDLib2VoidingButton() {
+        return new GTToggleButtonElement(40, 41, 18, 18,
+                GuiTextures.BUTTON_VOID, () -> isVoiding, this::setLDLib2Voiding)
+                .setShouldUseBaseBackground()
+                .setTooltipText("gtpm.gui.item_voiding_partial.tooltip");
+    }
+
+    private void setLDLib2Voiding(boolean voiding) {
         setVoiding(voiding);
-        if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetQuantumChestVoidingAction(voiding));
+        if (isRemote()) {
+            sendServerSyncChanges();
         }
     }
 
@@ -576,15 +573,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
                         .build())
                 .build();
         return new SyncActionData(SET_QUANTUM_CHEST_LOCKED_ACTION, locked ? 1 : 0, payload);
-    }
-
-    private static SyncActionData createSetQuantumChestVoidingAction(boolean voiding) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(VOIDING_FIELD, new JsonPrimitive(voiding))
-                        .build())
-                .build();
-        return new SyncActionData(SET_QUANTUM_CHEST_VOIDING_ACTION, voiding ? 1 : 0, payload);
     }
 
     //////////////////////////////////////
@@ -748,25 +736,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         @Override
         public void execute(SyncActionContext context) {
             getMachine(context).setLocked(requireBoolean(context.payload(), LOCKED_FIELD));
-        }
-    }
-
-    private static final class QuantumChestVoidingActionHandler extends QuantumChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_QUANTUM_CHEST_VOIDING_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, VOIDING_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setVoiding(requireBoolean(context.payload(), VOIDING_FIELD));
         }
     }
 
