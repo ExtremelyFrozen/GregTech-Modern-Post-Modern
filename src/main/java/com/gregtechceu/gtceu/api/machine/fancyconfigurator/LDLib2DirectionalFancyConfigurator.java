@@ -120,9 +120,6 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         this.pageHolder = pageHolder;
         this.actionSender = actionSender;
         LDLib2DirectionalCoverActions.initialize();
-        if (output != null) {
-            LDLib2DirectionalAutoOutputActions.initialize();
-        }
     }
 
     private static void requireMatchingMachine(MetaMachine machine, MachineUIHolder pageHolder) {
@@ -208,40 +205,60 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
             return true;
         }
         if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && supportsItemOutput()) {
-            sendAction(LDLib2DirectionalAutoOutputActions.createConfigureItemOutputSideAction(side));
+            configureSelectedItemOutputSide();
         } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && supportsFluidOutput()) {
-            sendAction(LDLib2DirectionalAutoOutputActions.createConfigureFluidOutputSideAction(side));
+            configureSelectedFluidOutputSide();
         }
         return true;
     }
 
     boolean configureSelectedItemOutputSide() {
         Direction side = selectedSide;
-        if (side == null || !supportsItemOutput()) {
+        if (side == null || !supportsItemOutput() || !canChangeSyncedFields()) {
             return false;
         }
-        sendAction(LDLib2DirectionalAutoOutputActions.createConfigureItemOutputSideAction(side));
+        DirectionalAutoOutputMachine output = requireOutput();
+        if (output.getItemOutputDirection() == side) {
+            output.setAllowAutoOutputItems(!output.isAutoOutputItems());
+        } else {
+            if (!output.canSetItemOutputDirection(side)) {
+                return false;
+            }
+            output.setAllowAutoOutputItems(false);
+            output.setItemOutputDirection(side);
+        }
+        machine.sendServerSyncChanges();
         return true;
     }
 
     boolean configureSelectedFluidOutputSide() {
         Direction side = selectedSide;
-        if (side == null || !supportsFluidOutput()) {
+        if (side == null || !supportsFluidOutput() || !canChangeSyncedFields()) {
             return false;
         }
-        sendAction(LDLib2DirectionalAutoOutputActions.createConfigureFluidOutputSideAction(side));
+        DirectionalAutoOutputMachine output = requireOutput();
+        if (output.getFluidOutputDirection() == side) {
+            output.setAllowAutoOutputFluids(!output.isAutoOutputFluids());
+        } else {
+            if (!output.canSetFluidOutputDirection(side)) {
+                return false;
+            }
+            output.setAllowAutoOutputFluids(false);
+            output.setFluidOutputDirection(side);
+        }
+        machine.sendServerSyncChanges();
         return true;
     }
 
     void setAllowItemInputFromOutputSide(boolean allow) {
-        if (machine.isRemote()) {
+        if (canChangeSyncedFields()) {
             requireOutput().setAllowItemInputFromOutputSide(allow);
             machine.sendServerSyncChanges();
         }
     }
 
     void setAllowFluidInputFromOutputSide(boolean allow) {
-        if (machine.isRemote()) {
+        if (canChangeSyncedFields()) {
             requireOutput().setAllowFluidInputFromOutputSide(allow);
             machine.sendServerSyncChanges();
         }
@@ -309,6 +326,10 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
 
     private void sendAction(SyncActionData action) {
         actionSender.accept(pageHolder, action);
+    }
+
+    private boolean canChangeSyncedFields() {
+        return machine.isRemote() && pageHolder.getMachine() == machine;
     }
 
     private boolean supportsItemOutput() {

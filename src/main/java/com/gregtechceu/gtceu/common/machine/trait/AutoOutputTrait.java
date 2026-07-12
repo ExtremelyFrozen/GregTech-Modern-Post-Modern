@@ -14,7 +14,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
-import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ISubscription;
@@ -53,7 +52,7 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     protected final List<IFluidHandler> fluidHandlers;
 
     @SaveField
-    @SyncToClient
+    @SyncBoth
     @RerenderOnChanged
     protected @Nullable Direction itemOutputDirection, fluidOutputDirection;
     @Getter
@@ -232,6 +231,28 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
         return candidate;
     }
 
+    @ServerFieldNormalizer(fieldName = "itemOutputDirection")
+    private @Nullable Direction normalizeItemOutputDirection(@Nullable Direction candidate) {
+        if (!supportsAutoOutputItems()) {
+            throw new IllegalArgumentException("Machine trait does not support item output directions.");
+        }
+        if (candidate != itemOutputDirection && !canSetItemOutputDirection(candidate)) {
+            throw new IllegalArgumentException("Machine trait rejected the item output direction.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "fluidOutputDirection")
+    private @Nullable Direction normalizeFluidOutputDirection(@Nullable Direction candidate) {
+        if (!supportsAutoOutputFluids()) {
+            throw new IllegalArgumentException("Machine trait does not support fluid output directions.");
+        }
+        if (candidate != fluidOutputDirection && !canSetFluidOutputDirection(candidate)) {
+            throw new IllegalArgumentException("Machine trait rejected the fluid output direction.");
+        }
+        return candidate;
+    }
+
     @ServerFieldNormalizer(fieldName = "autoOutputFluids")
     private boolean normalizeAutoOutputFluids(boolean candidate) {
         if (!supportsAutoOutputFluids()) {
@@ -266,6 +287,16 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
         updateFluidOutputSubscription();
     }
 
+    @ServerFieldChangeListener(fieldName = "itemOutputDirection")
+    private void onItemOutputDirectionChanged(@Nullable Direction oldValue, @Nullable Direction newValue) {
+        updateItemOutputSubscription();
+    }
+
+    @ServerFieldChangeListener(fieldName = "fluidOutputDirection")
+    private void onFluidOutputDirectionChanged(@Nullable Direction oldValue, @Nullable Direction newValue) {
+        updateFluidOutputSubscription();
+    }
+
     @Override
     public boolean canSetFluidOutputDirection(@Nullable Direction outputFacing) {
         return supportsAutoOutputFluids() && fluidOutputDirectionValidator.test(outputFacing) &&
@@ -276,7 +307,6 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     public void setFluidOutputDirection(@Nullable Direction outputFacing) {
         if (canSetFluidOutputDirection(outputFacing)) {
             this.fluidOutputDirection = outputFacing;
-            syncDataHolder.markClientSyncFieldDirty("outputFacingFluids");
             updateFluidOutputSubscription();
         }
     }
@@ -291,7 +321,6 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     public void setItemOutputDirection(@Nullable Direction outputFacing) {
         if (canSetItemOutputDirection(outputFacing)) {
             this.itemOutputDirection = outputFacing;
-            syncDataHolder.markClientSyncFieldDirty("outputFacingItems");
             updateItemOutputSubscription();
         }
     }

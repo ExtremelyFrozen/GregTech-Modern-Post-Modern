@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2DirectionalFaceClickTracker;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.SimpleTieredMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
@@ -20,7 +21,6 @@ import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
 import com.gregtechceu.gtceu.common.machine.electric.ItemCollectorMachine;
-import com.gregtechceu.gtceu.common.machine.storage.BufferMachine;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.gametest.util.TestUtils;
 
@@ -33,6 +33,8 @@ import com.lowdragmc.lowdraglib2.utils.data.BlockPosFace;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -40,11 +42,17 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -54,16 +62,16 @@ import java.util.List;
 @GameTestHolder(GTCEu.MOD_ID)
 public class LDLib2DirectionalFancyConfiguratorTest {
 
-    private static final ResourceLocation CONFIGURE_ITEM_OUTPUT_SIDE_ACTION = GTCEu
-            .id("configure_item_output_side");
-    private static final ResourceLocation CONFIGURE_FLUID_OUTPUT_SIDE_ACTION = GTCEu
-            .id("configure_fluid_output_side");
     private static final ResourceLocation PLACE_DIRECTIONAL_COVER_ACTION = GTCEu.id("place_directional_cover");
     private static final ResourceLocation REMOVE_DIRECTIONAL_COVER_ACTION = GTCEu.id("remove_directional_cover");
     private static final ResourceLocation OPEN_DIRECTIONAL_COVER_ACTION = GTCEu.id("open_directional_cover");
     private static final ResourceLocation ALLOW_ITEM_INPUT_FIELD = SyncFieldData.key("allowItemInputFromOutputSide");
     private static final ResourceLocation ALLOW_FLUID_INPUT_FIELD = SyncFieldData
             .key("allowFluidInputFromOutputSide");
+    private static final ResourceLocation AUTO_OUTPUT_ITEMS_FIELD = SyncFieldData.key("autoOutputItems");
+    private static final ResourceLocation AUTO_OUTPUT_FLUIDS_FIELD = SyncFieldData.key("autoOutputFluids");
+    private static final ResourceLocation ITEM_OUTPUT_DIRECTION_FIELD = SyncFieldData.key("itemOutputDirection");
+    private static final ResourceLocation FLUID_OUTPUT_DIRECTION_FIELD = SyncFieldData.key("fluidOutputDirection");
 
     @TestHolder
     @EmptyTemplate
@@ -306,24 +314,25 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         helper.assertTrue(capturedActions.isEmpty(), "right-click must not configure item output");
 
         page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
-        assertAction(helper, capturedActions, 0, pageHolder, CONFIGURE_ITEM_OUTPUT_SIDE_ACTION,
-                Direction.EAST.get3DDataValue());
+        helper.assertTrue(capturedActions.isEmpty() && output.isAutoOutputItems(),
+                "server-side scene callback changed item auto-output or sent a legacy action");
 
         clickButton(outputModeButton);
-        assertAction(helper, capturedActions, 1, pageHolder, CONFIGURE_ITEM_OUTPUT_SIDE_ACTION,
-                Direction.EAST.get3DDataValue());
+        helper.assertTrue(capturedActions.isEmpty() && output.isAutoOutputItems(),
+                "server-side item mode button changed item auto-output or sent a legacy action");
 
         page.handleSceneFaceClick(Direction.SOUTH, GLFW.GLFW_MOUSE_BUTTON_LEFT);
-        helper.assertTrue(capturedActions.size() == 2, "selecting a different face must not send an action");
+        helper.assertTrue(capturedActions.isEmpty(), "selecting a different face sent an action");
         helper.assertTrue(page.getItemOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
                 "a selected side different from item output should use off mode");
         clickButton(outputModeButton);
-        assertAction(helper, capturedActions, 2, pageHolder, CONFIGURE_ITEM_OUTPUT_SIDE_ACTION,
-                Direction.SOUTH.get3DDataValue());
+        helper.assertTrue(capturedActions.isEmpty() && output.getItemOutputDirection() == Direction.EAST &&
+                output.isAutoOutputItems(),
+                "server-side item mode button changed the selected output fields");
 
         output.setAllowItemInputFromOutputSide(true);
         clickButton(allowInputButton);
-        helper.assertTrue(capturedActions.size() == 3 && output.allowsItemInputFromOutputSide(),
+        helper.assertTrue(capturedActions.isEmpty() && output.allowsItemInputFromOutputSide(),
                 "server-side item input-policy callback changed state or sent an action");
         helper.succeed();
     }
@@ -379,27 +388,26 @@ public class LDLib2DirectionalFancyConfiguratorTest {
                 "selected fluid output side should use auto mode when auto-output is enabled");
 
         page.handleSceneFaceClick(Direction.UP, GLFW.GLFW_MOUSE_BUTTON_LEFT);
-        assertAction(helper, capturedActions, 0, pageHolder, CONFIGURE_ITEM_OUTPUT_SIDE_ACTION,
-                Direction.UP.get3DDataValue());
         page.handleSceneFaceClick(Direction.UP, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
-        assertAction(helper, capturedActions, 1, pageHolder, CONFIGURE_FLUID_OUTPUT_SIDE_ACTION,
-                Direction.UP.get3DDataValue());
+        helper.assertTrue(capturedActions.isEmpty() && output.isAutoOutputFluids(),
+                "server-side scene callback changed auto-output or sent a legacy action");
 
         clickButton(fluidModeButton);
-        assertAction(helper, capturedActions, 2, pageHolder, CONFIGURE_FLUID_OUTPUT_SIDE_ACTION,
-                Direction.UP.get3DDataValue());
+        helper.assertTrue(capturedActions.isEmpty() && output.isAutoOutputFluids(),
+                "server-side fluid mode button changed auto-output or sent a legacy action");
 
         page.handleSceneFaceClick(Direction.DOWN, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
-        helper.assertTrue(capturedActions.size() == 3, "selecting a different fluid face must not send an action");
+        helper.assertTrue(capturedActions.isEmpty(), "selecting a different fluid face sent an action");
         helper.assertTrue(page.getFluidOutputMode() == LDLib2DirectionalFancyConfigurator.OutputMode.OFF,
                 "a selected side different from fluid output should use off mode");
         clickButton(fluidModeButton);
-        assertAction(helper, capturedActions, 3, pageHolder, CONFIGURE_FLUID_OUTPUT_SIDE_ACTION,
-                Direction.DOWN.get3DDataValue());
+        helper.assertTrue(capturedActions.isEmpty() && output.getFluidOutputDirection() == Direction.UP &&
+                output.isAutoOutputFluids(),
+                "server-side fluid mode button changed the selected output fields");
 
         output.setAllowFluidInputFromOutputSide(true);
         clickButton(allowFluidInputButton);
-        helper.assertTrue(capturedActions.size() == 4 && output.allowsFluidInputFromOutputSide(),
+        helper.assertTrue(capturedActions.isEmpty() && output.allowsFluidInputFromOutputSide(),
                 "server-side fluid input-policy callback changed state or sent an action");
         helper.succeed();
     }
@@ -407,9 +415,118 @@ public class LDLib2DirectionalFancyConfiguratorTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
-    public static void clientInputPolicyHandlersChangeFieldsAndFlushMachineSync(GameTestHelper helper) {
-        TestClientBufferMachine machine = createClientBufferMachine();
+    public static void clientDirectionControlsFlushAtomicFieldBatches(GameTestHelper helper) {
+        TestClientDirectionalMachine machine = createClientDirectionalMachine();
+        machine.setFrontFacing(Direction.NORTH);
         AutoOutputTrait output = machine.autoOutput;
+        output.setItemOutputDirection(Direction.SOUTH);
+        output.setFluidOutputDirection(Direction.DOWN);
+        output.setAllowAutoOutputItems(true);
+        output.setAllowAutoOutputFluids(true);
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        machine.beginSyncCapture(registries);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MachineUIHolder holder = new DirectMachineUIHolder(machine);
+        List<CapturedAction> capturedActions = new ArrayList<>();
+        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(
+                machine, player, holder,
+                (actionHolder, action) -> capturedActions.add(new CapturedAction(actionHolder, action)));
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(page, player.getInventory(),
+                holder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
+        UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
+        UIElement itemModeButton = pageRoot.getChildren().get(3).getChildren().getFirst();
+        UIElement fluidModeButton = pageRoot.getChildren().get(4).getChildren().getFirst();
+
+        page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        helper.assertTrue(machine.syncRequests == 0,
+                "first item scene click flushed before the side was confirmed");
+        page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+
+        helper.assertTrue(output.getItemOutputDirection() == Direction.EAST && !output.isAutoOutputItems(),
+                "confirmed item scene click did not change side and disable auto-output");
+        helper.assertTrue(machine.syncRequests == 1 && machine.syncBatches.size() == 1,
+                "item side change did not flush exactly once");
+        assertDirectionChangeBatch(helper, machine.syncBatches.getFirst(), ITEM_OUTPUT_DIRECTION_FIELD,
+                AUTO_OUTPUT_ITEMS_FIELD, Direction.EAST, "item side change");
+
+        page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+
+        helper.assertTrue(output.isAutoOutputItems() && machine.syncRequests == 2,
+                "same-side item scene click did not enable auto-output with one flush");
+        assertBooleanOnlyBatch(helper, machine.syncBatches.get(1), AUTO_OUTPUT_ITEMS_FIELD, true,
+                "same-side item enable");
+
+        page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        helper.assertTrue(!output.isAutoOutputItems() && machine.syncRequests == 3,
+                "second same-side item scene click did not disable auto-output with one flush");
+        assertBooleanOnlyBatch(helper, machine.syncBatches.get(2), AUTO_OUTPUT_ITEMS_FIELD, false,
+                "same-side item disable");
+
+        page.handleSceneFaceClick(Direction.WEST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        clickButton(itemModeButton);
+
+        helper.assertTrue(output.getItemOutputDirection() == Direction.WEST && !output.isAutoOutputItems(),
+                "item mode button did not change side while auto-output was already disabled");
+        helper.assertTrue(machine.syncRequests == 4,
+                "item mode button side change did not flush exactly once");
+        assertDirectionOnlyBatch(helper, machine.syncBatches.get(3), ITEM_OUTPUT_DIRECTION_FIELD,
+                Direction.WEST, "item side change while disabled");
+
+        page.handleSceneFaceClick(Direction.UP, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        clickButton(fluidModeButton);
+
+        helper.assertTrue(output.getFluidOutputDirection() == Direction.UP && !output.isAutoOutputFluids(),
+                "fluid mode button did not change side and disable auto-output");
+        helper.assertTrue(machine.syncRequests == 5,
+                "fluid mode button side change did not flush exactly once");
+        assertDirectionChangeBatch(helper, machine.syncBatches.get(4), FLUID_OUTPUT_DIRECTION_FIELD,
+                AUTO_OUTPUT_FLUIDS_FIELD, Direction.UP, "fluid side change");
+
+        clickButton(fluidModeButton);
+        helper.assertTrue(output.isAutoOutputFluids() && machine.syncRequests == 6,
+                "same-side fluid mode click did not enable auto-output with one flush");
+        assertBooleanOnlyBatch(helper, machine.syncBatches.get(5), AUTO_OUTPUT_FLUIDS_FIELD, true,
+                "same-side fluid enable");
+        helper.assertTrue(capturedActions.isEmpty(),
+                "client direction controls sent legacy auto-output actions");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void clientDirectionControlRejectsStalePageHolder(GameTestHelper helper) {
+        TestClientDirectionalMachine target = createClientDirectionalMachine();
+        TestClientDirectionalMachine resolved = createClientDirectionalMachine();
+        target.setFrontFacing(Direction.NORTH);
+        AutoOutputTrait output = target.autoOutput;
+        output.setItemOutputDirection(Direction.SOUTH);
+        output.setAllowAutoOutputItems(true);
+        target.beginSyncCapture(helper.getLevel().registryAccess());
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        MutableMachineUIHolder holder = new MutableMachineUIHolder(target);
+        LDLib2DirectionalFancyConfigurator page = new LDLib2DirectionalFancyConfigurator(target, player, holder);
+        page.handleSceneFaceClick(Direction.EAST, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+
+        holder.setMachine(resolved);
+        boolean configured = page.configureSelectedItemOutputSide();
+
+        helper.assertTrue(!configured, "direction control accepted a stale page holder");
+        helper.assertTrue(output.getItemOutputDirection() == Direction.SOUTH && output.isAutoOutputItems(),
+                "stale page holder changed item output state");
+        helper.assertTrue(target.syncRequests == 0 && target.syncBatches.isEmpty(),
+                "stale page holder flushed a field update");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2DirectionalFancyConfigurator")
+    public static void clientInputPolicyHandlersChangeFieldsAndFlushMachineSync(GameTestHelper helper) {
+        TestClientDirectionalMachine machine = createClientDirectionalMachine();
+        AutoOutputTrait output = machine.autoOutput;
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        machine.beginSyncCapture(registries);
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         MachineUIHolder holder = new DirectMachineUIHolder(machine);
         List<CapturedAction> capturedActions = new ArrayList<>();
@@ -425,12 +542,10 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         helper.assertTrue(machine.syncRequests == 2,
                 "client input-policy handlers did not flush each field update");
         helper.assertTrue(capturedActions.isEmpty(), "client input-policy handlers sent legacy actions");
-        SyncFieldData enabledFields = output.getSyncDataHolder()
-                .collectServerNetworkChanges(helper.getLevel().registryAccess())
-                .get(GTDataComponents.SYNC_FIELD_DATA.get());
-        helper.assertTrue(enabledFields != null && enabledFields.get(ALLOW_ITEM_INPUT_FIELD).getAsBoolean() &&
-                enabledFields.get(ALLOW_FLUID_INPUT_FIELD).getAsBoolean(),
-                "client input-policy fields were not available to the trait C2S collector");
+        assertBooleanOnlyBatch(helper, machine.syncBatches.getFirst(), ALLOW_ITEM_INPUT_FIELD, true,
+                "item input-policy enable");
+        assertBooleanOnlyBatch(helper, machine.syncBatches.get(1), ALLOW_FLUID_INPUT_FIELD, true,
+                "fluid input-policy enable");
 
         page.setAllowItemInputFromOutputSide(false);
         page.setAllowFluidInputFromOutputSide(false);
@@ -439,12 +554,10 @@ public class LDLib2DirectionalFancyConfiguratorTest {
                 "client input-policy handlers did not clear both local fields");
         helper.assertTrue(machine.syncRequests == 4,
                 "client input-policy disable handlers did not flush each field update");
-        SyncFieldData disabledFields = output.getSyncDataHolder()
-                .collectServerNetworkChanges(helper.getLevel().registryAccess())
-                .get(GTDataComponents.SYNC_FIELD_DATA.get());
-        helper.assertTrue(disabledFields != null && !disabledFields.get(ALLOW_ITEM_INPUT_FIELD).getAsBoolean() &&
-                !disabledFields.get(ALLOW_FLUID_INPUT_FIELD).getAsBoolean(),
-                "client input-policy disable fields were not available to the trait C2S collector");
+        assertBooleanOnlyBatch(helper, machine.syncBatches.get(2), ALLOW_ITEM_INPUT_FIELD, false,
+                "item input-policy disable");
+        assertBooleanOnlyBatch(helper, machine.syncBatches.get(3), ALLOW_FLUID_INPUT_FIELD, false,
+                "fluid input-policy disable");
         helper.succeed();
     }
 
@@ -516,9 +629,9 @@ public class LDLib2DirectionalFancyConfiguratorTest {
                 GTMachines.ARC_FURNACE[GTValues.LV]);
     }
 
-    private static TestClientBufferMachine createClientBufferMachine() {
+    private static TestClientDirectionalMachine createClientDirectionalMachine() {
         var definition = GTMachines.BUFFER[GTValues.LV];
-        return new TestClientBufferMachine(new BlockEntityCreationInfo(
+        return new TestClientDirectionalMachine(new BlockEntityCreationInfo(
                 definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()));
     }
 
@@ -548,6 +661,58 @@ public class LDLib2DirectionalFancyConfiguratorTest {
                 "directional action sequence did not match the selected state");
     }
 
+    private static void assertDirectionChangeBatch(GameTestHelper helper, DataComponentMap components,
+                                                   ResourceLocation directionField,
+                                                   ResourceLocation autoOutputField, Direction expectedDirection,
+                                                   String description) {
+        SyncFieldData fields = requireFields(components, description);
+        helper.assertTrue(fields.fields().size() == 2,
+                description + " did not send exactly one direction and one auto-output field");
+        assertDirectionField(helper, fields, directionField, expectedDirection, description);
+        assertBooleanField(helper, fields, autoOutputField, false, description);
+    }
+
+    private static void assertDirectionOnlyBatch(GameTestHelper helper, DataComponentMap components,
+                                                 ResourceLocation directionField, Direction expectedDirection,
+                                                 String description) {
+        SyncFieldData fields = requireFields(components, description);
+        helper.assertTrue(fields.fields().size() == 1,
+                description + " included an unchanged auto-output field");
+        assertDirectionField(helper, fields, directionField, expectedDirection, description);
+    }
+
+    private static void assertBooleanOnlyBatch(GameTestHelper helper, DataComponentMap components,
+                                               ResourceLocation field, boolean expected, String description) {
+        SyncFieldData fields = requireFields(components, description);
+        helper.assertTrue(fields.fields().size() == 1,
+                description + " included unrelated synchronized fields");
+        assertBooleanField(helper, fields, field, expected, description);
+    }
+
+    private static SyncFieldData requireFields(DataComponentMap components, String description) {
+        SyncFieldData fields = components.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        if (fields == null) {
+            throw new IllegalStateException(description + " did not collect synchronized field data.");
+        }
+        return fields;
+    }
+
+    private static void assertDirectionField(GameTestHelper helper, SyncFieldData fields, ResourceLocation field,
+                                             Direction expected, String description) {
+        JsonElement value = fields.get(field);
+        helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isString() &&
+                primitive.getAsString().equals(expected.getSerializedName()),
+                description + " did not encode the expected direction enum string");
+    }
+
+    private static void assertBooleanField(GameTestHelper helper, SyncFieldData fields, ResourceLocation field,
+                                           boolean expected, String description) {
+        JsonElement value = fields.get(field);
+        helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isBoolean() &&
+                primitive.getAsBoolean() == expected,
+                description + " did not encode the expected boolean field");
+    }
+
     private static void clickButton(UIElement button) {
         clickElement(button, GLFW.GLFW_MOUSE_BUTTON_LEFT);
     }
@@ -559,12 +724,23 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         UIEventDispatcher.dispatchEvent(event, false, false, false);
     }
 
-    private static final class TestClientBufferMachine extends BufferMachine {
+    private static final class TestClientDirectionalMachine extends MetaMachine {
 
+        private final AutoOutputTrait autoOutput;
+        private final List<DataComponentMap> syncBatches = new ArrayList<>();
         private int syncRequests;
+        private RegistryAccess syncRegistries;
 
-        private TestClientBufferMachine(BlockEntityCreationInfo info) {
-            super(info, GTValues.LV);
+        private TestClientDirectionalMachine(BlockEntityCreationInfo info) {
+            super(info);
+            autoOutput = attachTrait(new TestAutoOutputTrait());
+        }
+
+        private void beginSyncCapture(RegistryAccess registries) {
+            syncRegistries = registries;
+            autoOutput.getSyncDataHolder().collectServerNetworkChanges(registries);
+            syncBatches.clear();
+            syncRequests = 0;
         }
 
         @Override
@@ -574,11 +750,29 @@ public class LDLib2DirectionalFancyConfiguratorTest {
 
         @Override
         public void sendServerSyncChanges() {
+            if (syncRegistries == null) {
+                throw new IllegalStateException("Test client machine did not initialize sync capture.");
+            }
             syncRequests++;
+            syncBatches.add(autoOutput.getSyncDataHolder().collectServerNetworkChanges(syncRegistries));
         }
     }
 
-    private record DirectMachineUIHolder(TestClientBufferMachine machine) implements MachineUIHolder {
+    private static final class TestAutoOutputTrait extends AutoOutputTrait {
+
+        private TestAutoOutputTrait() {
+            super(List.<IItemHandler>of(new ItemStackHandler(1)),
+                    List.<IFluidHandler>of(new FluidTank(1_000)), false);
+        }
+
+        @Override
+        protected void updateItemOutputSubscription() {}
+
+        @Override
+        protected void updateFluidOutputSubscription() {}
+    }
+
+    private record DirectMachineUIHolder(TestClientDirectionalMachine machine) implements MachineUIHolder {
 
         @Override
         public BlockPos getPos() {
@@ -591,7 +785,35 @@ public class LDLib2DirectionalFancyConfiguratorTest {
         }
 
         @Override
-        public TestClientBufferMachine getMachine() {
+        public TestClientDirectionalMachine getMachine() {
+            return machine;
+        }
+    }
+
+    private static final class MutableMachineUIHolder implements MachineUIHolder {
+
+        private MetaMachine machine;
+
+        private MutableMachineUIHolder(MetaMachine machine) {
+            this.machine = machine;
+        }
+
+        private void setMachine(MetaMachine machine) {
+            this.machine = machine;
+        }
+
+        @Override
+        public BlockPos getPos() {
+            return machine.getBlockPos();
+        }
+
+        @Override
+        public ResourceLocation getMachineDefinitionId() {
+            return machine.getDefinition().getId();
+        }
+
+        @Override
+        public MetaMachine getMachine() {
             return machine;
         }
     }

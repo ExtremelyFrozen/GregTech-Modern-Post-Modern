@@ -16,6 +16,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
@@ -30,6 +31,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
 import java.util.List;
@@ -43,6 +45,8 @@ public class AutoOutputTraitSyncTest {
     private static final String BATCH = "AutoOutputTraitSync";
     private static final ResourceLocation AUTO_OUTPUT_ITEMS_FIELD = SyncFieldData.key("autoOutputItems");
     private static final ResourceLocation AUTO_OUTPUT_FLUIDS_FIELD = SyncFieldData.key("autoOutputFluids");
+    private static final ResourceLocation ITEM_OUTPUT_DIRECTION_FIELD = SyncFieldData.key("itemOutputDirection");
+    private static final ResourceLocation FLUID_OUTPUT_DIRECTION_FIELD = SyncFieldData.key("fluidOutputDirection");
     private static final ResourceLocation ALLOW_ITEM_INPUT_FIELD = SyncFieldData.key("allowItemInputFromOutputSide");
     private static final ResourceLocation ALLOW_FLUID_INPUT_FIELD = SyncFieldData
             .key("allowFluidInputFromOutputSide");
@@ -173,6 +177,176 @@ public class AutoOutputTraitSyncTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
+    public static void directionFieldsUseEnumStringsForFullAndDeltaSync(GameTestHelper helper) {
+        TestClientMachine machine = createClientMachine();
+        machine.setFrontFacing(Direction.NORTH);
+        TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        trait.setItemOutputDirection(Direction.SOUTH);
+        trait.setFluidOutputDirection(Direction.DOWN);
+
+        SyncFieldData full = trait.getSyncDataHolder().serializeFullClientSyncData(registries);
+
+        assertDirectionField(helper, full, ITEM_OUTPUT_DIRECTION_FIELD, Direction.SOUTH,
+                "full sync did not encode the item direction as its enum string");
+        assertDirectionField(helper, full, FLUID_OUTPUT_DIRECTION_FIELD, Direction.DOWN,
+                "full sync did not encode the fluid direction as its enum string");
+
+        trait.getSyncDataHolder().collectServerNetworkChanges(registries);
+        trait.setItemOutputDirection(Direction.EAST);
+        SyncFieldData delta = requireFields(trait.getSyncDataHolder().collectServerNetworkChanges(registries));
+
+        helper.assertTrue(delta.fields().size() == 1,
+                "item direction delta included an unchanged auto-output field");
+        assertDirectionField(helper, delta, ITEM_OUTPUT_DIRECTION_FIELD, Direction.EAST,
+                "client delta did not encode the changed item direction as its enum string");
+        helper.assertTrue(trait.getSyncDataHolder().collectServerNetworkChanges(registries).isEmpty(),
+                "unchanged direction produced a second client delta");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void directionBatchCommitsNotifiesAndAcceptsNoOp(GameTestHelper helper) {
+        TestClientMachine machine = createClientMachine();
+        machine.setFrontFacing(Direction.NORTH);
+        TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        trait.setItemOutputDirection(Direction.SOUTH);
+        trait.setFluidOutputDirection(Direction.DOWN);
+        trait.setAllowAutoOutputItems(true);
+        trait.setAllowAutoOutputFluids(true);
+        trait.resetSubscriptionUpdates();
+        trait.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+
+        ServerFieldUpdateResult changed = trait.getSyncDataHolder().tryApplyServerNetworkUpdate(registries,
+                payload(SyncFieldData.builder()
+                        .put(AUTO_OUTPUT_ITEMS_FIELD, new JsonPrimitive(false))
+                        .put(ITEM_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.EAST.getSerializedName()))
+                        .put(AUTO_OUTPUT_FLUIDS_FIELD, new JsonPrimitive(false))
+                        .put(FLUID_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.UP.getSerializedName()))
+                        .build()));
+
+        helper.assertTrue(changed.getAccepted() && changed.getChanged(),
+                "valid direction batch was not committed");
+        helper.assertTrue(trait.getItemOutputDirection() == Direction.EAST &&
+                trait.getFluidOutputDirection() == Direction.UP && !trait.isAutoOutputItems() &&
+                !trait.isAutoOutputFluids(),
+                "valid batch did not update both direction and auto-output fields");
+        helper.assertTrue(trait.itemSubscriptionUpdates == 2 && trait.fluidSubscriptionUpdates == 2,
+                "combined direction and auto-output changes did not preserve both setter side effects");
+        SyncFieldData changedAck = trait.getSyncDataHolder().serializeToFieldData(registries, true, false);
+        assertDirectionField(helper, changedAck, ITEM_OUTPUT_DIRECTION_FIELD, Direction.EAST,
+                "changed item direction was not acknowledged");
+        assertDirectionField(helper, changedAck, FLUID_OUTPUT_DIRECTION_FIELD, Direction.UP,
+                "changed fluid direction was not acknowledged");
+
+        trait.setItemOutputDirectionValidator(direction -> false);
+        trait.setFluidOutputDirectionValidator(direction -> false);
+        ServerFieldUpdateResult noOp = trait.getSyncDataHolder().tryApplyServerNetworkUpdate(registries,
+                payload(SyncFieldData.builder()
+                        .put(AUTO_OUTPUT_ITEMS_FIELD, new JsonPrimitive(false))
+                        .put(ITEM_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.EAST.getSerializedName()))
+                        .put(AUTO_OUTPUT_FLUIDS_FIELD, new JsonPrimitive(false))
+                        .put(FLUID_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.UP.getSerializedName()))
+                        .build()));
+
+        helper.assertTrue(noOp.getAccepted() && !noOp.getChanged(),
+                "current directions were not accepted as no-ops after validators changed");
+        helper.assertTrue(trait.itemSubscriptionUpdates == 2 && trait.fluidSubscriptionUpdates == 2,
+                "no-op direction batch invoked a server change listener");
+        SyncFieldData noOpAck = trait.getSyncDataHolder().serializeToFieldData(registries, true, false);
+        assertDirectionField(helper, noOpAck, ITEM_OUTPUT_DIRECTION_FIELD, Direction.EAST,
+                "no-op item direction was not acknowledged");
+        assertDirectionField(helper, noOpAck, FLUID_OUTPUT_DIRECTION_FIELD, Direction.UP,
+                "no-op fluid direction was not acknowledged");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void invalidDirectionRejectsWholeAutoOutputBatch(GameTestHelper helper) {
+        TestClientMachine machine = createClientMachine();
+        machine.setFrontFacing(Direction.NORTH);
+        TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        trait.setItemOutputDirection(Direction.SOUTH);
+        trait.setFluidOutputDirection(Direction.DOWN);
+        trait.setAllowAutoOutputItems(true);
+        trait.setAllowAutoOutputFluids(true);
+        trait.resetSubscriptionUpdates();
+        trait.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+
+        ServerFieldUpdateResult frontFace = trait.getSyncDataHolder().tryApplyServerNetworkUpdate(registries,
+                payload(SyncFieldData.builder()
+                        .put(AUTO_OUTPUT_ITEMS_FIELD, new JsonPrimitive(false))
+                        .put(ITEM_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.NORTH.getSerializedName()))
+                        .put(AUTO_OUTPUT_FLUIDS_FIELD, new JsonPrimitive(false))
+                        .put(FLUID_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.NORTH.getSerializedName()))
+                        .build()));
+
+        helper.assertTrue(!frontFace.getAccepted(), "machine front face was accepted as an output direction");
+        assertInitialOutputState(helper, trait,
+                "front-face rejection partially committed the auto-output batch");
+        helper.assertTrue(trait.itemSubscriptionUpdates == 0 && trait.fluidSubscriptionUpdates == 0,
+                "front-face rejection invoked a server change listener");
+        assertInitialOutputAcknowledgement(helper,
+                trait.getSyncDataHolder().serializeToFieldData(registries, true, false));
+
+        trait.setItemOutputDirectionValidator(direction -> direction != Direction.WEST);
+        trait.setFluidOutputDirectionValidator(direction -> direction != Direction.WEST);
+        ServerFieldUpdateResult customValidator = trait.getSyncDataHolder().tryApplyServerNetworkUpdate(registries,
+                payload(SyncFieldData.builder()
+                        .put(AUTO_OUTPUT_ITEMS_FIELD, new JsonPrimitive(false))
+                        .put(ITEM_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.WEST.getSerializedName()))
+                        .put(AUTO_OUTPUT_FLUIDS_FIELD, new JsonPrimitive(false))
+                        .put(FLUID_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.WEST.getSerializedName()))
+                        .build()));
+
+        helper.assertTrue(!customValidator.getAccepted(),
+                "custom-validator-rejected directions were accepted");
+        assertInitialOutputState(helper, trait,
+                "custom validator rejection partially committed the auto-output batch");
+
+        ServerFieldUpdateResult ordinal = trait.getSyncDataHolder().tryApplyServerNetworkUpdate(registries,
+                payload(SyncFieldData.builder()
+                        .put(AUTO_OUTPUT_ITEMS_FIELD, new JsonPrimitive(false))
+                        .put(ITEM_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.EAST.get3DDataValue()))
+                        .build()));
+
+        helper.assertTrue(!ordinal.getAccepted(), "legacy ordinal direction payload was accepted");
+        assertInitialOutputState(helper, trait,
+                "legacy ordinal rejection partially committed the auto-output batch");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void unsupportedDirectionCandidatesAreRejected(GameTestHelper helper) {
+        TestClientMachine machine = createClientMachine();
+        TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(false, false));
+        RegistryAccess registries = helper.getLevel().registryAccess();
+
+        ServerFieldUpdateResult item = trait.getSyncDataHolder().tryApplyServerNetworkUpdate(registries,
+                payload(ITEM_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.EAST.getSerializedName())));
+        ServerFieldUpdateResult fluid = trait.getSyncDataHolder().tryApplyServerNetworkUpdate(registries,
+                payload(FLUID_OUTPUT_DIRECTION_FIELD, new JsonPrimitive(Direction.UP.getSerializedName())));
+
+        helper.assertTrue(!item.getAccepted() && !fluid.getAccepted(),
+                "unsupported output direction candidate was accepted");
+        helper.assertTrue(trait.getItemOutputDirection() == null && trait.getFluidOutputDirection() == null,
+                "unsupported output direction candidate changed trait state");
+        helper.assertTrue(trait.itemSubscriptionUpdates == 0 && trait.fluidSubscriptionUpdates == 0,
+                "unsupported output direction candidate invoked a listener");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
     public static void ldlib2TogglesChangeFieldsAndFlushMachineSync(GameTestHelper helper) {
         TestClientMachine machine = createClientMachine();
         TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
@@ -210,7 +384,7 @@ public class AutoOutputTraitSyncTest {
                 definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()));
     }
 
-    private static DataComponentMap payload(ResourceLocation field, JsonPrimitive value) {
+    private static DataComponentMap payload(ResourceLocation field, JsonElement value) {
         return payload(SyncFieldData.builder().put(field, value).build());
     }
 
@@ -218,6 +392,38 @@ public class AutoOutputTraitSyncTest {
         return DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), fields)
                 .build();
+    }
+
+    private static SyncFieldData requireFields(DataComponentMap components) {
+        SyncFieldData fields = components.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        if (fields == null) {
+            throw new IllegalStateException("Expected synchronized field data.");
+        }
+        return fields;
+    }
+
+    private static void assertDirectionField(GameTestHelper helper, SyncFieldData fields, ResourceLocation field,
+                                             Direction expected, String message) {
+        JsonElement value = fields.get(field);
+        helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isString() &&
+                primitive.getAsString().equals(expected.getSerializedName()), message);
+    }
+
+    private static void assertInitialOutputState(GameTestHelper helper, TrackingAutoOutputTrait trait,
+                                                 String message) {
+        helper.assertTrue(trait.isAutoOutputItems() && trait.isAutoOutputFluids() &&
+                trait.getItemOutputDirection() == Direction.SOUTH &&
+                trait.getFluidOutputDirection() == Direction.DOWN, message);
+    }
+
+    private static void assertInitialOutputAcknowledgement(GameTestHelper helper, SyncFieldData fields) {
+        helper.assertTrue(fields.get(AUTO_OUTPUT_ITEMS_FIELD).getAsBoolean() &&
+                fields.get(AUTO_OUTPUT_FLUIDS_FIELD).getAsBoolean(),
+                "rejected direction batch did not acknowledge canonical auto-output states");
+        assertDirectionField(helper, fields, ITEM_OUTPUT_DIRECTION_FIELD, Direction.SOUTH,
+                "rejected direction batch did not acknowledge the canonical item direction");
+        assertDirectionField(helper, fields, FLUID_OUTPUT_DIRECTION_FIELD, Direction.DOWN,
+                "rejected direction batch did not acknowledge the canonical fluid direction");
     }
 
     private static final class TrackingAutoOutputTrait extends AutoOutputTrait {
@@ -238,6 +444,11 @@ public class AutoOutputTraitSyncTest {
         @Override
         protected void updateFluidOutputSubscription() {
             fluidSubscriptionUpdates++;
+        }
+
+        private void resetSubscriptionUpdates() {
+            itemSubscriptionUpdates = 0;
+            fluidSubscriptionUpdates = 0;
         }
     }
 
