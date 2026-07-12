@@ -11,6 +11,9 @@ import com.gregtechceu.gtceu.api.machine.trait.feature.IInteractionTrait;
 import com.gregtechceu.gtceu.api.machine.trait.feature.IRenderingTrait;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
@@ -55,12 +58,12 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     protected @Nullable Direction itemOutputDirection, fluidOutputDirection;
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     @RerenderOnChanged
     protected boolean autoOutputItems = false;
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     @RerenderOnChanged
     protected boolean autoOutputFluids = false;
     @SaveField
@@ -211,7 +214,6 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     public void setAllowAutoOutputItems(boolean allow) {
         if (supportsAutoOutputItems()) {
             this.autoOutputItems = allow;
-            syncDataHolder.markClientSyncFieldDirty("autoOutputItems");
             updateItemOutputSubscription();
         }
     }
@@ -220,9 +222,34 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     public void setAllowAutoOutputFluids(boolean allow) {
         if (supportsAutoOutputFluids()) {
             this.autoOutputFluids = allow;
-            syncDataHolder.markClientSyncFieldDirty("autoOutputFluids");
             updateFluidOutputSubscription();
         }
+    }
+
+    @ServerFieldNormalizer(fieldName = "autoOutputItems")
+    private boolean normalizeAutoOutputItems(boolean candidate) {
+        if (!supportsAutoOutputItems()) {
+            throw new IllegalArgumentException("Machine trait does not support item auto-output.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "autoOutputFluids")
+    private boolean normalizeAutoOutputFluids(boolean candidate) {
+        if (!supportsAutoOutputFluids()) {
+            throw new IllegalArgumentException("Machine trait does not support fluid auto-output.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldChangeListener(fieldName = "autoOutputItems")
+    private void onAutoOutputItemsChanged(boolean oldValue, boolean newValue) {
+        updateItemOutputSubscription();
+    }
+
+    @ServerFieldChangeListener(fieldName = "autoOutputFluids")
+    private void onAutoOutputFluidsChanged(boolean oldValue, boolean newValue) {
+        updateFluidOutputSubscription();
     }
 
     @Override

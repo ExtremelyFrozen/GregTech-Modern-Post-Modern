@@ -17,7 +17,8 @@ import java.util.function.Function;
  * Describes a collapsed Fancy configurator that reacts to a local LDLib2 click instead of opening a body.
  *
  * <p>
- * Implementations that need to mutate server state must dispatch a GTM action packet from the click handler.
+ * Implementations that need to mutate server state must flush a GTM field update or dispatch a GTM action packet from
+ * the click handler.
  */
 public interface LDLib2FancyConfiguratorButton extends LDLib2FancyConfigurator {
 
