@@ -323,29 +323,25 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine
         setThrottle(Mth.clamp(throttle + direction * THROTTLE_STEP, MIN_THROTTLE, MAX_THROTTLE));
     }
 
-    private void setThrottle(int throttle) {
-        boolean changed = this.throttle != throttle;
-        this.throttle = throttle;
-        if (changed) {
-            syncDataHolder.markClientSyncFieldDirty("throttle");
+    void setThrottle(int throttle) {
+        if (this.throttle != throttle) {
+            this.throttle = throttle;
         }
         this.getRecipeLogic().modifyFuelBurnTime(this.throttle);
     }
 
-    private void setCurrentTemperature(int currentTemperature) {
+    void setCurrentTemperature(int currentTemperature) {
         if (this.currentTemperature == currentTemperature) {
             return;
         }
         this.currentTemperature = currentTemperature;
-        syncDataHolder.markClientSyncFieldDirty("currentTemperature");
     }
 
-    private void setSteamGenerated(int steamGenerated) {
+    void setSteamGenerated(int steamGenerated) {
         if (this.steamGenerated == steamGenerated) {
             return;
         }
         this.steamGenerated = steamGenerated;
-        syncDataHolder.markClientSyncFieldDirty("steamGenerated");
     }
 
     private static int readThrottleButtonDirection(String componentData) {
@@ -443,8 +439,10 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine
         }
 
         public void setCurrentThrottle(int currentThrottle) {
+            if (this.currentThrottle == currentThrottle) {
+                return;
+            }
             this.currentThrottle = currentThrottle;
-            syncDataHolder.markClientSyncFieldDirty("currentThrottle");
         }
 
         @Override
