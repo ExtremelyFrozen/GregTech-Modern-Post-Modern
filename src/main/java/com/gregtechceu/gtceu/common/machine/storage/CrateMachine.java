@@ -115,7 +115,6 @@ public class CrateMachine extends MetaMachine implements LDLib2MachineUIProvider
                 isTaped = true;
                 inventory.shouldDropInventoryInWorld(false);
                 setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_TAPED, isTaped));
-                syncDataHolder.markClientSyncFieldDirty("isTaped");
                 return InteractionResult.sidedSuccess(context.getLevel().isClientSide);
             }
         }
