@@ -30,6 +30,6 @@ public final class GTCoverUIMenuType {
     public static ModularUIContainerMenu create(int windowId, Inventory inventory, RegistryFriendlyByteBuf data) {
         LDLib2CoverUIHolderContext holder = new LDLib2CoverUIHolderContext(inventory.player,
                 data.readBlockPos(), data.readEnum(Direction.class), data.readResourceLocation());
-        return new ModularUIContainerMenu(GTMenuTypes.COVER_UI.get(), windowId, inventory, holder);
+        return new GTCoverUIContainerMenu(GTMenuTypes.COVER_UI.get(), windowId, inventory, holder);
     }
 }

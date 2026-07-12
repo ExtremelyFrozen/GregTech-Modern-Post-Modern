@@ -25,4 +25,12 @@ public interface LDLib2CoverUIProvider {
      * @return non-null LDLib2 UI tree.
      */
     UI createLDLib2UI(Player player, UICoverHolder holder);
+
+    /**
+     * Notifies this cover after its server-side LDLib2 menu has closed.
+     *
+     * <p>
+     * The default preserves compatibility for covers that do not own per-menu state.
+     */
+    default void onUIClosed() {}
 }

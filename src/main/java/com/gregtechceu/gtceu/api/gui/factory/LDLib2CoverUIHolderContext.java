@@ -1,11 +1,11 @@
 package com.gregtechceu.gtceu.api.gui.factory;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.common.data.GTMenuTypes;
 
 import com.lowdragmc.lowdraglib2.gui.factory.IContainerUIHolder;
-import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
@@ -36,17 +36,28 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
     private final BlockPos pos;
     private final Direction side;
     private final ResourceLocation coverDefinitionId;
+    @Nullable
+    private final LDLib2CoverUIProvider openedProvider;
+    private boolean serverCloseNotified;
 
     public LDLib2CoverUIHolderContext(Player player, CoverBehavior cover) {
-        this(player, cover.coverHolder.getBlockPos(), cover.attachedSide, cover.coverDefinition.getId());
+        this(player, cover.coverHolder.getBlockPos(), cover.attachedSide, cover.coverDefinition.getId(),
+                requireProvider(cover));
     }
 
     public LDLib2CoverUIHolderContext(Player player, BlockPos pos, Direction side,
                                       ResourceLocation coverDefinitionId) {
+        this(player, pos, side, coverDefinitionId, null);
+    }
+
+    private LDLib2CoverUIHolderContext(Player player, BlockPos pos, Direction side,
+                                       ResourceLocation coverDefinitionId,
+                                       @Nullable LDLib2CoverUIProvider openedProvider) {
         this.player = player;
         this.pos = pos;
         this.side = side;
         this.coverDefinitionId = coverDefinitionId;
+        this.openedProvider = openedProvider;
     }
 
     @Override
@@ -101,7 +112,7 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
 
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-        return new ModularUIContainerMenu(GTMenuTypes.COVER_UI.get(), containerId, playerInventory, this);
+        return new GTCoverUIContainerMenu(GTMenuTypes.COVER_UI.get(), containerId, playerInventory, this);
     }
 
     @Override
@@ -124,5 +135,28 @@ public final class LDLib2CoverUIHolderContext implements UICoverHolder, MenuProv
             throw new IllegalStateException("Cover LDLib2 UI provider returned null.");
         }
         return ModularUI.of(ui, player);
+    }
+
+    void close(Player player) {
+        if (player.level().isClientSide || serverCloseNotified) {
+            return;
+        }
+        serverCloseNotified = true;
+        if (openedProvider == null) {
+            return;
+        }
+        try {
+            openedProvider.onUIClosed();
+        } catch (RuntimeException exception) {
+            GTCEu.LOGGER.error("Failed to close LDLib2 cover UI {} for player {} at {} on {}", coverDefinitionId,
+                    player.getGameProfile().getName(), pos, side, exception);
+        }
+    }
+
+    private static LDLib2CoverUIProvider requireProvider(CoverBehavior cover) {
+        if (cover instanceof LDLib2CoverUIProvider provider) {
+            return provider;
+        }
+        throw new IllegalArgumentException("Cover does not expose an LDLib2 UI.");
     }
 }
