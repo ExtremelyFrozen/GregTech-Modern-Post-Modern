@@ -234,11 +234,17 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     }
 
     void setAllowItemInputFromOutputSide(boolean allow) {
-        sendAction(LDLib2DirectionalAutoOutputActions.createSetItemInputFromOutputSideAction(allow));
+        if (machine.isRemote()) {
+            requireOutput().setAllowItemInputFromOutputSide(allow);
+            machine.sendServerSyncChanges();
+        }
     }
 
     void setAllowFluidInputFromOutputSide(boolean allow) {
-        sendAction(LDLib2DirectionalAutoOutputActions.createSetFluidInputFromOutputSideAction(allow));
+        if (machine.isRemote()) {
+            requireOutput().setAllowFluidInputFromOutputSide(allow);
+            machine.sendServerSyncChanges();
+        }
     }
 
     OutputMode getItemOutputMode() {

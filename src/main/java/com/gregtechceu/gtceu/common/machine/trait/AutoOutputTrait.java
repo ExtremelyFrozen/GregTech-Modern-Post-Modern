@@ -67,10 +67,10 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     @RerenderOnChanged
     protected boolean autoOutputFluids = false;
     @SaveField
-    @SyncToClient
+    @SyncBoth
     protected boolean allowItemInputFromOutputSide = false;
     @SaveField
-    @SyncToClient
+    @SyncBoth
     protected boolean allowFluidInputFromOutputSide = false;
 
     @Setter
@@ -201,13 +201,11 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     @Override
     public void setAllowItemInputFromOutputSide(boolean allow) {
         this.allowItemInputFromOutputSide = allow;
-        syncDataHolder.markClientSyncFieldDirty("allowItemInputFromOutputSide");
     }
 
     @Override
     public void setAllowFluidInputFromOutputSide(boolean allow) {
         this.allowFluidInputFromOutputSide = allow;
-        syncDataHolder.markClientSyncFieldDirty("allowFluidInputFromOutputSide");
     }
 
     @Override
@@ -238,6 +236,22 @@ public class AutoOutputTrait extends MachineTrait implements DirectionalAutoOutp
     private boolean normalizeAutoOutputFluids(boolean candidate) {
         if (!supportsAutoOutputFluids()) {
             throw new IllegalArgumentException("Machine trait does not support fluid auto-output.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "allowItemInputFromOutputSide")
+    private boolean normalizeAllowItemInputFromOutputSide(boolean candidate) {
+        if (!supportsAutoOutputItems()) {
+            throw new IllegalArgumentException("Machine trait does not support item output-side input.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "allowFluidInputFromOutputSide")
+    private boolean normalizeAllowFluidInputFromOutputSide(boolean candidate) {
+        if (!supportsAutoOutputFluids()) {
+            throw new IllegalArgumentException("Machine trait does not support fluid output-side input.");
         }
         return candidate;
     }

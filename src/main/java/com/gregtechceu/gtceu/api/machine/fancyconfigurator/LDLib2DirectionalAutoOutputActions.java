@@ -35,18 +35,11 @@ public final class LDLib2DirectionalAutoOutputActions {
             .id("configure_item_output_side");
     private static final ResourceLocation CONFIGURE_FLUID_OUTPUT_SIDE_ACTION = GTCEu
             .id("configure_fluid_output_side");
-    private static final ResourceLocation SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION = GTCEu
-            .id("set_item_input_from_output_side");
-    private static final ResourceLocation SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION = GTCEu
-            .id("set_fluid_input_from_output_side");
     private static final ResourceLocation OUTPUT_DIRECTION_FIELD = SyncFieldData.key("outputDirection");
-    private static final ResourceLocation ALLOW_INPUT_FIELD = SyncFieldData.key("allowInput");
 
     static {
         SyncActionDispatchers.server().register(new ConfigureItemOutputSideActionHandler());
         SyncActionDispatchers.server().register(new ConfigureFluidOutputSideActionHandler());
-        SyncActionDispatchers.server().register(new SetItemInputFromOutputSideActionHandler());
-        SyncActionDispatchers.server().register(new SetFluidInputFromOutputSideActionHandler());
     }
 
     private LDLib2DirectionalAutoOutputActions() {}
@@ -70,20 +63,6 @@ public final class LDLib2DirectionalAutoOutputActions {
         return createConfigureOutputSideAction(CONFIGURE_FLUID_OUTPUT_SIDE_ACTION, direction);
     }
 
-    /**
-     * Creates an action that updates the global item input policy for the configured item output face.
-     */
-    public static SyncActionData createSetItemInputFromOutputSideAction(boolean allow) {
-        return createSetInputFromOutputSideAction(SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION, allow);
-    }
-
-    /**
-     * Creates an action that updates the global fluid input policy for the configured fluid output face.
-     */
-    public static SyncActionData createSetFluidInputFromOutputSideAction(boolean allow) {
-        return createSetInputFromOutputSideAction(SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION, allow);
-    }
-
     private static SyncActionData createConfigureOutputSideAction(ResourceLocation actionId, Direction direction) {
         int directionId = direction.get3DDataValue();
         DataComponentMap payload = DataComponentMap.builder()
@@ -92,15 +71,6 @@ public final class LDLib2DirectionalAutoOutputActions {
                         .build())
                 .build();
         return new SyncActionData(actionId, directionId, payload);
-    }
-
-    private static SyncActionData createSetInputFromOutputSideAction(ResourceLocation actionId, boolean allow) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(ALLOW_INPUT_FIELD, new JsonPrimitive(allow))
-                        .build())
-                .build();
-        return new SyncActionData(actionId, allow ? 1 : 0, payload);
     }
 
     private abstract static class ConfigureOutputSideActionHandler implements SyncActionHandler {
@@ -226,74 +196,6 @@ public final class LDLib2DirectionalAutoOutputActions {
         }
     }
 
-    private abstract static class SetInputFromOutputSideActionHandler implements SyncActionHandler {
-
-        @Override
-        public boolean acceptsHolder(@NotNull SyncActionContext context) {
-            DirectionalAutoOutputMachine machine = readDirectionalAutoOutputMachine(context);
-            return machine != null && supportsOutput(machine);
-        }
-
-        @Override
-        public boolean acceptsPayload(@NotNull DataComponentMap payload) {
-            return readAllowInput(payload) != null;
-        }
-
-        @Override
-        public boolean mayExecute(@NotNull ServerPlayer player, @NotNull SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(@NotNull SyncActionContext context) {
-            DirectionalAutoOutputMachine machine = requireDirectionalAutoOutputMachine(context);
-            if (!supportsOutput(machine)) {
-                throw new IllegalStateException("Output-side input action received an unsupported holder.");
-            }
-            setAllowInput(machine, requireAllowInput(context.payload()));
-        }
-
-        protected abstract boolean supportsOutput(DirectionalAutoOutputMachine machine);
-
-        protected abstract void setAllowInput(DirectionalAutoOutputMachine machine, boolean allow);
-    }
-
-    private static final class SetItemInputFromOutputSideActionHandler extends SetInputFromOutputSideActionHandler {
-
-        @Override
-        public @NotNull ResourceLocation actionId() {
-            return SET_ITEM_INPUT_FROM_OUTPUT_SIDE_ACTION;
-        }
-
-        @Override
-        protected boolean supportsOutput(DirectionalAutoOutputMachine machine) {
-            return machine.supportsAutoOutputItems();
-        }
-
-        @Override
-        protected void setAllowInput(DirectionalAutoOutputMachine machine, boolean allow) {
-            machine.setAllowItemInputFromOutputSide(allow);
-        }
-    }
-
-    private static final class SetFluidInputFromOutputSideActionHandler extends SetInputFromOutputSideActionHandler {
-
-        @Override
-        public @NotNull ResourceLocation actionId() {
-            return SET_FLUID_INPUT_FROM_OUTPUT_SIDE_ACTION;
-        }
-
-        @Override
-        protected boolean supportsOutput(DirectionalAutoOutputMachine machine) {
-            return machine.supportsAutoOutputFluids();
-        }
-
-        @Override
-        protected void setAllowInput(DirectionalAutoOutputMachine machine, boolean allow) {
-            machine.setAllowFluidInputFromOutputSide(allow);
-        }
-    }
-
     private static @Nullable DirectionalAutoOutputMachine readDirectionalAutoOutputMachine(
                                                                                            SyncActionContext context) {
         if (!(context.holder() instanceof LDLib2FancyActionMachine)) {
@@ -322,26 +224,6 @@ public final class LDLib2DirectionalAutoOutputActions {
             throw new IllegalStateException("Directional auto-output action payload is missing a valid direction.");
         }
         return direction;
-    }
-
-    private static boolean requireAllowInput(DataComponentMap payload) {
-        Boolean value = readAllowInput(payload);
-        if (value == null) {
-            throw new IllegalStateException("Output-side input action payload is missing a valid boolean state.");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readAllowInput(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            return null;
-        }
-        JsonElement element = fields.get(ALLOW_INPUT_FIELD);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 
     private static @Nullable Direction readDirection(DataComponentMap payload) {
