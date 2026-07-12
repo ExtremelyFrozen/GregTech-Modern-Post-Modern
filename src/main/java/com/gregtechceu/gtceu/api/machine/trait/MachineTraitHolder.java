@@ -23,6 +23,7 @@ public final class MachineTraitHolder {
 
     private final MetaMachine machine;
     private final List<MachineTrait> traits;
+    private final List<MachineTrait> syncTraits;
     private final Map<MachineTraitType<?>, List<MachineTrait>> traitsByType;
 
     private final Map<String, MachineTrait> traitsToSave;
@@ -30,6 +31,7 @@ public final class MachineTraitHolder {
     public MachineTraitHolder(MetaMachine machine) {
         this.machine = machine;
         this.traits = new ObjectArrayList<>();
+        this.syncTraits = new ObjectArrayList<>();
         this.traitsByType = new Object2ObjectOpenHashMap<>();
         this.traitsToSave = new Object2ObjectOpenHashMap<>();
     }
@@ -73,9 +75,17 @@ public final class MachineTraitHolder {
         list.sort(Comparator.comparingInt(MachineTrait::getTraitPriority).reversed());
         traits.add(trait);
         traits.sort(Comparator.comparingInt(MachineTrait::getTraitPriority).reversed());
+        syncTraits.add(trait);
 
         trait.setMachine(machine);
         return trait;
+    }
+
+    /**
+     * Returns traits in immutable attachment order for stable client-to-server sync target identities.
+     */
+    public @UnmodifiableView List<MachineTrait> getSyncTraits() {
+        return Collections.unmodifiableList(syncTraits);
     }
 
     /**

@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 
 import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo
+import com.gregtechceu.gtceu.api.machine.MetaMachine
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer
 import com.gregtechceu.gtceu.common.network.packets.SPacketMachineSyncToClient
@@ -146,11 +147,19 @@ abstract class ManagedSyncBlockEntity :
 			return
 		}
 
-		val changes = syncDataHolder.collectServerNetworkChanges(level!!.registryAccess())
-		if (!changes.isEmpty) {
-			PacketDistributor.sendToServer(
-				CPacketMachineSyncToServer(blockPos, BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type)!!, changes),
-			)
+		val registryAccess = level!!.registryAccess()
+		val rootChanges = syncDataHolder.collectServerNetworkChanges(registryAccess)
+		if (!rootChanges.isEmpty) {
+			PacketDistributor.sendToServer(CPacketMachineSyncToServer(blockPos, BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type)!!, rootChanges))
+		}
+
+		if (this is MetaMachine) {
+			for (trait in getSyncTraits()) {
+				val traitChanges = trait.getSyncDataHolder().collectServerNetworkChanges(registryAccess)
+				if (!traitChanges.isEmpty) {
+					PacketDistributor.sendToServer(CPacketMachineSyncToServer.forMachineTrait(this, trait, traitChanges))
+				}
+			}
 		}
 	}
 }

@@ -332,6 +332,13 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     }
 
     /**
+     * Returns traits in stable attachment order for client-to-server sync target identities.
+     */
+    public @Unmodifiable List<MachineTrait> getSyncTraits() {
+        return traitHolder.getSyncTraits();
+    }
+
+    /**
      * Attaches a trait to this machine, with the default trait callback priority of 1.
      *
      * @param trait The trait to attach
