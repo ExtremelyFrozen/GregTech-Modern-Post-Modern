@@ -17,17 +17,11 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.TieredMachine;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -36,31 +30,18 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Arrays;
 
-public class CreativeEnergyContainerMachine extends TieredMachine implements ILaserContainer, LDLib2MachineUIProvider {
-
-    private static final ResourceLocation SET_CREATIVE_ENERGY_VOLTAGE_ACTION = GTCEu
-            .id("set_creative_energy_voltage");
-    private static final ResourceLocation SET_CREATIVE_ENERGY_TIER_ACTION = GTCEu
-            .id("set_creative_energy_tier");
-    private static final ResourceLocation VOLTAGE_FIELD = SyncFieldData.key("voltage");
-    private static final ResourceLocation TIER_FIELD = SyncFieldData.key("setTier");
+public class CreativeEnergyContainerMachine extends TieredMachine
+                                            implements ILaserContainer, LDLib2MachineUIProvider,
+                                            CreativeEnergyActionTarget {
 
     static {
-        SyncActionDispatchers.server().register(new CreativeEnergyVoltageActionHandler());
-        SyncActionDispatchers.server().register(new CreativeEnergyTierActionHandler());
+        CreativeEnergyContainerMachineActions.initialize();
     }
 
     @SaveField
@@ -212,7 +193,11 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         }
     }
 
-    private void setVoltage(long voltage) {
+    @Override
+    public void setCreativeEnergyVoltage(long voltage) {
+        if (voltage < 0L) {
+            throw new IllegalArgumentException("Creative energy voltage cannot be negative: " + voltage);
+        }
         this.voltage = voltage;
         this.setTier = GTUtil.getTierByVoltage(voltage);
         syncDataHolder.markClientSyncFieldDirty("voltage");
@@ -267,9 +252,13 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
         }
     }
 
-    private void setTier(String tierName) {
-        setTier = getTierIndex(tierName);
-        voltage = GTValues.VEX[setTier];
+    @Override
+    public void setCreativeEnergyTier(int tier) {
+        if (tier < 0 || tier >= GTValues.VNF.length) {
+            throw new IllegalArgumentException("Creative energy tier is out of range: " + tier);
+        }
+        setTier = tier;
+        voltage = GTValues.VEX[tier];
         syncDataHolder.markClientSyncFieldDirty("setTier");
         syncDataHolder.markClientSyncFieldDirty("voltage");
     }
@@ -439,9 +428,10 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
             GTCEu.LOGGER.error("Invalid creative energy voltage input: {}", value, e);
             throw e;
         }
-        setVoltage(parsedValue);
+        setCreativeEnergyVoltage(parsedValue);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeEnergyVoltageAction(parsedValue));
+            MachineUIHelper.sendAction(holder,
+                    CreativeEnergyContainerMachineActions.createSetVoltageAction(parsedValue));
         }
     }
 
@@ -466,9 +456,9 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
 
     private void setLDLib2Tier(Player player, MachineUIHolder holder, String tierName) {
         int tierIndex = getTierIndex(tierName);
-        setTier(tierName);
+        setCreativeEnergyTier(tierIndex);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeEnergyTierAction(tierIndex));
+            MachineUIHelper.sendAction(holder, CreativeEnergyContainerMachineActions.createSetTierAction(tierIndex));
         }
     }
 
@@ -489,138 +479,5 @@ public class CreativeEnergyContainerMachine extends TieredMachine implements ILa
             }
         }
         throw new IllegalArgumentException("Unknown creative energy voltage tier: " + tierName);
-    }
-
-    private static SyncActionData createSetCreativeEnergyVoltageAction(long voltage) {
-        return createSetCreativeEnergyAction(SET_CREATIVE_ENERGY_VOLTAGE_ACTION, VOLTAGE_FIELD,
-                new JsonPrimitive(voltage), Long.hashCode(voltage));
-    }
-
-    private static SyncActionData createSetCreativeEnergyTierAction(int tier) {
-        return createSetCreativeEnergyAction(SET_CREATIVE_ENERGY_TIER_ACTION, TIER_FIELD, new JsonPrimitive(tier),
-                tier);
-    }
-
-    private static SyncActionData createSetCreativeEnergyAction(ResourceLocation actionId, ResourceLocation field,
-                                                                JsonPrimitive value, int sequence) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(field, value)
-                        .build())
-                .build();
-        return new SyncActionData(actionId, sequence, payload);
-    }
-
-    private abstract static class CreativeEnergyActionHandler implements SyncActionHandler {
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof CreativeEnergyContainerMachine;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        protected CreativeEnergyContainerMachine getMachine(SyncActionContext context) {
-            if (!(context.holder() instanceof CreativeEnergyContainerMachine machine)) {
-                throw new IllegalStateException("Creative energy action received a non-creative-energy machine.");
-            }
-            return machine;
-        }
-    }
-
-    private static final class CreativeEnergyVoltageActionHandler extends CreativeEnergyActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_ENERGY_VOLTAGE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readNonNegativeLong(fields, VOLTAGE_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setVoltage(requireNonNegativeLong(context.payload(), VOLTAGE_FIELD));
-        }
-    }
-
-    private static final class CreativeEnergyTierActionHandler extends CreativeEnergyActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_ENERGY_TIER_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readTierIndex(fields, TIER_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            int tier = requireTierIndex(context.payload(), TIER_FIELD);
-            getMachine(context).setTier(GTValues.VNF[tier]);
-        }
-    }
-
-    private static SyncFieldData requireFieldData(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Creative energy action payload is missing field data.");
-        }
-        return fields;
-    }
-
-    private static long requireNonNegativeLong(DataComponentMap payload, ResourceLocation field) {
-        Long value = readNonNegativeLong(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative energy action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static int requireTierIndex(DataComponentMap payload, ResourceLocation field) {
-        Integer value = readTierIndex(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Creative energy action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Long readNonNegativeLong(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            long value = primitive.getAsLong();
-            if (value >= 0L) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-    private static @Nullable Integer readNonNegativeInteger(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            long value = primitive.getAsLong();
-            if (value >= 0L && value <= Integer.MAX_VALUE) {
-                return (int) value;
-            }
-        }
-        return null;
-    }
-
-    private static @Nullable Integer readTierIndex(SyncFieldData fields, ResourceLocation field) {
-        Integer value = readNonNegativeInteger(fields, field);
-        if (value != null && value < GTValues.VNF.length) {
-            return value;
-        }
-        return null;
     }
 }
