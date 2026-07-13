@@ -121,7 +121,7 @@ public class AdvancedFluidVoidingCover extends FluidVoidingCover {
         syncDataHolder.markClientSyncFieldDirty("voidingMode");
         configureStackSizeInput();
 
-        if (!this.isRemote()) {
+        if (!coverHolder.isRemote()) {
             configureFilter();
         }
     }
