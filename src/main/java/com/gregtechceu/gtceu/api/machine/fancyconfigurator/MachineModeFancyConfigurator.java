@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.fancy.FancyMachineUIWidget;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.gui.texture.ResourceBorderTexture;
 import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.common.data.GTItems;
@@ -49,7 +48,7 @@ public class MachineModeFancyConfigurator implements IFancyUIProvider {
                     cd -> setActiveRecipeTypeAndUpdateTickSubs(finalI)));
             group.addWidget(new ImageWidget(2, 2 + i * 20, 136, 20,
                     () -> GuiTextures.group(
-                            ResourceBorderTexture.BUTTON_COMMON.copy()
+                            GuiTextures.BUTTON.copy()
                                     .setColor(machine.getActiveRecipeType() == finalI ? ColorPattern.CYAN.color : -1),
                             GuiTextures.text(machine.getRecipeTypes()[finalI].getTranslationKey()).setWidth(136)
                                     .setType(TextTexture.TextType.ROLL))));

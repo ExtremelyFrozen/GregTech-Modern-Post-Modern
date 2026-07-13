@@ -20,7 +20,6 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.gui.texture.ResourceBorderTexture;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -303,7 +302,7 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
     }
 
     private IGuiTexture createLDLib2ActivityButtonTexture() {
-        return GuiTextures.group(ResourceBorderTexture.BUTTON_COMMON,
+        return GuiTextures.group(GuiTextures.BUTTON,
                 GuiTextures.text(isWorkingEnabled() ? "gtpm.creative.activity.on" : "gtpm.creative.activity.off"));
     }
 
