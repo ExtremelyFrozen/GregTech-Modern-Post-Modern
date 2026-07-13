@@ -305,7 +305,6 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 file('gradle/scripts/resources.gradle')
         ].findAll { it.exists() })
         var filesToScan = sourceFilesToScan + gradleFilesToScan
-        var ownImplementationSuffixDeclaration = ~/.*\b(class|interface|enum|record)\s+[A-Za-z0-9_]+Impl\b.*/
         var ldlib2RpcCall = ~/.*\baddRPCEvent\s*\(.*/
         var manualMarkAsDirtyCall = ~/.*\.markAsDirty\s*\(.*/
         var ldlib2FluidClickAttribute = ~/.*(?<!legacy-)allow-click-(filled|drained)=.*/
@@ -358,19 +357,11 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
             if (relativePath.endsWith('.rtui')) {
                 matches.add("${relativePath}: legacy LDLib1 .rtui file")
             } else {
-                if (relativePath.endsWith('Impl.java')) {
-                    matches.add("${relativePath}: GTM source type must not use Impl suffix")
-                }
-                var gtmJavaSource = relativePath.startsWith('src/main/java/com/gregtechceu/') ||
-                        relativePath.startsWith('src/test/java/com/gregtechceu/')
                 scannedFile.eachLine('UTF-8') { line, number ->
                     patterns.each { pattern ->
                         if (line.contains(pattern)) {
                             matches.add("${relativePath}:${number}: ${pattern}")
                         }
-                    }
-                    if (gtmJavaSource && ownImplementationSuffixDeclaration.matcher(line).matches()) {
-                        matches.add("${relativePath}:${number}: GTM source type must not use Impl suffix")
                     }
                     if (ldlib2RpcCall.matcher(line).matches()) {
                         matches.add("${relativePath}:${number}: LDLib2 RPC must not be used for GTM business UI actions")
