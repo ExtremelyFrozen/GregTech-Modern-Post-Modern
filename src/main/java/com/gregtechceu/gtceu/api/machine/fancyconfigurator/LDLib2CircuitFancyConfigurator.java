@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.api.machine.fancyconfigurator;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
@@ -13,14 +12,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyCustomMiddleClickAction;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyCustomMouseWheelAction;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
-import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
@@ -30,17 +22,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,9 +39,6 @@ import java.util.List;
 public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, LDLib2FancyCustomMouseWheelAction,
                                             LDLib2FancyCustomMiddleClickAction {
 
-    private static final ResourceLocation SET_MACHINE_CIRCUIT_CONFIGURATION_ACTION = GTCEu.id(
-            "set_machine_circuit_configuration");
-    private static final ResourceLocation CIRCUIT_CONFIGURATION_FIELD = SyncFieldData.key("circuitConfig");
     private static final int WIDTH = 174;
     private static final int HEIGHT = 132;
     private static final int SLOT_SIZE = 18;
@@ -65,7 +46,7 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
     private static final int NO_CONFIG = -1;
 
     static {
-        SyncActionDispatchers.server().register(new MachineCircuitConfigurationActionHandler());
+        LDLib2CircuitFancyConfiguratorActions.initialize();
     }
 
     private final IHasCircuitSlot circuitMachine;
@@ -202,7 +183,8 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
     private void sendActionIfRemote(int configuration) {
         var machine = holder.getMachine();
         if (machine != null && machine.isRemote()) {
-            MachineUIHelper.sendAction(holder, createSetMachineCircuitConfigurationAction(configuration));
+            MachineUIHelper.sendAction(holder,
+                    LDLib2CircuitFancyConfiguratorActions.createSetMachineCircuitConfigurationAction(configuration));
         }
     }
 
@@ -247,8 +229,7 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
         return false;
     }
 
-    private static void writeMachineCircuitConfiguration(NotifiableItemStackHandler circuitInventory,
-                                                         int configuration) {
+    static void writeMachineCircuitConfiguration(NotifiableItemStackHandler circuitInventory, int configuration) {
         validateActionConfiguration(configuration);
         if (configuration == NO_CONFIG) {
             if (ConfigHolder.INSTANCE.machines.ghostCircuit ||
@@ -263,16 +244,6 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
                 !circuitInventory.getStackInSlot(SELECTED_SLOT).isEmpty()) {
             circuitInventory.setStackInSlot(SELECTED_SLOT, IntCircuitBehaviour.stack(configuration));
         }
-    }
-
-    private static SyncActionData createSetMachineCircuitConfigurationAction(int configuration) {
-        validateActionConfiguration(configuration);
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(CIRCUIT_CONFIGURATION_FIELD, new JsonPrimitive(configuration))
-                        .build())
-                .build();
-        return new SyncActionData(SET_MACHINE_CIRCUIT_CONFIGURATION_ACTION, configuration, payload);
     }
 
     private static boolean hasUsableCircuitSlot(IHasCircuitSlot circuitHolder) {
@@ -297,92 +268,6 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
         if (!isValidActionConfiguration(configuration)) {
             throw new IllegalArgumentException("Machine circuit action configuration is out of range: " +
                     configuration);
-        }
-    }
-
-    private static @Nullable IHasCircuitSlot readCircuitHolder(SyncActionContext context) {
-        if (!(context.holder() instanceof IHasCircuitSlot circuitHolder) ||
-                !(context.holder() instanceof LDLib2FancyActionMachine)) {
-            return null;
-        }
-        if (!hasUsableCircuitSlot(circuitHolder)) {
-            return null;
-        }
-        return circuitHolder;
-    }
-
-    private static IHasCircuitSlot requireCircuitHolder(SyncActionContext context) {
-        IHasCircuitSlot circuitHolder = readCircuitHolder(context);
-        if (circuitHolder == null) {
-            throw new IllegalStateException("Machine circuit action received an invalid holder.");
-        }
-        return circuitHolder;
-    }
-
-    private static @Nullable Integer readCircuitConfiguration(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            return null;
-        }
-        return readCircuitConfiguration(fields);
-    }
-
-    private static @Nullable Integer readCircuitConfiguration(SyncFieldData fields) {
-        JsonElement element = fields.get(CIRCUIT_CONFIGURATION_FIELD);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return readExactInt(primitive);
-        }
-        return null;
-    }
-
-    private static @Nullable Integer readExactInt(JsonPrimitive primitive) {
-        try {
-            long value = primitive.getAsBigDecimal().longValueExact();
-            if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
-                return (int) value;
-            }
-        } catch (ArithmeticException | NumberFormatException e) {
-            GTCEu.LOGGER.warn("Invalid machine circuit integer action payload.", e);
-        }
-        return null;
-    }
-
-    private static int requireCircuitConfiguration(DataComponentMap payload) {
-        Integer configuration = readCircuitConfiguration(payload);
-        if (configuration == null || !isValidActionConfiguration(configuration)) {
-            throw new IllegalStateException("Machine circuit action payload is missing or invalid.");
-        }
-        return configuration;
-    }
-
-    private static final class MachineCircuitConfigurationActionHandler implements SyncActionHandler {
-
-        @Override
-        public @NotNull ResourceLocation actionId() {
-            return SET_MACHINE_CIRCUIT_CONFIGURATION_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(@NotNull SyncActionContext context) {
-            return readCircuitHolder(context) != null;
-        }
-
-        @Override
-        public boolean acceptsPayload(@NotNull DataComponentMap payload) {
-            Integer configuration = readCircuitConfiguration(payload);
-            return configuration != null && isValidActionConfiguration(configuration);
-        }
-
-        @Override
-        public boolean mayExecute(@NotNull ServerPlayer player, @NotNull SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(@NotNull SyncActionContext context) {
-            IHasCircuitSlot circuitHolder = requireCircuitHolder(context);
-            writeMachineCircuitConfiguration(circuitHolder.getCircuitInventory(),
-                    requireCircuitConfiguration(context.payload()));
         }
     }
 }
