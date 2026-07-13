@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -20,15 +19,9 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
@@ -36,11 +29,9 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -50,10 +41,10 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -63,20 +54,14 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 
 public class MaintenanceHatchPartMachine extends TieredPartMachine
-                                         implements IMaintenanceMachine, LDLib2MachineUIProvider {
+                                         implements IMaintenanceMachine, LDLib2MachineUIProvider,
+                                         MaintenanceHatchActionTarget {
 
     private static final float MAX_DURATION_MULTIPLIER = 1.1f;
     private static final float MIN_DURATION_MULTIPLIER = 0.9f;
     private static final float DURATION_ACTION_AMOUNT = 0.01f;
-    private static final ResourceLocation ADJUST_MAINTENANCE_DURATION_ACTION = GTCEu
-            .id("adjust_maintenance_duration_multiplier");
-    private static final ResourceLocation FIX_MAINTENANCE_PROBLEMS_ACTION = GTCEu
-            .id("fix_maintenance_problems");
-    private static final ResourceLocation DURATION_DIRECTION_FIELD = SyncFieldData.key("direction");
-
     static {
-        SyncActionDispatchers.server().register(new MaintenanceDurationActionHandler());
-        SyncActionDispatchers.server().register(new MaintenanceFixActionHandler());
+        MaintenanceHatchPartMachineActions.initialize();
     }
 
     @Getter
@@ -421,16 +406,35 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
     private void adjustLDLib2Duration(Player player, MachineUIHolder holder, int direction) {
         adjustDurationMultiplier(direction);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createAdjustMaintenanceDurationAction(direction));
+            MachineUIHelper.sendAction(holder,
+                    MaintenanceHatchPartMachineActions.createAdjustMaintenanceDurationAction(direction));
         }
     }
 
     private void fixLDLib2MaintenanceProblems(Player player, MachineUIHolder holder) {
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createFixMaintenanceProblemsAction());
+            MachineUIHelper.sendAction(holder, MaintenanceHatchPartMachineActions.createFixMaintenanceProblemsAction());
         } else if (player instanceof ServerPlayer serverPlayer) {
             fixMaintenanceProblems(serverPlayer);
         }
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public boolean supportsMaintenanceDurationAdjustment() {
+        return isConfigurable;
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public void adjustMaintenanceDuration(int direction) {
+        adjustDurationMultiplier(direction);
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public void fixMaintenanceProblemsForAction(@NotNull ServerPlayer player) {
+        fixMaintenanceProblems(player);
     }
 
     private void adjustDurationMultiplier(int direction) {
@@ -441,106 +445,6 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
     private void setDurationMultiplier(float durationMultiplier) {
         this.durationMultiplier = durationMultiplier;
         syncDataHolder.markClientSyncFieldDirty("durationMultiplier");
-    }
-
-    private static SyncActionData createAdjustMaintenanceDurationAction(int direction) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(DURATION_DIRECTION_FIELD, new JsonPrimitive(direction))
-                        .build())
-                .build();
-        return new SyncActionData(ADJUST_MAINTENANCE_DURATION_ACTION, direction > 0 ? 1 : 0, payload);
-    }
-
-    private static SyncActionData createFixMaintenanceProblemsAction() {
-        return new SyncActionData(FIX_MAINTENANCE_PROBLEMS_ACTION, 0, DataComponentMap.EMPTY);
-    }
-
-    private static final class MaintenanceDurationActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return ADJUST_MAINTENANCE_DURATION_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof MaintenanceHatchPartMachine machine && machine.isConfigurable();
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readDirection(fields, DURATION_DIRECTION_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof MaintenanceHatchPartMachine machine)) {
-                throw new IllegalStateException(
-                        "Maintenance duration action received a non-maintenance-hatch machine.");
-            }
-            machine.adjustDurationMultiplier(requireDirection(context.payload(), DURATION_DIRECTION_FIELD));
-        }
-    }
-
-    private static final class MaintenanceFixActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return FIX_MAINTENANCE_PROBLEMS_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof MaintenanceHatchPartMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return payload.isEmpty();
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof MaintenanceHatchPartMachine machine)) {
-                throw new IllegalStateException("Maintenance fix action received a non-maintenance-hatch machine.");
-            }
-            machine.fixMaintenanceProblems(context.player());
-        }
-    }
-
-    private static int requireDirection(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Maintenance duration action payload is missing field data.");
-        }
-        Integer value = readDirection(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Maintenance duration action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readDirection(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            int direction = primitive.getAsInt();
-            if (direction == -1 || direction == 1) {
-                return direction;
-            }
-        }
-        return null;
     }
 
     private static boolean allMaintenanceToolsMatched(List<@Nullable GTToolType> toolsToMatch) {
