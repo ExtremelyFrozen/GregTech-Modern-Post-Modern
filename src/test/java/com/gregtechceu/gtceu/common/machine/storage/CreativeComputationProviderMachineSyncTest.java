@@ -25,8 +25,10 @@ import com.google.gson.JsonPrimitive;
 @GameTestHolder(GTCEu.MOD_ID)
 public class CreativeComputationProviderMachineSyncTest {
 
+    private static final int CHANGED_LAST_REQUESTED_CWUT = 24;
     private static final ResourceLocation MAX_CWUT_FIELD = SyncFieldData.key("maxCWUt");
     private static final ResourceLocation ACTIVE_FIELD = SyncFieldData.key("active");
+    private static final ResourceLocation LAST_REQUESTED_CWUT_FIELD = SyncFieldData.key("lastRequestedCWUt");
 
     @TestHolder
     @EmptyTemplate
@@ -94,6 +96,60 @@ public class CreativeComputationProviderMachineSyncTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "CreativeComputationProviderMachineSync")
+    public static void lastRequestedCWUtUsesChangedOnlyServerOwnedSync(GameTestHelper helper) {
+        TestCreativeComputationProviderMachine server = createMachine();
+        TestCreativeComputationProviderMachine client = createMachine();
+        RegistryAccess registries = helper.getLevel().registryAccess();
+
+        DataComponentMap full = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        assertIntField(helper, full, LAST_REQUESTED_CWUT_FIELD, 0,
+                "creative computation last requested full sync");
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, full);
+        assertLastRequestedCWUtState(helper, client, registries, 0,
+                "creative computation last requested full sync client");
+        helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "unchanged creative computation provider produced a delta after full sync");
+
+        server.setLevel(helper.getLevel());
+        server.applyProducedCWUt(CHANGED_LAST_REQUESTED_CWUT * 20);
+        int ticksUntilUpdate = 20 - (int) (server.getOffsetTimer() % 20L);
+        helper.runAfterDelay(ticksUntilUpdate, () -> {
+            server.runComputationTick();
+
+            DataComponentMap delta = server.getSyncDataHolder().serializeToComponents(registries, true, false);
+            SyncFieldData changedFields = delta.get(GTDataComponents.SYNC_FIELD_DATA.get());
+            helper.assertTrue(changedFields != null && changedFields.fields().size() == 1,
+                    "creative computation last requested delta contained unrelated fields");
+            assertIntField(helper, delta, LAST_REQUESTED_CWUT_FIELD, CHANGED_LAST_REQUESTED_CWUT,
+                    "creative computation last requested delta");
+            client.getSyncDataHolder().applyClientNetworkUpdate(registries, delta);
+            assertLastRequestedCWUtState(helper, client, registries, CHANGED_LAST_REQUESTED_CWUT,
+                    "creative computation last requested delta client");
+
+            server.applyProducedCWUt(CHANGED_LAST_REQUESTED_CWUT * 20);
+            server.runComputationTick();
+            helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                    "unchanged creative computation last requested value produced a redundant delta");
+
+            SyncFieldData saved = server.getSyncDataHolder().serializeToFieldData(registries, false, false);
+            helper.assertTrue(!saved.fields().containsKey(LAST_REQUESTED_CWUT_FIELD),
+                    "transient creative computation last requested value was saved");
+
+            ServerFieldUpdateResult rejected = server.getSyncDataHolder().tryApplyServerNetworkUpdate(
+                    registries, payload(LAST_REQUESTED_CWUT_FIELD, new JsonPrimitive(1)));
+            helper.assertTrue(!rejected.getAccepted(),
+                    "creative computation provider accepted a client last requested update");
+            helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                    "rejected creative computation last requested update produced an acknowledgement");
+            assertLastRequestedCWUtState(helper, server, registries, CHANGED_LAST_REQUESTED_CWUT,
+                    "rejected creative computation last requested update");
+            helper.succeed();
+        });
+    }
+
     private static TestCreativeComputationProviderMachine createMachine() {
         var definition = GTMachines.CREATIVE_COMPUTATION_PROVIDER;
         return new TestCreativeComputationProviderMachine(new BlockEntityCreationInfo(
@@ -112,6 +168,22 @@ public class CreativeComputationProviderMachineSyncTest {
                 .build();
     }
 
+    private static void assertLastRequestedCWUtState(GameTestHelper helper,
+                                                     TestCreativeComputationProviderMachine machine,
+                                                     RegistryAccess registries, int expected, String description) {
+        assertIntField(helper, machine.getSyncDataHolder().serializeFullClientSyncComponents(registries),
+                LAST_REQUESTED_CWUT_FIELD, expected, description);
+    }
+
+    private static void assertIntField(GameTestHelper helper, DataComponentMap components, ResourceLocation field,
+                                       int expected, String description) {
+        SyncFieldData fields = components.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        JsonElement value = fields == null ? null : fields.get(field);
+        helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isNumber() &&
+                primitive.getAsInt() == expected,
+                description + " did not contain the expected " + field.getPath() + " value");
+    }
+
     private static final class TestCreativeComputationProviderMachine extends CreativeComputationProviderMachine {
 
         private int activeListenerCalls;
@@ -123,6 +195,10 @@ public class CreativeComputationProviderMachineSyncTest {
         @Override
         protected void updateComputationSubscription() {
             activeListenerCalls++;
+        }
+
+        private void runComputationTick() {
+            updateComputationTick();
         }
     }
 }

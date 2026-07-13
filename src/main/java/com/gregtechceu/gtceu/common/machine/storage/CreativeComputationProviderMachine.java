@@ -245,6 +245,5 @@ public class CreativeComputationProviderMachine extends MetaMachine
 
     private void setLastRequestedCWUt(int lastRequestedCWUt) {
         this.lastRequestedCWUt = lastRequestedCWUt;
-        syncDataHolder.markClientSyncFieldDirty("lastRequestedCWUt");
     }
 }
