@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.api.machine.steam;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -21,14 +20,8 @@ import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -44,10 +37,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -66,9 +57,8 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,18 +67,15 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class SteamBoilerMachine extends SteamWorkableMachine
-                                         implements LDLib2MachineUIProvider, IDataInfoProvider {
+                                         implements LDLib2MachineUIProvider, IDataInfoProvider,
+                                         SteamBoilerFluidSlotActionTarget {
 
-    private static final ResourceLocation CLICK_STEAM_BOILER_FLUID_SLOT_ACTION = GTCEu
-            .id("click_steam_boiler_fluid_slot");
-    private static final ResourceLocation FLUID_SLOT_FIELD = SyncFieldData.key("fluidSlot");
-    private static final ResourceLocation SHIFT_FIELD = SyncFieldData.key("shift");
     protected static final int WATER_FLUID_SLOT = 0;
     protected static final int STEAM_FLUID_SLOT = 1;
     protected static final int FUEL_FLUID_SLOT = 2;
 
     static {
-        SyncActionDispatchers.server().register(new SteamBoilerFluidSlotActionHandler());
+        SteamBoilerMachineActions.initialize();
     }
 
     @SaveField
@@ -402,7 +389,7 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
             tank.addEventListener(UIEvents.MOUSE_DOWN, event -> {
                 if (event.button == 0 && player.level().isClientSide() &&
                         FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
-                    MachineUIHelper.sendAction(holder, createClickSteamBoilerFluidSlotAction(
+                    MachineUIHelper.sendAction(holder, SteamBoilerMachineActions.createClickSteamBoilerFluidSlotAction(
                             fluidSlot, event.isShiftDown()));
                     event.stopImmediatePropagation();
                     event.hasHandler = true;
@@ -425,22 +412,14 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
         return new LDLib2FluidClickTarget(fluidTank, allowClickFilled, allowClickDrained);
     }
 
-    private void clickLDLib2FluidSlot(ServerPlayer player, int fluidSlot, boolean shiftDown) {
+    @Override
+    @ApiStatus.Internal
+    public void clickSteamBoilerFluidSlot(@NotNull ServerPlayer player, int fluidSlot, boolean shiftDown) {
         LDLib2FluidClickTarget target = getLDLib2FluidClickTarget(fluidSlot);
         if (target == null) {
             throw new IllegalArgumentException("Invalid steam boiler fluid slot: " + fluidSlot);
         }
         target.click(player, shiftDown);
-    }
-
-    private static SyncActionData createClickSteamBoilerFluidSlotAction(int fluidSlot, boolean shiftDown) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(FLUID_SLOT_FIELD, new JsonPrimitive(fluidSlot))
-                        .put(SHIFT_FIELD, new JsonPrimitive(shiftDown))
-                        .build())
-                .build();
-        return new SyncActionData(CLICK_STEAM_BOILER_FLUID_SLOT_ACTION, fluidSlot, payload);
     }
 
     protected record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
@@ -545,83 +524,6 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
             }
             player.containerMenu.broadcastChanges();
         }
-    }
-
-    private static final class SteamBoilerFluidSlotActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return CLICK_STEAM_BOILER_FLUID_SLOT_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof SteamBoilerMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readFluidSlot(fields, FLUID_SLOT_FIELD) != null &&
-                    readBoolean(fields, SHIFT_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof SteamBoilerMachine machine)) {
-                throw new IllegalStateException("Steam boiler fluid slot action received a non-boiler machine.");
-            }
-            machine.clickLDLib2FluidSlot(context.player(), requireFluidSlot(context.payload(), FLUID_SLOT_FIELD),
-                    requireBoolean(context.payload(), SHIFT_FIELD));
-        }
-    }
-
-    private static int requireFluidSlot(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Steam boiler fluid slot action payload is missing field data.");
-        }
-        Integer value = readFluidSlot(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Steam boiler fluid slot action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Steam boiler fluid slot action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Steam boiler fluid slot action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readFluidSlot(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            int value = primitive.getAsInt();
-            if (value >= WATER_FLUID_SLOT && value <= FUEL_FLUID_SLOT) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 
     //////////////////////////////////////
