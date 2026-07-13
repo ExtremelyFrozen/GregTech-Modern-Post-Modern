@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class AdvancedItemVoidingCover extends ItemVoidingCover
-        implements AdvancedItemVoidingCoverConfigActionTarget {
+                                      implements AdvancedItemVoidingCoverConfigActionTarget {
 
     static {
         AdvancedItemVoidingCoverConfigActions.initialize();

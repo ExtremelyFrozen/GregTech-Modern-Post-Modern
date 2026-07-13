@@ -262,7 +262,7 @@ public class AdvancedItemVoidingCoverConfigActionTest {
                                        int expected, String description) {
         JsonElement value = fields.get(field);
         helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isNumber() &&
-                        primitive.getAsBigDecimal().intValueExact() == expected,
+                primitive.getAsBigDecimal().intValueExact() == expected,
                 description + " was not encoded as the expected integer");
     }
 
