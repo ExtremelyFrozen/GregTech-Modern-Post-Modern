@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.machine.electric;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.sync_system.ServerFieldUpdateResult;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
@@ -34,6 +35,8 @@ public class ItemCollectorMachineSyncTest {
     private static final int MIN_RANGE = 1;
     private static final int MAX_RANGE = 1 << (TIER + 2);
     private static final ResourceLocation RANGE_FIELD = SyncFieldData.key("range");
+    private static final ResourceLocation WORKING_ENABLED_FIELD = SyncFieldData.key("isWorkingEnabled");
+    private static final ResourceLocation ACTIVE_FIELD = SyncFieldData.key("active");
     private static final ResourceLocation UNKNOWN_FIELD = SyncFieldData.key("unknown");
 
     @TestHolder
@@ -135,6 +138,82 @@ public class ItemCollectorMachineSyncTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void workingEnabledSyncRetainsSubscriptionRefreshSemantics(GameTestHelper helper) {
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        TestItemCollectorMachine server = createMachine();
+        TestItemCollectorMachine client = createMachine();
+        TestItemCollectorMachine loaded = createMachine();
+
+        DataComponentMap full = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        assertBooleanField(helper, full, WORKING_ENABLED_FIELD, true,
+                "item collector full sync");
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, full);
+        helper.assertTrue(client.isWorkingEnabled(),
+                "item collector full sync disabled the client field");
+
+        server.energyContainer.setEnergyStored(GTValues.V[TIER] * 4L);
+        server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        server.resetWorkingTracking();
+
+        server.setWorkingEnabled(true);
+        helper.assertTrue(server.collectionRefreshes == 1,
+                "identical enabled setter call did not reevaluate the collection subscription");
+        helper.assertTrue(server.subscriptionRequests == 1 && server.hasActiveCollectionSubscription(),
+                "identical enabled setter call did not restore the powered collection subscription");
+        DataComponentMap refreshed = server.getSyncDataHolder().serializeToComponents(registries, true, false);
+        assertBooleanField(helper, refreshed, ACTIVE_FIELD, true,
+                "item collector restored subscription delta");
+        assertFieldAbsent(helper, refreshed, WORKING_ENABLED_FIELD,
+                "identical enabled setter call produced a redundant working-enabled delta");
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, refreshed);
+        helper.assertTrue(client.isWorkingEnabled() && client.isActive(),
+                "restored subscription delta changed the wrong client state");
+
+        TickableSubscription restoredSubscription = server.lastSubscription;
+        server.setWorkingEnabled(false);
+        helper.assertTrue(server.collectionRefreshes == 2,
+                "disabled setter call did not reevaluate the collection subscription");
+        helper.assertTrue(!server.isWorkingEnabled() && !server.isActive(),
+                "disabled setter call retained working or active state");
+        helper.assertTrue(restoredSubscription != null && !restoredSubscription.isStillSubscribed() &&
+                !server.hasActiveCollectionSubscription(),
+                "disabled setter call did not cancel the restored collection subscription");
+        DataComponentMap disabled = server.getSyncDataHolder().serializeToComponents(registries, true, false);
+        assertBooleanField(helper, disabled, WORKING_ENABLED_FIELD, false,
+                "item collector disabled delta");
+        assertBooleanField(helper, disabled, ACTIVE_FIELD, false,
+                "item collector disabled delta");
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, disabled);
+        helper.assertTrue(!client.isWorkingEnabled() && !client.isActive(),
+                "disabled delta did not update the client state");
+
+        server.setWorkingEnabled(false);
+        helper.assertTrue(server.collectionRefreshes == 3,
+                "identical disabled setter call skipped subscription reevaluation");
+        helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "identical disabled setter call produced a redundant client delta");
+
+        SyncFieldData saved = server.getSyncDataHolder().serializeToFieldData(registries, false, false);
+        assertBooleanField(helper, saved, WORKING_ENABLED_FIELD, false,
+                "item collector saved state");
+        loaded.getSyncDataHolder().deserializeFieldData(registries, saved, false);
+        helper.assertTrue(!loaded.isWorkingEnabled(),
+                "item collector did not load the saved working-enabled state");
+
+        ServerFieldUpdateResult rejected = server.getSyncDataHolder().tryApplyServerNetworkUpdate(
+                registries, payload(WORKING_ENABLED_FIELD, new JsonPrimitive(true)));
+        helper.assertTrue(!rejected.getAccepted(),
+                "item collector accepted a client working-enabled field write");
+        helper.assertTrue(!server.isWorkingEnabled() && server.collectionRefreshes == 3,
+                "rejected client write changed state or reevaluated the collection subscription");
+        helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "rejected client write produced a client acknowledgement");
+        helper.succeed();
+    }
+
     private static TestItemCollectorMachine createMachine() {
         var definition = GTMachines.ITEM_COLLECTOR[TIER];
         return new TestItemCollectorMachine(new BlockEntityCreationInfo(
@@ -172,6 +251,32 @@ public class ItemCollectorMachineSyncTest {
                 primitive.getAsInt() == expectedRange, failureMessage);
     }
 
+    private static void assertBooleanField(GameTestHelper helper, DataComponentMap components,
+                                           ResourceLocation field, boolean expected, String description) {
+        assertBooleanField(helper, requireFields(components, description), field, expected, description);
+    }
+
+    private static void assertBooleanField(GameTestHelper helper, SyncFieldData fields,
+                                           ResourceLocation field, boolean expected, String description) {
+        JsonElement value = fields.get(field);
+        helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isBoolean() &&
+                primitive.getAsBoolean() == expected,
+                description + " did not contain the expected " + field.getPath() + " state");
+    }
+
+    private static void assertFieldAbsent(GameTestHelper helper, DataComponentMap components,
+                                          ResourceLocation field, String description) {
+        helper.assertTrue(requireFields(components, description).get(field) == null, description);
+    }
+
+    private static SyncFieldData requireFields(DataComponentMap components, String description) {
+        SyncFieldData fields = components.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        if (fields == null) {
+            throw new GameTestAssertException(description + " omitted sync field data");
+        }
+        return fields;
+    }
+
     private static void assertSetterRejected(GameTestHelper helper, TestItemCollectorMachine machine, int range,
                                              String description) {
         int currentRange = machine.getRange();
@@ -199,6 +304,9 @@ public class ItemCollectorMachineSyncTest {
     private static final class TestItemCollectorMachine extends ItemCollectorMachine {
 
         private int boundsInvalidations;
+        private int collectionRefreshes;
+        private int subscriptionRequests;
+        private TickableSubscription lastSubscription;
 
         private TestItemCollectorMachine(BlockEntityCreationInfo info) {
             super(info, TIER);
@@ -208,6 +316,29 @@ public class ItemCollectorMachineSyncTest {
         protected void invalidateCollectionBounds() {
             super.invalidateCollectionBounds();
             boundsInvalidations++;
+        }
+
+        @Override
+        public void updateCollectionSubscription() {
+            collectionRefreshes++;
+            super.updateCollectionSubscription();
+        }
+
+        @Override
+        public TickableSubscription subscribeServerTick(Runnable runnable) {
+            subscriptionRequests++;
+            lastSubscription = new TickableSubscription(runnable);
+            return lastSubscription;
+        }
+
+        private boolean hasActiveCollectionSubscription() {
+            return collectionSubs != null && collectionSubs.isStillSubscribed();
+        }
+
+        private void resetWorkingTracking() {
+            collectionRefreshes = 0;
+            subscriptionRequests = 0;
+            lastSubscription = null;
         }
     }
 }

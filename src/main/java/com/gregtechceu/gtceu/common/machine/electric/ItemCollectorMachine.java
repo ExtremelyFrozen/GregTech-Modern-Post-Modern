@@ -335,7 +335,6 @@ public class ItemCollectorMachine extends TieredEnergyMachine
     @Override
     public void setWorkingEnabled(boolean workingEnabled) {
         isWorkingEnabled = workingEnabled;
-        syncDataHolder.markClientSyncFieldDirty("isWorkingEnabled");
         updateCollectionSubscription();
     }
 
