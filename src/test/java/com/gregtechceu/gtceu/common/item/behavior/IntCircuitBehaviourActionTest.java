@@ -110,7 +110,7 @@ public class IntCircuitBehaviourActionTest {
         helper.assertTrue(IntCircuitBehaviour.getCircuitConfiguration(wrongOpenedHolder) == 5,
                 "wrong opened item action changed the holder circuit");
         helper.assertTrue(wrongHeldItem.is(Items.STICK) &&
-                        IntCircuitBehaviour.getCircuitConfiguration(wrongHeldItem) == 0,
+                IntCircuitBehaviour.getCircuitConfiguration(wrongHeldItem) == 0,
                 "rejected current item was changed");
         helper.assertTrue(wrongOpenedItem.is(Items.STICK), "rejected opened item was changed");
         helper.succeed();
