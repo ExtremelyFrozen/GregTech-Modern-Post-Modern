@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.storage;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -26,17 +25,11 @@ import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.TieredMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
@@ -51,9 +44,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.Util;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -66,12 +57,9 @@ import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
-import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import lombok.Getter;
@@ -81,26 +69,16 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class QuantumTankMachine extends TieredMachine implements IControllable,
-                                LDLib2MachineUIProvider {
+                                LDLib2MachineUIProvider, QuantumTankActionTarget {
 
     public static Object2LongMap<MachineDefinition> TANK_CAPACITY = Util.make(new Object2LongArrayMap<>(),
             map -> map.defaultReturnValue(-1L));
 
     private static final int PAGE_WIDTH = 90;
     private static final int PAGE_HEIGHT = 63;
-    private static final ResourceLocation CLICK_QUANTUM_TANK_FLUID_SLOT_ACTION = GTCEu
-            .id("click_quantum_tank_fluid_slot");
-    private static final ResourceLocation SET_QUANTUM_TANK_LOCKED_FLUID_ACTION = GTCEu
-            .id("set_quantum_tank_locked_fluid");
-    private static final ResourceLocation SET_QUANTUM_TANK_LOCKED_ACTION = GTCEu
-            .id("set_quantum_tank_locked");
-    private static final ResourceLocation SHIFT_FIELD = SyncFieldData.key("shift");
-    private static final ResourceLocation LOCKED_FIELD = SyncFieldData.key("locked");
 
     static {
-        SyncActionDispatchers.server().register(new QuantumTankFluidSlotActionHandler());
-        SyncActionDispatchers.server().register(new QuantumTankLockedFluidActionHandler());
-        SyncActionDispatchers.server().register(new QuantumTankLockedActionHandler());
+        QuantumTankMachineActions.initialize();
     }
 
     @SaveField
@@ -220,6 +198,16 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
         syncDataHolder.markClientSyncFieldDirty("lockedFluid");
     }
 
+    @Override
+    public void setQuantumTankLockedFluid(FluidStack fluid) {
+        setLocked(fluid);
+    }
+
+    @Override
+    public void setQuantumTankLocked(boolean locked) {
+        setLocked(locked);
+    }
+
     private void setVoiding(boolean voiding) {
         isVoiding = voiding;
     }
@@ -302,7 +290,8 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
         fluidSlot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
-                MachineUIHelper.sendAction(holder, createClickQuantumTankFluidSlotAction(event.isShiftDown()));
+                MachineUIHelper.sendAction(holder,
+                        QuantumTankMachineActions.createClickQuantumTankFluidSlotAction(event.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }
@@ -358,14 +347,15 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
     private void setLDLib2LockedFluid(Player player, MachineUIHolder holder, FluidStack fluid) {
         setLocked(fluid);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetQuantumTankLockedFluidAction(fluid));
+            MachineUIHelper.sendAction(holder,
+                    QuantumTankMachineActions.createSetQuantumTankLockedFluidAction(fluid));
         }
     }
 
     private void setLDLib2Locked(Player player, MachineUIHolder holder, boolean locked) {
         setLocked(locked);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetQuantumTankLockedAction(locked));
+            MachineUIHelper.sendAction(holder, QuantumTankMachineActions.createSetQuantumTankLockedAction(locked));
         }
     }
 
@@ -390,35 +380,9 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
         }
     }
 
-    private void clickLDLib2FluidSlot(ServerPlayer player, boolean shiftDown) {
+    @Override
+    public void clickQuantumTankFluidSlot(ServerPlayer player, boolean shiftDown) {
         new LDLib2FluidClickTarget(cache, true, true).click(player, shiftDown);
-    }
-
-    private static SyncActionData createClickQuantumTankFluidSlotAction(boolean shiftDown) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(SHIFT_FIELD, new JsonPrimitive(shiftDown))
-                        .build())
-                .build();
-        return new SyncActionData(CLICK_QUANTUM_TANK_FLUID_SLOT_ACTION, shiftDown ? 1 : 0, payload);
-    }
-
-    private static SyncActionData createSetQuantumTankLockedFluidAction(FluidStack fluid) {
-        FluidStack locked = fluid.isEmpty() ? FluidStack.EMPTY : fluid.copyWithAmount(FluidType.BUCKET_VOLUME);
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.FLUID_CONTENT.get(), SimpleFluidContent.copyOf(locked))
-                .build();
-        int sequence = FluidStack.hashFluidAndComponents(locked) * 31 + locked.getAmount();
-        return new SyncActionData(SET_QUANTUM_TANK_LOCKED_FLUID_ACTION, sequence, payload);
-    }
-
-    private static SyncActionData createSetQuantumTankLockedAction(boolean locked) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(LOCKED_FIELD, new JsonPrimitive(locked))
-                        .build())
-                .build();
-        return new SyncActionData(SET_QUANTUM_TANK_LOCKED_ACTION, locked ? 1 : 0, payload);
     }
 
     private final class QuantumTankLDLib2Page implements LDLib2FancyUIProvider {
@@ -577,114 +541,6 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
             }
             player.containerMenu.broadcastChanges();
         }
-    }
-
-    private abstract static class QuantumTankActionHandler implements SyncActionHandler {
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof QuantumTankMachine;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        protected QuantumTankMachine getMachine(SyncActionContext context) {
-            if (!(context.holder() instanceof QuantumTankMachine machine)) {
-                throw new IllegalStateException("Quantum tank action received a non-quantum-tank machine.");
-            }
-            return machine;
-        }
-    }
-
-    private static final class QuantumTankFluidSlotActionHandler extends QuantumTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return CLICK_QUANTUM_TANK_FLUID_SLOT_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, SHIFT_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).clickLDLib2FluidSlot(context.player(), requireBoolean(context.payload(),
-                    SHIFT_FIELD));
-        }
-    }
-
-    private static final class QuantumTankLockedFluidActionHandler extends QuantumTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_QUANTUM_TANK_LOCKED_FLUID_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return payload.has(GTDataComponents.FLUID_CONTENT.get());
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setLocked(requireFluidStack(context.payload()));
-        }
-    }
-
-    private static final class QuantumTankLockedActionHandler extends QuantumTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_QUANTUM_TANK_LOCKED_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, LOCKED_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setLocked(requireBoolean(context.payload(), LOCKED_FIELD));
-        }
-    }
-
-    private static SyncFieldData requireFieldData(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Quantum tank action payload is missing field data.");
-        }
-        return fields;
-    }
-
-    private static FluidStack requireFluidStack(DataComponentMap payload) {
-        if (!payload.has(GTDataComponents.FLUID_CONTENT.get())) {
-            throw new IllegalStateException("Quantum tank fluid action payload is missing fluid stack.");
-        }
-        return payload.getOrDefault(GTDataComponents.FLUID_CONTENT.get(), SimpleFluidContent.EMPTY).copy();
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        Boolean value = readBoolean(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Quantum tank action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 
     protected class FluidCache extends MachineTrait implements IFluidHandler {
