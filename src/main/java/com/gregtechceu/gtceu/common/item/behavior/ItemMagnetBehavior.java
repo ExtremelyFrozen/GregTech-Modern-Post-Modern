@@ -21,10 +21,6 @@ import com.gregtechceu.gtceu.api.item.component.IAddInformation;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.item.component.IItemLifeCycle;
 import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 
@@ -33,13 +29,10 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringRepresentable;
@@ -73,8 +66,6 @@ import java.util.List;
 
 public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAddInformation, IItemUIFactory {
 
-    private static final ResourceLocation SET_MAGNET_FILTER_ACTION = GTCEu.id("set_magnet_filter");
-
     private final int range;
     private final long energyDraw;
 
@@ -85,7 +76,7 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
 
     static {
         NeoForge.EVENT_BUS.register(ItemMagnetBehavior.class);
-        SyncActionDispatchers.server().register(new MagnetFilterActionHandler());
+        ItemMagnetBehaviorActions.initialize();
     }
 
     @Override
@@ -167,7 +158,8 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
         }
         updateLDLib2FilterButton(button, filter);
         if (holder.getPlayer().level().isClientSide()) {
-            HeldItemUIHelper.sendAction(holder, createSetMagnetFilterAction(held, filter));
+            HeldItemUIHelper.sendAction(holder,
+                    ItemMagnetBehaviorActions.createSetMagnetFilterAction(held, filter));
         }
     }
 
@@ -190,23 +182,6 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
     private static void setMagnetFilter(ItemStack stack, Filter filter) {
         stack.update(GTDataComponents.MAGNET, MagnetComponent.EMPTY,
                 current -> new MagnetComponent(current.active(), filter));
-    }
-
-    private static SyncActionData createSetMagnetFilterAction(ItemStack stack, Filter filter) {
-        MagnetComponent current = stack.getOrDefault(GTDataComponents.MAGNET, MagnetComponent.EMPTY);
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.MAGNET.get(), new MagnetComponent(current.active(), filter))
-                .build();
-        return new SyncActionData(SET_MAGNET_FILTER_ACTION, filter.ordinal(), payload);
-    }
-
-    private static boolean isKnownFilter(Filter filter) {
-        for (Filter value : Filter.values()) {
-            if (value == filter) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -464,44 +439,4 @@ public class ItemMagnetBehavior implements IInteractionItem, IItemLifeCycle, IAd
     }
 
     private record LDLib2FilterPanel(Filter filter, UIElement panel) {}
-
-    private static final class MagnetFilterActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_MAGNET_FILTER_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            if (!(context.holder() instanceof ItemStack stack) || context.openedStack() == null) {
-                return false;
-            }
-            return isMagnet(stack) && isMagnet(context.openedStack()) &&
-                    ItemStack.isSameItem(stack, context.openedStack());
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            MagnetComponent requested = payload.get(GTDataComponents.MAGNET.get());
-            return requested != null && isKnownFilter(requested.filterType());
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ItemStack stack)) {
-                throw new IllegalStateException("Magnet filter action received a non-item holder.");
-            }
-            MagnetComponent requested = context.payload().get(GTDataComponents.MAGNET.get());
-            if (requested == null) {
-                throw new IllegalStateException("Magnet filter action payload is missing.");
-            }
-            setMagnetFilter(stack, requested.filterType());
-        }
-    }
 }
