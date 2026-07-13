@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
@@ -12,12 +11,6 @@ import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
@@ -27,9 +20,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -43,20 +34,13 @@ import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import org.jetbrains.annotations.Nullable;
-
-public class SteamHatchPartMachine extends FluidHatchPartMachine implements LDLib2MachineUIProvider {
+public class SteamHatchPartMachine extends FluidHatchPartMachine
+                                   implements LDLib2MachineUIProvider, SteamHatchFluidSlotActionTarget {
 
     public static final int INITIAL_TANK_CAPACITY = 64 * FluidType.BUCKET_VOLUME;
     public static final boolean IS_STEEL = ConfigHolder.INSTANCE.machines.steelSteamMultiblocks;
-    private static final ResourceLocation CLICK_STEAM_HATCH_FLUID_SLOT_ACTION = GTCEu
-            .id("click_steam_hatch_fluid_slot");
-    private static final ResourceLocation SHIFT_FIELD = SyncFieldData.key("shift");
-
     static {
-        SyncActionDispatchers.server().register(new SteamHatchFluidSlotActionHandler());
+        SteamHatchPartMachineActions.initialize();
     }
 
     public SteamHatchPartMachine(BlockEntityCreationInfo info) {
@@ -142,7 +126,8 @@ public class SteamHatchPartMachine extends FluidHatchPartMachine implements LDLi
         fluidSlot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
-                MachineUIHelper.sendAction(holder, createClickSteamHatchFluidSlotAction(event.isShiftDown()));
+                MachineUIHelper.sendAction(holder,
+                        SteamHatchPartMachineActions.createClickSteamHatchFluidSlotAction(event.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }
@@ -150,17 +135,9 @@ public class SteamHatchPartMachine extends FluidHatchPartMachine implements LDLi
         return UITemplate.setLDLib2Bounds(fluidSlot, 90, 35, 18, 18);
     }
 
-    private void clickLDLib2FluidSlot(ServerPlayer player, boolean shiftDown) {
+    @Override
+    public void clickSteamHatchFluidSlot(ServerPlayer player, boolean shiftDown) {
         new LDLib2FluidClickTarget(tank.getStorages()[0], true, true).click(player, shiftDown);
-    }
-
-    private static SyncActionData createClickSteamHatchFluidSlotAction(boolean shiftDown) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(SHIFT_FIELD, new JsonPrimitive(shiftDown))
-                        .build())
-                .build();
-        return new SyncActionData(CLICK_STEAM_HATCH_FLUID_SLOT_ACTION, shiftDown ? 1 : 0, payload);
     }
 
     private record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
@@ -265,59 +242,6 @@ public class SteamHatchPartMachine extends FluidHatchPartMachine implements LDLi
             }
             player.containerMenu.broadcastChanges();
         }
-    }
-
-    private static final class SteamHatchFluidSlotActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return CLICK_STEAM_HATCH_FLUID_SLOT_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof SteamHatchPartMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, SHIFT_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof SteamHatchPartMachine machine)) {
-                throw new IllegalStateException(
-                        "Steam hatch fluid slot action received a non-steam-hatch machine.");
-            }
-            machine.clickLDLib2FluidSlot(context.player(), requireBoolean(context.payload(), SHIFT_FIELD));
-        }
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Steam hatch fluid slot action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Steam hatch fluid slot action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 
     // By returning false here, we don't allow shift-clicking
