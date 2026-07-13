@@ -125,7 +125,6 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
         long clamped = Math.max(minValue, 0L);
         if (this.minValue != clamped) {
             this.minValue = clamped;
-            syncDataHolder.markClientSyncFieldDirty("minValue");
         }
     }
 
@@ -133,7 +132,6 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
         long clamped = Math.max(maxValue, 0L);
         if (this.maxValue != clamped) {
             this.maxValue = clamped;
-            syncDataHolder.markClientSyncFieldDirty("maxValue");
         }
     }
 
@@ -152,7 +150,6 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
             if (convertValues) {
                 convertMinMaxValues(wasPercent);
             }
-            syncDataHolder.markClientSyncFieldDirty("usePercent");
         }
 
         initializeLDLib2MinMaxInputs();

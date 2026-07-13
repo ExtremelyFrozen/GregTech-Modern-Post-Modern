@@ -2,15 +2,20 @@ package com.gregtechceu.gtceu.common.cover;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.capability.IEnergyInfoProvider;
+import com.gregtechceu.gtceu.api.capability.IEnergyInfoProvider.EnergyInfo;
 import com.gregtechceu.gtceu.api.capability.IWorkable;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.element.GTLongInputElement;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.SimpleTieredMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.ServerFieldUpdateResult;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
+import com.gregtechceu.gtceu.common.cover.detector.AdvancedEnergyDetectorCover;
 import com.gregtechceu.gtceu.common.cover.detector.AdvancedFluidDetectorCover;
 import com.gregtechceu.gtceu.common.cover.detector.AdvancedItemDetectorCover;
 import com.gregtechceu.gtceu.common.data.GTCovers;
@@ -29,8 +34,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -40,6 +47,9 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import org.apache.commons.lang3.mutable.MutableInt;
+
+import java.math.BigInteger;
+import java.util.UUID;
 
 /**
  * The "electrolyzer" template contains a creative tank with water,
@@ -55,9 +65,15 @@ public class AdvancedDetectorCoverTest {
     private static final int DEFAULT_MAX = 512;
     private static final int CHANGED_MIN = 128;
     private static final int CHANGED_MAX = 1024;
+    private static final long DEFAULT_ENERGY_MIN = 33L;
+    private static final long DEFAULT_ENERGY_MAX = 66L;
+    private static final long CHANGED_ENERGY_MIN = 100L;
+    private static final long CHANGED_ENERGY_MAX = 900L;
+    private static final long FIXED_ENERGY_CAPACITY = 1000L;
     private static final ResourceLocation MIN_VALUE_FIELD = SyncFieldData.key("minValue");
     private static final ResourceLocation MAX_VALUE_FIELD = SyncFieldData.key("maxValue");
     private static final ResourceLocation LATCHED_FIELD = SyncFieldData.key("isLatched");
+    private static final ResourceLocation USE_PERCENT_FIELD = SyncFieldData.key("usePercent");
 
     @TestHolder()
     @GameTest(template = "electrolyzer", batch = "coverTests")
@@ -201,6 +217,140 @@ public class AdvancedDetectorCoverTest {
                 new ItemDetectorSyncProbeImpl(createBuffer()),
                 "advanced item detector");
         helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "coverTests")
+    public static void advancedEnergyDetectorUsesChangedOnlyScalarSync(GameTestHelper helper) {
+        assertAdvancedEnergyDetectorScalarSync(helper,
+                new EnergyDetectorSyncProbeImpl(createBuffer()),
+                new EnergyDetectorSyncProbeImpl(createBuffer()),
+                new EnergyDetectorSyncProbeImpl(createBuffer()));
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "coverTests")
+    public static void advancedEnergyDetectorSameModeRefreshesInputBounds(GameTestHelper helper) {
+        EnergyDetectorSyncProbeImpl cover = new EnergyDetectorSyncProbeImpl(createBuffer());
+        cover.setUsePercent(false);
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        UICoverHolder holder = new TestCoverUIHolderImpl(cover);
+        var inputs = cover.createLDLib2UI(player, holder).getRootElement().getChildren().stream()
+                .filter(element -> element instanceof GTLongInputElement)
+                .map(element -> (GTLongInputElement) element)
+                .toList();
+        helper.assertTrue(inputs.size() == 2,
+                "advanced energy detector UI did not create its two threshold inputs");
+
+        GTLongInputElement maxInput = inputs.get(1);
+        maxInput.setMax(100L);
+        cover.setUsePercent(false);
+        maxInput.setValue(CHANGED_ENERGY_MAX);
+
+        helper.assertTrue(!cover.isUsePercent() && cover.getMaxValue() == CHANGED_ENERGY_MAX,
+                "identical use-percent setter call did not restore the input bound from fixed capacity");
+        helper.succeed();
+    }
+
+    private static void assertAdvancedEnergyDetectorScalarSync(GameTestHelper helper,
+                                                               EnergyDetectorSyncProbeImpl server,
+                                                               EnergyDetectorSyncProbeImpl client,
+                                                               EnergyDetectorSyncProbeImpl loaded) {
+        RegistryAccess registries = helper.getLevel().registryAccess();
+
+        DataComponentMap full = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        assertEnergyScalarFields(helper, full, DEFAULT_ENERGY_MIN, DEFAULT_ENERGY_MAX, true,
+                "advanced energy detector full sync");
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, full);
+        assertEnergyScalarState(helper, client, DEFAULT_ENERGY_MIN, DEFAULT_ENERGY_MAX, true,
+                "advanced energy detector full sync client");
+
+        server.setMinValue(DEFAULT_ENERGY_MIN);
+        server.setMaxValue(DEFAULT_ENERGY_MAX);
+        server.setUsePercent(true);
+        helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "advanced energy detector default-equivalent setters produced a redundant delta");
+
+        server.setMinValue(CHANGED_ENERGY_MIN);
+        server.setMaxValue(CHANGED_ENERGY_MAX);
+        server.setUsePercent(false);
+        DataComponentMap delta = server.getSyncDataHolder().serializeToComponents(registries, true, false);
+        SyncFieldData changedFields = requireFields(delta, "advanced energy detector changed delta");
+        helper.assertTrue(changedFields.fields().size() == 3,
+                "advanced energy detector changed delta contained fields other than minValue, maxValue, and " +
+                        "usePercent");
+        assertEnergyScalarFields(helper, changedFields, CHANGED_ENERGY_MIN, CHANGED_ENERGY_MAX, false,
+                "advanced energy detector changed delta");
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, delta);
+        assertEnergyScalarState(helper, client, CHANGED_ENERGY_MIN, CHANGED_ENERGY_MAX, false,
+                "advanced energy detector changed delta client");
+
+        SyncFieldData saved = server.getSyncDataHolder().serializeToFieldData(registries, false, false);
+        assertEnergyScalarFields(helper, saved, CHANGED_ENERGY_MIN, CHANGED_ENERGY_MAX, false,
+                "advanced energy detector saved state");
+        loaded.getSyncDataHolder().deserializeFieldData(registries, saved, false);
+        assertEnergyScalarState(helper, loaded, CHANGED_ENERGY_MIN, CHANGED_ENERGY_MAX, false,
+                "advanced energy detector loaded state");
+
+        server.setMinValue(CHANGED_ENERGY_MIN);
+        server.setMaxValue(CHANGED_ENERGY_MAX);
+        server.setUsePercent(false);
+        helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "advanced energy detector changed-equivalent setters produced a redundant delta");
+
+        assertRejectedEnergyClientField(helper, server, registries, MIN_VALUE_FIELD,
+                new JsonPrimitive(DEFAULT_ENERGY_MIN), "advanced energy detector minValue client write");
+        assertRejectedEnergyClientField(helper, server, registries, MAX_VALUE_FIELD,
+                new JsonPrimitive(DEFAULT_ENERGY_MAX), "advanced energy detector maxValue client write");
+        assertRejectedEnergyClientField(helper, server, registries, USE_PERCENT_FIELD,
+                new JsonPrimitive(true), "advanced energy detector usePercent client write");
+    }
+
+    private static void assertRejectedEnergyClientField(GameTestHelper helper, EnergyDetectorSyncProbeImpl server,
+                                                        RegistryAccess registries, ResourceLocation field,
+                                                        JsonElement value, String description) {
+        ServerFieldUpdateResult rejected = server.getSyncDataHolder().tryApplyServerNetworkUpdate(
+                registries, scalarPayload(field, value));
+        helper.assertTrue(!rejected.getAccepted(), description + " was accepted");
+        assertEnergyScalarState(helper, server, CHANGED_ENERGY_MIN, CHANGED_ENERGY_MAX, false, description);
+        helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                description + " produced an acknowledgement");
+    }
+
+    private static void assertEnergyScalarState(GameTestHelper helper, EnergyDetectorSyncProbeImpl probe,
+                                                long minValue, long maxValue, boolean usePercent, String description) {
+        helper.assertTrue(probe.getMinValue() == minValue && probe.getMaxValue() == maxValue &&
+                probe.isUsePercent() == usePercent,
+                description + " did not contain the expected scalar state");
+    }
+
+    private static void assertEnergyScalarFields(GameTestHelper helper, DataComponentMap components,
+                                                 long minValue, long maxValue, boolean usePercent,
+                                                 String description) {
+        assertEnergyScalarFields(helper, requireFields(components, description), minValue, maxValue, usePercent,
+                description);
+    }
+
+    private static void assertEnergyScalarFields(GameTestHelper helper, SyncFieldData fields,
+                                                 long minValue, long maxValue, boolean usePercent,
+                                                 String description) {
+        assertLongField(helper, fields, MIN_VALUE_FIELD, minValue, description);
+        assertLongField(helper, fields, MAX_VALUE_FIELD, maxValue, description);
+        JsonElement usePercentValue = fields.get(USE_PERCENT_FIELD);
+        helper.assertTrue(usePercentValue instanceof JsonPrimitive primitive && primitive.isBoolean() &&
+                primitive.getAsBoolean() == usePercent,
+                description + " did not contain the expected usePercent field");
+    }
+
+    private static void assertLongField(GameTestHelper helper, SyncFieldData fields,
+                                        ResourceLocation field, long expected, String description) {
+        JsonElement value = fields.get(field);
+        helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isNumber() &&
+                primitive.getAsLong() == expected,
+                description + " did not contain the expected " + field.getPath() + " field");
     }
 
     private static void assertAdvancedDetectorScalarSync(GameTestHelper helper,
@@ -375,6 +525,82 @@ public class AdvancedDetectorCoverTest {
 
         private ItemDetectorSyncProbeImpl(BufferMachine machine) {
             super(GTCovers.ITEM_DETECTOR_ADVANCED, machine.getCoverContainer(), Direction.WEST);
+        }
+    }
+
+    private static final class EnergyDetectorSyncProbeImpl extends AdvancedEnergyDetectorCover {
+
+        private static final IEnergyInfoProvider ENERGY_INFO_PROVIDER = new FixedEnergyInfoProviderImpl();
+
+        private EnergyDetectorSyncProbeImpl(BufferMachine machine) {
+            super(GTCovers.ENERGY_DETECTOR_ADVANCED, machine.getCoverContainer(), Direction.WEST);
+        }
+
+        @Override
+        protected IEnergyInfoProvider getEnergyInfoProvider() {
+            return ENERGY_INFO_PROVIDER;
+        }
+    }
+
+    private static final class FixedEnergyInfoProviderImpl implements IEnergyInfoProvider {
+
+        private static final EnergyInfo ENERGY_INFO = new EnergyInfo(BigInteger.valueOf(FIXED_ENERGY_CAPACITY),
+                BigInteger.valueOf(FIXED_ENERGY_CAPACITY / 2));
+
+        @Override
+        public EnergyInfo getEnergyInfo() {
+            return ENERGY_INFO;
+        }
+
+        @Override
+        public long getInputPerSec() {
+            return 0L;
+        }
+
+        @Override
+        public long getOutputPerSec() {
+            return 0L;
+        }
+
+        @Override
+        public boolean supportsBigIntEnergyValues() {
+            return false;
+        }
+    }
+
+    private static final class TestCoverUIHolderImpl implements UICoverHolder {
+
+        private static final UUID ACTION_SESSION_ID = new UUID(0L, 0L);
+
+        private final AdvancedEnergyDetectorCover cover;
+
+        private TestCoverUIHolderImpl(AdvancedEnergyDetectorCover cover) {
+            this.cover = cover;
+        }
+
+        @Override
+        public BlockPos getPos() {
+            return cover.coverHolder.getBlockPos();
+        }
+
+        @Override
+        public Direction getSide() {
+            return cover.attachedSide;
+        }
+
+        @Override
+        public ResourceLocation getCoverDefinitionId() {
+            return cover.coverDefinition.getId();
+        }
+
+        @Override
+        public UUID getActionSessionId() {
+            return ACTION_SESSION_ID;
+        }
+
+        @Override
+        public AdvancedEnergyDetectorCover getCover() {
+            return cover;
         }
     }
 }
