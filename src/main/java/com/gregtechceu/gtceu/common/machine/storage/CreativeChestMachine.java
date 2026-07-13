@@ -21,10 +21,6 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
@@ -40,8 +36,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -50,14 +44,13 @@ import lombok.Getter;
 
 import java.util.List;
 
-public class CreativeChestMachine extends QuantumChestMachine implements LDLib2MachineUIProvider {
+public class CreativeChestMachine extends QuantumChestMachine
+                                  implements LDLib2MachineUIProvider, CreativeChestItemActionTarget {
 
     private static final int PAGE_WIDTH = 176;
     private static final int PAGE_HEIGHT = 131;
-    private static final ResourceLocation SET_CREATIVE_CHEST_ITEM_ACTION = GTCEu.id("set_creative_chest_item");
-
     static {
-        SyncActionDispatchers.server().register(new CreativeChestItemActionHandler());
+        CreativeChestMachineActions.initialize();
     }
 
     @Getter
@@ -84,7 +77,8 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         return new InfiniteCache();
     }
 
-    private void updateStored(ItemStack item) {
+    @Override
+    public void setCreativeChestItem(ItemStack item) {
         stored = item.isEmpty() ? ItemStack.EMPTY : item.copyWithCount(1);
         onItemChanged();
     }
@@ -138,7 +132,7 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         }
         // Clear item if empty hand + shift-rclick
         if (player.getItemInHand(context.getHand()).isEmpty() && player.isShiftKeyDown() && !stored.isEmpty()) {
-            updateStored(ItemStack.EMPTY);
+            setCreativeChestItem(ItemStack.EMPTY);
             return InteractionResult.SUCCESS;
         }
         return super.onUseWithItem(context);
@@ -276,9 +270,9 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
     }
 
     private void setLDLib2StoredItem(Player player, MachineUIHolder holder, ItemStack item) {
-        updateStored(item);
+        setCreativeChestItem(item);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeChestItemAction(item));
+            MachineUIHelper.sendAction(holder, CreativeChestMachineActions.createSetItemAction(item));
         }
     }
 
@@ -322,15 +316,6 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
             GTCEu.LOGGER.error("Invalid {} input: {}", fieldName, value, e);
             throw e;
         }
-    }
-
-    private static SyncActionData createSetCreativeChestItemAction(ItemStack item) {
-        ItemStack storedItem = item.isEmpty() ? ItemStack.EMPTY : item.copyWithCount(1);
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.PLACEHOLDER_ITEM_STACK.get(), storedItem)
-                .build();
-        return new SyncActionData(SET_CREATIVE_CHEST_ITEM_ACTION,
-                ItemStack.hashItemAndComponents(storedItem), payload);
     }
 
     private final class CreativeChestLDLib2Page implements LDLib2FancyUIProvider {
@@ -388,51 +373,6 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
         }
     }
 
-    private abstract static class CreativeChestActionHandler implements SyncActionHandler {
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof CreativeChestMachine;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        protected CreativeChestMachine getMachine(SyncActionContext context) {
-            if (!(context.holder() instanceof CreativeChestMachine machine)) {
-                throw new IllegalStateException("Creative chest action received a non-creative-chest machine.");
-            }
-            return machine;
-        }
-    }
-
-    private static final class CreativeChestItemActionHandler extends CreativeChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_CHEST_ITEM_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return payload.has(GTDataComponents.PLACEHOLDER_ITEM_STACK.get());
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).updateStored(requireItemStack(context.payload()));
-        }
-    }
-
-    private static ItemStack requireItemStack(DataComponentMap payload) {
-        if (!payload.has(GTDataComponents.PLACEHOLDER_ITEM_STACK.get())) {
-            throw new IllegalStateException("Creative chest item action payload is missing item stack.");
-        }
-        return payload.getOrDefault(GTDataComponents.PLACEHOLDER_ITEM_STACK.get(), ItemStack.EMPTY);
-    }
-
     @Override
     protected void applyImplicitComponents(DataComponentInput componentInput) {
         super.applyImplicitComponents(componentInput);
@@ -462,7 +402,7 @@ public class CreativeChestMachine extends QuantumChestMachine implements LDLib2M
 
         @Override
         public void setStackInSlot(int index, ItemStack stack) {
-            updateStored(stack);
+            setCreativeChestItem(stack);
         }
 
         @Override
