@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.cover;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.IControllable;
@@ -21,10 +20,6 @@ import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -34,7 +29,6 @@ import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.api.transfer.fluid.ModifiableFluidHandlerWrapper;
 import com.gregtechceu.gtceu.common.cover.data.BucketMode;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -47,7 +41,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -55,8 +48,6 @@ import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -67,18 +58,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIProvider, IControllable {
+public class PumpCover extends CoverBehavior
+                       implements IIOCover, LDLib2CoverUIProvider, IControllable, PumpCoverConfigActionTarget {
 
     // .5b 2b 8b
     public static final Int2IntFunction PUMP_SCALING = tier -> 64 * (int) Math.pow(4, Math.min(tier - 1, GTValues.IV));
-    private static final ResourceLocation SET_PUMP_COVER_CONFIG_ACTION = GTCEu.id("set_pump_cover_config");
-    private static final ResourceLocation TRANSFER_RATE_FIELD = SyncFieldData.key("transferRate");
-    private static final ResourceLocation IO_FIELD = SyncFieldData.key("io");
-    private static final ResourceLocation BUCKET_MODE_FIELD = SyncFieldData.key("bucketMode");
-    private static final ResourceLocation MANUAL_IO_FIELD = SyncFieldData.key("manualIO");
 
     static {
-        SyncActionDispatchers.server().register(new PumpCoverConfigActionHandler());
+        PumpCoverConfigActions.initialize();
     }
 
     public final int tier;
@@ -133,6 +120,11 @@ public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIP
         this(definition, coverHolder, attachedSide, tier, PUMP_SCALING.applyAsInt(tier));
     }
 
+    @Override
+    public int getMaxFluidTransferRate() {
+        return maxFluidTransferRate;
+    }
+
     protected boolean isSubscriptionActive() {
         return isWorkingEnabled() && getAdjacentFluidHandler() != null;
     }
@@ -155,6 +147,7 @@ public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIP
         return super.canAttach() && getOwnFluidHandler() != null;
     }
 
+    @Override
     public void setIo(IO io) {
         if (io == IO.IN || io == IO.OUT) {
             if (this.io != io) {
@@ -203,6 +196,7 @@ public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIP
     // ***** Transfer Logic *****//
     //////////////////////////////////////
 
+    @Override
     public void setTransferRate(int milliBucketsPerTick) {
         int clamped = Math.min(Math.max(milliBucketsPerTick, 0), maxFluidTransferRate);
         if (this.transferRate != clamped) {
@@ -211,6 +205,7 @@ public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIP
         }
     }
 
+    @Override
     public void setBucketMode(BucketMode bucketMode) {
         var oldMultiplier = this.bucketMode.multiplier;
         var newMultiplier = bucketMode.multiplier;
@@ -224,7 +219,8 @@ public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIP
         configureTransferRateLDLib2Input(oldMultiplier, newMultiplier);
     }
 
-    protected void setManualIOMode(ManualIOMode manualIOMode) {
+    @Override
+    public void setManualIOMode(ManualIOMode manualIOMode) {
         if (this.manualIOMode != manualIOMode) {
             this.manualIOMode = manualIOMode;
             syncDataHolder.markClientSyncFieldDirty("manualIOMode");
@@ -419,22 +415,9 @@ public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIP
 
     private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetPumpCoverConfigAction(getTransferRate(), getIo(),
+            CoverUIHelper.sendAction(holder, PumpCoverConfigActions.createSetConfigAction(getTransferRate(), getIo(),
                     getBucketMode(), getManualIOMode()));
         }
-    }
-
-    private static SyncActionData createSetPumpCoverConfigAction(int transferRate, IO io, BucketMode bucketMode,
-                                                                 ManualIOMode manualIOMode) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(TRANSFER_RATE_FIELD, new JsonPrimitive(transferRate))
-                        .put(IO_FIELD, new JsonPrimitive(io.ordinal()))
-                        .put(BUCKET_MODE_FIELD, new JsonPrimitive(bucketMode.ordinal()))
-                        .put(MANUAL_IO_FIELD, new JsonPrimitive(manualIOMode.ordinal()))
-                        .build())
-                .build();
-        return new SyncActionData(SET_PUMP_COVER_CONFIG_ACTION, 0, payload);
     }
 
     /////////////////////////////////////
@@ -518,111 +501,5 @@ public class PumpCover extends CoverBehavior implements IIOCover, LDLib2CoverUIP
                 .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
         setBucketMode(BucketMode.values()[ConfigCopyHelper.getInt(config, "bucketMode")]);
         super.pasteConfig(player, registries, config);
-    }
-
-    private static final class PumpCoverConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_PUMP_COVER_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof PumpCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null &&
-                    isValidNonNegativeInt(fields, TRANSFER_RATE_FIELD) &&
-                    isValidIOOrdinal(fields, IO_FIELD) &&
-                    isValidOrdinal(fields, BUCKET_MODE_FIELD, BucketMode.values().length) &&
-                    isValidOrdinal(fields, MANUAL_IO_FIELD, ManualIOMode.VALUES.length);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            if (player.isSpectator()) {
-                return false;
-            }
-            if (!(context.holder() instanceof PumpCover cover)) {
-                return false;
-            }
-            int bucketModeOrdinal = requireOrdinal(context.payload(), BUCKET_MODE_FIELD, BucketMode.values().length);
-            return BucketMode.values()[bucketModeOrdinal].multiplier <= cover.maxFluidTransferRate;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof PumpCover cover)) {
-                throw new IllegalStateException("Pump cover config action received a non-pump cover.");
-            }
-            cover.setTransferRate(requireNonNegativeInt(context.payload(), TRANSFER_RATE_FIELD));
-            cover.setIo(IO.values()[requireIOOrdinal(context.payload(), IO_FIELD)]);
-            cover.setBucketMode(BucketMode.values()[requireOrdinal(context.payload(), BUCKET_MODE_FIELD,
-                    BucketMode.values().length)]);
-            cover.setManualIOMode(ManualIOMode.VALUES[requireOrdinal(context.payload(), MANUAL_IO_FIELD,
-                    ManualIOMode.VALUES.length)]);
-        }
-    }
-
-    private static boolean isValidNonNegativeInt(SyncFieldData fields, ResourceLocation field) {
-        Integer value = readInt(fields, field);
-        return value != null && value >= 0;
-    }
-
-    private static boolean isValidIOOrdinal(SyncFieldData fields, ResourceLocation field) {
-        Integer ordinal = readInt(fields, field);
-        return ordinal != null && isImportExportOrdinal(ordinal);
-    }
-
-    private static int requireIOOrdinal(DataComponentMap payload, ResourceLocation field) {
-        int ordinal = requireNonNegativeInt(payload, field);
-        if (!isImportExportOrdinal(ordinal)) {
-            throw new IllegalArgumentException("Pump cover config action IO ordinal is out of range: " + ordinal);
-        }
-        return ordinal;
-    }
-
-    private static boolean isImportExportOrdinal(int ordinal) {
-        return ordinal == IO.IN.ordinal() || ordinal == IO.OUT.ordinal();
-    }
-
-    private static boolean isValidOrdinal(SyncFieldData fields, ResourceLocation field, int valueCount) {
-        Integer ordinal = readInt(fields, field);
-        return ordinal != null && ordinal >= 0 && ordinal < valueCount;
-    }
-
-    private static int requireOrdinal(DataComponentMap payload, ResourceLocation field, int valueCount) {
-        int ordinal = requireNonNegativeInt(payload, field);
-        if (ordinal >= valueCount) {
-            throw new IllegalArgumentException("Pump cover config action ordinal is out of range: " + ordinal);
-        }
-        return ordinal;
-    }
-
-    private static int requireNonNegativeInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Pump cover config action payload is missing field data.");
-        }
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Pump cover config action payload is missing " + field + ".");
-        }
-        if (value < 0) {
-            throw new IllegalArgumentException("Pump cover config action value is negative: " + value);
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
-        }
-        return null;
     }
 }
