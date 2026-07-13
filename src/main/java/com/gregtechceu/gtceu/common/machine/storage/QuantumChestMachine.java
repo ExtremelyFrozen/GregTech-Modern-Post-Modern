@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.storage;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -28,11 +27,6 @@ import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.machine.TieredMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -55,7 +49,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -66,8 +59,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +69,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public class QuantumChestMachine extends TieredMachine implements IControllable,
-                                 LDLib2MachineUIProvider {
+                                 LDLib2MachineUIProvider, QuantumChestActionTarget {
 
     /**
      * Sourced from FunctionalStorage's
@@ -90,22 +81,9 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
 
     private static final int PAGE_WIDTH = 109;
     private static final int PAGE_HEIGHT = 63;
-    private static final ResourceLocation CLICK_QUANTUM_CHEST_IMPORT_SLOT_ACTION = GTCEu
-            .id("click_quantum_chest_import_slot");
-    private static final ResourceLocation EXPORT_QUANTUM_CHEST_ITEM_ACTION = GTCEu
-            .id("export_quantum_chest_item");
-    private static final ResourceLocation SET_QUANTUM_CHEST_LOCKED_ITEM_ACTION = GTCEu
-            .id("set_quantum_chest_locked_item");
-    private static final ResourceLocation SET_QUANTUM_CHEST_LOCKED_ACTION = GTCEu
-            .id("set_quantum_chest_locked");
-    private static final ResourceLocation RIGHT_CLICK_FIELD = SyncFieldData.key("rightClick");
-    private static final ResourceLocation LOCKED_FIELD = SyncFieldData.key("locked");
 
     static {
-        SyncActionDispatchers.server().register(new QuantumChestImportSlotActionHandler());
-        SyncActionDispatchers.server().register(new QuantumChestExportItemActionHandler());
-        SyncActionDispatchers.server().register(new QuantumChestLockedItemActionHandler());
-        SyncActionDispatchers.server().register(new QuantumChestLockedActionHandler());
+        QuantumChestMachineActions.initialize();
     }
 
     @SaveField
@@ -282,7 +260,8 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         }
     }
 
-    private void setLockedFromAction(ItemStack stack) {
+    @Override
+    public void setQuantumChestLockedItem(ItemStack stack) {
         if (stack.isEmpty()) {
             setLocked(false);
             return;
@@ -291,6 +270,11 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
             throw new IllegalArgumentException("Quantum chest locked item does not match stored item.");
         }
         lockedItem.setStackInSlot(0, stack.copyWithCount(1));
+    }
+
+    @Override
+    public void setQuantumChestLocked(boolean locked) {
+        setLocked(locked);
     }
 
     private boolean canLockItem(ItemStack stack) {
@@ -384,7 +368,9 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
             }
             ItemStack carried = player.containerMenu.getCarried();
             if ((event.button == 0 || event.button == 1) && !carried.isEmpty()) {
-                MachineUIHelper.sendAction(holder, createClickQuantumChestImportSlotAction(carried, event.button == 1));
+                MachineUIHelper.sendAction(holder,
+                        QuantumChestMachineActions.createClickQuantumChestImportSlotAction(carried,
+                                event.button == 1));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }
@@ -420,7 +406,8 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
                 GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.ICON_DOWN.copy().scale(0.7f)),
                 event -> {
                     if (player.level().isClientSide()) {
-                        MachineUIHelper.sendAction(holder, createExportQuantumChestItemAction());
+                        MachineUIHelper.sendAction(holder,
+                                QuantumChestMachineActions.createExportQuantumChestItemAction());
                     }
                     event.stopImmediatePropagation();
                     event.hasHandler = true;
@@ -474,14 +461,16 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
     private void setLDLib2LockedItem(Player player, MachineUIHolder holder, ItemStack item) {
         setLocked(item);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetQuantumChestLockedItemAction(item));
+            MachineUIHelper.sendAction(holder,
+                    QuantumChestMachineActions.createSetQuantumChestLockedItemAction(item));
         }
     }
 
     private void setLDLib2Locked(Player player, MachineUIHolder holder, boolean locked) {
         setLocked(locked);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetQuantumChestLockedAction(locked));
+            MachineUIHelper.sendAction(holder,
+                    QuantumChestMachineActions.createSetQuantumChestLockedAction(locked));
         }
     }
 
@@ -506,7 +495,8 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         }
     }
 
-    private void clickLDLib2ImportSlot(ServerPlayer player, ItemStack requestedItem, boolean rightClick) {
+    @Override
+    public void clickQuantumChestImportSlot(ServerPlayer player, ItemStack requestedItem, boolean rightClick) {
         ItemStack carried = player.containerMenu.getCarried();
         if (requestedItem.isEmpty() || carried.isEmpty() ||
                 !ItemStack.isSameItemSameComponents(requestedItem, carried)) {
@@ -526,7 +516,8 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         }
     }
 
-    private void exportLDLib2StoredItem(ServerPlayer player) {
+    @Override
+    public void exportQuantumChestItem(ServerPlayer player) {
         if (stored.isEmpty()) {
             return;
         }
@@ -538,41 +529,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
             Block.popResource(player.level(), player.getOnPos(), extracted);
         }
         player.containerMenu.broadcastChanges();
-    }
-
-    private static SyncActionData createClickQuantumChestImportSlotAction(ItemStack carried, boolean rightClick) {
-        ItemStack item = carried.copy();
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(RIGHT_CLICK_FIELD, new JsonPrimitive(rightClick))
-                        .build())
-                .set(GTDataComponents.PLACEHOLDER_ITEM_STACK.get(), item)
-                .build();
-        int sequence = ItemStack.hashItemAndComponents(item) * 31 + item.getCount();
-        return new SyncActionData(CLICK_QUANTUM_CHEST_IMPORT_SLOT_ACTION, sequence * 31 + (rightClick ? 1 : 0),
-                payload);
-    }
-
-    private static SyncActionData createExportQuantumChestItemAction() {
-        return new SyncActionData(EXPORT_QUANTUM_CHEST_ITEM_ACTION, 0, DataComponentMap.EMPTY);
-    }
-
-    private static SyncActionData createSetQuantumChestLockedItemAction(ItemStack item) {
-        ItemStack locked = item.isEmpty() ? ItemStack.EMPTY : item.copyWithCount(1);
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.PLACEHOLDER_ITEM_STACK.get(), locked)
-                .build();
-        return new SyncActionData(SET_QUANTUM_CHEST_LOCKED_ITEM_ACTION, ItemStack.hashItemAndComponents(locked),
-                payload);
-    }
-
-    private static SyncActionData createSetQuantumChestLockedAction(boolean locked) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(LOCKED_FIELD, new JsonPrimitive(locked))
-                        .build())
-                .build();
-        return new SyncActionData(SET_QUANTUM_CHEST_LOCKED_ACTION, locked ? 1 : 0, payload);
     }
 
     //////////////////////////////////////
@@ -641,133 +597,6 @@ public class QuantumChestMachine extends TieredMachine implements IControllable,
         public List<Component> getTabTooltips() {
             return List.of(Component.translatable(getDefinition().getDescriptionId()));
         }
-    }
-
-    private abstract static class QuantumChestActionHandler implements SyncActionHandler {
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof QuantumChestMachine;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        protected QuantumChestMachine getMachine(SyncActionContext context) {
-            if (!(context.holder() instanceof QuantumChestMachine machine)) {
-                throw new IllegalStateException("Quantum chest action received a non-quantum-chest machine.");
-            }
-            return machine;
-        }
-    }
-
-    private static final class QuantumChestImportSlotActionHandler extends QuantumChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return CLICK_QUANTUM_CHEST_IMPORT_SLOT_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return payload.has(GTDataComponents.PLACEHOLDER_ITEM_STACK.get()) &&
-                    fields != null && readBoolean(fields, RIGHT_CLICK_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).clickLDLib2ImportSlot(context.player(), requireItemStack(context.payload()),
-                    requireBoolean(context.payload(), RIGHT_CLICK_FIELD));
-        }
-    }
-
-    private static final class QuantumChestExportItemActionHandler extends QuantumChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return EXPORT_QUANTUM_CHEST_ITEM_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return payload.isEmpty();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).exportLDLib2StoredItem(context.player());
-        }
-    }
-
-    private static final class QuantumChestLockedItemActionHandler extends QuantumChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_QUANTUM_CHEST_LOCKED_ITEM_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return payload.has(GTDataComponents.PLACEHOLDER_ITEM_STACK.get());
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setLockedFromAction(requireItemStack(context.payload()));
-        }
-    }
-
-    private static final class QuantumChestLockedActionHandler extends QuantumChestActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_QUANTUM_CHEST_LOCKED_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, LOCKED_FIELD) != null;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).setLocked(requireBoolean(context.payload(), LOCKED_FIELD));
-        }
-    }
-
-    private static SyncFieldData requireFieldData(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Quantum chest action payload is missing field data.");
-        }
-        return fields;
-    }
-
-    private static ItemStack requireItemStack(DataComponentMap payload) {
-        if (!payload.has(GTDataComponents.PLACEHOLDER_ITEM_STACK.get())) {
-            throw new IllegalStateException("Quantum chest item action payload is missing item stack.");
-        }
-        return payload.getOrDefault(GTDataComponents.PLACEHOLDER_ITEM_STACK.get(), ItemStack.EMPTY);
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        Boolean value = readBoolean(requireFieldData(payload), field);
-        if (value == null) {
-            throw new IllegalStateException("Quantum chest action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 
     protected class ItemCache extends MachineTrait implements IItemHandlerModifiable {
