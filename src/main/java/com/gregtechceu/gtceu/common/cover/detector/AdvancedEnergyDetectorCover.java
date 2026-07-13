@@ -13,14 +13,9 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.GTMath;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -31,12 +26,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,15 +41,9 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
     private static final int DEFAULT_MIN_PERCENT = 33;
     private static final int DEFAULT_MAX_PERCENT = 66;
     private static final BigInteger LONG_MAX_VALUE = BigInteger.valueOf(Long.MAX_VALUE);
-    private static final ResourceLocation SET_ADVANCED_ENERGY_DETECTOR_CONFIG_ACTION = GTCEu
-            .id("set_advanced_energy_detector_config");
-    private static final ResourceLocation MIN_FIELD = SyncFieldData.key("min");
-    private static final ResourceLocation MAX_FIELD = SyncFieldData.key("max");
-    private static final ResourceLocation USE_PERCENT_FIELD = SyncFieldData.key("usePercent");
-    private static final ResourceLocation INVERTED_FIELD = SyncFieldData.key("inverted");
 
     static {
-        SyncActionDispatchers.server().register(new AdvancedEnergyDetectorConfigActionHandler());
+        AdvancedEnergyDetectorConfigActions.initialize();
     }
 
     @SaveField
@@ -224,22 +210,9 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
 
     private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetAdvancedEnergyDetectorConfigAction(
+            CoverUIHelper.sendAction(holder, AdvancedEnergyDetectorConfigActions.createSetConfigAction(
                     getMinValue(), getMaxValue(), isUsePercent(), isInverted()));
         }
-    }
-
-    private static SyncActionData createSetAdvancedEnergyDetectorConfigAction(long min, long max, boolean usePercent,
-                                                                              boolean inverted) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(MIN_FIELD, new JsonPrimitive(min))
-                        .put(MAX_FIELD, new JsonPrimitive(max))
-                        .put(USE_PERCENT_FIELD, new JsonPrimitive(usePercent))
-                        .put(INVERTED_FIELD, new JsonPrimitive(inverted))
-                        .build())
-                .build();
-        return new SyncActionData(SET_ADVANCED_ENERGY_DETECTOR_CONFIG_ACTION, 0, payload);
     }
 
     private void initializeLDLib2MinMaxInputs() {
@@ -308,93 +281,5 @@ public class AdvancedEnergyDetectorCover extends EnergyDetectorCover implements 
         setMaxValue(ConfigCopyHelper.getLong(config, "max"));
         setUsePercent(ConfigCopyHelper.getBoolean(config, "percent"));
         super.pasteConfig(player, registries, config);
-    }
-
-    private static final class AdvancedEnergyDetectorConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_ADVANCED_ENERGY_DETECTOR_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof AdvancedEnergyDetectorCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null &&
-                    isValidNonNegativeLong(fields, MIN_FIELD) &&
-                    isValidNonNegativeLong(fields, MAX_FIELD) &&
-                    readBoolean(fields, USE_PERCENT_FIELD) != null &&
-                    readBoolean(fields, INVERTED_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof AdvancedEnergyDetectorCover cover)) {
-                throw new IllegalStateException(
-                        "Advanced energy detector config action received a non-energy detector.");
-            }
-            cover.setUsePercent(requireBoolean(context.payload(), USE_PERCENT_FIELD));
-            cover.setMinValue(requireNonNegativeLong(context.payload(), MIN_FIELD));
-            cover.setMaxValue(requireNonNegativeLong(context.payload(), MAX_FIELD));
-            cover.setInverted(requireBoolean(context.payload(), INVERTED_FIELD));
-        }
-    }
-
-    private static boolean isValidNonNegativeLong(SyncFieldData fields, ResourceLocation field) {
-        Long value = readLong(fields, field);
-        return value != null && value >= 0;
-    }
-
-    private static long requireNonNegativeLong(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Advanced energy detector config action payload is missing field data.");
-        }
-        Long value = readLong(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Advanced energy detector config action payload is missing " + field + ".");
-        }
-        if (value < 0) {
-            throw new IllegalArgumentException("Advanced energy detector config action value is negative: " + value);
-        }
-        return value;
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Advanced energy detector config action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Advanced energy detector config action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Long readLong(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsLong();
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 }
