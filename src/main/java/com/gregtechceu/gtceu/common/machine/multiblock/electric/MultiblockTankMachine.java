@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.electric;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.fluids.PropertyFluidFilter;
@@ -14,14 +13,8 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -31,9 +24,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -47,19 +38,14 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
-public class MultiblockTankMachine extends MultiblockControllerMachine implements LDLib2MachineUIProvider {
-
-    private static final ResourceLocation CLICK_MULTIBLOCK_TANK_FLUID_SLOT_ACTION = GTCEu
-            .id("click_multiblock_tank_fluid_slot");
-    private static final ResourceLocation SHIFT_FIELD = SyncFieldData.key("shift");
+public class MultiblockTankMachine extends MultiblockControllerMachine
+                                   implements LDLib2MachineUIProvider, MultiblockTankFluidSlotActionTarget {
 
     static {
-        SyncActionDispatchers.server().register(new MultiblockTankFluidSlotActionHandler());
+        MultiblockTankMachineActions.initialize();
     }
 
     @SaveField
@@ -168,7 +154,8 @@ public class MultiblockTankMachine extends MultiblockControllerMachine implement
         fluidSlot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
-                MachineUIHelper.sendAction(holder, createClickMultiblockTankFluidSlotAction(event.isShiftDown()));
+                MachineUIHelper.sendAction(holder,
+                        MultiblockTankMachineActions.createClickMultiblockTankFluidSlotAction(event.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }
@@ -176,17 +163,9 @@ public class MultiblockTankMachine extends MultiblockControllerMachine implement
         return UITemplate.setLDLib2Bounds(fluidSlot, 90, 35, 18, 18);
     }
 
-    private void clickLDLib2FluidSlot(ServerPlayer player, boolean shiftDown) {
+    @Override
+    public void clickMultiblockTankFluidSlot(ServerPlayer player, boolean shiftDown) {
         new LDLib2FluidClickTarget(tank.getStorages()[0], true, true).click(player, shiftDown);
-    }
-
-    private static SyncActionData createClickMultiblockTankFluidSlotAction(boolean shiftDown) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(SHIFT_FIELD, new JsonPrimitive(shiftDown))
-                        .build())
-                .build();
-        return new SyncActionData(CLICK_MULTIBLOCK_TANK_FLUID_SLOT_ACTION, shiftDown ? 1 : 0, payload);
     }
 
     private record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
@@ -291,58 +270,5 @@ public class MultiblockTankMachine extends MultiblockControllerMachine implement
             }
             player.containerMenu.broadcastChanges();
         }
-    }
-
-    private static final class MultiblockTankFluidSlotActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return CLICK_MULTIBLOCK_TANK_FLUID_SLOT_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof MultiblockTankMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, SHIFT_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof MultiblockTankMachine machine)) {
-                throw new IllegalStateException(
-                        "Multiblock tank fluid slot action received a non-multiblock-tank machine.");
-            }
-            machine.clickLDLib2FluidSlot(context.player(), requireBoolean(context.payload(), SHIFT_FIELD));
-        }
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Multiblock tank action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Multiblock tank action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 }
