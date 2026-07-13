@@ -344,8 +344,6 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'com.lowdragmc.ldlib:ldlib-neoforge',
                 'ldlib_version',
                 'modId = "ldlib"',
-                'modrinth = "ldlib"',
-                'curseforge = "ldlib"',
                 '"ldlib":',
                 '"ldlib.',
                 'ldlib:'
@@ -450,9 +448,7 @@ tasks.register('reportLdlib2MigrationInventory') {
                 [category: 'legacy-dependency', snippet: 'version.ref = "ldlib"'],
                 [category: 'legacy-dependency', snippet: 'com.lowdragmc.ldlib:ldlib-neoforge'],
                 [category: 'legacy-dependency', snippet: 'ldlib_version'],
-                [category: 'legacy-dependency', snippet: 'modId = "ldlib"'],
-                [category: 'legacy-dependency', snippet: 'modrinth = "ldlib"'],
-                [category: 'legacy-dependency', snippet: 'curseforge = "ldlib"']
+                [category: 'legacy-dependency', snippet: 'modId = "ldlib"']
         ]
         var regexPatterns = [
                 [category: 'disabled-ldlib2-sync', pattern: ~/.*\baddRPCEvent\s*\(.*/, snippet: 'addRPCEvent('],

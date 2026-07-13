@@ -45,8 +45,8 @@ enumExtensions = "META-INF/enum_extensions.json"
     side = "BOTH"
     [dependencies.${mod_id}.mc-publish]
         ignore = false
-        modrinth = "ldlib2"
-        curseforge = "ldlib2"
+        modrinth = "ldlib"
+        curseforge = "ldlib"
 
 [[dependencies.${mod_id}]]
     modId = "configuration"
