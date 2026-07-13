@@ -91,8 +91,8 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     public void setMuffled(boolean muffled) {
+        if (isMuffled == muffled) return;
         isMuffled = muffled;
-        syncDataHolder.markClientSyncFieldDirty("isMuffled");
     }
 
     @Override
