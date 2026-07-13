@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.item.behavior;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
@@ -12,10 +11,6 @@ import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
@@ -26,10 +21,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -45,10 +37,9 @@ import static com.gregtechceu.gtceu.api.gui.UITemplate.setLDLib2Bounds;
 public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
 
     public static final int CIRCUIT_MAX = 32;
-    private static final ResourceLocation SET_CIRCUIT_CONFIGURATION_ACTION = GTCEu.id("set_circuit_configuration");
 
     static {
-        SyncActionDispatchers.server().register(new CircuitConfigurationActionHandler());
+        IntCircuitBehaviourActions.initialize();
     }
 
     public static ItemStack stack(int configuration) {
@@ -146,19 +137,10 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
     private static void setCircuitConfiguration(HeldItemUIHolder holder, GTItemSlotElement selectedSlot,
                                                 int configuration) {
         if (holder.getPlayer().level().isClientSide()) {
-            HeldItemUIHelper.sendAction(holder, createSetCircuitConfigurationAction(configuration));
+            HeldItemUIHelper.sendAction(holder,
+                    IntCircuitBehaviourActions.createSetCircuitConfigurationAction(configuration));
         }
         selectedSlot.setHandlerSlot(new CustomItemStackHandler(stack(configuration)), 0);
-    }
-
-    private static SyncActionData createSetCircuitConfigurationAction(int configuration) {
-        if (!isValidCircuitConfiguration(configuration)) {
-            throw new IllegalArgumentException("Given configuration number is out of range!");
-        }
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.CIRCUIT_CONFIG.get(), configuration)
-                .build();
-        return new SyncActionData(SET_CIRCUIT_CONFIGURATION_ACTION, configuration, payload);
     }
 
     @Override
@@ -180,45 +162,5 @@ public class IntCircuitBehaviour implements IItemUIFactory, IAddInformation {
 
     void setCircuitConfig(NotifiableItemStackHandler circuit, int value) {
         circuit.setStackInSlot(0, IntCircuitBehaviour.stack(value));
-    }
-
-    private static final class CircuitConfigurationActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CIRCUIT_CONFIGURATION_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            if (!(context.holder() instanceof ItemStack stack) || context.openedStack() == null) {
-                return false;
-            }
-            return isIntegratedCircuit(stack) && isIntegratedCircuit(context.openedStack()) &&
-                    ItemStack.isSameItem(stack, context.openedStack());
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            Integer configuration = payload.get(GTDataComponents.CIRCUIT_CONFIG.get());
-            return configuration != null && isValidCircuitConfiguration(configuration);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ItemStack stack)) {
-                throw new IllegalStateException("Circuit configuration action received a non-item holder.");
-            }
-            Integer configuration = context.payload().get(GTDataComponents.CIRCUIT_CONFIG.get());
-            if (configuration == null) {
-                throw new IllegalStateException("Circuit configuration action payload is missing.");
-            }
-            setCircuitConfiguration(stack, configuration);
-        }
     }
 }
