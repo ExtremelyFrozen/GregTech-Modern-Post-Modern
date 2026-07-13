@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.cover.detector;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
@@ -15,14 +14,9 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -32,7 +26,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -40,10 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -54,15 +44,8 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LD
 
     private static final int DEFAULT_MIN = 64;
     private static final int DEFAULT_MAX = 512;
-    private static final ResourceLocation SET_ADVANCED_FLUID_DETECTOR_CONFIG_ACTION = GTCEu
-            .id("set_advanced_fluid_detector_config");
-    private static final ResourceLocation MIN_FIELD = SyncFieldData.key("min");
-    private static final ResourceLocation MAX_FIELD = SyncFieldData.key("max");
-    private static final ResourceLocation LATCHED_FIELD = SyncFieldData.key("latched");
-    private static final ResourceLocation INVERTED_FIELD = SyncFieldData.key("inverted");
-
     static {
-        SyncActionDispatchers.server().register(new AdvancedFluidDetectorConfigActionHandler());
+        AdvancedFluidDetectorConfigActions.initialize();
     }
 
     @SaveField
@@ -212,22 +195,9 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LD
 
     private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetAdvancedFluidDetectorConfigAction(
+            CoverUIHelper.sendAction(holder, AdvancedFluidDetectorConfigActions.createSetConfigAction(
                     getMinValue(), getMaxValue(), isLatched(), isInverted()));
         }
-    }
-
-    private static SyncActionData createSetAdvancedFluidDetectorConfigAction(int min, int max, boolean latched,
-                                                                             boolean inverted) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(MIN_FIELD, new JsonPrimitive(min))
-                        .put(MAX_FIELD, new JsonPrimitive(max))
-                        .put(LATCHED_FIELD, new JsonPrimitive(latched))
-                        .put(INVERTED_FIELD, new JsonPrimitive(inverted))
-                        .build())
-                .build();
-        return new SyncActionData(SET_ADVANCED_FLUID_DETECTOR_CONFIG_ACTION, 0, payload);
     }
 
     @Override
@@ -251,92 +221,5 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LD
         filterHandler
                 .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
         super.pasteConfig(player, registries, config);
-    }
-
-    private static final class AdvancedFluidDetectorConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_ADVANCED_FLUID_DETECTOR_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof AdvancedFluidDetectorCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null &&
-                    isValidNonNegativeInt(fields, MIN_FIELD) &&
-                    isValidNonNegativeInt(fields, MAX_FIELD) &&
-                    readBoolean(fields, LATCHED_FIELD) != null &&
-                    readBoolean(fields, INVERTED_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof AdvancedFluidDetectorCover cover)) {
-                throw new IllegalStateException("Advanced fluid detector config action received a non-fluid detector.");
-            }
-            cover.setMinValue(requireNonNegativeInt(context.payload(), MIN_FIELD));
-            cover.setMaxValue(requireNonNegativeInt(context.payload(), MAX_FIELD));
-            cover.setLatched(requireBoolean(context.payload(), LATCHED_FIELD));
-            cover.setInverted(requireBoolean(context.payload(), INVERTED_FIELD));
-        }
-    }
-
-    private static boolean isValidNonNegativeInt(SyncFieldData fields, ResourceLocation field) {
-        Integer value = readInt(fields, field);
-        return value != null && value >= 0;
-    }
-
-    private static int requireNonNegativeInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Advanced fluid detector config action payload is missing field data.");
-        }
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Advanced fluid detector config action payload is missing " + field + ".");
-        }
-        if (value < 0) {
-            throw new IllegalArgumentException("Advanced fluid detector config action value is negative: " + value);
-        }
-        return value;
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Advanced fluid detector config action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Advanced fluid detector config action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 }
