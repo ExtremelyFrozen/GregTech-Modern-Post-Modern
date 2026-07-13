@@ -79,7 +79,7 @@ public class MachineControllerCoverConfigActionTest {
     public static void dispatcherPreservesSetterOrderForNullAndAllowedModes(GameTestHelper helper) {
         TrackingMachineControllerCover nullModeCover = createTrackingCover(List.of(ControllerMode.COVER_UP));
         helper.assertTrue(dispatch(helper, nullModeCover,
-                        MachineControllerCoverConfigActions.createSetConfigAction(null, 1, false, true)),
+                MachineControllerCoverConfigActions.createSetConfigAction(null, 1, false, true)),
                 "dispatcher rejected the null controller mode");
         assertState(helper, nullModeCover, null, 1, false, true, "null-mode action");
         helper.assertTrue(nullModeCover.getSetterOrder().equals("mode>redstone>inverted>prevent"),
@@ -87,8 +87,8 @@ public class MachineControllerCoverConfigActionTest {
 
         TrackingMachineControllerCover allowedModeCover = createTrackingCover(List.of(ControllerMode.COVER_UP));
         helper.assertTrue(dispatch(helper, allowedModeCover,
-                        MachineControllerCoverConfigActions.createSetConfigAction(
-                                ControllerMode.COVER_UP, 15, true, false)),
+                MachineControllerCoverConfigActions.createSetConfigAction(
+                        ControllerMode.COVER_UP, 15, true, false)),
                 "dispatcher rejected an allowed controller mode");
         assertState(helper, allowedModeCover, ControllerMode.COVER_UP, 15, true, false,
                 "allowed-mode action");
@@ -104,8 +104,8 @@ public class MachineControllerCoverConfigActionTest {
         TrackingMachineControllerCover cover = createTrackingCover(List.of(ControllerMode.COVER_UP));
 
         helper.assertTrue(!dispatch(helper, cover,
-                        MachineControllerCoverConfigActions.createSetConfigAction(
-                                ControllerMode.COVER_DOWN, 7, false, false)),
+                MachineControllerCoverConfigActions.createSetConfigAction(
+                        ControllerMode.COVER_DOWN, 7, false, false)),
                 "dispatcher accepted a controller mode unavailable to this cover");
         helper.assertTrue(cover.getSetterOrder().isEmpty(),
                 "rejected controller mode invoked machine controller setters");
@@ -120,12 +120,12 @@ public class MachineControllerCoverConfigActionTest {
         TrackingMachineControllerCover maximumCover = createTrackingCover(List.of(ControllerMode.MACHINE));
 
         helper.assertTrue(dispatch(helper, minimumCover,
-                        MachineControllerCoverConfigActions.createSetConfigAction(
-                                ControllerMode.MACHINE, 1, false, false)),
+                MachineControllerCoverConfigActions.createSetConfigAction(
+                        ControllerMode.MACHINE, 1, false, false)),
                 "dispatcher rejected redstone strength 1");
         helper.assertTrue(dispatch(helper, maximumCover,
-                        MachineControllerCoverConfigActions.createSetConfigAction(
-                                ControllerMode.MACHINE, 15, false, false)),
+                MachineControllerCoverConfigActions.createSetConfigAction(
+                        ControllerMode.MACHINE, 15, false, false)),
                 "dispatcher rejected redstone strength 15");
         helper.assertTrue(minimumCover.getAppliedRedstoneStrength() == 1,
                 "minimum redstone strength was not applied");
@@ -133,10 +133,10 @@ public class MachineControllerCoverConfigActionTest {
                 "maximum redstone strength was not applied");
 
         assertFactoryRejected(() -> MachineControllerCoverConfigActions.createSetConfigAction(
-                        ControllerMode.MACHINE, 0, false, false),
+                ControllerMode.MACHINE, 0, false, false),
                 "factory accepted redstone strength 0");
         assertFactoryRejected(() -> MachineControllerCoverConfigActions.createSetConfigAction(
-                        ControllerMode.MACHINE, 16, false, false),
+                ControllerMode.MACHINE, 16, false, false),
                 "factory accepted redstone strength 16");
         helper.succeed();
     }
@@ -321,7 +321,7 @@ public class MachineControllerCoverConfigActionTest {
                                        int expected, String description) {
         JsonElement value = fields.get(field);
         helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isNumber() &&
-                        primitive.getAsBigDecimal().intValueExact() == expected,
+                primitive.getAsBigDecimal().intValueExact() == expected,
                 description + " was not encoded as the expected integer");
     }
 
@@ -329,7 +329,7 @@ public class MachineControllerCoverConfigActionTest {
                                            boolean expected, String description) {
         JsonElement value = fields.get(field);
         helper.assertTrue(value instanceof JsonPrimitive primitive && primitive.isBoolean() &&
-                        primitive.getAsBoolean() == expected,
+                primitive.getAsBoolean() == expected,
                 description + " was not encoded as the expected boolean");
     }
 
@@ -337,9 +337,9 @@ public class MachineControllerCoverConfigActionTest {
                                     @Nullable ControllerMode controllerMode, int redstoneStrength,
                                     boolean inverted, boolean preventPowerFail, String description) {
         helper.assertTrue(cover.getAppliedControllerMode() == controllerMode &&
-                        cover.getAppliedRedstoneStrength() == redstoneStrength &&
-                        cover.isAppliedInverted() == inverted &&
-                        cover.isAppliedPreventPowerFail() == preventPowerFail,
+                cover.getAppliedRedstoneStrength() == redstoneStrength &&
+                cover.isAppliedInverted() == inverted &&
+                cover.isAppliedPreventPowerFail() == preventPowerFail,
                 description + " changed the machine controller to an unexpected state");
     }
 

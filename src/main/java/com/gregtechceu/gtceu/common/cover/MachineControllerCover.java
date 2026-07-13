@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MachineControllerCover extends CoverBehavior
-        implements LDLib2CoverUIProvider, MachineControllerCoverConfigActionTarget {
+                                    implements LDLib2CoverUIProvider, MachineControllerCoverConfigActionTarget {
 
     static {
         MachineControllerCoverConfigActions.initialize();
