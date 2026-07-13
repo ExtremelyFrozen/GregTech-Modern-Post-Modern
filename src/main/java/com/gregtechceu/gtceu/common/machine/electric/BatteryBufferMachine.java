@@ -269,7 +269,6 @@ public class BatteryBufferMachine extends TieredEnergyMachine
     private void changeState(State newState) {
         if (state == newState) return;
         state = newState;
-        syncDataHolder.markClientSyncFieldDirty("state");
         MachineRenderState renderState = getRenderState();
         if (renderState.hasProperty(GTMachineModelProperties.CHARGER_STATE)) {
             setRenderState(renderState.setValue(GTMachineModelProperties.CHARGER_STATE, newState));
