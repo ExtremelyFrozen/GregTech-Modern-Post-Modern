@@ -21,10 +21,6 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
 import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
@@ -41,15 +37,12 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
-import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import lombok.Getter;
@@ -57,14 +50,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CreativeTankMachine extends QuantumTankMachine implements LDLib2MachineUIProvider {
+public class CreativeTankMachine extends QuantumTankMachine
+                                 implements LDLib2MachineUIProvider, CreativeTankFluidActionTarget {
 
     private static final int PAGE_WIDTH = 176;
     private static final int PAGE_HEIGHT = 131;
-    private static final ResourceLocation SET_CREATIVE_TANK_FLUID_ACTION = GTCEu.id("set_creative_tank_fluid");
-
     static {
-        SyncActionDispatchers.server().register(new CreativeTankFluidActionHandler());
+        CreativeTankMachineActions.initialize();
     }
 
     @Getter
@@ -97,9 +89,14 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         return (long) Math.ceil(1d * mBPerCycle / ticksPerCycle);
     }
 
-    private InteractionResult updateStored(FluidStack fluid) {
+    @Override
+    public void setCreativeTankFluid(FluidStack fluid) {
         stored = fluid.isEmpty() ? FluidStack.EMPTY : fluid.copyWithAmount(FluidType.BUCKET_VOLUME);
         onFluidChanged();
+    }
+
+    private InteractionResult updateStored(FluidStack fluid) {
+        setCreativeTankFluid(fluid);
         return InteractionResult.SUCCESS;
     }
 
@@ -321,9 +318,9 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
     }
 
     private void setLDLib2StoredFluid(Player player, MachineUIHolder holder, FluidStack fluid) {
-        updateStored(fluid);
+        setCreativeTankFluid(fluid);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createSetCreativeTankFluidAction(fluid));
+            MachineUIHelper.sendAction(holder, CreativeTankMachineActions.createSetFluidAction(fluid));
         }
     }
 
@@ -367,15 +364,6 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
             GTCEu.LOGGER.error("Invalid {} input: {}", fieldName, value, e);
             throw e;
         }
-    }
-
-    private static SyncActionData createSetCreativeTankFluidAction(FluidStack fluid) {
-        FluidStack storedFluid = fluid.isEmpty() ? FluidStack.EMPTY : fluid.copyWithAmount(FluidType.BUCKET_VOLUME);
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.FLUID_CONTENT.get(), SimpleFluidContent.copyOf(storedFluid))
-                .build();
-        int sequence = FluidStack.hashFluidAndComponents(storedFluid) * 31 + storedFluid.getAmount();
-        return new SyncActionData(SET_CREATIVE_TANK_FLUID_ACTION, sequence, payload);
     }
 
     @Override
@@ -447,51 +435,6 @@ public class CreativeTankMachine extends QuantumTankMachine implements LDLib2Mac
         public List<Component> getTabTooltips() {
             return List.of(Component.translatable(getDefinition().getDescriptionId()));
         }
-    }
-
-    private abstract static class CreativeTankActionHandler implements SyncActionHandler {
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof CreativeTankMachine;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        protected CreativeTankMachine getMachine(SyncActionContext context) {
-            if (!(context.holder() instanceof CreativeTankMachine machine)) {
-                throw new IllegalStateException("Creative tank action received a non-creative-tank machine.");
-            }
-            return machine;
-        }
-    }
-
-    private static final class CreativeTankFluidActionHandler extends CreativeTankActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CREATIVE_TANK_FLUID_ACTION;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return payload.has(GTDataComponents.FLUID_CONTENT.get());
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            getMachine(context).updateStored(requireFluidStack(context.payload()));
-        }
-    }
-
-    private static FluidStack requireFluidStack(DataComponentMap payload) {
-        if (!payload.has(GTDataComponents.FLUID_CONTENT.get())) {
-            throw new IllegalStateException("Creative tank fluid action payload is missing fluid stack.");
-        }
-        return payload.getOrDefault(GTDataComponents.FLUID_CONTENT.get(), SimpleFluidContent.EMPTY).copy();
     }
 
     private class InfiniteCache extends FluidCache {
