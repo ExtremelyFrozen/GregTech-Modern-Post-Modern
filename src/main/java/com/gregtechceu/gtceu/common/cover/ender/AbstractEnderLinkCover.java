@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.cover.ender;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
@@ -26,16 +25,11 @@ import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEnderRegistry;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.network.packets.SPacketEnderLinkChannelsToClient;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -59,7 +53,6 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +71,8 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends CoverBehavior
-                                            implements LDLib2CoverUIProvider, IControllable {
+                                            implements LDLib2CoverUIProvider, IControllable,
+                                            EnderLinkCoverActionTarget {
 
     public static final Pattern COLOR_INPUT_PATTERN = Pattern.compile("^[0-9a-fA-F]{0,8}$");
 
@@ -87,27 +81,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
     private static final int TOTAL_WIDTH = 156;
     private static final int BUTTON_SIZE = 16;
 
-    private static final ResourceLocation SET_ENDER_LINK_COVER_CONFIG_ACTION = GTCEu
-            .id("set_ender_link_cover_config");
-    private static final ResourceLocation SET_ENDER_LINK_CHANNEL_DESCRIPTION_ACTION = GTCEu
-            .id("set_ender_link_channel_description");
-    private static final ResourceLocation REQUEST_ENDER_LINK_CHANNELS_ACTION = GTCEu
-            .id("request_ender_link_channels");
-    private static final ResourceLocation CLEAR_ENDER_LINK_CHANNEL_DESCRIPTION_ACTION = GTCEu
-            .id("clear_ender_link_channel_description");
-    private static final ResourceLocation CHANNEL_COLOR_FIELD = SyncFieldData.key("channelColor");
-    private static final ResourceLocation PERMISSION_FIELD = SyncFieldData.key("permission");
-    private static final ResourceLocation IO_FIELD = SyncFieldData.key("io");
-    private static final ResourceLocation MANUAL_IO_FIELD = SyncFieldData.key("manualIO");
-    private static final ResourceLocation WORKING_ENABLED_FIELD = SyncFieldData.key("workingEnabled");
-    private static final ResourceLocation DESCRIPTION_FIELD = SyncFieldData.key("description");
-    private static final ResourceLocation REQUEST_CHANNELS_FIELD = SyncFieldData.key("requestChannels");
-
     static {
-        SyncActionDispatchers.server().register(new EnderLinkCoverConfigActionHandler());
-        SyncActionDispatchers.server().register(new EnderLinkDescriptionActionHandler());
-        SyncActionDispatchers.server().register(new EnderLinkChannelListActionHandler());
-        SyncActionDispatchers.server().register(new EnderLinkClearDescriptionActionHandler());
+        EnderLinkCoverActions.initialize();
     }
 
     protected final ConditionalSubscriptionHandler subscriptionHandler;
@@ -191,7 +166,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         return UI.of(new EnderLinkRootElement(player, holder, this));
     }
 
-    public void setIo(IO io) {
+    @Override
+    public void setIo(@NotNull IO io) {
         if (io == IO.IN || io == IO.OUT) {
             this.io = io;
             syncDataHolder.markClientSyncFieldDirty("io");
@@ -221,7 +197,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         return identifier() + this.colorStr;
     }
 
-    protected void setChannelName(String name) {
+    @Override
+    public void setChannelName(@NotNull String name) {
         if (coverHolder.isRemote()) return;
         VirtualEnderRegistry.getInstance().deleteEntryIf(getOwner(), getEntryType(), getChannelName(),
                 VirtualEntry::canRemove);
@@ -234,7 +211,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         return identifier() + entry.getColorStr();
     }
 
-    protected void setPermission(Permissions permission) {
+    @Override
+    public void setPermission(@NotNull Permissions permission) {
         if (coverHolder.isRemote()) return;
         VirtualEnderRegistry.getInstance().deleteEntryIf(getOwner(), getEntryType(), getChannelName(),
                 VirtualEntry::canRemove);
@@ -277,7 +255,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
 
     protected abstract void transfer();
 
-    protected void setManualIOMode(ManualIOMode manualIOMode) {
+    @Override
+    public void setManualIOMode(@NotNull ManualIOMode manualIOMode) {
         this.manualIOMode = manualIOMode;
         syncDataHolder.markClientSyncFieldDirty("manualIOMode");
         subscriptionHandler.updateSubscription();
@@ -323,7 +302,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         String normalized = normalizeColorInput(channelColor);
         if (player.level().isClientSide()) {
             colorStr = normalized;
-            CoverUIHelper.sendAction(holder, createSetEnderLinkCoverConfigAction(this));
+            CoverUIHelper.sendAction(holder, EnderLinkCoverActions.createSetConfigAction(colorStr, permission, io,
+                    manualIOMode, isWorkingEnabled));
         } else {
             setChannelName(normalized);
         }
@@ -332,7 +312,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
     private void setLDLib2Permission(Player player, UICoverHolder holder, Permissions permission) {
         if (player.level().isClientSide()) {
             this.permission = permission;
-            CoverUIHelper.sendAction(holder, createSetEnderLinkCoverConfigAction(this));
+            CoverUIHelper.sendAction(holder, EnderLinkCoverActions.createSetConfigAction(colorStr, permission, io,
+                    manualIOMode, isWorkingEnabled));
         } else {
             setPermission(permission);
         }
@@ -341,7 +322,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
     private void setLDLib2Io(Player player, UICoverHolder holder, IO io) {
         if (player.level().isClientSide()) {
             this.io = io;
-            CoverUIHelper.sendAction(holder, createSetEnderLinkCoverConfigAction(this));
+            CoverUIHelper.sendAction(holder, EnderLinkCoverActions.createSetConfigAction(colorStr, permission, io,
+                    manualIOMode, isWorkingEnabled));
         } else {
             setIo(io);
         }
@@ -350,7 +332,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
     private void setLDLib2ManualIOMode(Player player, UICoverHolder holder, ManualIOMode manualIOMode) {
         if (player.level().isClientSide()) {
             this.manualIOMode = manualIOMode;
-            CoverUIHelper.sendAction(holder, createSetEnderLinkCoverConfigAction(this));
+            CoverUIHelper.sendAction(holder, EnderLinkCoverActions.createSetConfigAction(colorStr, permission, io,
+                    manualIOMode, isWorkingEnabled));
         } else {
             setManualIOMode(manualIOMode);
         }
@@ -359,7 +342,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
     private void setLDLib2WorkingEnabled(Player player, UICoverHolder holder, boolean workingEnabled) {
         if (player.level().isClientSide()) {
             isWorkingEnabled = workingEnabled;
-            CoverUIHelper.sendAction(holder, createSetEnderLinkCoverConfigAction(this));
+            CoverUIHelper.sendAction(holder, EnderLinkCoverActions.createSetConfigAction(colorStr, permission, io,
+                    manualIOMode, isWorkingEnabled));
         } else {
             setWorkingEnabled(workingEnabled);
         }
@@ -371,7 +355,8 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
             entry.setDescription(description);
         }
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetEnderLinkChannelDescriptionAction(getChannelName(), description));
+            CoverUIHelper.sendAction(holder,
+                    EnderLinkCoverActions.createSetDescriptionAction(getChannelName(), description));
         } else {
             markEnderLinkUIChanged();
         }
@@ -379,100 +364,58 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
 
     private void requestLDLib2Channels(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createRequestEnderLinkChannelsAction());
+            CoverUIHelper.sendAction(holder, EnderLinkCoverActions.createRequestChannelsAction());
         }
     }
 
     private void clearLDLib2Description(Player player, UICoverHolder holder, VirtualEntry entry) {
         entry.setDescription("");
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createClearEnderLinkChannelDescriptionAction(getChannelName(entry)));
+            CoverUIHelper.sendAction(holder, EnderLinkCoverActions.createClearDescriptionAction(getChannelName(entry)));
             requestLDLib2Channels(player, holder);
         }
     }
 
-    private void markEnderLinkUIChanged() {
+    @Override
+    public void markEnderLinkUIChanged() {
         syncDataHolder.markClientSyncFieldDirty("isAnyChanged");
         this.isAnyChanged = true;
     }
 
-    private static SyncActionData createSetEnderLinkCoverConfigAction(AbstractEnderLinkCover<?> cover) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(CHANNEL_COLOR_FIELD, new JsonPrimitive(cover.colorStr))
-                        .put(PERMISSION_FIELD, new JsonPrimitive(cover.permission.ordinal()))
-                        .put(IO_FIELD, new JsonPrimitive(cover.io.ordinal()))
-                        .put(MANUAL_IO_FIELD, new JsonPrimitive(cover.manualIOMode.ordinal()))
-                        .put(WORKING_ENABLED_FIELD, new JsonPrimitive(cover.isWorkingEnabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_ENDER_LINK_COVER_CONFIG_ACTION, 0, payload);
+    @Override
+    public @NotNull List<String> getEnderLinkActionChannelNames() {
+        return List.copyOf(VirtualEnderRegistry.getInstance().getEntryNames(getOwner(), getEntryType()));
     }
 
-    private static SyncActionData createSetEnderLinkChannelDescriptionAction(String channelName, String description) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(CHANNEL_COLOR_FIELD, new JsonPrimitive(channelName))
-                        .put(DESCRIPTION_FIELD, new JsonPrimitive(description))
-                        .build())
-                .build();
-        return new SyncActionData(SET_ENDER_LINK_CHANNEL_DESCRIPTION_ACTION, 0, payload);
+    @Nullable
+    @Override
+    public VirtualEntry findEnderLinkActionChannel(@NotNull String channelName) {
+        return VirtualEnderRegistry.getInstance().getEntry(getOwner(), getEntryType(), channelName);
     }
 
-    private static SyncActionData createRequestEnderLinkChannelsAction() {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(REQUEST_CHANNELS_FIELD, new JsonPrimitive(true))
-                        .build())
-                .build();
-        return new SyncActionData(REQUEST_ENDER_LINK_CHANNELS_ACTION, 0, payload);
+    @Override
+    public void setEnderLinkActionChannelDescription(@NotNull VirtualEntry entry, @NotNull String description) {
+        entry.setDescription(description);
     }
 
-    private static SyncActionData createClearEnderLinkChannelDescriptionAction(String channelName) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(CHANNEL_COLOR_FIELD, new JsonPrimitive(channelName))
-                        .build())
-                .build();
-        return new SyncActionData(CLEAR_ENDER_LINK_CHANNEL_DESCRIPTION_ACTION, 0, payload);
+    @Override
+    public @NotNull String getEnderLinkActionChannelColor(@NotNull VirtualEntry entry) {
+        return entry.getColorStr();
     }
 
-    private static void applyEnderLinkCoverConfig(AbstractEnderLinkCover<?> cover, DataComponentMap payload) {
-        cover.setChannelName(requireColor(payload, CHANNEL_COLOR_FIELD));
-        cover.setPermission(requirePermission(payload, PERMISSION_FIELD));
-        cover.setIo(requireIo(payload, IO_FIELD));
-        cover.setManualIOMode(requireManualIOMode(payload, MANUAL_IO_FIELD));
-        cover.setWorkingEnabled(requireBoolean(payload, WORKING_ENABLED_FIELD));
-        cover.markEnderLinkUIChanged();
-    }
-
-    private static void sendChannelList(ServerPlayer player, AbstractEnderLinkCover<?> cover, @Nullable BlockPos pos,
-                                        @Nullable Direction side) {
-        if (pos == null || side == null) {
-            throw new IllegalStateException("Ender link channel list action is missing cover position.");
-        }
-        List<JsonElement> entries = VirtualEnderRegistry.getInstance()
-                .getEntryNames(cover.getOwner(), cover.getEntryType())
-                .stream()
-                .map(name -> requireRegistryEntry(cover, name))
-                .sorted(Comparator.comparing(VirtualEntry::getColorStr))
+    @Override
+    public void sendEnderLinkActionChannelList(@NotNull ServerPlayer player, @NotNull BlockPos pos,
+                                               @NotNull Direction side,
+                                               @NotNull List<? extends VirtualEntry> entries) {
+        List<JsonElement> serializedEntries = entries.stream()
                 .map(entry -> serializeEntry(entry, player.registryAccess()))
                 .toList();
         PacketDistributor.sendToPlayer(player, new SPacketEnderLinkChannelsToClient(pos, side,
-                cover.coverDefinition.getId(), entries));
+                coverDefinition.getId(), serializedEntries));
     }
 
     private static JsonElement serializeEntry(VirtualEntry entry, HolderLookup.Provider registries) {
         return entry.serializeJson(registries);
-    }
-
-    private static VirtualEntry requireRegistryEntry(AbstractEnderLinkCover<?> cover, String channelName) {
-        VirtualEntry entry = VirtualEnderRegistry.getInstance()
-                .getEntry(cover.getOwner(), cover.getEntryType(), channelName);
-        if (entry == null) {
-            throw new IllegalStateException("Ender link channel is missing: " + channelName);
-        }
-        return entry;
     }
 
     private static void deserializeEntry(VirtualEntry entry, JsonElement data, HolderLookup.Provider registries) {
@@ -494,145 +437,7 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
         return color != null && COLOR_INPUT_PATTERN.matcher(color).matches();
     }
 
-    private static SyncFieldData requireFields(DataComponentMap payload, String actionName) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException(actionName + " action payload is missing field data.");
-        }
-        return fields;
-    }
-
-    private static String requireColor(DataComponentMap payload, ResourceLocation field) {
-        String color = requireString(payload, field);
-        if (!isValidColorInput(color)) {
-            throw new IllegalArgumentException("Ender link cover action color is invalid: " + color);
-        }
-        return normalizeColorInput(color);
-    }
-
-    private static String requireString(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = requireFields(payload, "Ender link cover");
-        String value = readString(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Ender link cover action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static int requireInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = requireFields(payload, "Ender link cover");
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Ender link cover action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = requireFields(payload, "Ender link cover");
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Ender link cover action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static Permissions requirePermission(DataComponentMap payload, ResourceLocation field) {
-        int ordinal = requireInt(payload, field);
-        if (ordinal < 0 || ordinal >= Permissions.values().length) {
-            throw new IllegalArgumentException("Ender link cover action permission is out of range: " + ordinal);
-        }
-        return Permissions.values()[ordinal];
-    }
-
-    private static IO requireIo(DataComponentMap payload, ResourceLocation field) {
-        int ordinal = requireInt(payload, field);
-        if (ordinal < 0 || ordinal >= IO.values().length) {
-            throw new IllegalArgumentException("Ender link cover action io is out of range: " + ordinal);
-        }
-        IO value = IO.values()[ordinal];
-        if (value != IO.IN && value != IO.OUT) {
-            throw new IllegalArgumentException("Ender link cover action io is unsupported: " + value);
-        }
-        return value;
-    }
-
-    private static ManualIOMode requireManualIOMode(DataComponentMap payload, ResourceLocation field) {
-        int ordinal = requireInt(payload, field);
-        if (ordinal < 0 || ordinal >= ManualIOMode.values().length) {
-            throw new IllegalArgumentException("Ender link cover action manual IO mode is out of range: " + ordinal);
-        }
-        return ManualIOMode.values()[ordinal];
-    }
-
-    private static boolean isValidConfigPayload(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        return fields != null &&
-                isValidColorInput(readString(fields, CHANNEL_COLOR_FIELD)) &&
-                isValidOrdinal(fields, PERMISSION_FIELD, Permissions.values().length) &&
-                isValidIoOrdinal(fields, IO_FIELD) &&
-                isValidOrdinal(fields, MANUAL_IO_FIELD, ManualIOMode.values().length) &&
-                readBoolean(fields, WORKING_ENABLED_FIELD) != null;
-    }
-
-    private static boolean isValidDescriptionPayload(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        return fields != null &&
-                readString(fields, CHANNEL_COLOR_FIELD) != null &&
-                readString(fields, DESCRIPTION_FIELD) != null;
-    }
-
-    private static boolean isValidRequestPayload(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        Boolean request = fields == null ? null : readBoolean(fields, REQUEST_CHANNELS_FIELD);
-        return request != null && request;
-    }
-
-    private static boolean isValidClearDescriptionPayload(DataComponentMap payload) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        String channelName = fields == null ? null : readString(fields, CHANNEL_COLOR_FIELD);
-        return channelName != null && !channelName.isBlank();
-    }
-
-    private static boolean isValidOrdinal(SyncFieldData fields, ResourceLocation field, int size) {
-        Integer ordinal = readInt(fields, field);
-        return ordinal != null && ordinal >= 0 && ordinal < size;
-    }
-
-    private static boolean isValidIoOrdinal(SyncFieldData fields, ResourceLocation field) {
-        Integer ordinal = readInt(fields, field);
-        if (ordinal == null || ordinal < 0 || ordinal >= IO.values().length) {
-            return false;
-        }
-        IO value = IO.values()[ordinal];
-        return value == IO.IN || value == IO.OUT;
-    }
-
-    private static @Nullable String readString(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isString()) {
-            return primitive.getAsString();
-        }
-        return null;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
-        }
-        return null;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
-    }
-
-    protected enum Permissions implements SelectableEnum {
+    public enum Permissions implements SelectableEnum {
 
         PUBLIC("cover.ender_fluid_link.private.tooltip.disabled",
                 GuiTextures.BUTTON_PUBLIC_PRIVATE.getSubTexture(0, 0, 1, 0.5)),
@@ -965,136 +770,5 @@ public abstract class AbstractEnderLinkCover<T extends VirtualEntry> extends Cov
                 .textShadow(false)
                 .textAlignHorizontal(Horizontal.LEFT)
                 .textAlignVertical(Vertical.CENTER));
-    }
-
-    private static final class EnderLinkCoverConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_ENDER_LINK_COVER_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return isValidConfigPayload(payload);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator() && context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof AbstractEnderLinkCover<?> cover)) {
-                throw new IllegalStateException("Ender link cover config action received a non-ender-link cover.");
-            }
-            applyEnderLinkCoverConfig(cover, context.payload());
-        }
-    }
-
-    private static final class EnderLinkChannelListActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return REQUEST_ENDER_LINK_CHANNELS_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return isValidRequestPayload(payload);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator() && context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof AbstractEnderLinkCover<?> cover)) {
-                throw new IllegalStateException("Ender link channel list action received a non-ender-link cover.");
-            }
-            sendChannelList(context.player(), cover, context.pos(), context.side());
-        }
-    }
-
-    private static final class EnderLinkDescriptionActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_ENDER_LINK_CHANNEL_DESCRIPTION_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return isValidDescriptionPayload(payload);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator() && context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof AbstractEnderLinkCover<?> cover)) {
-                throw new IllegalStateException(
-                        "Ender link description action received a non-ender-link cover.");
-            }
-            String channelName = requireString(context.payload(), CHANNEL_COLOR_FIELD);
-            String description = requireString(context.payload(), DESCRIPTION_FIELD);
-            requireRegistryEntry(cover, channelName).setDescription(description);
-            cover.markEnderLinkUIChanged();
-        }
-    }
-
-    private static final class EnderLinkClearDescriptionActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return CLEAR_ENDER_LINK_CHANNEL_DESCRIPTION_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            return isValidClearDescriptionPayload(payload);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator() && context.holder() instanceof AbstractEnderLinkCover<?>;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof AbstractEnderLinkCover<?> cover)) {
-                throw new IllegalStateException(
-                        "Ender link clear description action received a non-ender-link cover.");
-            }
-            String channelName = requireString(context.payload(), CHANNEL_COLOR_FIELD);
-            requireRegistryEntry(cover, channelName).setDescription("");
-            sendChannelList(context.player(), cover, context.pos(), context.side());
-        }
     }
 }
