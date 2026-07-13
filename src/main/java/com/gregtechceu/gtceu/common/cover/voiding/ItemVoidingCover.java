@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.cover.voiding;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
@@ -13,13 +12,7 @@ import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.cover.ConveyorCover;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
@@ -30,18 +23,13 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,12 +37,8 @@ import java.util.Set;
 
 public class ItemVoidingCover extends ConveyorCover implements IControllable {
 
-    private static final ResourceLocation SET_ITEM_VOIDING_COVER_CONFIG_ACTION = GTCEu
-            .id("set_item_voiding_cover_config");
-    private static final ResourceLocation WORKING_ENABLED_FIELD = SyncFieldData.key("workingEnabled");
-
     static {
-        SyncActionDispatchers.server().register(new ItemVoidingCoverConfigActionHandler());
+        ItemVoidingCoverConfigActions.initialize();
     }
 
     public ItemVoidingCover(CoverDefinition definition, ICoverable coverHolder, Direction attachedSide) {
@@ -140,17 +124,8 @@ public class ItemVoidingCover extends ConveyorCover implements IControllable {
     private void setLDLib2WorkingEnabled(Player player, UICoverHolder holder, boolean enabled) {
         setWorkingEnabled(enabled);
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetItemVoidingCoverConfigAction(enabled));
+            CoverUIHelper.sendAction(holder, ItemVoidingCoverConfigActions.createSetWorkingEnabledAction(enabled));
         }
-    }
-
-    private static SyncActionData createSetItemVoidingCoverConfigAction(boolean enabled) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(WORKING_ENABLED_FIELD, new JsonPrimitive(enabled))
-                        .build())
-                .build();
-        return new SyncActionData(SET_ITEM_VOIDING_COVER_CONFIG_ACTION, enabled ? 1 : 0, payload);
     }
 
     @NotNull
@@ -185,58 +160,6 @@ public class ItemVoidingCover extends ConveyorCover implements IControllable {
         if (superTips != null) return superTips;
         if (toolTypes.contains(GTToolType.SOFT_MALLET)) {
             return isWorkingEnabled() ? GridHighlightTexture.TOOL_START : GridHighlightTexture.TOOL_PAUSE;
-        }
-        return null;
-    }
-
-    private static final class ItemVoidingCoverConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_ITEM_VOIDING_COVER_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ItemVoidingCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, WORKING_ENABLED_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ItemVoidingCover cover)) {
-                throw new IllegalStateException("Item voiding cover config action received a non-item-voiding cover.");
-            }
-            cover.setWorkingEnabled(requireBoolean(context.payload(), WORKING_ENABLED_FIELD));
-        }
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Item voiding cover config action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Item voiding cover config action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
         }
         return null;
     }
