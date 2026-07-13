@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.steam;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
@@ -20,14 +19,8 @@ import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.GTUtil;
@@ -41,37 +34,30 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LargeBoilerMachine extends WorkableMultiblockMachine implements LDLib2MachineUIProvider {
+public class LargeBoilerMachine extends WorkableMultiblockMachine
+                                implements LDLib2MachineUIProvider, LargeBoilerThrottleActionTarget {
 
     public static final int TICKS_PER_STEAM_GENERATION = 5;
     private static final int THROTTLE_STEP = 5;
     private static final int MIN_THROTTLE = 25;
     private static final int MAX_THROTTLE = 100;
-    private static final ResourceLocation ADJUST_LARGE_BOILER_THROTTLE_ACTION = GTCEu
-            .id("adjust_large_boiler_throttle");
-    private static final ResourceLocation THROTTLE_DIRECTION_FIELD = SyncFieldData.key("direction");
-
     static {
-        SyncActionDispatchers.server().register(new LargeBoilerThrottleActionHandler());
+        LargeBoilerMachineActions.initialize();
     }
 
     @Getter
@@ -307,11 +293,17 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements LDL
     private void adjustLDLib2Throttle(Player player, MachineUIHolder holder, String componentData) {
         int direction = readThrottleButtonDirection(componentData);
         if (player.level().isClientSide()) {
-            MachineUIHelper.sendAction(holder, createAdjustLargeBoilerThrottleAction(direction));
+            MachineUIHelper.sendAction(holder,
+                    LargeBoilerMachineActions.createAdjustLargeBoilerThrottleAction(direction));
         }
     }
 
-    private void adjustThrottle(int direction) {
+    @Override
+    @ApiStatus.Internal
+    public void adjustLargeBoilerThrottle(int direction) {
+        if (direction != -1 && direction != 1) {
+            throw new IllegalArgumentException("Invalid large boiler throttle direction: " + direction);
+        }
         setThrottle(Mth.clamp(throttle + direction * THROTTLE_STEP, MIN_THROTTLE, MAX_THROTTLE));
     }
 
@@ -342,70 +334,6 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements LDL
             case "add" -> 1;
             default -> throw new IllegalArgumentException("Unknown large boiler throttle action: " + componentData);
         };
-    }
-
-    private static SyncActionData createAdjustLargeBoilerThrottleAction(int direction) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(THROTTLE_DIRECTION_FIELD, new JsonPrimitive(direction))
-                        .build())
-                .build();
-        return new SyncActionData(ADJUST_LARGE_BOILER_THROTTLE_ACTION, direction > 0 ? 1 : 0, payload);
-    }
-
-    private static final class LargeBoilerThrottleActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return ADJUST_LARGE_BOILER_THROTTLE_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof LargeBoilerMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readThrottleDirection(fields, THROTTLE_DIRECTION_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof LargeBoilerMachine machine)) {
-                throw new IllegalStateException("Large boiler throttle action received a non-large-boiler machine.");
-            }
-            machine.adjustThrottle(requireThrottleDirection(context.payload(), THROTTLE_DIRECTION_FIELD));
-        }
-    }
-
-    private static int requireThrottleDirection(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Large boiler throttle action payload is missing field data.");
-        }
-        Integer value = readThrottleDirection(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Large boiler throttle action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readThrottleDirection(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            int direction = primitive.getAsInt();
-            if (direction == -1 || direction == 1) {
-                return direction;
-            }
-        }
-        return null;
     }
 
     public static class LargeBoilerRecipeLogic extends RecipeLogic {

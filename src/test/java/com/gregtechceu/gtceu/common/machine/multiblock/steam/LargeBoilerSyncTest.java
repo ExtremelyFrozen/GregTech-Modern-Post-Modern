@@ -20,6 +20,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -144,6 +145,58 @@ public class LargeBoilerSyncTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
+    public static void throttleActionCreatorEncodesDirectionSequenceAndPayload(GameTestHelper helper) {
+        assertCreatedThrottleAction(helper, -1, 0);
+        assertCreatedThrottleAction(helper, 1, 1);
+
+        boolean rejectedInvalidDirection = false;
+        try {
+            LargeBoilerMachineActions.createAdjustLargeBoilerThrottleAction(0);
+        } catch (IllegalArgumentException exception) {
+            rejectedInvalidDirection = true;
+        }
+        helper.assertTrue(rejectedInvalidDirection,
+                "large boiler throttle creator accepted a direction outside -1 and 1");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void throttleTargetAppliesBothDirectionsAndClampsBoundaries(GameTestHelper helper) {
+        LargeBoilerMachine machine = createMachine();
+
+        machine.setThrottle(30);
+        machine.adjustLargeBoilerThrottle(-1);
+        helper.assertTrue(machine.getThrottle() == 25 && machine.getRecipeLogic().getCurrentThrottle() == 25,
+                "large boiler throttle target did not apply its lower-bound decrement");
+        machine.adjustLargeBoilerThrottle(-1);
+        helper.assertTrue(machine.getThrottle() == 25 && machine.getRecipeLogic().getCurrentThrottle() == 25,
+                "large boiler throttle target crossed its lower bound");
+
+        machine.setThrottle(95);
+        machine.adjustLargeBoilerThrottle(1);
+        helper.assertTrue(machine.getThrottle() == 100 && machine.getRecipeLogic().getCurrentThrottle() == 100,
+                "large boiler throttle target did not apply its upper-bound increment");
+        machine.adjustLargeBoilerThrottle(1);
+        helper.assertTrue(machine.getThrottle() == 100 && machine.getRecipeLogic().getCurrentThrottle() == 100,
+                "large boiler throttle target crossed its upper bound");
+
+        boolean rejectedInvalidDirection = false;
+        try {
+            machine.adjustLargeBoilerThrottle(0);
+        } catch (IllegalArgumentException exception) {
+            rejectedInvalidDirection = true;
+        }
+        helper.assertTrue(rejectedInvalidDirection && machine.getThrottle() == 100 &&
+                machine.getRecipeLogic().getCurrentThrottle() == 100,
+                "large boiler throttle target accepted or applied an invalid direction");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
     public static void throttleActionClampsExecutesOnceAndRetimesActiveFuel(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
         LargeBoilerMachine machine = createMachine();
@@ -199,6 +252,48 @@ public class LargeBoilerSyncTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void throttleActionRejectsInvalidHolderPayloadAndSpectatorWithoutMutation(GameTestHelper helper) {
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        LargeBoilerRecipeLogic invalidHolder = createMachine().getRecipeLogic();
+        int invalidHolderThrottle = invalidHolder.getCurrentThrottle();
+        helper.assertTrue(!dispatch(player, invalidHolder,
+                LargeBoilerMachineActions.createAdjustLargeBoilerThrottleAction(-1)),
+                "large boiler throttle action accepted a recipe-logic holder");
+        helper.assertTrue(invalidHolder.getCurrentThrottle() == invalidHolderThrottle,
+                "rejected large boiler holder action changed recipe-logic state");
+
+        LargeBoilerMachine machine = createMachine();
+        machine.setThrottle(80);
+        assertRejectedThrottle(helper, player, machine,
+                new SyncActionData(ADJUST_THROTTLE_ACTION, 0, DataComponentMap.EMPTY),
+                "large boiler throttle action without field data");
+        assertRejectedThrottle(helper, player, machine,
+                new SyncActionData(ADJUST_THROTTLE_ACTION, 0,
+                        payload(DIRECTION_FIELD, new JsonPrimitive(true))),
+                "large boiler throttle action with a boolean direction");
+        assertRejectedThrottle(helper, player, machine,
+                new SyncActionData(ADJUST_THROTTLE_ACTION, 0,
+                        payload(DIRECTION_FIELD, new JsonPrimitive(0))),
+                "large boiler throttle action with an out-of-range direction");
+
+        player.setGameMode(GameType.SPECTATOR);
+        boolean spectatorAccepted;
+        try {
+            spectatorAccepted = dispatch(player, machine,
+                    LargeBoilerMachineActions.createAdjustLargeBoilerThrottleAction(1));
+        } finally {
+            player.setGameMode(GameType.SURVIVAL);
+        }
+        helper.assertTrue(!spectatorAccepted,
+                "large boiler throttle action accepted a spectator");
+        helper.assertTrue(machine.getThrottle() == 80 && machine.getRecipeLogic().getCurrentThrottle() == 80,
+                "rejected spectator throttle action changed large boiler state");
+        helper.succeed();
+    }
+
     private static LargeBoilerMachine createMachine() {
         var definition = GTMultiMachines.LARGE_BOILER_BRONZE;
         return new LargeBoilerMachine(new BlockEntityCreationInfo(
@@ -208,9 +303,42 @@ public class LargeBoilerSyncTest {
     private static boolean dispatchThrottle(ServerPlayer player, LargeBoilerMachine machine, int direction) {
         SyncActionData action = new SyncActionData(ADJUST_THROTTLE_ACTION, direction > 0 ? 1 : 0,
                 payload(DIRECTION_FIELD, new JsonPrimitive(direction)));
-        SyncActionContext context = new SyncActionContext(player, machine, action, BlockPos.ZERO,
+        return dispatch(player, machine, action);
+    }
+
+    private static boolean dispatch(ServerPlayer player, Object holder, SyncActionData action) {
+        LargeBoilerMachineActions.initialize();
+        SyncActionContext context = new SyncActionContext(player, holder, action, BlockPos.ZERO,
                 null, null, null);
         return SyncActionDispatchers.server().dispatch(context);
+    }
+
+    private static void assertCreatedThrottleAction(GameTestHelper helper, int direction, int sequence) {
+        SyncActionData action = LargeBoilerMachineActions.createAdjustLargeBoilerThrottleAction(direction);
+        SyncFieldData fields = requireFields(action.payload());
+
+        helper.assertTrue(action.actionId().equals(ADJUST_THROTTLE_ACTION),
+                "large boiler throttle creator encoded the wrong action id");
+        helper.assertTrue(action.sequence() == sequence,
+                "large boiler throttle creator encoded the wrong sequence");
+        assertOnlyIntField(helper, fields, DIRECTION_FIELD, direction,
+                "large boiler throttle creator payload");
+    }
+
+    private static void assertRejectedThrottle(GameTestHelper helper, ServerPlayer player,
+                                               LargeBoilerMachine machine, SyncActionData action,
+                                               String description) {
+        int throttle = machine.getThrottle();
+        int currentThrottle = machine.getRecipeLogic().getCurrentThrottle();
+        int progress = machine.getRecipeLogic().getProgress();
+        int maxProgress = machine.getRecipeLogic().getMaxProgress();
+
+        helper.assertTrue(!dispatch(player, machine, action), description + " was accepted");
+        helper.assertTrue(machine.getThrottle() == throttle &&
+                machine.getRecipeLogic().getCurrentThrottle() == currentThrottle &&
+                machine.getRecipeLogic().getProgress() == progress &&
+                machine.getRecipeLogic().getMaxProgress() == maxProgress,
+                description + " changed large boiler state");
     }
 
     private static DataComponentMap machinePayload(int currentTemperature, int throttle, int steamGenerated) {
