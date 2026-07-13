@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.machine.electric;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -15,15 +14,9 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -37,9 +30,7 @@ import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -62,8 +53,6 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.fluids.capability.wrappers.BucketPickupHandlerWrapper;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
@@ -80,16 +69,13 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIProvider {
+public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIProvider, PumpFluidSlotActionTarget {
 
     public static final int BASE_PUMP_RADIUS = 16;
     public static final int EXTRA_PUMP_RADIUS = 4;
     public static final int PUMP_SPEED_BASE = 80;
-    private static final ResourceLocation CLICK_PUMP_FLUID_SLOT_ACTION = GTCEu.id("click_pump_machine_fluid_slot");
-    private static final ResourceLocation SHIFT_FIELD = SyncFieldData.key("shift");
-
     static {
-        SyncActionDispatchers.server().register(new PumpFluidSlotActionHandler());
+        PumpMachineActions.initialize();
     }
 
     private final Set<BlockPos> forbiddenBlocks = new ObjectOpenHashSet<>();
@@ -644,7 +630,8 @@ public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIP
         fluidSlot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
-                MachineUIHelper.sendAction(holder, createClickPumpFluidSlotAction(event.isShiftDown()));
+                MachineUIHelper.sendAction(holder,
+                        PumpMachineActions.createClickPumpFluidSlotAction(event.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }
@@ -659,17 +646,9 @@ public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIP
         }
     }
 
-    private void clickLDLib2FluidSlot(ServerPlayer player, boolean shiftDown) {
+    @Override
+    public void clickPumpFluidSlot(ServerPlayer player, boolean shiftDown) {
         new LDLib2FluidClickTarget(cache.getStorages()[0], true, true).click(player, shiftDown);
-    }
-
-    private static SyncActionData createClickPumpFluidSlotAction(boolean shiftDown) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(SHIFT_FIELD, new JsonPrimitive(shiftDown))
-                        .build())
-                .build();
-        return new SyncActionData(CLICK_PUMP_FLUID_SLOT_ACTION, shiftDown ? 1 : 0, payload);
     }
 
     private record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
@@ -774,57 +753,5 @@ public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIP
             }
             player.containerMenu.broadcastChanges();
         }
-    }
-
-    private static final class PumpFluidSlotActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return CLICK_PUMP_FLUID_SLOT_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof PumpMachine;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null && readBoolean(fields, SHIFT_FIELD) != null;
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof PumpMachine machine)) {
-                throw new IllegalStateException("Pump fluid slot action received a non-pump machine.");
-            }
-            machine.clickLDLib2FluidSlot(context.player(), requireBoolean(context.payload(), SHIFT_FIELD));
-        }
-    }
-
-    private static boolean requireBoolean(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Pump action payload is missing field data.");
-        }
-        Boolean value = readBoolean(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Pump action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable Boolean readBoolean(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            return primitive.getAsBoolean();
-        }
-        return null;
     }
 }
