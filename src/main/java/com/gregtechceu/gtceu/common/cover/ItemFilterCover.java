@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.cover;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
@@ -16,17 +15,12 @@ import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.ItemHandlerDelegate;
 import com.gregtechceu.gtceu.common.cover.data.FilterMode;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -36,28 +30,20 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ItemFilterCover extends CoverBehavior implements LDLib2CoverUIProvider {
-
-    private static final ResourceLocation SET_ITEM_FILTER_COVER_CONFIG_ACTION = GTCEu
-            .id("set_item_filter_cover_config");
-    private static final ResourceLocation FILTER_MODE_FIELD = SyncFieldData.key("filterMode");
-    private static final ResourceLocation MANUAL_IO_FIELD = SyncFieldData.key("manualIO");
+public class ItemFilterCover extends CoverBehavior
+                             implements LDLib2CoverUIProvider, ItemFilterCoverConfigActionTarget {
 
     static {
-        SyncActionDispatchers.server().register(new ItemFilterCoverConfigActionHandler());
+        ItemFilterCoverConfigActions.initialize();
     }
 
     protected ItemFilter itemFilter;
@@ -67,7 +53,6 @@ public class ItemFilterCover extends CoverBehavior implements LDLib2CoverUIProvi
     protected FilterMode filterMode = FilterMode.FILTER_INSERT;
     private FilteredItemHandlerWrapper itemFilterWrapper;
     @SaveField
-    @Setter
     @Getter
     protected ManualIOMode allowFlow = ManualIOMode.DISABLED;
 
@@ -86,9 +71,15 @@ public class ItemFilterCover extends CoverBehavior implements LDLib2CoverUIProvi
         return itemFilter;
     }
 
+    @Override
     public void setFilterMode(FilterMode filterMode) {
         this.filterMode = filterMode;
         syncDataHolder.markClientSyncFieldDirty("filterMode");
+    }
+
+    @Override
+    public void setAllowFlow(ManualIOMode allowFlow) {
+        this.allowFlow = allowFlow;
     }
 
     @Override
@@ -155,19 +146,9 @@ public class ItemFilterCover extends CoverBehavior implements LDLib2CoverUIProvi
 
     private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetItemFilterCoverConfigAction(getFilterMode(), getAllowFlow()));
+            CoverUIHelper.sendAction(holder,
+                    ItemFilterCoverConfigActions.createSetConfigAction(getFilterMode(), getAllowFlow()));
         }
-    }
-
-    private static SyncActionData createSetItemFilterCoverConfigAction(FilterMode filterMode,
-                                                                       ManualIOMode manualIOMode) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(FILTER_MODE_FIELD, new JsonPrimitive(filterMode.ordinal()))
-                        .put(MANUAL_IO_FIELD, new JsonPrimitive(manualIOMode.ordinal()))
-                        .build())
-                .build();
-        return new SyncActionData(SET_ITEM_FILTER_COVER_CONFIG_ACTION, 0, payload);
     }
 
     private class FilteredItemHandlerWrapper extends ItemHandlerDelegate {
@@ -228,70 +209,5 @@ public class ItemFilterCover extends CoverBehavior implements LDLib2CoverUIProvi
         itemFilter = ItemFilter.loadFilter(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config,
                 "filter")));
         super.pasteConfig(player, registries, config);
-    }
-
-    private static final class ItemFilterCoverConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_ITEM_FILTER_COVER_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ItemFilterCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null &&
-                    isValidOrdinal(fields, FILTER_MODE_FIELD, FilterMode.VALUES.length) &&
-                    isValidOrdinal(fields, MANUAL_IO_FIELD, ManualIOMode.VALUES.length);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ItemFilterCover cover)) {
-                throw new IllegalStateException("Item filter cover config action received a non-item-filter cover.");
-            }
-            int filterModeOrdinal = requireOrdinal(context.payload(), FILTER_MODE_FIELD, FilterMode.VALUES.length);
-            int manualIOOrdinal = requireOrdinal(context.payload(), MANUAL_IO_FIELD, ManualIOMode.VALUES.length);
-            cover.setFilterMode(FilterMode.VALUES[filterModeOrdinal]);
-            cover.setAllowFlow(ManualIOMode.VALUES[manualIOOrdinal]);
-        }
-    }
-
-    private static boolean isValidOrdinal(SyncFieldData fields, ResourceLocation field, int valueCount) {
-        Integer ordinal = readOrdinal(fields, field);
-        return ordinal != null && ordinal >= 0 && ordinal < valueCount;
-    }
-
-    private static int requireOrdinal(DataComponentMap payload, ResourceLocation field, int valueCount) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Item filter cover config action payload is missing field data.");
-        }
-        Integer ordinal = readOrdinal(fields, field);
-        if (ordinal == null) {
-            throw new IllegalStateException("Item filter cover config action payload is missing " + field + ".");
-        }
-        if (ordinal < 0 || ordinal >= valueCount) {
-            throw new IllegalArgumentException("Item filter cover config action ordinal is out of range: " + ordinal);
-        }
-        return ordinal;
-    }
-
-    private static @Nullable Integer readOrdinal(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
-        }
-        return null;
     }
 }
