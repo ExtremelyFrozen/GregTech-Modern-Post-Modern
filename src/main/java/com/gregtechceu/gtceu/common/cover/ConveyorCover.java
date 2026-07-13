@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.cover;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.IControllable;
@@ -21,10 +20,6 @@ import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -33,7 +28,6 @@ import com.gregtechceu.gtceu.api.transfer.item.ItemHandlerDelegate;
 import com.gregtechceu.gtceu.common.blockentity.ItemPipeBlockEntity;
 import com.gregtechceu.gtceu.common.cover.data.DistributionMode;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
@@ -47,7 +41,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -56,8 +49,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -70,19 +61,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2CoverUIProvider, IControllable {
+public class ConveyorCover extends CoverBehavior
+                           implements IIOCover, LDLib2CoverUIProvider, IControllable,
+                           ConveyorCoverConfigActionTarget {
 
     // 8 32 128 512 1024
     public static final Int2IntFunction CONVEYOR_SCALING = tier -> 2 * (int) Math.pow(4, Math.min(tier, GTValues.LuV));
-    private static final ResourceLocation SET_CONVEYOR_COVER_CONFIG_ACTION = GTCEu
-            .id("set_conveyor_cover_config");
-    private static final ResourceLocation TRANSFER_RATE_FIELD = SyncFieldData.key("transferRate");
-    private static final ResourceLocation IO_FIELD = SyncFieldData.key("io");
-    private static final ResourceLocation DISTRIBUTION_MODE_FIELD = SyncFieldData.key("distributionMode");
-    private static final ResourceLocation MANUAL_IO_FIELD = SyncFieldData.key("manualIO");
-
     static {
-        SyncActionDispatchers.server().register(new ConveyorCoverConfigActionHandler());
+        ConveyorCoverConfigActions.initialize();
     }
 
     public final int tier;
@@ -150,6 +136,7 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2Cove
                 .orElse(null);
     }
 
+    @Override
     public void setDistributionMode(DistributionMode mode) {
         if (distributionMode != mode) {
             distributionMode = mode;
@@ -166,6 +153,7 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2Cove
         return super.canAttach() && getOwnItemHandler() != null;
     }
 
+    @Override
     public void setTransferRate(int transferRate) {
         int clamped = Math.min(Math.max(transferRate, 1), maxItemTransferRate);
         if (this.transferRate != clamped) {
@@ -174,6 +162,7 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2Cove
         }
     }
 
+    @Override
     public void setIo(IO io) {
         if (io == IO.IN || io == IO.OUT) {
             if (this.io != io) {
@@ -184,7 +173,8 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2Cove
         subscriptionHandler.updateSubscription();
     }
 
-    protected void setManualIOMode(ManualIOMode manualIOMode) {
+    @Override
+    public void setManualIOMode(ManualIOMode manualIOMode) {
         if (this.manualIOMode != manualIOMode) {
             this.manualIOMode = manualIOMode;
             syncDataHolder.markClientSyncFieldDirty("manualIOMode");
@@ -540,23 +530,9 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2Cove
 
     private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetConveyorCoverConfigAction(getTransferRate(), getIo(),
-                    getDistributionMode(), getManualIOMode()));
+            CoverUIHelper.sendAction(holder, ConveyorCoverConfigActions.createSetConfigAction(getTransferRate(),
+                    getIo(), getDistributionMode(), getManualIOMode()));
         }
-    }
-
-    private static SyncActionData createSetConveyorCoverConfigAction(int transferRate, IO io,
-                                                                     DistributionMode distributionMode,
-                                                                     ManualIOMode manualIOMode) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(TRANSFER_RATE_FIELD, new JsonPrimitive(transferRate))
-                        .put(IO_FIELD, new JsonPrimitive(io.ordinal()))
-                        .put(DISTRIBUTION_MODE_FIELD, new JsonPrimitive(distributionMode.ordinal()))
-                        .put(MANUAL_IO_FIELD, new JsonPrimitive(manualIOMode.ordinal()))
-                        .build())
-                .build();
-        return new SyncActionData(SET_CONVEYOR_COVER_CONFIG_ACTION, 0, payload);
     }
 
     /////////////////////////////////////
@@ -643,112 +619,5 @@ public class ConveyorCover extends CoverBehavior implements IIOCover, LDLib2Cove
         filterHandler
                 .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
         super.pasteConfig(player, registries, config);
-    }
-
-    private static final class ConveyorCoverConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_CONVEYOR_COVER_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ConveyorCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null &&
-                    isValidPositiveInt(fields, TRANSFER_RATE_FIELD) &&
-                    isValidIOOrdinal(fields, IO_FIELD) &&
-                    isValidOrdinal(fields, DISTRIBUTION_MODE_FIELD, DistributionMode.VALUES.length) &&
-                    isValidOrdinal(fields, MANUAL_IO_FIELD, ManualIOMode.VALUES.length);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ConveyorCover cover)) {
-                throw new IllegalStateException("Conveyor cover config action received a non-conveyor cover.");
-            }
-            cover.setTransferRate(requirePositiveInt(context.payload(), TRANSFER_RATE_FIELD));
-            cover.setIo(IO.values()[requireIOOrdinal(context.payload(), IO_FIELD)]);
-            cover.setDistributionMode(DistributionMode.VALUES[requireOrdinal(context.payload(),
-                    DISTRIBUTION_MODE_FIELD, DistributionMode.VALUES.length)]);
-            cover.setManualIOMode(ManualIOMode.VALUES[requireOrdinal(context.payload(), MANUAL_IO_FIELD,
-                    ManualIOMode.VALUES.length)]);
-        }
-    }
-
-    private static boolean isValidPositiveInt(SyncFieldData fields, ResourceLocation field) {
-        Integer value = readInt(fields, field);
-        return value != null && value > 0;
-    }
-
-    private static int requirePositiveInt(DataComponentMap payload, ResourceLocation field) {
-        int value = requireNonNegativeInt(payload, field);
-        if (value <= 0) {
-            throw new IllegalArgumentException("Conveyor cover config action value must be positive: " + value);
-        }
-        return value;
-    }
-
-    private static boolean isValidIOOrdinal(SyncFieldData fields, ResourceLocation field) {
-        Integer ordinal = readInt(fields, field);
-        return ordinal != null && isImportExportOrdinal(ordinal);
-    }
-
-    private static int requireIOOrdinal(DataComponentMap payload, ResourceLocation field) {
-        int ordinal = requireNonNegativeInt(payload, field);
-        if (!isImportExportOrdinal(ordinal)) {
-            throw new IllegalArgumentException("Conveyor cover config action IO ordinal is out of range: " + ordinal);
-        }
-        return ordinal;
-    }
-
-    private static boolean isImportExportOrdinal(int ordinal) {
-        return ordinal == IO.IN.ordinal() || ordinal == IO.OUT.ordinal();
-    }
-
-    private static boolean isValidOrdinal(SyncFieldData fields, ResourceLocation field, int valueCount) {
-        Integer ordinal = readInt(fields, field);
-        return ordinal != null && ordinal >= 0 && ordinal < valueCount;
-    }
-
-    private static int requireOrdinal(DataComponentMap payload, ResourceLocation field, int valueCount) {
-        int ordinal = requireNonNegativeInt(payload, field);
-        if (ordinal >= valueCount) {
-            throw new IllegalArgumentException("Conveyor cover config action ordinal is out of range: " + ordinal);
-        }
-        return ordinal;
-    }
-
-    private static int requireNonNegativeInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Conveyor cover config action payload is missing field data.");
-        }
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException("Conveyor cover config action payload is missing " + field + ".");
-        }
-        if (value < 0) {
-            throw new IllegalArgumentException("Conveyor cover config action value is negative: " + value);
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
-        }
-        return null;
     }
 }
