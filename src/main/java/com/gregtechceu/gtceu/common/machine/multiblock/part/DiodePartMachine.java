@@ -82,9 +82,15 @@ public class DiodePartMachine extends TieredIOPartMachine {
     }
 
     private void cycleAmpMode() {
-        amps = amps == getMaxAmperage() ? 1 : amps << 1;
+        setAmps(amps == getMaxAmperage() ? 1 : amps << 1);
+    }
+
+    void setAmps(int amps) {
+        if (this.amps == amps) {
+            return;
+        }
+        this.amps = amps;
         if (!isRemote()) {
-            syncDataHolder.markClientSyncFieldDirty("amps");
             reinitializeEnergyContainer();
             notifyBlockUpdate();
         }
