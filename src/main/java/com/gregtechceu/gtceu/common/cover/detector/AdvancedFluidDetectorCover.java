@@ -90,7 +90,6 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LD
 
     public void setLatched(boolean latched) {
         isLatched = latched;
-        syncDataHolder.markClientSyncFieldDirty("isLatched");
     }
 
     @Override
@@ -134,7 +133,6 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LD
         int clamped = Mth.clamp(minValue, 0, upperBound);
         if (this.minValue != clamped) {
             this.minValue = clamped;
-            syncDataHolder.markClientSyncFieldDirty("minValue");
         }
     }
 
@@ -142,7 +140,6 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LD
         int clamped = Math.max(maxValue, 0);
         if (this.maxValue != clamped) {
             this.maxValue = clamped;
-            syncDataHolder.markClientSyncFieldDirty("maxValue");
         }
     }
 

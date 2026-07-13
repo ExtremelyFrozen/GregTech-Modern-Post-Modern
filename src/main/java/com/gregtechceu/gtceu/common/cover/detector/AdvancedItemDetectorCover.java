@@ -125,7 +125,6 @@ public class AdvancedItemDetectorCover extends ItemDetectorCover implements LDLi
         int clamped = Mth.clamp(minValue, 0, upperBound);
         if (this.minValue != clamped) {
             this.minValue = clamped;
-            syncDataHolder.markClientSyncFieldDirty("minValue");
         }
     }
 
@@ -133,13 +132,11 @@ public class AdvancedItemDetectorCover extends ItemDetectorCover implements LDLi
         int clamped = Math.max(maxValue, 0);
         if (this.maxValue != clamped) {
             this.maxValue = clamped;
-            syncDataHolder.markClientSyncFieldDirty("maxValue");
         }
     }
 
     public void setLatched(boolean latched) {
         isLatched = latched;
-        syncDataHolder.markClientSyncFieldDirty("isLatched");
     }
 
     //////////////////////////////////////
