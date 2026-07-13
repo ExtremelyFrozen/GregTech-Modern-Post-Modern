@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.capability.ICoverable
 import com.gregtechceu.gtceu.api.cover.CoverBehavior
 import com.gregtechceu.gtceu.api.registry.GTRegistries
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec
+import com.gregtechceu.gtceu.api.sync_system.SyncSerializationTarget
 
 import net.minecraft.core.Direction
 import net.minecraft.core.component.DataComponentMap
@@ -33,6 +34,23 @@ class CoverBehaviorCodec private constructor() : ContextualFieldCodec<CoverBehav
 				).getOrThrow(),
 		)
 		return json
+	}
+
+	override fun shouldSyncField(value: CoverBehavior, context: ContextualFieldCodec.Context<CoverBehavior>, fullSync: Boolean, manuallyDirty: Boolean): Boolean {
+		if (!context.isClientSync) return fullSync || manuallyDirty
+		if (fullSync || manuallyDirty) {
+			value.getSyncDataHolder().resyncAllFields()
+			return true
+		}
+		return when (context.serializationTarget) {
+			SyncSerializationTarget.NBT -> {
+				val message = "Sync: CoverBehavior client sync NBT is disabled; use DataComponentMap serialization"
+				GTCEu.LOGGER.error(message)
+				throw IllegalStateException(message)
+			}
+
+			SyncSerializationTarget.DATA_COMPONENTS -> value.getSyncDataHolder().scanAndMarkChanges(context.lookup)
+		}
 	}
 
 	override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<CoverBehavior>): CoverBehavior? {
