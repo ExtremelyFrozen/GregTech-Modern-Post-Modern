@@ -21,11 +21,6 @@ import com.gregtechceu.gtceu.api.placeholder.IPlaceholderInfoProviderCover;
 import com.gregtechceu.gtceu.api.placeholder.MultiLineComponent;
 import com.gregtechceu.gtceu.api.placeholder.PlaceholderContext;
 import com.gregtechceu.gtceu.api.placeholder.PlaceholderHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
-import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
@@ -45,21 +40,14 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -73,7 +61,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 public class ComputerMonitorCover extends CoverBehavior
                                   implements LDLib2CoverUIProvider, IDataStickInteractable,
-                                  IPlaceholderInfoProviderCover {
+                                  IPlaceholderInfoProviderCover, ComputerMonitorCoverConfigActionTarget {
 
     private static final int FORMAT_LINE_COUNT = 8;
     private static final int TEXT_FIELD_WIDTH = 160;
@@ -85,14 +73,8 @@ public class ComputerMonitorCover extends CoverBehavior
     private static final int ROOT_WIDTH = 390;
     private static final int CONTENT_HEIGHT = 195;
 
-    private static final ResourceLocation SET_COMPUTER_MONITOR_COVER_CONFIG_ACTION = GTCEu
-            .id("set_computer_monitor_cover_config");
-    private static final ResourceLocation FORMAT_LINES_FIELD = SyncFieldData.key("formatLines");
-    private static final ResourceLocation FORMAT_ARGS_FIELD = SyncFieldData.key("formatArgs");
-    private static final ResourceLocation UPDATE_INTERVAL_FIELD = SyncFieldData.key("updateInterval");
-
     static {
-        SyncActionDispatchers.server().register(new ComputerMonitorCoverConfigActionHandler());
+        ComputerMonitorCoverConfigActions.initialize();
     }
 
     private TickableSubscription subscription;
@@ -113,7 +95,6 @@ public class ComputerMonitorCover extends CoverBehavior
     public CustomItemStackHandler itemStackHandler = new CustomItemStackHandler(FORMAT_LINE_COUNT);
     @Setter
     private String placeholderSearch = "";
-    @Setter
     @Getter
     @SaveField
     private int updateInterval = 100;
@@ -334,8 +315,8 @@ public class ComputerMonitorCover extends CoverBehavior
 
     private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetComputerMonitorCoverConfigAction(formatStringLines,
-                    formatStringArgs, getUpdateInterval()));
+            CoverUIHelper.sendAction(holder, ComputerMonitorCoverConfigActions.createSetConfigAction(
+                    formatStringLines, formatStringArgs, getUpdateInterval()));
         }
     }
 
@@ -357,32 +338,6 @@ public class ComputerMonitorCover extends CoverBehavior
 
     private static Component[] tooltips(List<MutableComponent> tooltips) {
         return GTStringUtils.toImmutable(tooltips).toArray(Component[]::new);
-    }
-
-    private static SyncActionData createSetComputerMonitorCoverConfigAction(List<String> lines, List<String> args,
-                                                                            int updateInterval) {
-        if (!isValidUpdateInterval(updateInterval)) {
-            throw new IllegalArgumentException(
-                    "Computer monitor cover update interval is out of range: " + updateInterval);
-        }
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(FORMAT_LINES_FIELD, writeStringList(lines))
-                        .put(FORMAT_ARGS_FIELD, writeStringList(args))
-                        .put(UPDATE_INTERVAL_FIELD, new JsonPrimitive(updateInterval))
-                        .build())
-                .build();
-        return new SyncActionData(SET_COMPUTER_MONITOR_COVER_CONFIG_ACTION, 0, payload);
-    }
-
-    private static JsonArray writeStringList(List<String> values) {
-        JsonArray array = new JsonArray();
-        values.forEach(array::add);
-        return array;
-    }
-
-    private static boolean isValidUpdateInterval(int value) {
-        return value >= UPDATE_INTERVAL_MIN && value <= UPDATE_INTERVAL_MAX;
     }
 
     @Override
@@ -451,116 +406,22 @@ public class ComputerMonitorCover extends CoverBehavior
         return InteractionResult.sidedSuccess(player.level().isClientSide);
     }
 
-    private static final class ComputerMonitorCoverConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_COMPUTER_MONITOR_COVER_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof ComputerMonitorCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null &&
-                    readStringList(fields, FORMAT_LINES_FIELD) != null &&
-                    readStringList(fields, FORMAT_ARGS_FIELD) != null &&
-                    isValidUpdateInterval(fields, UPDATE_INTERVAL_FIELD);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator() && context.holder() instanceof ComputerMonitorCover;
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof ComputerMonitorCover cover)) {
-                throw new IllegalStateException(
-                        "Computer monitor cover config action received a non-computer-monitor cover.");
-            }
-            cover.replaceFormatStringLines(requireStringList(context.payload(), FORMAT_LINES_FIELD));
-            cover.replaceFormatStringArgs(requireStringList(context.payload(), FORMAT_ARGS_FIELD));
-            cover.setUpdateInterval(requireUpdateInterval(context.payload(), UPDATE_INTERVAL_FIELD));
-        }
-    }
-
-    private void replaceFormatStringLines(List<String> lines) {
+    @Override
+    public void replaceFormatStringLines(List<String> lines) {
         formatStringLines.clear();
         formatStringLines.addAll(lines);
         ensureListSize(formatStringLines, FORMAT_LINE_COUNT);
     }
 
-    private void replaceFormatStringArgs(List<String> args) {
+    @Override
+    public void replaceFormatStringArgs(List<String> args) {
         formatStringArgs.clear();
         formatStringArgs.addAll(args);
         ensureListSize(formatStringArgs, FORMAT_LINE_COUNT);
     }
 
-    private static boolean isValidUpdateInterval(SyncFieldData fields, ResourceLocation field) {
-        Integer value = readInt(fields, field);
-        return value != null && isValidUpdateInterval(value);
-    }
-
-    private static int requireUpdateInterval(DataComponentMap payload, ResourceLocation field) {
-        int value = requireInt(payload, field);
-        if (!isValidUpdateInterval(value)) {
-            throw new IllegalArgumentException(
-                    "Computer monitor cover config action update interval is out of range: " + value);
-        }
-        return value;
-    }
-
-    private static List<String> requireStringList(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Computer monitor cover config action payload is missing field data.");
-        }
-        List<String> values = readStringList(fields, field);
-        if (values == null) {
-            throw new IllegalStateException(
-                    "Computer monitor cover config action payload is missing " + field + ".");
-        }
-        return values;
-    }
-
-    private static int requireInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Computer monitor cover config action payload is missing field data.");
-        }
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException(
-                    "Computer monitor cover config action payload is missing " + field + ".");
-        }
-        return value;
-    }
-
-    private static @Nullable List<String> readStringList(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (!(element instanceof JsonArray array)) {
-            return null;
-        }
-        List<String> values = new ArrayList<>(array.size());
-        for (JsonElement entry : array) {
-            if (!(entry instanceof JsonPrimitive primitive) || !primitive.isString()) {
-                return null;
-            }
-            values.add(primitive.getAsString());
-        }
-        return values;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
-        }
-        return null;
+    @Override
+    public void setUpdateInterval(int updateInterval) {
+        this.updateInterval = updateInterval;
     }
 }
