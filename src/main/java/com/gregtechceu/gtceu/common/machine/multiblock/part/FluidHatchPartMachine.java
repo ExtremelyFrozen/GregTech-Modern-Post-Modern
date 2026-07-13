@@ -202,7 +202,6 @@ public class FluidHatchPartMachine extends TieredIOPartMachine
 
     public void setCircuitSlotEnabled(boolean enabled) {
         circuitSlotEnabled = enabled;
-        syncDataHolder.markClientSyncFieldDirty("circuitSlotEnabled");
     }
 
     //////////////////////////////////////

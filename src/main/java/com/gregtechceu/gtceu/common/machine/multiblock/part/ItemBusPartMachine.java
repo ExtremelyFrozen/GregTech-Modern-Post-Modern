@@ -208,7 +208,6 @@ public class ItemBusPartMachine extends TieredIOPartMachine
 
     public void setCircuitSlotEnabled(boolean enabled) {
         circuitSlotEnabled = enabled;
-        syncDataHolder.markClientSyncFieldDirty("circuitSlotEnabled");
     }
 
     //////////////////////////////////////
