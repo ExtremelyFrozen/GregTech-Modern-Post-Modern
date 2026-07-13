@@ -1,6 +1,5 @@
 package com.gregtechceu.gtceu.common.cover;
 
-import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
@@ -10,47 +9,34 @@ import com.gregtechceu.gtceu.api.gui.element.GTEnumSelectorElement;
 import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
 import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
-import com.gregtechceu.gtceu.api.sync_system.SyncActionHandler;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.common.cover.data.BucketMode;
 import com.gregtechceu.gtceu.common.cover.data.TransferMode;
-import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FluidRegulatorCover extends PumpCover {
+public class FluidRegulatorCover extends PumpCover implements FluidRegulatorCoverConfigActionTarget {
 
     private static final int MAX_STACK_SIZE = 2_048_000_000; // Capacity of quantum tank IX
-    private static final ResourceLocation SET_FLUID_REGULATOR_COVER_CONFIG_ACTION = GTCEu
-            .id("set_fluid_regulator_cover_config");
-    private static final ResourceLocation TRANSFER_MODE_FIELD = SyncFieldData.key("transferMode");
-    private static final ResourceLocation TRANSFER_LIMIT_FIELD = SyncFieldData.key("transferLimit");
-    private static final ResourceLocation TRANSFER_BUCKET_FIELD = SyncFieldData.key("transferBucket");
 
     static {
-        SyncActionDispatchers.server().register(new FluidRegulatorCoverConfigActionHandler());
+        FluidRegulatorCoverConfigActions.initialize();
     }
 
     @SaveField
@@ -172,7 +158,8 @@ public class FluidRegulatorCover extends PumpCover {
         return platformTransferLimit - fluidLeftToTransfer;
     }
 
-    private void setTransferBucketMode(BucketMode transferBucketMode) {
+    @Override
+    public void setTransferBucketMode(BucketMode transferBucketMode) {
         var oldMultiplier = this.transferBucketMode.multiplier;
         var newMultiplier = transferBucketMode.multiplier;
 
@@ -185,7 +172,8 @@ public class FluidRegulatorCover extends PumpCover {
         configureTransferBucketModeInput(oldMultiplier, newMultiplier);
     }
 
-    private void setTransferMode(TransferMode transferMode) {
+    @Override
+    public void setTransferMode(TransferMode transferMode) {
         if (this.transferMode == transferMode) {
             configureTransferSizeInput();
             return;
@@ -254,7 +242,8 @@ public class FluidRegulatorCover extends PumpCover {
         setGlobalTransferLimit((int) Math.min(transferLimit, MAX_STACK_SIZE));
     }
 
-    private void setGlobalTransferLimit(int transferLimit) {
+    @Override
+    public void setGlobalTransferLimit(int transferLimit) {
         int clamped = Math.min(Math.max(transferLimit, 0), MAX_STACK_SIZE);
         if (this.globalTransferLimit != clamped) {
             this.globalTransferLimit = clamped;
@@ -310,22 +299,9 @@ public class FluidRegulatorCover extends PumpCover {
 
     private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
         if (player.level().isClientSide()) {
-            CoverUIHelper.sendAction(holder, createSetFluidRegulatorCoverConfigAction(getTransferMode(),
+            CoverUIHelper.sendAction(holder, FluidRegulatorCoverConfigActions.createSetConfigAction(getTransferMode(),
                     getGlobalTransferLimit(), getTransferBucketMode()));
         }
-    }
-
-    private static SyncActionData createSetFluidRegulatorCoverConfigAction(TransferMode transferMode,
-                                                                           int transferLimit,
-                                                                           BucketMode transferBucketMode) {
-        DataComponentMap payload = DataComponentMap.builder()
-                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
-                        .put(TRANSFER_MODE_FIELD, new JsonPrimitive(transferMode.ordinal()))
-                        .put(TRANSFER_LIMIT_FIELD, new JsonPrimitive(transferLimit))
-                        .put(TRANSFER_BUCKET_FIELD, new JsonPrimitive(transferBucketMode.ordinal()))
-                        .build())
-                .build();
-        return new SyncActionData(SET_FLUID_REGULATOR_COVER_CONFIG_ACTION, 0, payload);
     }
 
     @Override
@@ -345,88 +321,5 @@ public class FluidRegulatorCover extends PumpCover {
         setGlobalTransferLimit(ConfigCopyHelper.getInt(config, "transferLimit"));
         setTransferBucketMode(BucketMode.values()[ConfigCopyHelper.getInt(config, "transferBucket")]);
         super.pasteConfig(player, registries, config);
-    }
-
-    private static final class FluidRegulatorCoverConfigActionHandler implements SyncActionHandler {
-
-        @Override
-        public ResourceLocation actionId() {
-            return SET_FLUID_REGULATOR_COVER_CONFIG_ACTION;
-        }
-
-        @Override
-        public boolean acceptsHolder(SyncActionContext context) {
-            return context.holder() instanceof FluidRegulatorCover;
-        }
-
-        @Override
-        public boolean acceptsPayload(DataComponentMap payload) {
-            SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-            return fields != null &&
-                    isValidOrdinal(fields, TRANSFER_MODE_FIELD, TransferMode.values().length) &&
-                    isValidNonNegativeInt(fields, TRANSFER_LIMIT_FIELD) &&
-                    isValidOrdinal(fields, TRANSFER_BUCKET_FIELD, BucketMode.values().length);
-        }
-
-        @Override
-        public boolean mayExecute(ServerPlayer player, SyncActionContext context) {
-            return !player.isSpectator();
-        }
-
-        @Override
-        public void execute(SyncActionContext context) {
-            if (!(context.holder() instanceof FluidRegulatorCover cover)) {
-                throw new IllegalStateException(
-                        "Fluid regulator cover config action received a non-fluid-regulator cover.");
-            }
-            cover.setTransferMode(TransferMode.values()[requireOrdinal(context.payload(), TRANSFER_MODE_FIELD,
-                    TransferMode.values().length)]);
-            cover.setGlobalTransferLimit(requireNonNegativeInt(context.payload(), TRANSFER_LIMIT_FIELD));
-            cover.setTransferBucketMode(BucketMode.values()[requireOrdinal(context.payload(), TRANSFER_BUCKET_FIELD,
-                    BucketMode.values().length)]);
-        }
-    }
-
-    private static boolean isValidOrdinal(SyncFieldData fields, ResourceLocation field, int valueCount) {
-        Integer ordinal = readInt(fields, field);
-        return ordinal != null && ordinal >= 0 && ordinal < valueCount;
-    }
-
-    private static int requireOrdinal(DataComponentMap payload, ResourceLocation field, int valueCount) {
-        int ordinal = requireNonNegativeInt(payload, field);
-        if (ordinal >= valueCount) {
-            throw new IllegalArgumentException(
-                    "Fluid regulator cover config action ordinal is out of range: " + ordinal);
-        }
-        return ordinal;
-    }
-
-    private static boolean isValidNonNegativeInt(SyncFieldData fields, ResourceLocation field) {
-        Integer value = readInt(fields, field);
-        return value != null && value >= 0;
-    }
-
-    private static int requireNonNegativeInt(DataComponentMap payload, ResourceLocation field) {
-        SyncFieldData fields = payload.get(GTDataComponents.SYNC_FIELD_DATA.get());
-        if (fields == null) {
-            throw new IllegalStateException("Fluid regulator cover config action payload is missing field data.");
-        }
-        Integer value = readInt(fields, field);
-        if (value == null) {
-            throw new IllegalStateException(
-                    "Fluid regulator cover config action payload is missing " + field + ".");
-        }
-        if (value < 0) {
-            throw new IllegalArgumentException("Fluid regulator cover config action value is negative: " + value);
-        }
-        return value;
-    }
-
-    private static @Nullable Integer readInt(SyncFieldData fields, ResourceLocation field) {
-        JsonElement element = fields.get(field);
-        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            return primitive.getAsInt();
-        }
-        return null;
     }
 }
