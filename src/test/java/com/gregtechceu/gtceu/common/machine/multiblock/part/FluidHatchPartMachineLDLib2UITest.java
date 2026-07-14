@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -58,31 +59,51 @@ public class FluidHatchPartMachineLDLib2UITest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "FluidHatchPartMachineLDLib2UI")
-    public static void holderIdentityAndSpecializedDefinitionFallbackAreEnforced(GameTestHelper helper) {
+    public static void holderIdentityCustomDefinitionsAndSpecializedTypesAreEnforced(GameTestHelper helper) {
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         FluidHatchPartMachine input = createFluidHatch(GTMachines.FLUID_IMPORT_HATCH[LV]);
         FluidHatchPartMachine output = createFluidHatch(GTMachines.FLUID_EXPORT_HATCH[LV]);
         MachineUIHolder inputHolder = new TestMachineUIHolder(input);
         MachineUIHolder outputHolder = new TestMachineUIHolder(output);
 
-        helper.assertTrue(input.canCreateLDLib2UI(FakePlayerFactory.getMinecraft(helper.getLevel()), inputHolder),
+        helper.assertTrue(input.canCreateLDLib2UI(player, inputHolder),
                 "ordinary fluid hatch rejected its matching holder");
-        helper.assertTrue(!input.canCreateLDLib2UI(FakePlayerFactory.getMinecraft(helper.getLevel()), outputHolder),
+        helper.assertTrue(!input.canCreateLDLib2UI(player, outputHolder),
                 "ordinary fluid hatch accepted another machine's holder");
 
         boolean mismatchedHolderRejected = false;
         try {
-            input.createLDLib2UI(FakePlayerFactory.getMinecraft(helper.getLevel()), outputHolder);
+            requireContextualProvider(input).createLDLib2FancyPage(player, outputHolder);
         } catch (IllegalArgumentException expected) {
             mismatchedHolderRejected = expected.getMessage().contains("holder");
         }
-        helper.assertTrue(mismatchedHolderRejected, "direct page creation accepted a mismatched holder");
+        helper.assertTrue(mismatchedHolderRejected, "contextual page creation accepted a mismatched holder");
 
-        FluidHatchPartMachine specialized = new FluidHatchPartMachine(
+        StandardFluidHatchPartMachine customDefinitionHatch = new StandardFluidHatchPartMachine(
                 info(GTMachines.ITEM_IMPORT_BUS[LV]), LV, IO.IN,
                 FluidHatchPartMachine.INITIAL_TANK_CAPACITY_1X, 1);
-        helper.assertTrue(!specialized.canCreateLDLib2UI(FakePlayerFactory.getMinecraft(helper.getLevel()),
-                new TestMachineUIHolder(specialized)),
-                "a specialized definition inherited the generic fluid hatch page instead of retaining fallback");
+        MachineUIHolder customHolder = new TestMachineUIHolder(customDefinitionHatch);
+        helper.assertTrue(customDefinitionHatch.canCreateLDLib2UI(player, customHolder),
+                "an addon-style ordinary fluid hatch definition was rejected by the generic LDLib2 page");
+        helper.assertTrue(customDefinitionHatch.createLDLib2FancyPage(player, customHolder)
+                .getLDLib2PageWidth() == 89,
+                "an addon-style ordinary fluid hatch definition could not create its contextual page");
+
+        ReservoirHatchPartMachine customReservoir = new ReservoirHatchPartMachine(
+                info(GTMachines.ITEM_IMPORT_BUS[LV]));
+        MachineUIHolder customReservoirHolder = new TestMachineUIHolder(customReservoir);
+        helper.assertTrue(customReservoir.canCreateLDLib2UI(player, customReservoirHolder),
+                "an addon-style Reservoir definition was rejected by the generic LDLib2 page");
+        helper.assertTrue(customReservoir.createLDLib2FancyPage(player, customReservoirHolder)
+                .getLDLib2PageWidth() == 89,
+                "an addon-style Reservoir definition could not create its contextual page");
+
+        FluidHatchPartMachine pump = createFluidHatch(GTMachines.PUMP_HATCH);
+        FluidHatchPartMachine steam = createFluidHatch(GTMachines.STEAM_HATCH);
+        helper.assertTrue(!(pump instanceof LDLib2FancyPartUIProvider),
+                "Pump Hatch inherited the generic contextual fluid hatch provider");
+        helper.assertTrue(!(steam instanceof LDLib2FancyPartUIProvider),
+                "Steam Hatch inherited the generic contextual fluid hatch provider");
         helper.succeed();
     }
 
@@ -94,13 +115,24 @@ public class FluidHatchPartMachineLDLib2UITest {
         FluidHatchPartMachine input = createFluidHatch(GTMachines.FLUID_IMPORT_HATCH[LV]);
         FluidHatchPartMachine output = createFluidHatch(GTMachines.FLUID_EXPORT_HATCH[LV]);
         FluidHatchPartMachine quadruple = createFluidHatch(GTMachines.FLUID_IMPORT_HATCH_4X[EV]);
+        FluidHatchPartMachine passthrough = createFluidHatch(GTMachines.FLUID_PASSTHROUGH_HATCH[LV]);
+        FluidHatchPartMachine reservoir = createFluidHatch(GTMachines.RESERVOIR_HATCH);
 
         MachineUIHolder inputHolder = new TestMachineUIHolder(input);
         MachineUIHolder outputHolder = new TestMachineUIHolder(output);
         MachineUIHolder quadrupleHolder = new TestMachineUIHolder(quadruple);
-        LDLib2FancyUIProvider inputPage = input.createLDLib2Page(player, inputHolder);
-        LDLib2FancyUIProvider outputPage = output.createLDLib2Page(player, outputHolder);
-        LDLib2FancyUIProvider quadruplePage = quadruple.createLDLib2Page(player, quadrupleHolder);
+        MachineUIHolder passthroughHolder = new TestMachineUIHolder(passthrough);
+        MachineUIHolder reservoirHolder = new TestMachineUIHolder(reservoir);
+        LDLib2FancyPartUIProvider inputContext = requireContextualProvider(input);
+        LDLib2FancyPartUIProvider outputContext = requireContextualProvider(output);
+        LDLib2FancyPartUIProvider quadrupleContext = requireContextualProvider(quadruple);
+        LDLib2FancyPartUIProvider passthroughContext = requireContextualProvider(passthrough);
+        LDLib2FancyPartUIProvider reservoirContext = requireContextualProvider(reservoir);
+        LDLib2FancyUIProvider inputPage = inputContext.createLDLib2FancyPage(player, inputHolder);
+        LDLib2FancyUIProvider outputPage = outputContext.createLDLib2FancyPage(player, outputHolder);
+        LDLib2FancyUIProvider quadruplePage = quadrupleContext.createLDLib2FancyPage(player, quadrupleHolder);
+        LDLib2FancyUIProvider passthroughPage = passthroughContext.createLDLib2FancyPage(player, passthroughHolder);
+        LDLib2FancyUIProvider reservoirPage = reservoirContext.createLDLib2FancyPage(player, reservoirHolder);
 
         helper.assertTrue(inputPage.getLDLib2PageWidth() == 89 && inputPage.getLDLib2PageHeight() == 63,
                 "single input hatch page did not preserve the 89x63 legacy body");
@@ -110,6 +142,8 @@ public class FluidHatchPartMachineLDLib2UITest {
                 "quadruple hatch page did not preserve the 2x2 tank-grid dimensions");
         assertGrouping(helper, inputPage, "gtpm.multiblock.page_switcher.io.import", 1, "input hatch");
         assertGrouping(helper, outputPage, "gtpm.multiblock.page_switcher.io.export", 2, "output hatch");
+        assertGrouping(helper, passthroughPage, "gtpm.multiblock.page_switcher.io.both", 3, "passthrough hatch");
+        assertGrouping(helper, reservoirPage, "gtpm.multiblock.page_switcher.io.import", 1, "reservoir hatch");
 
         LDLib2FancyMachineUIElement inputShell = createShell(player, input, inputHolder);
         LDLib2FancyMachineUIElement outputShell = createShell(player, output, outputHolder);
@@ -376,6 +410,13 @@ public class FluidHatchPartMachineLDLib2UITest {
             throw new IllegalStateException("Fluid hatch definition did not create a fluid hatch machine.");
         }
         return fluidHatch;
+    }
+
+    private static LDLib2FancyPartUIProvider requireContextualProvider(FluidHatchPartMachine machine) {
+        if (machine instanceof LDLib2FancyPartUIProvider provider) {
+            return provider;
+        }
+        throw new IllegalStateException("Ordinary fluid hatch definition has no contextual LDLib2 page provider.");
     }
 
     private static BlockEntityCreationInfo info(MachineDefinition definition) {

@@ -302,7 +302,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine
 
     @Override
     public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
-        return holder.getMachine() == this && supportsStandaloneLDLib2Page();
+        return holder.getMachine() == this && supportsGenericLDLib2Page();
     }
 
     @Override
@@ -314,7 +314,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine
 
     LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder) {
         requireMatchingLDLib2Holder(holder);
-        if (!supportsStandaloneLDLib2Page()) {
+        if (!supportsGenericLDLib2Page()) {
             throw new IllegalStateException("Fluid hatch definition requires its specialized UI provider.");
         }
         return new FluidHatchLDLib2Page(player, holder);
@@ -326,7 +326,8 @@ public class FluidHatchPartMachine extends TieredIOPartMachine
         }
     }
 
-    private boolean supportsStandaloneLDLib2Page() {
+    /** Determines whether this definition may reuse the generic holder-scoped LDLib2 fluid hatch page. */
+    protected boolean supportsGenericLDLib2Page() {
         MachineDefinition definition = getDefinition();
         return containsDefinition(definition, GTMachines.FLUID_IMPORT_HATCH) ||
                 containsDefinition(definition, GTMachines.FLUID_IMPORT_HATCH_4X) ||
@@ -581,7 +582,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine
     @Override
     @ApiStatus.Internal
     public boolean supportsFluidHatchActions() {
-        return supportsStandaloneLDLib2Page();
+        return supportsGenericLDLib2Page();
     }
 
     @Override

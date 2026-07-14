@@ -945,7 +945,7 @@ public class GTMachines {
             ELECTRIC_TIERS);
 
     public static final MachineDefinition[] FLUID_PASSTHROUGH_HATCH = registerTieredMachines("fluid_passthrough_hatch",
-            (holder, tier) -> new FluidHatchPartMachine(holder, tier, IO.BOTH,
+            (holder, tier) -> new StandardFluidHatchPartMachine(holder, tier, IO.BOTH,
                     FluidHatchPartMachine.INITIAL_TANK_CAPACITY_1X, 1),
             (tier, builder) -> builder
                     .langValue("%s Fluid Passthrough Hatch".formatted(VNF[tier]))

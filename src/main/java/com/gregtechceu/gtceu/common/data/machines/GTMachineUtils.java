@@ -249,7 +249,7 @@ public class GTMachineUtils {
         final String ioOverlay = io == OUT ? OVERLAY_FLUID_HATCH_OUTPUT : OVERLAY_FLUID_HATCH_INPUT;
         final String emissiveOverlay = io == OUT ? "overlay_pipe_out_emissive" : "overlay_pipe_in_emissive";
         return registerTieredMachines(registrate, name,
-                (holder, tier) -> new FluidHatchPartMachine(holder, tier, io, initialCapacity, slots),
+                (holder, tier) -> new StandardFluidHatchPartMachine(holder, tier, io, initialCapacity, slots),
                 (tier, builder) -> {
                     builder.langValue(VNF[tier] + ' ' + displayName)
                             .rotationState(RotationState.ALL)
