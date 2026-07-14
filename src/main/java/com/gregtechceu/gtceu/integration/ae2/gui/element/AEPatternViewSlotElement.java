@@ -14,6 +14,8 @@ import appeng.api.stacks.AEItemKey;
 import appeng.crafting.pattern.EncodedPatternItem;
 import appeng.items.misc.WrappedGenericStack;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * Item-handler slot that keeps an encoded AE2 pattern as its value while rendering the pattern's primary output.
  */
@@ -26,10 +28,18 @@ public final class AEPatternViewSlotElement extends GTItemSlotElement {
      */
     public AEPatternViewSlotElement(IItemHandlerModifiable patternInventory, int slotIndex, Level level,
                                     Runnable changeListener) {
+        this(patternInventory, slotIndex, level, changeListener, () -> true);
+    }
+
+    /**
+     * Binds a pattern slot whose server-side insertion and extraction stay scoped to one validated opening.
+     */
+    public AEPatternViewSlotElement(IItemHandlerModifiable patternInventory, int slotIndex, Level level,
+                                    Runnable changeListener, BooleanSupplier openingValid) {
         super(patternInventory, slotIndex);
         this.level = level;
-        setCanPlace(stack -> stack.getItem() instanceof EncodedPatternItem<?>);
-        setCanTakeItems(true);
+        setCanPlace(stack -> openingValid.getAsBoolean() && stack.getItem() instanceof EncodedPatternItem<?>);
+        setCanTake(player -> openingValid.getAsBoolean());
         setChangeListener(changeListener);
         setBackgroundTexture(GuiTextures.SLOT);
         slotStyle(style -> style

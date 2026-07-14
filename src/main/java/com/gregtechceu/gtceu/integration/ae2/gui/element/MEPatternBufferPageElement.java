@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
+import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferActions;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferPartMachine;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 
 /**
  * Fixed-pixel LDLib2 body for one ME Pattern Buffer menu opening.
@@ -42,8 +44,19 @@ public final class MEPatternBufferPageElement extends UIElement {
     public MEPatternBufferPageElement(MEPatternBufferPartMachine machine, Level level, MachineUIHolder holder,
                                       BiConsumer<MachineUIHolder, SyncActionData> actionSender,
                                       BooleanSupplier canSendAction) {
-        if (holder.getMachine() != machine) {
-            throw new IllegalArgumentException("Pattern Buffer page holder must resolve the opened machine.");
+        this(machine, level, holder, actionSender, canSendAction,
+                () -> holder.getMachine() == machine, MEPatternBufferActions::createSetNameAction);
+    }
+
+    /**
+     * Builds a Pattern Buffer body whose slots and rename action belong to a caller-owned opening identity.
+     */
+    public MEPatternBufferPageElement(MEPatternBufferPartMachine machine, Level level, MachineUIHolder holder,
+                                      BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                      BooleanSupplier canSendAction, BooleanSupplier openingValid,
+                                      Function<String, SyncActionData> nameActionFactory) {
+        if (!openingValid.getAsBoolean()) {
+            throw new IllegalArgumentException("Pattern Buffer page requires a valid opened machine context.");
         }
         UITemplate.setLDLib2Bounds(this, 0, 0, WIDTH, HEIGHT);
         style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
@@ -53,7 +66,8 @@ public final class MEPatternBufferPageElement extends UIElement {
         for (int index = 0; index < patternSlotCount; index++) {
             int patternIndex = index;
             AEPatternViewSlotElement slot = new AEPatternViewSlotElement(
-                    machine.getPatternInventory(), patternIndex, level, () -> machine.onPatternChange(patternIndex));
+                    machine.getPatternInventory(), patternIndex, level, () -> machine.onPatternChange(patternIndex),
+                    openingValid);
             UITemplate.setLDLib2Bounds(slot, 8 + index % 9 * 18, 14 + index / 9 * 18, 18, 18);
             slots.add(slot);
             addChild(slot);
@@ -75,7 +89,7 @@ public final class MEPatternBufferPageElement extends UIElement {
         addChild(networkStatusLabel);
 
         nameEditor = new MEPatternBufferNameEditorElement(100, 2, machine::getCustomName,
-                holder, actionSender, canSendAction);
+                holder, actionSender, canSendAction, nameActionFactory);
         addChild(nameEditor);
     }
 

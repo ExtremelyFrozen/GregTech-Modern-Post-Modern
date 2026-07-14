@@ -18,6 +18,7 @@ import lombok.Getter;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -34,6 +35,7 @@ public final class MEPatternBufferNameEditorElement extends UIElement {
     private final MachineUIHolder holder;
     private final BiConsumer<MachineUIHolder, SyncActionData> actionSender;
     private final BooleanSupplier canSendAction;
+    private final Function<String, SyncActionData> nameActionFactory;
     @Getter
     private final GTTextFieldElement textField;
     @Getter
@@ -48,10 +50,23 @@ public final class MEPatternBufferNameEditorElement extends UIElement {
                                             MachineUIHolder holder,
                                             BiConsumer<MachineUIHolder, SyncActionData> actionSender,
                                             BooleanSupplier canSendAction) {
+        this(x, y, nameSupplier, holder, actionSender, canSendAction,
+                MEPatternBufferActions::createSetNameAction);
+    }
+
+    /**
+     * Creates a rename control whose authoritative action is owned by the opening context.
+     */
+    public MEPatternBufferNameEditorElement(int x, int y, Supplier<String> nameSupplier,
+                                            MachineUIHolder holder,
+                                            BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                            BooleanSupplier canSendAction,
+                                            Function<String, SyncActionData> nameActionFactory) {
         this.nameSupplier = nameSupplier;
         this.holder = holder;
         this.actionSender = actionSender;
         this.canSendAction = canSendAction;
+        this.nameActionFactory = nameActionFactory;
         UITemplate.setLDLib2Bounds(this, x, y, WIDTH, HEIGHT);
 
         textField = new GTTextFieldElement(0, 0, TEXT_WIDTH, HEIGHT)
@@ -93,7 +108,7 @@ public final class MEPatternBufferNameEditorElement extends UIElement {
         textField.setActive(false);
         toggleButton.setButtonTexture(editTexture());
         if (canSendAction.getAsBoolean()) {
-            actionSender.accept(holder, MEPatternBufferActions.createSetNameAction(textField.getText()));
+            actionSender.accept(holder, nameActionFactory.apply(textField.getText()));
         }
     }
 

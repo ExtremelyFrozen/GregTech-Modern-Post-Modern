@@ -39,6 +39,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 
 /**
  * LDLib2 Fancy side page that composes directional machine controls around one shared scene.
@@ -89,6 +90,8 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     private final DirectionalAutoOutputMachine output;
     private final MachineUIHolder pageHolder;
     private final BiConsumer<MachineUIHolder, SyncActionData> actionSender;
+    private final BooleanSupplier openingValid;
+    private final CoverActionRequests coverActionRequests;
 
     @Nullable
     private Direction selectedSide;
@@ -100,6 +103,39 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     }
 
     /**
+     * Creates the three allowlisted cover commands rendered by a directional page.
+     */
+    public interface CoverActionRequests {
+
+        /** Creates a request to place or replace a cover on the selected side. */
+        SyncActionData createPlaceCoverAction(Direction side);
+
+        /** Creates a request to remove the cover on the selected side. */
+        SyncActionData createRemoveCoverAction(Direction side);
+
+        /** Creates a request to open the cover UI on the selected side. */
+        SyncActionData createOpenCoverAction(Direction side);
+    }
+
+    private static final CoverActionRequests DIRECT_COVER_ACTIONS = new CoverActionRequests() {
+
+        @Override
+        public SyncActionData createPlaceCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createPlaceCoverAction(side);
+        }
+
+        @Override
+        public SyncActionData createRemoveCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createRemoveCoverAction(side);
+        }
+
+        @Override
+        public SyncActionData createOpenCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createOpenCoverAction(side);
+        }
+    };
+
+    /**
      * Creates a cover-capable directional page and discovers optional auto-output controls from the machine.
      *
      * @param machine    machine rendered and configured by this page
@@ -107,25 +143,38 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
      * @param pageHolder stable holder used for every machine action sent by the page
      */
     public LDLib2DirectionalFancyConfigurator(MetaMachine machine, Player player, MachineUIHolder pageHolder) {
-        this(machine, player, pageHolder, MachineUIHelper::sendAction);
+        this(machine, player, pageHolder, MachineUIHelper::sendAction,
+                () -> pageHolder.getMachine() == machine, DIRECT_COVER_ACTIONS);
     }
 
     LDLib2DirectionalFancyConfigurator(MetaMachine machine, Player player, MachineUIHolder pageHolder,
                                        BiConsumer<MachineUIHolder, SyncActionData> actionSender) {
-        requireMatchingMachine(machine, pageHolder);
+        this(machine, player, pageHolder, actionSender,
+                () -> pageHolder.getMachine() == machine, DIRECT_COVER_ACTIONS);
+    }
+
+    /**
+     * Creates a directional page whose holder validity and cover actions belong to a caller-owned opening.
+     */
+    public LDLib2DirectionalFancyConfigurator(MetaMachine machine, Player player, MachineUIHolder pageHolder,
+                                              BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                              BooleanSupplier openingValid,
+                                              CoverActionRequests coverActionRequests) {
+        requireValidOpening(openingValid);
         this.machine = machine;
         this.player = player;
         this.coverContainer = machine.getCoverContainer();
         this.output = findDirectionalOutput(machine);
         this.pageHolder = pageHolder;
         this.actionSender = actionSender;
+        this.openingValid = openingValid;
+        this.coverActionRequests = coverActionRequests;
         LDLib2DirectionalCoverActions.initialize();
     }
 
-    private static void requireMatchingMachine(MetaMachine machine, MachineUIHolder pageHolder) {
-        MetaMachine heldMachine = pageHolder.getMachine();
-        if (heldMachine != machine) {
-            throw new IllegalArgumentException("Directional page holder must resolve the configured machine.");
+    private static void requireValidOpening(BooleanSupplier openingValid) {
+        if (!openingValid.getAsBoolean()) {
+            throw new IllegalArgumentException("Directional page requires a valid configured-machine opening.");
         }
     }
 
@@ -140,8 +189,8 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
 
     @Override
     public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
-        if (pageHolder.getMachine() != machine) {
-            throw new IllegalStateException("Directional page holder no longer resolves its opened machine.");
+        if (!openingValid.getAsBoolean()) {
+            throw new IllegalStateException("Directional page no longer resolves its opened machine context.");
         }
 
         UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
@@ -325,11 +374,13 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
     }
 
     private void sendAction(SyncActionData action) {
-        actionSender.accept(pageHolder, action);
+        if (openingValid.getAsBoolean()) {
+            actionSender.accept(pageHolder, action);
+        }
     }
 
     private boolean canChangeSyncedFields() {
-        return machine.isRemote() && pageHolder.getMachine() == machine;
+        return machine.isRemote() && openingValid.getAsBoolean();
     }
 
     private boolean supportsItemOutput() {
@@ -505,7 +556,8 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
 
         private void refreshState() {
             CoverBehavior cover = getSelectedCover();
-            boolean configurable = cover != null && CoverUIHelper.canOpenLDLib2(cover, player);
+            boolean configurable = openingValid.getAsBoolean() && cover != null &&
+                    CoverUIHelper.canOpenLDLib2(cover, player);
             setVisible(configurable);
             setActive(configurable);
         }
@@ -529,8 +581,9 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
 
         private void refreshState() {
             Direction side = selectedSide;
-            setVisible(side != null);
-            setActive(side != null);
+            boolean active = openingValid.getAsBoolean() && side != null;
+            setVisible(active);
+            setActive(active);
             CoverBehavior cover = getSelectedCover();
             setItem(cover == null ? ItemStack.EMPTY : cover.getAttachItem().copy(), false);
         }
@@ -557,8 +610,8 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
             return;
         }
         SyncActionData action = player.containerMenu.getCarried().isEmpty() && getSelectedCover() != null ?
-                LDLib2DirectionalCoverActions.createRemoveCoverAction(side) :
-                LDLib2DirectionalCoverActions.createPlaceCoverAction(side);
+                coverActionRequests.createRemoveCoverAction(side) :
+                coverActionRequests.createPlaceCoverAction(side);
         sendAction(action);
         event.stopImmediatePropagation();
         event.hasHandler = true;
@@ -570,7 +623,7 @@ public final class LDLib2DirectionalFancyConfigurator implements LDLib2FancyUIPr
         if (side == null || cover == null || !CoverUIHelper.canOpenLDLib2(cover, player)) {
             return;
         }
-        sendAction(LDLib2DirectionalCoverActions.createOpenCoverAction(side));
+        sendAction(coverActionRequests.createOpenCoverAction(side));
         event.stopImmediatePropagation();
         event.hasHandler = true;
     }

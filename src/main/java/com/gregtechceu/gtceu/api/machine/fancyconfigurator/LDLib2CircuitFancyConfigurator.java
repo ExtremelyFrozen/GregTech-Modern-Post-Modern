@@ -13,6 +13,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyCustomMouseWheelAction;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
@@ -28,6 +29,9 @@ import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
+import java.util.function.IntFunction;
 
 /**
  * LDLib2 Fancy configurator for machine programmed-circuit slots.
@@ -51,6 +55,9 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
 
     private final IHasCircuitSlot circuitMachine;
     private final MachineUIHolder holder;
+    private final BiConsumer<MachineUIHolder, SyncActionData> actionSender;
+    private final BooleanSupplier openingValid;
+    private final IntFunction<SyncActionData> actionFactory;
 
     /**
      * Creates a circuit configurator bound to the machine circuit inventory and opened UI holder.
@@ -59,11 +66,25 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
      * @param holder         opened machine UI holder used to send GTM machine actions.
      */
     public LDLib2CircuitFancyConfigurator(IHasCircuitSlot circuitMachine, MachineUIHolder holder) {
+        this(circuitMachine, holder, MachineUIHelper::sendAction, () -> true,
+                LDLib2CircuitFancyConfiguratorActions::createSetMachineCircuitConfigurationAction);
+    }
+
+    /**
+     * Creates a circuit configurator whose authoritative action and slot validity belong to its caller's opening.
+     */
+    public LDLib2CircuitFancyConfigurator(IHasCircuitSlot circuitMachine, MachineUIHolder holder,
+                                          BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                          BooleanSupplier openingValid,
+                                          IntFunction<SyncActionData> actionFactory) {
         if (!hasUsableCircuitSlot(circuitMachine)) {
             throw new IllegalArgumentException("Circuit Fancy configurator requires an enabled circuit slot.");
         }
         this.circuitMachine = circuitMachine;
         this.holder = holder;
+        this.actionSender = actionSender;
+        this.openingValid = openingValid;
+        this.actionFactory = actionFactory;
     }
 
     @Override
@@ -108,8 +129,8 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
         boolean canModifySlot = !ConfigHolder.INSTANCE.machines.ghostCircuit;
         GTItemSlotElement selectedSlot = new GTItemSlotElement(circuitInventory().storage, SELECTED_SLOT);
         selectedSlot.setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.INT_CIRCUIT_OVERLAY))
-                .setCanPutItems(canModifySlot)
-                .setCanTakeItems(canModifySlot);
+                .setCanPlace(stack -> canModifySlot && openingValid.getAsBoolean())
+                .setCanTake(player -> canModifySlot && openingValid.getAsBoolean());
         UITemplate.setLDLib2Bounds(selectedSlot, selectedSlotX, 20, SLOT_SIZE, SLOT_SIZE);
         root.addChild(selectedSlot);
 
@@ -170,21 +191,26 @@ public class LDLib2CircuitFancyConfigurator implements LDLib2FancyConfigurator, 
     }
 
     private void setCircuitButtonConfiguration(int configuration) {
+        if (!openingValid.getAsBoolean()) {
+            return;
+        }
         if (writeCircuitButtonConfiguration(circuitInventory(), configuration)) {
             sendActionIfRemote(configuration);
         }
     }
 
     private void setMachineCircuitConfiguration(int configuration) {
+        if (!openingValid.getAsBoolean()) {
+            return;
+        }
         writeMachineCircuitConfiguration(circuitInventory(), configuration);
         sendActionIfRemote(configuration);
     }
 
     private void sendActionIfRemote(int configuration) {
         var machine = holder.getMachine();
-        if (machine != null && machine.isRemote()) {
-            MachineUIHelper.sendAction(holder,
-                    LDLib2CircuitFancyConfiguratorActions.createSetMachineCircuitConfigurationAction(configuration));
+        if (machine != null && machine.isRemote() && openingValid.getAsBoolean()) {
+            actionSender.accept(holder, actionFactory.apply(configuration));
         }
     }
 

@@ -23,6 +23,8 @@ import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyInvConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyTankConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2ButtonConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfiguratorActions;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalCoverActions;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2FancyInvConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2FancyTankConfigurator;
@@ -57,6 +59,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -111,6 +114,62 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     }
 
     protected static final int MAX_PATTERN_COUNT = 27;
+
+    /**
+     * Creates every authoritative command exposed by one Pattern Buffer Fancy page.
+     */
+    interface PatternBufferPageActions extends LDLib2DirectionalFancyConfigurator.CoverActionRequests {
+
+        /** Creates the exact terminal-name command for this opening. */
+        SyncActionData createSetNameAction(String name);
+
+        /** Creates the command that refunds every buffered crafting input. */
+        SyncActionData createRefundAllAction();
+
+        /** Creates one shared-tank container interaction. */
+        SyncActionData createClickShareTankAction(int tankIndex, boolean shiftDown);
+
+        /** Creates one programmed-circuit configuration command. */
+        SyncActionData createSetCircuitConfigurationAction(int configuration);
+    }
+
+    private static final PatternBufferPageActions DIRECT_PAGE_ACTIONS = new PatternBufferPageActions() {
+
+        @Override
+        public SyncActionData createSetNameAction(String name) {
+            return MEPatternBufferActions.createSetNameAction(name);
+        }
+
+        @Override
+        public SyncActionData createRefundAllAction() {
+            return MEPatternBufferActions.createRefundAllAction();
+        }
+
+        @Override
+        public SyncActionData createClickShareTankAction(int tankIndex, boolean shiftDown) {
+            return MEPatternBufferActions.createClickShareTankAction(tankIndex, shiftDown);
+        }
+
+        @Override
+        public SyncActionData createSetCircuitConfigurationAction(int configuration) {
+            return LDLib2CircuitFancyConfiguratorActions.createSetMachineCircuitConfigurationAction(configuration);
+        }
+
+        @Override
+        public SyncActionData createPlaceCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createPlaceCoverAction(side);
+        }
+
+        @Override
+        public SyncActionData createRemoveCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createRemoveCoverAction(side);
+        }
+
+        @Override
+        public SyncActionData createOpenCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createOpenCoverAction(side);
+        }
+    };
     private final InternalInventory internalPatternInventory = new InternalInventory() {
 
         @Override
@@ -260,14 +319,27 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
 
     @UnmodifiableView
     public Set<MEPatternBufferProxyPartMachine> getProxies() {
-        if (proxyMachines.size() != proxies.size()) {
-            proxyMachines.clear();
-            for (var pos : proxies) {
-                if (MetaMachine.getMachine(getLevel(), pos) instanceof MEPatternBufferProxyPartMachine proxy) {
-                    proxyMachines.add(proxy);
+        var level = getLevel();
+        if (level == null) {
+            return Collections.unmodifiableSet(proxyMachines);
+        }
+        Set<MEPatternBufferProxyPartMachine> resolvedProxies = new ReferenceOpenHashSet<>();
+        Set<BlockPos> stalePositions = new ObjectOpenHashSet<>();
+        for (var pos : List.copyOf(proxies)) {
+            MetaMachine machine = MetaMachine.getMachine(level, pos);
+            if (machine instanceof MEPatternBufferProxyPartMachine proxy) {
+                if (proxy.getBuffer() == this) {
+                    resolvedProxies.add(proxy);
+                } else {
+                    stalePositions.add(pos);
                 }
+            } else if (machine != null) {
+                stalePositions.add(pos);
             }
         }
+        proxies.removeAll(stalePositions);
+        proxyMachines.clear();
+        proxyMachines.addAll(resolvedProxies);
         return Collections.unmodifiableSet(proxyMachines);
     }
 
@@ -307,9 +379,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     //////////////////////////////////////
     @Override
     public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
-        return holder.getMachine() == this &&
-                holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId()) &&
-                supportsMEPatternBufferActions();
+        return matchesDirectLDLib2Opening(holder) && supportsMEPatternBufferActions();
     }
 
     @Override
@@ -323,10 +393,10 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
      * Creates one standalone opening-scoped page after validating the holder and exact machine definition.
      */
     LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder) {
-        return createLDLib2Page(player, holder, MachineUIHelper::sendAction,
-                () -> player.level().isClientSide() && holder.getMachine() == this &&
-                        holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId()),
-                UIEvent::isShiftDown);
+        BooleanSupplier openingValid = () -> matchesDirectLDLib2Opening(holder);
+        return createOpeningScopedLDLib2Page(player, holder, MachineUIHelper::sendAction, openingValid,
+                () -> player.level().isClientSide() && openingValid.getAsBoolean(),
+                UIEvent::isShiftDown, DIRECT_PAGE_ACTIONS);
     }
 
     /**
@@ -336,8 +406,24 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
                                            BiConsumer<MachineUIHolder, SyncActionData> actionSender,
                                            BooleanSupplier canSendAction, Predicate<UIEvent> shiftDown) {
         requireMatchingLDLib2Holder(holder);
+        BooleanSupplier openingValid = () -> matchesDirectLDLib2Opening(holder);
+        return createOpeningScopedLDLib2Page(player, holder, actionSender, openingValid,
+                () -> openingValid.getAsBoolean() && canSendAction.getAsBoolean(), shiftDown, DIRECT_PAGE_ACTIONS);
+    }
+
+    /**
+     * Builds this buffer's page around a caller-owned holder and immutable opening identity.
+     */
+    LDLib2FancyUIProvider createOpeningScopedLDLib2Page(Player player, MachineUIHolder holder,
+                                                        BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                                        BooleanSupplier openingValid,
+                                                        BooleanSupplier canSendAction,
+                                                        Predicate<UIEvent> shiftDown,
+                                                        PatternBufferPageActions pageActions) {
+        requireValidOpening(openingValid);
         requirePatternBufferDefinition();
-        return new MEPatternBufferFancyPage(player, holder, actionSender, canSendAction, shiftDown);
+        return new MEPatternBufferFancyPage(player, holder, actionSender, openingValid, canSendAction,
+                shiftDown, pageActions);
     }
 
     @Override
@@ -352,8 +438,24 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
                                                        BiConsumer<MachineUIHolder, SyncActionData> actionSender,
                                                        BooleanSupplier canSendAction) {
         requireMatchingLDLib2Holder(holder);
+        BooleanSupplier openingValid = () -> matchesDirectLDLib2Opening(holder);
+        return createOpeningScopedLDLib2MainElement(player, holder, actionSender, openingValid,
+                () -> openingValid.getAsBoolean() && canSendAction.getAsBoolean(), DIRECT_PAGE_ACTIONS);
+    }
+
+    /**
+     * Builds the directly testable body for a validated direct or Proxy opening.
+     */
+    MEPatternBufferPageElement createOpeningScopedLDLib2MainElement(
+                                                                    Player player, MachineUIHolder holder,
+                                                                    BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                                                    BooleanSupplier openingValid,
+                                                                    BooleanSupplier canSendAction,
+                                                                    PatternBufferPageActions pageActions) {
+        requireValidOpening(openingValid);
         requirePatternBufferDefinition();
-        return new MEPatternBufferPageElement(this, player.level(), holder, actionSender, canSendAction);
+        return new MEPatternBufferPageElement(this, player.level(), holder, actionSender, canSendAction,
+                openingValid, pageActions::createSetNameAction);
     }
 
     public int getLDLib2PageWidth() {
@@ -365,9 +467,19 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     }
 
     private void requireMatchingLDLib2Holder(MachineUIHolder holder) {
-        if (holder.getMachine() != this ||
-                !holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId())) {
+        if (!matchesDirectLDLib2Opening(holder)) {
             throw new IllegalArgumentException("Pattern Buffer page holder must resolve the opened definition.");
+        }
+    }
+
+    private boolean matchesDirectLDLib2Opening(MachineUIHolder holder) {
+        return holder.getMachine() == this &&
+                holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId());
+    }
+
+    private static void requireValidOpening(BooleanSupplier openingValid) {
+        if (!openingValid.getAsBoolean()) {
+            throw new IllegalArgumentException("Pattern Buffer page requires a valid opening identity.");
         }
     }
 
@@ -476,30 +588,35 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
         private final Player player;
         private final MachineUIHolder holder;
         private final BiConsumer<MachineUIHolder, SyncActionData> actionSender;
+        private final BooleanSupplier openingValid;
         private final BooleanSupplier canSendAction;
         private final Predicate<UIEvent> shiftDown;
+        private final PatternBufferPageActions pageActions;
         private final LDLib2DirectionalFancyConfigurator directionalPage;
 
         private MEPatternBufferFancyPage(Player player, MachineUIHolder holder,
                                          BiConsumer<MachineUIHolder, SyncActionData> actionSender,
-                                         BooleanSupplier canSendAction, Predicate<UIEvent> shiftDown) {
-            requireMatchingLDLib2Holder(holder);
+                                         BooleanSupplier openingValid, BooleanSupplier canSendAction,
+                                         Predicate<UIEvent> shiftDown, PatternBufferPageActions pageActions) {
+            requireValidOpening(openingValid);
             this.player = player;
             this.holder = holder;
             this.actionSender = actionSender;
+            this.openingValid = openingValid;
             this.canSendAction = canSendAction;
             this.shiftDown = shiftDown;
-            directionalPage = new LDLib2DirectionalFancyConfigurator(
-                    MEPatternBufferPartMachine.this, player, holder);
+            this.pageActions = pageActions;
+            directionalPage = new LDLib2DirectionalFancyConfigurator(MEPatternBufferPartMachine.this, player,
+                    holder, actionSender, openingValid, pageActions);
         }
 
         @Override
         public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
-            if (holder.getMachine() != MEPatternBufferPartMachine.this ||
-                    !holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId())) {
-                throw new IllegalStateException("Pattern Buffer page holder no longer resolves its opened machine.");
+            if (!openingValid.getAsBoolean()) {
+                throw new IllegalStateException("Pattern Buffer page no longer resolves its opened machine context.");
             }
-            return createLDLib2MainElement(player, holder, actionSender, canSendAction);
+            return createOpeningScopedLDLib2MainElement(player, holder, actionSender, openingValid,
+                    canSendAction, pageActions);
         }
 
         @Override
@@ -532,15 +649,16 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
             configuratorPanel.attachConfigurators(new LDLib2ButtonConfigurator(
                     GuiTextures.group(GuiTextures.BUTTON, GuiTextures.REFUND_OVERLAY), event -> {
                         if (canSendAction.getAsBoolean()) {
-                            actionSender.accept(holder, MEPatternBufferActions.createRefundAllAction());
+                            actionSender.accept(holder, pageActions.createRefundAllAction());
                         }
                     }).setTooltips(List.of(Component.translatable("gui.gtpm.refund_all.desc"))));
             if (isHasCircuitSlot() && isCircuitSlotEnabled()) {
                 configuratorPanel.attachConfigurators(new LDLib2CircuitFancyConfigurator(
-                        MEPatternBufferPartMachine.this, holder));
+                        MEPatternBufferPartMachine.this, holder, actionSender, openingValid,
+                        pageActions::createSetCircuitConfigurationAction));
             }
             configuratorPanel.attachConfigurators(new LDLib2FancyInvConfigurator(
-                    shareInventory.storage, Component.translatable("gui.gtpm.share_inventory.title"))
+                    shareInventory.storage, Component.translatable("gui.gtpm.share_inventory.title"), openingValid)
                     .setTooltips(List.of(
                             Component.translatable("gui.gtpm.share_inventory.desc.0"),
                             Component.translatable("gui.gtpm.share_inventory.desc.1"))));
@@ -551,7 +669,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
                                 FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isEmpty()) {
                             return false;
                         }
-                        actionSender.accept(holder, MEPatternBufferActions.createClickShareTankAction(
+                        actionSender.accept(holder, pageActions.createClickShareTankAction(
                                 tankIndex, shiftDown.test(event)));
                         return true;
                     })
