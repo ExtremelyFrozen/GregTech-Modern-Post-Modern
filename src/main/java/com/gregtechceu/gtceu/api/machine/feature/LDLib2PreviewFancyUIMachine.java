@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.api.machine.feature;
 
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
-import com.gregtechceu.gtceu.api.gui.fancy.LDLib2PreviewFancyPageImpl;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
@@ -17,12 +17,12 @@ public interface LDLib2PreviewFancyUIMachine extends LDLib2FancyUIMachine {
     /**
      * Width of the legacy fallback preview content.
      */
-    int PREVIEW_PAGE_WIDTH = LDLib2PreviewFancyPageImpl.PREVIEW_PAGE_WIDTH;
+    int PREVIEW_PAGE_WIDTH = LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH;
 
     /**
      * Height of the legacy fallback preview content.
      */
-    int PREVIEW_PAGE_HEIGHT = LDLib2PreviewFancyPageImpl.PREVIEW_PAGE_HEIGHT;
+    int PREVIEW_PAGE_HEIGHT = LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT;
 
     /**
      * Builds a fixed-size LDLib2 preview page for this machine.
@@ -32,7 +32,7 @@ public interface LDLib2PreviewFancyUIMachine extends LDLib2FancyUIMachine {
      */
     @Override
     default UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
-        return LDLib2PreviewFancyPageImpl.createPreviewElement(self());
+        return LDLib2FancyPreviewPage.createPreviewElement(self());
     }
 
     /**

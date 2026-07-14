@@ -61,7 +61,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyTitleBarElement.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyTooltipsPanelElement.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyUIProvider.java',
-                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2PreviewFancyPageImpl.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyPreviewPage.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ColorBorderTexture.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ColorRectTexture.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/texture/GTGuiTexture.java',

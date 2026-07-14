@@ -30,7 +30,7 @@ import java.util.List;
  * The page captures its own validated holder so contextual multiblock part actions cannot accidentally use the
  * controller holder owned by the surrounding Fancy shell.
  */
-public final class LDLib2PreviewFancyPageImpl implements LDLib2FancyUIProvider {
+public final class LDLib2FancyPreviewPage implements LDLib2FancyUIProvider {
 
     public static final int PREVIEW_PAGE_WIDTH = 100;
     public static final int PREVIEW_PAGE_HEIGHT = 100;
@@ -49,7 +49,7 @@ public final class LDLib2PreviewFancyPageImpl implements LDLib2FancyUIProvider {
      * @param holder       holder dedicated to the contextual machine rather than its controller
      * @param groupingData optional page-switcher group for multipart navigation
      */
-    public LDLib2PreviewFancyPageImpl(MetaMachine machine, Player player, MachineUIHolder holder,
+    public LDLib2FancyPreviewPage(MetaMachine machine, Player player, MachineUIHolder holder,
                                       @Nullable PageGroupingData groupingData) {
         requireMatchingHolder(machine, holder);
         if (!(machine instanceof LDLib2FancyActionMachine)) {

@@ -3,8 +3,8 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
-import com.gregtechceu.gtceu.api.gui.fancy.LDLib2PreviewFancyPageImpl;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
@@ -80,8 +80,8 @@ public class EnergyTransferHatchLDLib2UITest {
     private static void assertPage(GameTestHelper helper, ServerPlayer player, TieredIOPartMachine machine,
                                    MachineUIHolder holder, LDLib2FancyUIProvider page,
                                    String expectedGroupKey, int expectedGroupWeight, String description) {
-        helper.assertTrue(page.getLDLib2PageWidth() == LDLib2PreviewFancyPageImpl.PREVIEW_PAGE_WIDTH &&
-                page.getLDLib2PageHeight() == LDLib2PreviewFancyPageImpl.PREVIEW_PAGE_HEIGHT,
+        helper.assertTrue(page.getLDLib2PageWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                page.getLDLib2PageHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 description + " did not preserve the 100x100 default preview body");
 
         LDLib2FancyUIProvider.PageGroupingData grouping = page.getPageGroupingData();
@@ -99,8 +99,8 @@ public class EnergyTransferHatchLDLib2UITest {
                 description + " did not expose one stable directional side page");
 
         UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(pageRoot.getSizeWidth() == LDLib2PreviewFancyPageImpl.PREVIEW_PAGE_WIDTH &&
-                pageRoot.getSizeHeight() == LDLib2PreviewFancyPageImpl.PREVIEW_PAGE_HEIGHT,
+        helper.assertTrue(pageRoot.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                pageRoot.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 description + " created a preview element with incorrect bounds");
         helper.assertTrue(pageRoot.getChildren().isEmpty(),
                 description + " constructed a client Scene on the GameTest server");

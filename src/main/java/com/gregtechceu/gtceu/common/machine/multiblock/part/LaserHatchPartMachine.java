@@ -4,8 +4,8 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
-import com.gregtechceu.gtceu.api.gui.fancy.LDLib2PreviewFancyPageImpl;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -51,7 +51,7 @@ public class LaserHatchPartMachine extends TieredIOPartMachine
 
     @Override
     public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
-        return new LDLib2PreviewFancyPageImpl(this, player, holder, switch (io) {
+        return new LDLib2FancyPreviewPage(this, player, holder, switch (io) {
             case IN -> new LDLib2FancyUIProvider.PageGroupingData(
                     "gtpm.multiblock.page_switcher.io.import", 1);
             case OUT -> new LDLib2FancyUIProvider.PageGroupingData(
