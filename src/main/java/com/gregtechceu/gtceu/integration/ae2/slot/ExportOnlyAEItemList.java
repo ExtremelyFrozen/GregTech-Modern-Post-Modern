@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -20,6 +21,10 @@ public class ExportOnlyAEItemList extends NotifiableItemStackHandler implements 
     @SaveField
     @Getter
     protected ExportOnlyAEItemSlot[] inventory;
+
+    /** Keeps construction-time and standalone slots callable before an owning snapshot subscribes. */
+    @Setter
+    private Runnable snapshotChangeListener = () -> {};
 
     private @Nullable CustomItemStackHandler itemHandler;
 
@@ -34,8 +39,13 @@ public class ExportOnlyAEItemList extends NotifiableItemStackHandler implements 
             this.inventory[i] = slotFactory.get();
         }
         for (ExportOnlyAEItemSlot slot : this.inventory) {
-            slot.setOnContentsChanged(this::onContentsChanged);
+            slot.setOnContentsChanged(this::onSlotContentsChanged);
         }
+    }
+
+    private void onSlotContentsChanged() {
+        onContentsChanged();
+        snapshotChangeListener.run();
     }
 
     public CustomItemStackHandler getHandler() {

@@ -34,6 +34,7 @@ import appeng.api.storage.MEStorage;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -204,6 +205,9 @@ public class MEStockingBusPartMachine extends MEInputBusPartMachine implements I
 
     @Override
     public void setAutoPull(boolean autoPull) {
+        if (this.autoPull == autoPull) {
+            return;
+        }
         this.autoPull = autoPull;
         if (!isRemote()) {
             syncDataHolder.markClientSyncFieldDirty("autoPull");
@@ -213,7 +217,28 @@ public class MEStockingBusPartMachine extends MEInputBusPartMachine implements I
                 this.refreshList();
                 updateInventorySubscription();
             }
+            refreshItemConfigSnapshot();
         }
+    }
+
+    @Override
+    public boolean isMEItemConfigAutoPull() {
+        return autoPull;
+    }
+
+    @Override
+    public boolean isMEItemStocking() {
+        return true;
+    }
+
+    @Override
+    public void setMEItemAutoPull(boolean autoPull) {
+        setAutoPull(autoPull);
+    }
+
+    @Override
+    protected boolean isConfiguredInOtherStockingPart(@NotNull GenericStack stack) {
+        return testConfiguredInOtherPart(stack);
     }
 
     /**

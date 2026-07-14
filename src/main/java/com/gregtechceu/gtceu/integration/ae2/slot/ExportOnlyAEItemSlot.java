@@ -20,6 +20,18 @@ public class ExportOnlyAEItemSlot extends ExportOnlyAESlot implements IItemHandl
     }
 
     @Override
+    public void setConfig(@Nullable GenericStack stack) {
+        if (this.config == null && stack == null) {
+            return;
+        }
+        if (stack != null && stack.equals(this.config)) {
+            return;
+        }
+        this.config = stack;
+        onContentsChanged();
+    }
+
+    @Override
     public void addStack(GenericStack stack) {
         if (this.stock == null) {
             this.stock = stack;
