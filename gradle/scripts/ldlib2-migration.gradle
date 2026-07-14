@@ -611,10 +611,18 @@ tasks.register('reportLdlib2MigrationInventory') {
             rootProject.relativePath(left) <=> rootProject.relativePath(right)
         }
         var legacyFluidXeiSlotEntry = 'setXEIRecipe' + 'Slot'
+        var legacyModularUIReference = 'com.lowdragmc.lowdraglib.gui.modular.ModularUI'
+        var legacyModularUIWildcard = 'com.lowdragmc.lowdraglib.gui.modular.*'
+        var ldlib2ModularUIReferences = [
+                'com.lowdragmc.lowdraglib2.gui.ui.ModularUI',
+                'com.lowdragmc.lowdraglib2.integration.xei.emi.ModularUIEMIRecipe',
+                'com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory'
+        ]
+        var standaloneModularUI = ~/(?<![A-Za-z0-9_$])ModularUI(?![A-Za-z0-9_$])/
+        var createModularUI = ~/(?<![A-Za-z0-9_$])createModularUI(?![A-Za-z0-9_$])/
 
         var stringPatterns = [
                 [category: 'legacy-package', snippet: 'com.lowdragmc.lowdraglib.'],
-                [category: 'legacy-ui-model', snippet: 'ModularUI'],
                 [category: 'legacy-ui-model', snippet: 'WidgetGroup'],
                 [category: 'legacy-ui-model', snippet: 'Widget'],
                 [category: 'legacy-xei-role', snippet: 'IngredientIO.RENDER_ONLY'],
@@ -643,6 +651,9 @@ tasks.register('reportLdlib2MigrationInventory') {
                 [category: 'legacy-dependency', snippet: 'modId = "ldlib"']
         ]
         var regexPatterns = [
+                [category: 'legacy-ui-model', pattern: ~/.*\bgetModularUIContainer\b.*/,
+                 snippet: 'getModularUIContainer'],
+                [category: 'legacy-ui-model', pattern: ~/.*\bgetModularUIGui\b.*/, snippet: 'getModularUIGui'],
                 [category: 'disabled-ldlib2-sync', pattern: ~/.*\baddRPCEvent\s*\(.*/, snippet: 'addRPCEvent('],
                 [category: 'disabled-ldlib2-sync', pattern: ~/.*\.markAsDirty\s*\(.*/, snippet: '.markAsDirty(']
         ]
@@ -653,6 +664,10 @@ tasks.register('reportLdlib2MigrationInventory') {
             if (relativePath.endsWith('.rtui')) {
                 matches.add([path: relativePath, line: 1, category: 'legacy-rtui', snippet: 'legacy LDLib1 .rtui file'])
             } else {
+                var fileContent = scannedFile.getText('UTF-8')
+                var hasLegacyModularUI = fileContent.contains(legacyModularUIReference) ||
+                        fileContent.contains(legacyModularUIWildcard)
+                var hasLdlib2ModularUI = ldlib2ModularUIReferences.any { fileContent.contains(it) }
                 scannedFile.eachLine('UTF-8') { line, number ->
                     stringPatterns.each { inventoryPattern ->
                         if (line.contains(inventoryPattern.snippet)) {
@@ -673,6 +688,38 @@ tasks.register('reportLdlib2MigrationInventory') {
                                     snippet : inventoryPattern.snippet
                             ])
                         }
+                    }
+                    var referencesModularUI = standaloneModularUI.matcher(line).find()
+                    var callsCreateModularUI = createModularUI.matcher(line).find()
+                    if (referencesModularUI && hasLegacyModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'legacy-ui-model',
+                                snippet : 'ModularUI'
+                        ])
+                    } else if (callsCreateModularUI && hasLegacyModularUI && !hasLdlib2ModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'legacy-ui-model',
+                                snippet : 'createModularUI'
+                        ])
+                    } else if ((referencesModularUI || callsCreateModularUI) &&
+                            !hasLegacyModularUI && !hasLdlib2ModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'unresolved-modular-ui-origin',
+                                snippet : referencesModularUI ? 'ModularUI' : 'createModularUI'
+                        ])
+                    } else if (callsCreateModularUI && hasLegacyModularUI && hasLdlib2ModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'unresolved-modular-ui-origin',
+                                snippet : 'createModularUI'
+                        ])
                     }
                 }
             }
