@@ -55,7 +55,7 @@ public class PumpHatchPartMachineActionTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void dispatcherExecutesBothShiftStatesExactlyOnce(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-        TestPumpHatchTargetImpl target = new TestPumpHatchTargetImpl();
+        TestPumpHatchActionTarget target = new TestPumpHatchActionTarget();
 
         helper.assertTrue(dispatch(player, target,
                 PumpHatchPartMachineActions.createClickPumpHatchFluidSlotAction(false)),
@@ -76,7 +76,7 @@ public class PumpHatchPartMachineActionTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void dispatcherRejectsMalformedPayloadsWithoutInvokingTarget(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-        TestPumpHatchTargetImpl target = new TestPumpHatchTargetImpl();
+        TestPumpHatchActionTarget target = new TestPumpHatchActionTarget();
 
         helper.assertTrue(!dispatch(player, target, rawAction(DataComponentMap.EMPTY)),
                 "pump hatch action without field data was accepted");
@@ -96,7 +96,7 @@ public class PumpHatchPartMachineActionTest {
     public static void dispatcherRejectsWrongHolderAndSpectatorWithoutInvokingTarget(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         SyncActionData action = PumpHatchPartMachineActions.createClickPumpHatchFluidSlotAction(true);
-        TestPumpHatchTargetImpl target = new TestPumpHatchTargetImpl();
+        TestPumpHatchActionTarget target = new TestPumpHatchActionTarget();
 
         helper.assertTrue(!dispatch(player, new Object(), action),
                 "pump hatch action accepted an unrelated holder");
@@ -154,7 +154,7 @@ public class PumpHatchPartMachineActionTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void dispatcherIgnoresUnknownTankIndexAndOtherFields(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-        TestPumpHatchTargetImpl target = new TestPumpHatchTargetImpl();
+        TestPumpHatchActionTarget target = new TestPumpHatchActionTarget();
         DataComponentMap payload = DataComponentMap.builder()
                 .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
                         .put(SHIFT_FIELD, new JsonPrimitive(false))
@@ -324,7 +324,7 @@ public class PumpHatchPartMachineActionTest {
         return pumpHatch;
     }
 
-    private static final class TestPumpHatchTargetImpl implements PumpHatchFluidSlotActionTarget {
+    private static final class TestPumpHatchActionTarget implements PumpHatchFluidSlotActionTarget {
 
         private int invocations;
         private boolean lastShiftDown;
