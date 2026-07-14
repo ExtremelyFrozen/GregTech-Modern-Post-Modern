@@ -8,11 +8,19 @@ import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.network.chat.Component;
 
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiPredicate;
 
 /**
  * LDLib2 Fancy configurator for display-only fluid tank grids.
@@ -21,11 +29,15 @@ import java.util.List;
  * Bucket transfer must be wired by the owning machine through a GT action before this replaces legacy TankWidget
  * behavior.
  */
+@Accessors(chain = true)
 public class LDLib2FancyTankConfigurator implements LDLib2FancyConfigurator {
 
     private final CustomFluidTank[] tanks;
     private final Component title;
     private List<Component> tooltips = Collections.emptyList();
+    @Setter
+    @Nullable
+    private BiPredicate<Integer, UIEvent> tankClickHandler;
 
     public LDLib2FancyTankConfigurator(CustomFluidTank[] tanks, Component title) {
         this.tanks = tanks;
@@ -76,12 +88,21 @@ public class LDLib2FancyTankConfigurator implements LDLib2FancyConfigurator {
         int index = 0;
         for (int y = 0; y < colSize; y++) {
             for (int x = 0; x < rowSize; x++) {
+                int tankIndex = index++;
                 GTFluidSlotElement slot = new GTFluidSlotElement()
-                        .setFluidTank(tanks[index++], 0)
+                        .setFluidTank(tanks[tankIndex], 0)
                         .setBackgroundTexture(GuiTextures.FLUID_SLOT)
-                        .setAllowClickFilled(false)
-                        .setAllowClickDrained(false)
+                        .setAllowClickFilled(tankClickHandler != null)
+                        .setAllowClickDrained(tankClickHandler != null)
                         .setShowAmount(true);
+                if (tankClickHandler != null) {
+                    slot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+                        if (event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT && tankClickHandler.test(tankIndex, event)) {
+                            event.stopImmediatePropagation();
+                            event.hasHandler = true;
+                        }
+                    });
+                }
                 UITemplate.setLDLib2Bounds(slot, 4 + x * 18, 4 + y * 18, 18, 18);
                 container.addChild(slot);
             }

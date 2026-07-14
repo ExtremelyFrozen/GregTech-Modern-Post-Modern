@@ -116,6 +116,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ProspectingTexture.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ResourceBorderTexture.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/texture/TextTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/util/FluidContainerSlotInteraction.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/ComponentItem.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/IGTTool.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/component/IItemUIFactory.java',
@@ -202,10 +203,15 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEFluidConfigAmountProjection.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEFluidConfigElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEFluidConfigSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEPatternViewSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEPatternBufferNameEditorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEPatternBufferPageElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/fancy/LDLib2MEFluidAutoPullFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/AEFluidConfigSnapshot.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEFluidConfigActions.kt',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEInputHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferActions.kt',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEStockingHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/slot/ExportOnlyAEFluidList.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/slot/ExportOnlyAEFluidSlot.java',
@@ -249,13 +255,39 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                         'public void attachSideTabs(TabsWidget sideTabs) {',
                         'public void attachConfigurators(ConfiguratorPanel configuratorPanel) {',
                         'configuratorPanel.attachConfigurators(new AutoStockingFancyConfigurator(this));'
+                ],
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferPartMachine.java': [
+                        'import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;',
+                        'import com.gregtechceu.gtceu.api.machine.fancyconfigurator.ButtonConfigurator;',
+                        'import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CircuitFancyConfigurator;',
+                        'import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyInvConfigurator;',
+                        'import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyTankConfigurator;',
+                        'import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;',
+                        'import com.gregtechceu.gtceu.integration.ae2.gui.widget.slot.AEPatternViewSlotWidget;',
+                        'import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;',
+                        'import com.lowdragmc.lowdraglib.gui.widget.Widget;',
+                        'import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;',
+                        'import com.lowdragmc.lowdraglib2.gui.util.ClickData;',
+                        'private void refundAll(ClickData clickData) {',
+                        'public void attachConfigurators(ConfiguratorPanel configuratorPanel) {',
+                        'configuratorPanel.attachConfigurators(new ButtonConfigurator(',
+                        'configuratorPanel.attachConfigurators(new CircuitFancyConfigurator(circuitInventory.storage));',
+                        'configuratorPanel.attachConfigurators(new FancyInvConfigurator(',
+                        'configuratorPanel.attachConfigurators(new FancyTankConfigurator(',
+                        'public Widget createUIWidget() {',
+                        'var group = new WidgetGroup(0, 0, 18 * rowSize + 16, 18 * colSize + 16);',
+                        'var slot = new AEPatternViewSlotWidget(patternInventory, index++, 8 + x * 18, 14 + y * 18)',
+                        'group.addWidget(new LabelWidget(',
+                        'group.addWidget(new AETextInputButtonWidget(18 * rowSize + 8 - 70, 2, 70, 10)'
                 ]
         ]
         var transitionalLegacyTypesBySurface = [
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEInputHatchPartMachine.java':
                         ~/\b(AEFluidConfigWidget|LabelWidget|Position|Widget|WidgetGroup)\b/,
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEStockingHatchPartMachine.java':
-                        ~/\b(AutoStockingFancyConfigurator|ConfiguratorPanel|TabsWidget)\b/
+                        ~/\b(AutoStockingFancyConfigurator|ConfiguratorPanel|TabsWidget)\b/,
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferPartMachine.java':
+                        ~/\b(AEPatternViewSlotWidget|AETextInputButtonWidget|ButtonConfigurator|CircuitFancyConfigurator|ClickData|ConfiguratorPanel|FancyInvConfigurator|FancyTankConfigurator|LabelWidget|Widget|WidgetGroup)\b/
         ]
 
         var patterns = [

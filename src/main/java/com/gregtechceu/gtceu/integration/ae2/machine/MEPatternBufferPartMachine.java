@@ -3,7 +3,17 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
+import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.util.FluidContainerSlotInteraction;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
@@ -11,18 +21,26 @@ import com.gregtechceu.gtceu.api.machine.fancyconfigurator.ButtonConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CircuitFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyInvConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyTankConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2ButtonConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2FancyInvConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2FancyTankConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.ingredient.SizedIngredientExtensions;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.machines.GTAEMachines;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
+import com.gregtechceu.gtceu.integration.ae2.gui.element.MEPatternBufferPageElement;
 import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
 import com.gregtechceu.gtceu.integration.ae2.gui.widget.slot.AEPatternViewSlotWidget;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.InternalSlotRecipeHandler;
@@ -33,16 +51,21 @@ import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import appeng.api.crafting.IPatternDetails;
@@ -73,11 +96,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ExtensionMethod(SizedIngredientExtensions.class)
 public class MEPatternBufferPartMachine extends MEBusPartMachine
-                                        implements ICraftingProvider, PatternContainer, IDataStickInteractable {
+                                        implements ICraftingProvider, PatternContainer, IDataStickInteractable,
+                                        LDLib2FancyPartUIProvider, MEPatternBufferActionTarget {
+
+    static {
+        MEPatternBufferActions.initialize();
+    }
 
     protected static final int MAX_PATTERN_COUNT = 27;
     private final InternalInventory internalPatternInventory = new InternalInventory() {
@@ -123,6 +154,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
 
     @SyncToClient
     @SaveField
+    @Getter
     private String customName = "";
 
     private boolean needPatternSync;
@@ -176,6 +208,9 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     }
 
     public void setCustomName(String newName) {
+        if (customName.equals(newName)) {
+            return;
+        }
         customName = newName;
         syncDataHolder.markClientSyncFieldDirty("customName");
     }
@@ -238,9 +273,13 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
 
     private void refundAll(ClickData clickData) {
         if (!clickData.isRemote) {
-            for (InternalSlot internalSlot : internalInventory) {
-                internalSlot.refund();
-            }
+            refundAllContents();
+        }
+    }
+
+    private void refundAllContents() {
+        for (InternalSlot internalSlot : internalInventory) {
+            internalSlot.refund();
         }
     }
 
@@ -266,6 +305,110 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     //////////////////////////////////////
     // ********** GUI ***********//
     //////////////////////////////////////
+    @Override
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this &&
+                holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId()) &&
+                supportsMEPatternBufferActions();
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        LDLib2FancyUIProvider page = createLDLib2Page(player, holder);
+        return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    /**
+     * Creates one standalone opening-scoped page after validating the holder and exact machine definition.
+     */
+    LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder) {
+        return createLDLib2Page(player, holder, MachineUIHelper::sendAction,
+                () -> player.level().isClientSide() && holder.getMachine() == this &&
+                        holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId()),
+                UIEvent::isShiftDown);
+    }
+
+    /**
+     * Builds an opening-scoped page with injectable action transport for direct interaction tests.
+     */
+    LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder,
+                                           BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                           BooleanSupplier canSendAction, Predicate<UIEvent> shiftDown) {
+        requireMatchingLDLib2Holder(holder);
+        requirePatternBufferDefinition();
+        return new MEPatternBufferFancyPage(player, holder, actionSender, canSendAction, shiftDown);
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return createLDLib2Page(player, holder);
+    }
+
+    /**
+     * Builds the directly testable Pattern Buffer body for one validated opening.
+     */
+    MEPatternBufferPageElement createLDLib2MainElement(Player player, MachineUIHolder holder,
+                                                       BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                                       BooleanSupplier canSendAction) {
+        requireMatchingLDLib2Holder(holder);
+        requirePatternBufferDefinition();
+        return new MEPatternBufferPageElement(this, player.level(), holder, actionSender, canSendAction);
+    }
+
+    public int getLDLib2PageWidth() {
+        return MEPatternBufferPageElement.WIDTH;
+    }
+
+    public int getLDLib2PageHeight() {
+        return MEPatternBufferPageElement.HEIGHT;
+    }
+
+    private void requireMatchingLDLib2Holder(MachineUIHolder holder) {
+        if (holder.getMachine() != this ||
+                !holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId())) {
+            throw new IllegalArgumentException("Pattern Buffer page holder must resolve the opened definition.");
+        }
+    }
+
+    private void requirePatternBufferDefinition() {
+        if (!supportsMEPatternBufferActions()) {
+            throw new IllegalStateException("Pattern Buffer LDLib2 UI requires the exact Pattern Buffer definition.");
+        }
+    }
+
+    @Override
+    public boolean supportsMEPatternBufferActions() {
+        return getDefinition() == GTAEMachines.ME_PATTERN_BUFFER;
+    }
+
+    @Override
+    public void setMEPatternBufferName(String name) {
+        requirePatternBufferDefinition();
+        setCustomName(name);
+    }
+
+    @Override
+    public void refundMEPatternBufferContents() {
+        requirePatternBufferDefinition();
+        refundAllContents();
+    }
+
+    @Override
+    public int getMEPatternBufferShareTankCount() {
+        return shareTank.getStorages().length;
+    }
+
+    @Override
+    public void clickMEPatternBufferShareTank(ServerPlayer player, int tankIndex, boolean shiftDown) {
+        requirePatternBufferDefinition();
+        if (tankIndex < 0 || tankIndex >= getMEPatternBufferShareTankCount()) {
+            throw new IllegalArgumentException("Invalid Pattern Buffer shared tank index: " + tankIndex);
+        }
+        new FluidContainerSlotInteraction(shareTank.getStorages()[tankIndex], true, true)
+                .click(player, shiftDown);
+    }
+
     @Override
     public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
         configuratorPanel.attachConfigurators(new ButtonConfigurator(
@@ -323,6 +466,118 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
                 .setButtonTooltips(Component.translatable("gui.gtpm.rename.desc")));
 
         return group;
+    }
+
+    /**
+     * Owns one menu opening's page-local state, holder, actions, and directional subpage.
+     */
+    private final class MEPatternBufferFancyPage implements LDLib2FancyUIProvider {
+
+        private final Player player;
+        private final MachineUIHolder holder;
+        private final BiConsumer<MachineUIHolder, SyncActionData> actionSender;
+        private final BooleanSupplier canSendAction;
+        private final Predicate<UIEvent> shiftDown;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+
+        private MEPatternBufferFancyPage(Player player, MachineUIHolder holder,
+                                         BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                         BooleanSupplier canSendAction, Predicate<UIEvent> shiftDown) {
+            requireMatchingLDLib2Holder(holder);
+            this.player = player;
+            this.holder = holder;
+            this.actionSender = actionSender;
+            this.canSendAction = canSendAction;
+            this.shiftDown = shiftDown;
+            directionalPage = new LDLib2DirectionalFancyConfigurator(
+                    MEPatternBufferPartMachine.this, player, holder);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != MEPatternBufferPartMachine.this ||
+                    !holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId())) {
+                throw new IllegalStateException("Pattern Buffer page holder no longer resolves its opened machine.");
+            }
+            return createLDLib2MainElement(player, holder, actionSender, canSendAction);
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return MEPatternBufferPartMachine.this.getLDLib2PageWidth();
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return MEPatternBufferPartMachine.this.getLDLib2PageHeight();
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+            configuratorPanel.attachConfigurators(new LDLib2ButtonConfigurator(
+                    GuiTextures.group(GuiTextures.BUTTON, GuiTextures.REFUND_OVERLAY), event -> {
+                        if (canSendAction.getAsBoolean()) {
+                            actionSender.accept(holder, MEPatternBufferActions.createRefundAllAction());
+                        }
+                    }).setTooltips(List.of(Component.translatable("gui.gtpm.refund_all.desc"))));
+            if (isHasCircuitSlot() && isCircuitSlotEnabled()) {
+                configuratorPanel.attachConfigurators(new LDLib2CircuitFancyConfigurator(
+                        MEPatternBufferPartMachine.this, holder));
+            }
+            configuratorPanel.attachConfigurators(new LDLib2FancyInvConfigurator(
+                    shareInventory.storage, Component.translatable("gui.gtpm.share_inventory.title"))
+                    .setTooltips(List.of(
+                            Component.translatable("gui.gtpm.share_inventory.desc.0"),
+                            Component.translatable("gui.gtpm.share_inventory.desc.1"))));
+            configuratorPanel.attachConfigurators(new LDLib2FancyTankConfigurator(
+                    shareTank.getStorages(), Component.translatable("gui.gtpm.share_tank.title"))
+                    .setTankClickHandler((tankIndex, event) -> {
+                        if (!canSendAction.getAsBoolean() ||
+                                FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isEmpty()) {
+                            return false;
+                        }
+                        actionSender.accept(holder, MEPatternBufferActions.createClickShareTankAction(
+                                tankIndex, shiftDown.test(event)));
+                        return true;
+                    })
+                    .setTooltips(List.of(
+                            Component.translatable("gui.gtpm.share_tank.desc.0"),
+                            Component.translatable("gui.gtpm.share_inventory.desc.1"))));
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            tooltipsPanel.attachTooltips(MEPatternBufferPartMachine.this);
+            getTraitHolder().getAllTraits().stream()
+                    .filter(IFancyTooltip.class::isInstance)
+                    .map(IFancyTooltip.class::cast)
+                    .forEach(tooltipsPanel::attachTooltips);
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(Component.translatable(getDefinition().getDescriptionId()));
+        }
+
+        @Override
+        public PageGroupingData getPageGroupingData() {
+            return new PageGroupingData("gtpm.multiblock.page_switcher.io.import", 1);
+        }
     }
 
     @Override
