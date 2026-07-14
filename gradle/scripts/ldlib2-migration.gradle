@@ -10,6 +10,46 @@ tasks.register('verifyGradleUserHomeOnE') {
     }
 }
 
+tasks.register('verifyDescriptiveTypeNames') {
+    group = 'verification'
+    description = 'Rejects GTM source types and files that use generic implementation suffixes.'
+
+    doLast {
+        var sourceRoots = [
+                file('src/main/java'),
+                file('src/main/kotlin'),
+                file('src/test/java'),
+                file('src/test/kotlin')
+        ]
+        var sourceFiles = files(sourceRoots.findAll { it.exists() }).asFileTree.matching {
+            include '**/*.java'
+            include '**/*.kt'
+            exclude 'src/generated/**'
+        }
+        var genericTypeName = ~/\b(class|interface|record|enum|object)\s+[A-Za-z_$][A-Za-z0-9_$]*(Impl|Implementation)\b/
+        var genericFileName = ~/[A-Za-z_$][A-Za-z0-9_$]*(Impl|Implementation)\.(java|kt)/
+        var matches = []
+
+        sourceFiles.each { sourceFile ->
+            var relativePath = rootProject.relativePath(sourceFile)
+            if (genericFileName.matcher(sourceFile.name).matches()) {
+                matches.add("${relativePath}: generic implementation file suffix")
+            }
+            sourceFile.eachLine('UTF-8') { line, number ->
+                if (genericTypeName.matcher(line).find()) {
+                    matches.add("${relativePath}:${number}: generic implementation type suffix")
+                }
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('Generic implementation names found in GTM source:')
+            matches.each { logger.lifecycle(" - ${it}") }
+            throw new GradleException("GTM source types must be named for their concrete responsibility.")
+        }
+    }
+}
+
 tasks.register('verifyLdlib2MigratedSurfaces') {
     group = 'verification'
     description = 'Verifies migrated LDLib2 UI bridge and facade surfaces do not regress to legacy LDLib or disabled sync paths.'
@@ -282,6 +322,7 @@ tasks.register('verifyLdlib2RecipeCapabilitySurface') {
 tasks.named('check') {
     dependsOn(
             tasks.named('verifyGradleUserHomeOnE'),
+            tasks.named('verifyDescriptiveTypeNames'),
             tasks.named('verifyLdlib2MigratedSurfaces'),
             tasks.named('verifyLdlib2RecipeCapabilitySurface')
     )
