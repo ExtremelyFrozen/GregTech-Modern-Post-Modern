@@ -1,6 +1,6 @@
 [versions]
 kotlinforforge = "5.7.0"
-ldlib2 = "2.2.9"
+ldlib2 = "2.2.28"
 registrate = "MC1.21-1.3.0+67"
 configuration = "3.1.1-neoforge"
 
