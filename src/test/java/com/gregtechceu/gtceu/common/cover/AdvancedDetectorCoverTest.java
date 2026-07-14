@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.common.cover;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.capability.IEnergyInfoProvider;
-import com.gregtechceu.gtceu.api.capability.IEnergyInfoProvider.EnergyInfo;
 import com.gregtechceu.gtceu.api.capability.IWorkable;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
@@ -200,9 +199,9 @@ public class AdvancedDetectorCoverTest {
     @GameTest(template = "empty", batch = "coverTests")
     public static void advancedFluidDetectorUsesChangedOnlyScalarSync(GameTestHelper helper) {
         assertAdvancedDetectorScalarSync(helper,
-                new FluidDetectorSyncProbeImpl(createBuffer()),
-                new FluidDetectorSyncProbeImpl(createBuffer()),
-                new FluidDetectorSyncProbeImpl(createBuffer()),
+                new FluidDetectorSyncProbe(createBuffer()),
+                new FluidDetectorSyncProbe(createBuffer()),
+                new FluidDetectorSyncProbe(createBuffer()),
                 "advanced fluid detector");
         helper.succeed();
     }
@@ -212,9 +211,9 @@ public class AdvancedDetectorCoverTest {
     @GameTest(template = "empty", batch = "coverTests")
     public static void advancedItemDetectorUsesChangedOnlyScalarSync(GameTestHelper helper) {
         assertAdvancedDetectorScalarSync(helper,
-                new ItemDetectorSyncProbeImpl(createBuffer()),
-                new ItemDetectorSyncProbeImpl(createBuffer()),
-                new ItemDetectorSyncProbeImpl(createBuffer()),
+                new ItemDetectorSyncProbe(createBuffer()),
+                new ItemDetectorSyncProbe(createBuffer()),
+                new ItemDetectorSyncProbe(createBuffer()),
                 "advanced item detector");
         helper.succeed();
     }
@@ -224,9 +223,9 @@ public class AdvancedDetectorCoverTest {
     @GameTest(template = "empty", batch = "coverTests")
     public static void advancedEnergyDetectorUsesChangedOnlyScalarSync(GameTestHelper helper) {
         assertAdvancedEnergyDetectorScalarSync(helper,
-                new EnergyDetectorSyncProbeImpl(createBuffer()),
-                new EnergyDetectorSyncProbeImpl(createBuffer()),
-                new EnergyDetectorSyncProbeImpl(createBuffer()));
+                new EnergyDetectorSyncProbe(createBuffer()),
+                new EnergyDetectorSyncProbe(createBuffer()),
+                new EnergyDetectorSyncProbe(createBuffer()));
         helper.succeed();
     }
 
@@ -234,10 +233,10 @@ public class AdvancedDetectorCoverTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "coverTests")
     public static void advancedEnergyDetectorSameModeRefreshesInputBounds(GameTestHelper helper) {
-        EnergyDetectorSyncProbeImpl cover = new EnergyDetectorSyncProbeImpl(createBuffer());
+        EnergyDetectorSyncProbe cover = new EnergyDetectorSyncProbe(createBuffer());
         cover.setUsePercent(false);
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-        UICoverHolder holder = new TestCoverUIHolderImpl(cover);
+        UICoverHolder holder = new TestCoverUIHolder(cover);
         var inputs = cover.createLDLib2UI(player, holder).getRootElement().getChildren().stream()
                 .filter(element -> element instanceof GTLongInputElement)
                 .map(element -> (GTLongInputElement) element)
@@ -256,9 +255,9 @@ public class AdvancedDetectorCoverTest {
     }
 
     private static void assertAdvancedEnergyDetectorScalarSync(GameTestHelper helper,
-                                                               EnergyDetectorSyncProbeImpl server,
-                                                               EnergyDetectorSyncProbeImpl client,
-                                                               EnergyDetectorSyncProbeImpl loaded) {
+                                                               EnergyDetectorSyncProbe server,
+                                                               EnergyDetectorSyncProbe client,
+                                                               EnergyDetectorSyncProbe loaded) {
         RegistryAccess registries = helper.getLevel().registryAccess();
 
         DataComponentMap full = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
@@ -309,7 +308,7 @@ public class AdvancedDetectorCoverTest {
                 new JsonPrimitive(true), "advanced energy detector usePercent client write");
     }
 
-    private static void assertRejectedEnergyClientField(GameTestHelper helper, EnergyDetectorSyncProbeImpl server,
+    private static void assertRejectedEnergyClientField(GameTestHelper helper, EnergyDetectorSyncProbe server,
                                                         RegistryAccess registries, ResourceLocation field,
                                                         JsonElement value, String description) {
         ServerFieldUpdateResult rejected = server.getSyncDataHolder().tryApplyServerNetworkUpdate(
@@ -320,7 +319,7 @@ public class AdvancedDetectorCoverTest {
                 description + " produced an acknowledgement");
     }
 
-    private static void assertEnergyScalarState(GameTestHelper helper, EnergyDetectorSyncProbeImpl probe,
+    private static void assertEnergyScalarState(GameTestHelper helper, EnergyDetectorSyncProbe probe,
                                                 long minValue, long maxValue, boolean usePercent, String description) {
         helper.assertTrue(probe.getMinValue() == minValue && probe.getMaxValue() == maxValue &&
                 probe.isUsePercent() == usePercent,
@@ -512,27 +511,27 @@ public class AdvancedDetectorCoverTest {
         void setLatched(boolean latched);
     }
 
-    private static final class FluidDetectorSyncProbeImpl extends AdvancedFluidDetectorCover
+    private static final class FluidDetectorSyncProbe extends AdvancedFluidDetectorCover
                                                           implements AdvancedDetectorSyncProbe {
 
-        private FluidDetectorSyncProbeImpl(BufferMachine machine) {
+        private FluidDetectorSyncProbe(BufferMachine machine) {
             super(GTCovers.FLUID_DETECTOR_ADVANCED, machine.getCoverContainer(), Direction.WEST);
         }
     }
 
-    private static final class ItemDetectorSyncProbeImpl extends AdvancedItemDetectorCover
+    private static final class ItemDetectorSyncProbe extends AdvancedItemDetectorCover
                                                          implements AdvancedDetectorSyncProbe {
 
-        private ItemDetectorSyncProbeImpl(BufferMachine machine) {
+        private ItemDetectorSyncProbe(BufferMachine machine) {
             super(GTCovers.ITEM_DETECTOR_ADVANCED, machine.getCoverContainer(), Direction.WEST);
         }
     }
 
-    private static final class EnergyDetectorSyncProbeImpl extends AdvancedEnergyDetectorCover {
+    private static final class EnergyDetectorSyncProbe extends AdvancedEnergyDetectorCover {
 
-        private static final IEnergyInfoProvider ENERGY_INFO_PROVIDER = new FixedEnergyInfoProviderImpl();
+        private static final IEnergyInfoProvider ENERGY_INFO_PROVIDER = new FixedEnergyInfoProvider();
 
-        private EnergyDetectorSyncProbeImpl(BufferMachine machine) {
+        private EnergyDetectorSyncProbe(BufferMachine machine) {
             super(GTCovers.ENERGY_DETECTOR_ADVANCED, machine.getCoverContainer(), Direction.WEST);
         }
 
@@ -542,7 +541,7 @@ public class AdvancedDetectorCoverTest {
         }
     }
 
-    private static final class FixedEnergyInfoProviderImpl implements IEnergyInfoProvider {
+    private static final class FixedEnergyInfoProvider implements IEnergyInfoProvider {
 
         private static final EnergyInfo ENERGY_INFO = new EnergyInfo(BigInteger.valueOf(FIXED_ENERGY_CAPACITY),
                 BigInteger.valueOf(FIXED_ENERGY_CAPACITY / 2));
@@ -568,13 +567,13 @@ public class AdvancedDetectorCoverTest {
         }
     }
 
-    private static final class TestCoverUIHolderImpl implements UICoverHolder {
+    private static final class TestCoverUIHolder implements UICoverHolder {
 
         private static final UUID ACTION_SESSION_ID = new UUID(0L, 0L);
 
         private final AdvancedEnergyDetectorCover cover;
 
-        private TestCoverUIHolderImpl(AdvancedEnergyDetectorCover cover) {
+        private TestCoverUIHolder(AdvancedEnergyDetectorCover cover) {
             this.cover = cover;
         }
 
