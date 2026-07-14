@@ -179,6 +179,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MaintenanceHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MufflerPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ObjectHolderMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/OpticalComputationHatchMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ParallelHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/PumpHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ReservoirHatchPartMachine.java',
