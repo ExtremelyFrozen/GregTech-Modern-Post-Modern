@@ -283,7 +283,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
     @Override
     public UI createLDLib2UI(Player player, MachineUIHolder holder) {
         requireMatchingHolder(holder);
-        ActiveTransformerLDLib2PageImpl page = new ActiveTransformerLDLib2PageImpl(player, holder);
+        ActiveTransformerFancyPage page = new ActiveTransformerFancyPage(player, holder);
         return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
                 page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
     }
@@ -294,7 +294,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
         }
     }
 
-    private final class ActiveTransformerLDLib2PageImpl implements LDLib2FancyUIProvider {
+    private final class ActiveTransformerFancyPage implements LDLib2FancyUIProvider {
 
         private static final int PAGE_WIDTH = 190;
         private static final int PAGE_HEIGHT = 125;
@@ -303,7 +303,7 @@ public class ActiveTransformerMachine extends WorkableElectricMultiblockMachine
         private final LDLib2DirectionalFancyConfigurator directionalPage;
         private final List<LDLib2FancyUIProvider> partPages;
 
-        private ActiveTransformerLDLib2PageImpl(Player player, MachineUIHolder holder) {
+        private ActiveTransformerFancyPage(Player player, MachineUIHolder holder) {
             requireMatchingHolder(holder);
             this.holder = holder;
             this.directionalPage = new LDLib2DirectionalFancyConfigurator(ActiveTransformerMachine.this,
