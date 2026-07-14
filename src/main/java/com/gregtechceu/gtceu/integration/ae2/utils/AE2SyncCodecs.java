@@ -27,6 +27,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public final class AE2SyncCodecs {
 
@@ -250,12 +251,12 @@ public final class AE2SyncCodecs {
         @Override
         public JsonElement serializeField(KeyStorage value, Context<KeyStorage> context) {
             JsonArray json = new JsonArray();
-            for (var entry : value.storage.object2LongEntrySet()) {
+            for (KeyStorage.Change entry : value.snapshot()) {
                 JsonObject element = new JsonObject();
                 element.add(KEY, AEKey.CODEC
-                        .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), entry.getKey())
+                        .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), entry.key())
                         .getOrThrow());
-                element.addProperty(AMOUNT, entry.getLongValue());
+                element.addProperty(AMOUNT, entry.amount());
                 json.add(element);
             }
             return json;
@@ -269,15 +270,45 @@ public final class AE2SyncCodecs {
                         " must be encoded as an array");
             }
 
-            storage.storage.clear();
+            List<KeyStorage.Change> replacement = new ArrayList<>(value.getAsJsonArray().size());
             for (JsonElement element : value.getAsJsonArray()) {
+                if (!element.isJsonObject()) {
+                    throw new IllegalArgumentException("Sync: AE2 key storage field " + context.fieldName() +
+                            " contains a non-object entry");
+                }
                 JsonObject json = element.getAsJsonObject();
-                storage.storage.put(AEKey.CODEC
+                if (json.size() != 2 || !json.has(KEY) || !json.has(AMOUNT)) {
+                    throw new IllegalArgumentException("Sync: AE2 key storage field " + context.fieldName() +
+                            " entries must contain exactly key and amount");
+                }
+                AEKey key = AEKey.CODEC
                         .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get(KEY))
-                        .getOrThrow(), json.get(AMOUNT).getAsLong());
+                        .getOrThrow();
+                replacement.add(new KeyStorage.Change(key,
+                        readPositiveLong(json.get(AMOUNT), context.fieldName())));
             }
-            storage.onChanged();
+            storage.replaceContents(replacement);
             return storage;
+        }
+
+        private static long readPositiveLong(JsonElement value, String fieldName) {
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+                throw new IllegalArgumentException("Sync: AE2 key storage field " + fieldName +
+                        " contains a non-numeric amount");
+            }
+            try {
+                long amount = value.getAsBigDecimal().longValueExact();
+                if (amount <= 0) {
+                    throw new IllegalArgumentException("Sync: AE2 key storage field " + fieldName +
+                            " contains a non-positive amount: " + amount);
+                }
+                return amount;
+            } catch (NumberFormatException | ArithmeticException exception) {
+                GTCEu.LOGGER.error("Sync: AE2 key storage field {} contains an invalid long amount", fieldName,
+                        exception);
+                throw new IllegalArgumentException("Sync: AE2 key storage field " + fieldName +
+                        " contains an invalid long amount", exception);
+            }
         }
     }
 
