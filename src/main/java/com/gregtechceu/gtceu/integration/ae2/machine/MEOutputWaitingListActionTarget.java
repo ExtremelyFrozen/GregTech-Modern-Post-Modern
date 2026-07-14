@@ -6,7 +6,7 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 public interface MEOutputWaitingListActionTarget {
 
     /**
-     * Returns the persistent machine identity used to reject actions and publications for a replaced output bus.
+     * Returns the persistent machine identity used to reject actions and publications for a replaced output machine.
      */
     MEOutputWaitingListTarget getWaitingListTarget();
 

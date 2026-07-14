@@ -213,7 +213,9 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEItemConfigElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEItemConfigSlotElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEPatternViewSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEFluidOutputWaitingListElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEItemOutputWaitingListElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEOutputWaitingListElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEPatternBufferNameEditorElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEPatternBufferPageElement.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/fancy/LDLib2MEFluidAutoPullFancyConfigurator.java',
@@ -225,6 +227,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEInputBusPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEInputHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListActions.kt',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListActionTarget.java',
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListClientState.java',
@@ -306,6 +309,17 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                         'group.addWidget(new LabelWidget(5, 10, "gtpm.gui.waiting_list"));',
                         'group.addWidget(new AEListGridWidget.Item(5, 20, 3, this.internalBuffer));'
                 ],
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputHatchPartMachine.java': [
+                        'import com.gregtechceu.gtceu.integration.ae2.gui.widget.list.AEListGridWidget;',
+                        'import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;',
+                        'import com.lowdragmc.lowdraglib.gui.widget.Widget;',
+                        'import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;',
+                        'public Widget createUIWidget() {',
+                        'WidgetGroup group = new WidgetGroup(0, 0, 170, 65);',
+                        'group.addWidget(new LabelWidget(5, 0, () -> this.isOnline ?',
+                        'group.addWidget(new LabelWidget(5, 10, "gtpm.gui.waiting_list"));',
+                        'group.addWidget(new AEListGridWidget.Fluid(5, 20, 3, this.internalBuffer));'
+                ],
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEStockingHatchPartMachine.java': [
                         'import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;',
                         'import com.gregtechceu.gtceu.api.gui.fancy.TabsWidget;',
@@ -353,6 +367,8 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEInputHatchPartMachine.java':
                         ~/\b(AEFluidConfigWidget|LabelWidget|Position|Widget|WidgetGroup)\b/,
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputBusPartMachine.java':
+                        ~/\b(AEListGridWidget|LabelWidget|Widget|WidgetGroup)\b/,
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputHatchPartMachine.java':
                         ~/\b(AEListGridWidget|LabelWidget|Widget|WidgetGroup)\b/,
                 'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEStockingHatchPartMachine.java':
                         ~/\b(AutoStockingFancyConfigurator|ConfiguratorPanel|TabsWidget)\b/,

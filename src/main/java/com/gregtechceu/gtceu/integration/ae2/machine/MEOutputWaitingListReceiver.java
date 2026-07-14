@@ -15,7 +15,7 @@ public interface MEOutputWaitingListReceiver {
     /**
      * Stable LDLib2 element id used by the S2C packet to resolve the active receiver.
      */
-    String ELEMENT_ID_PREFIX = "me_item_output_waiting_list_";
+    String ELEMENT_ID_PREFIX = "me_output_waiting_list_";
 
     /**
      * Returns the deterministic element id for one machine position inside a standalone or controller UI tree.
@@ -35,12 +35,12 @@ public interface MEOutputWaitingListReceiver {
     boolean matchesWaitingListTarget(MetaMachine machine);
 
     /**
-     * Returns whether this receiver's exact output bus may register a full-state request for the player.
+     * Returns whether this receiver's exact output machine may register a full-state request for the player.
      */
     boolean canRequestFull(ServerPlayer player);
 
     /**
-     * Registers an ordered full-state request against the exact output bus resolved by this receiver.
+     * Registers an ordered full-state request against the exact output machine resolved by this receiver.
      */
     boolean requestFull(ServerPlayer player, UUID openingId, int requestSequence);
 

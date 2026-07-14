@@ -2,8 +2,8 @@ package com.gregtechceu.gtceu.integration.ae2.gui.element;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
-import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
@@ -17,7 +17,7 @@ import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
 
-import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEFluidKey;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -25,31 +25,31 @@ import java.util.function.BooleanSupplier;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * Item-key projection of the shared opening-scoped ME output waiting-list element.
+ * Fluid-key projection of the shared opening-scoped ME output waiting-list element.
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public final class MEItemOutputWaitingListElement extends MEOutputWaitingListElement {
+public final class MEFluidOutputWaitingListElement extends MEOutputWaitingListElement {
 
-    /** Creates the item viewport at the supplied page-relative position. */
-    public MEItemOutputWaitingListElement(int x, int y, MachineUIHolder targetHolder,
-                                          MachineUIHolder actionHolder,
-                                          BiConsumer<MachineUIHolder, SyncActionData> actionSender,
-                                          BooleanSupplier canSendAction) {
+    /** Creates the fluid viewport at the supplied page-relative position. */
+    public MEFluidOutputWaitingListElement(int x, int y, MachineUIHolder targetHolder,
+                                           MachineUIHolder actionHolder,
+                                           BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                           BooleanSupplier canSendAction) {
         super(x, y, targetHolder, actionHolder, actionSender, canSendAction);
     }
 
-    /** Creates the item viewport at the legacy page position of {@code 5,20}. */
-    public MEItemOutputWaitingListElement(MachineUIHolder targetHolder, MachineUIHolder actionHolder,
-                                          BiConsumer<MachineUIHolder, SyncActionData> actionSender,
-                                          BooleanSupplier canSendAction) {
+    /** Creates the fluid viewport at the legacy page position of {@code 5,20}. */
+    public MEFluidOutputWaitingListElement(MachineUIHolder targetHolder, MachineUIHolder actionHolder,
+                                           BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                           BooleanSupplier canSendAction) {
         super(targetHolder, actionHolder, actionSender, canSendAction);
     }
 
     @Override
     protected UIElement createRow(MEOutputWaitingListEntry entry) {
-        if (!(entry.key() instanceof AEItemKey itemKey)) {
-            throw new IllegalArgumentException("ME item output waiting-list row received non-item key " +
+        if (!(entry.key() instanceof AEFluidKey fluidKey)) {
+            throw new IllegalArgumentException("ME fluid output waiting-list row received non-fluid key " +
                     entry.key());
         }
 
@@ -59,15 +59,17 @@ public final class MEItemOutputWaitingListElement extends MEOutputWaitingListEle
         amountBackground.setAllowHitTest(false);
         row.addChild(amountBackground);
 
-        GTItemSlotElement item = new GTItemSlotElement()
-                .setCanPutItems(false)
-                .setCanTakeItems(false)
+        GTFluidSlotElement fluid = new GTFluidSlotElement()
+                .setFluid(fluidKey.toStack(1))
+                .setCapacity(1)
+                .setShowAmount(false)
+                .setAllowClickFilled(false)
+                .setAllowClickDrained(false)
                 .setIngredientIO(IngredientIO.NONE)
-                .setBackgroundTexture(GuiTextures.SLOT)
+                .setBackgroundTexture(GuiTextures.FLUID_SLOT)
                 .setOnAddedTooltips((slot, tooltips) -> tooltips.add(
-                        Component.literal(String.format("%,d", entry.amount()))));
-        item.setItem(itemKey.toStack(1), false);
-        row.addChild(UITemplate.setLDLib2Bounds(item, 0, 0, 18, ROW_HEIGHT));
+                        Component.literal(String.format("%,d mB", entry.amount()))));
+        row.addChild(UITemplate.setLDLib2Bounds(fluid, 0, 0, 18, ROW_HEIGHT));
 
         GTLabelElement amount = new GTLabelElement(21, 0, 134, ROW_HEIGHT,
                 Component.literal(String.format("x%,d", entry.amount())))
@@ -82,9 +84,9 @@ public final class MEItemOutputWaitingListElement extends MEOutputWaitingListEle
 
     @Override
     protected void validateEntry(MEOutputWaitingListEntry entry) {
-        if (!(entry.key() instanceof AEItemKey)) {
+        if (!(entry.key() instanceof AEFluidKey)) {
             throw new IllegalArgumentException(
-                    "ME item output waiting-list publication contains non-item key " + entry.key());
+                    "ME fluid output waiting-list publication contains non-fluid key " + entry.key());
         }
     }
 }

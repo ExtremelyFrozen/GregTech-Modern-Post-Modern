@@ -27,9 +27,9 @@ import com.google.gson.JsonPrimitive
 import java.util.UUID
 
 /**
- * Persistent identity of one ME output bus used by menu actions and waiting-list publications.
+ * Persistent identity of one ME output machine used by menu actions and waiting-list publications.
  *
- * @property pos output bus position captured by the contextual page.
+ * @property pos output machine position captured by the contextual page.
  * @property machineDefinitionId exact machine definition captured by the contextual page.
  * @property incarnation persistent identity that changes when a machine at the same position is replaced.
  */
