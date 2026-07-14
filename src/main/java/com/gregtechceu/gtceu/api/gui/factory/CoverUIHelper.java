@@ -4,9 +4,12 @@ import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.common.network.packets.CPacketCoverActionToServer;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.function.BooleanSupplier;
 
 /**
  * Centralizes cover UI opening through GTM's LDLib2 cover holder.
@@ -22,6 +25,18 @@ public final class CoverUIHelper {
      */
     public static boolean open(CoverBehavior cover, ServerPlayer player) {
         return GTCoverUIMenuType.openUI(cover, player);
+    }
+
+    /**
+     * Opens a cover UI whose interaction distance is anchored to another validated server position.
+     *
+     * <p>
+     * The anchor validity belongs to this menu opening and is rechecked for every action. The client never supplies
+     * the authoritative anchor or its validity.
+     */
+    public static boolean open(CoverBehavior cover, ServerPlayer player, BlockPos interactionAnchor,
+                               BooleanSupplier interactionAnchorValid) {
+        return GTCoverUIMenuType.openUI(cover, player, interactionAnchor, interactionAnchorValid);
     }
 
     /**

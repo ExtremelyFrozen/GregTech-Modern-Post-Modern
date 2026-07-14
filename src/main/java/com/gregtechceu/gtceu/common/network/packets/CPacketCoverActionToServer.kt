@@ -63,8 +63,8 @@ open class CPacketCoverActionToServer(
 			)
 			return
 		}
-		val matchesActionSession = try {
-			menu.matchesActionSession(player, pos, side, coverDefinitionId, actionSessionId)
+		val interactionAnchor = try {
+			menu.getInteractionAnchorForAction(player, pos, side, coverDefinitionId, actionSessionId)
 		} catch (exception: RuntimeException) {
 			GTCEu.LOGGER.error(
 				"Sync action: failed to validate cover action {} from {} for {} {} {}",
@@ -77,9 +77,9 @@ open class CPacketCoverActionToServer(
 			)
 			return
 		}
-		if (!matchesActionSession) {
+		if (interactionAnchor == null) {
 			GTCEu.LOGGER.warn(
-				"Sync action: rejecting cover action {} from {} because the active cover UI session for {} {} {} does not match",
+				"Sync action: rejecting cover action {} from {} because the active cover UI session or interaction anchor for {} {} {} is invalid",
 				action.actionId,
 				player.gameProfile.name,
 				pos,
@@ -100,11 +100,22 @@ open class CPacketCoverActionToServer(
 			return
 		}
 
-		if (!canInteract(player, pos)) {
+		if (!level.isLoaded(interactionAnchor)) {
 			GTCEu.LOGGER.warn(
-				"Sync action: rejecting cover action {} from {} because interaction is not allowed",
+				"Sync action: rejecting cover action {} from {} because interaction anchor {} is not loaded",
 				action.actionId,
 				player.gameProfile.name,
+				interactionAnchor,
+			)
+			return
+		}
+
+		if (!canInteract(player, interactionAnchor)) {
+			GTCEu.LOGGER.warn(
+				"Sync action: rejecting cover action {} from {} because interaction at anchor {} is not allowed",
+				action.actionId,
+				player.gameProfile.name,
+				interactionAnchor,
 			)
 			return
 		}
@@ -146,6 +157,15 @@ open class CPacketCoverActionToServer(
 		if (machine != null && !MachineOwner.canOpenOwnerMachine(player, machine)) {
 			GTCEu.LOGGER.warn(
 				"Sync action: rejecting cover action {} from {} because owner permission failed",
+				action.actionId,
+				player.gameProfile.name,
+			)
+			return
+		}
+
+		if (!menu.matchesActionSession(player, pos, side, coverDefinitionId, actionSessionId)) {
+			GTCEu.LOGGER.warn(
+				"Sync action: rejecting cover action {} from {} because the cover UI session or interaction anchor became invalid",
 				action.actionId,
 				player.gameProfile.name,
 			)

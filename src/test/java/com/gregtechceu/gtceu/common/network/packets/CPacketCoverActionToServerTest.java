@@ -47,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 import static com.gregtechceu.gtceu.api.GTValues.LV;
 
@@ -55,6 +57,8 @@ import static com.gregtechceu.gtceu.api.GTValues.LV;
 public class CPacketCoverActionToServerTest {
 
     private static final BlockPos MACHINE_POS = new BlockPos(1, 1, 1);
+    private static final BlockPos REMOTE_ANCHOR = new BlockPos(12, 1, 1);
+    private static final BlockPos FAR_FROM_REMOTE_ANCHOR = new BlockPos(1, 1, 1);
     private static final Direction COVER_SIDE = Direction.EAST;
     private static final ResourceLocation ACTION_ID = GTCEu.id("test_cover_ui_session_action");
     private static final ResourceLocation WRONG_DEFINITION_ID = GTCEu.id("wrong_cover_ui_session_target");
@@ -84,6 +88,8 @@ public class CPacketCoverActionToServerTest {
             LDLib2CoverUIHolderContext clientHolder = holder((GTCoverUIContainerMenu) decodedMenu);
             helper.assertTrue(clientHolder.getActionSessionId().equals(serverHolder.getActionSessionId()),
                     "cover menu client factory changed the server action session");
+            helper.assertTrue(clientHolder.getInteractionAnchor().equals(machine.getBlockPos()),
+                    "default cover menu did not synchronize its cover-position interaction anchor");
 
             CPacketCoverActionToServer.CODEC.encode(packetData, packet(clientHolder, machine.getBlockPos(),
                     COVER_SIDE, cover.coverDefinition.getId()));
@@ -127,6 +133,95 @@ public class CPacketCoverActionToServerTest {
         execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
 
         helper.assertTrue(cover.actionCount == 1, "current exact cover session did not dispatch its action");
+        player.closeContainer();
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "CPacketCoverActionToServer")
+    public static void defaultAnchorRetainsCoverDistanceCheck(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        SessionTestCover cover = installCover(machine);
+        ServerPlayer player = preparePlayer(helper, machine, "cover_default_anchor_distance");
+        LDLib2CoverUIHolderContext holder = holder(openMenu(player, cover));
+        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
+
+        execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
+
+        helper.assertTrue(cover.actionCount == 0,
+                "default cover-position anchor accepted a player outside its interaction distance");
+        player.closeContainer();
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "CPacketCoverActionToServer")
+    public static void validRemoteAnchorAuthorizesExactCoverSession(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        SessionTestCover cover = installCover(machine);
+        ServerPlayer player = preparePlayer(helper, machine, "cover_remote_anchor_accept");
+        LDLib2CoverUIHolderContext holder = holder(openAnchoredMenu(
+                player, cover, REMOTE_ANCHOR, () -> true));
+        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
+
+        execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
+
+        helper.assertTrue(cover.actionCount == 1,
+                "valid remote interaction anchor did not authorize its exact cover session");
+        player.closeContainer();
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "CPacketCoverActionToServer")
+    public static void invalidAndDistantRemoteAnchorsRejectWithoutExecution(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        SessionTestCover cover = installCover(machine);
+        ServerPlayer player = preparePlayer(helper, machine, "cover_remote_anchor_reject");
+        AtomicBoolean anchorValid = new AtomicBoolean(true);
+        LDLib2CoverUIHolderContext invalidHolder = holder(openAnchoredMenu(
+                player, cover, REMOTE_ANCHOR, anchorValid::get));
+        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
+        anchorValid.set(false);
+
+        execute(player, packet(invalidHolder, machine.getBlockPos(), COVER_SIDE,
+                cover.coverDefinition.getId()));
+        helper.assertTrue(cover.actionCount == 0,
+                "invalid remote interaction anchor dispatched a cover action");
+
+        player.closeContainer();
+        LDLib2CoverUIHolderContext distantHolder = holder(openAnchoredMenu(
+                player, cover, REMOTE_ANCHOR, () -> true));
+        player.moveTo(Vec3.atCenterOf(FAR_FROM_REMOTE_ANCHOR));
+        execute(player, packet(distantHolder, machine.getBlockPos(), COVER_SIDE,
+                cover.coverDefinition.getId()));
+
+        helper.assertTrue(cover.actionCount == 0,
+                "remote interaction anchor accepted a player outside its interaction distance");
+        player.closeContainer();
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "CPacketCoverActionToServer")
+    public static void anchorInvalidatedDuringProviderValidationIsRejected(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        SessionTestCover cover = installCover(machine);
+        ServerPlayer player = preparePlayer(helper, machine, "cover_anchor_validation_revoke");
+        AtomicBoolean anchorValid = new AtomicBoolean(true);
+        LDLib2CoverUIHolderContext holder = holder(openAnchoredMenu(
+                player, cover, REMOTE_ANCHOR, anchorValid::get));
+        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
+        cover.validationAction = () -> anchorValid.set(false);
+
+        execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
+
+        helper.assertTrue(cover.actionCount == 0,
+                "anchor invalidated during provider validation dispatched a cover action");
         player.closeContainer();
         helper.succeed();
     }
@@ -280,6 +375,18 @@ public class CPacketCoverActionToServerTest {
         throw new GameTestAssertException("cover UI did not use the dedicated container menu");
     }
 
+    private static GTCoverUIContainerMenu openAnchoredMenu(ServerPlayer player, SessionTestCover cover,
+                                                           BlockPos interactionAnchor,
+                                                           BooleanSupplier interactionAnchorValid) {
+        if (!GTCoverUIMenuType.openUI(cover, player, interactionAnchor, interactionAnchorValid)) {
+            throw new GameTestAssertException("cover UI rejected its interaction anchor");
+        }
+        if (player.containerMenu instanceof GTCoverUIContainerMenu menu) {
+            return menu;
+        }
+        throw new GameTestAssertException("anchored cover UI did not use the dedicated container menu");
+    }
+
     private static LDLib2CoverUIHolderContext holder(GTCoverUIContainerMenu menu) {
         if (menu.uiHolder instanceof LDLib2CoverUIHolderContext holder) {
             return holder;
@@ -323,6 +430,8 @@ public class CPacketCoverActionToServerTest {
         private boolean failCanCreateUI;
         private boolean closeMenuDuringValidation;
         @Nullable
+        private Runnable validationAction;
+        @Nullable
         private SessionTestCover replacementDuringValidation;
         private int actionCount;
 
@@ -332,6 +441,11 @@ public class CPacketCoverActionToServerTest {
 
         @Override
         public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+            Runnable action = validationAction;
+            if (action != null) {
+                validationAction = null;
+                action.run();
+            }
             SessionTestCover replacement = replacementDuringValidation;
             if (replacement != null) {
                 replacementDuringValidation = null;
