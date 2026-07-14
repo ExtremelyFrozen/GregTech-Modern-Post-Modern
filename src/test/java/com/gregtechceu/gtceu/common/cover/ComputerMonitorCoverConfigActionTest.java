@@ -186,7 +186,7 @@ public class ComputerMonitorCoverConfigActionTest {
     @GameTest(template = "empty", batch = "ComputerMonitorCoverConfigAction")
     public static void dispatcherKeepsConcreteMonitorHolderScope(GameTestHelper helper) {
         PumpCover pump = createPumpCover();
-        FakeActionTargetImpl fakeTarget = new FakeActionTargetImpl();
+        TestComputerMonitorActionTarget fakeTarget = new TestComputerMonitorActionTarget();
         SyncActionData action = ComputerMonitorCoverConfigActions.createSetConfigAction(
                 List.of("line"), List.of("arg"), 100);
 
@@ -411,7 +411,7 @@ public class ComputerMonitorCoverConfigActionTest {
         }
     }
 
-    private static final class FakeActionTargetImpl implements ComputerMonitorCoverConfigActionTarget {
+    private static final class TestComputerMonitorActionTarget implements ComputerMonitorCoverConfigActionTarget {
 
         private int setterCalls;
 
