@@ -3,7 +3,11 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2PreviewFancyPageImpl;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableLaserContainer;
@@ -21,7 +25,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LaserHatchPartMachine extends TieredIOPartMachine implements IDataInfoProvider {
+public class LaserHatchPartMachine extends TieredIOPartMachine
+                                   implements IDataInfoProvider, LDLib2FancyPartUIProvider {
 
     @SaveField
     private NotifiableLaserContainer buffer;
@@ -42,6 +47,19 @@ public class LaserHatchPartMachine extends TieredIOPartMachine implements IDataI
     @Override
     public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
         return false;
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2PreviewFancyPageImpl(this, player, holder, switch (io) {
+            case IN -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.import", 1);
+            case OUT -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.export", 2);
+            case BOTH -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.both", 3);
+            case NONE -> null;
+        });
     }
 
     @Override

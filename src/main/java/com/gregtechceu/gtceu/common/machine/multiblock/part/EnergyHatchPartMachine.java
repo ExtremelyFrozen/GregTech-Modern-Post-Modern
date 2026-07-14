@@ -3,6 +3,10 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2PreviewFancyPageImpl;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -19,7 +23,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class EnergyHatchPartMachine extends TieredIOPartMachine {
+public class EnergyHatchPartMachine extends TieredIOPartMachine implements LDLib2FancyPartUIProvider {
 
     @SaveField
     public final NotifiableEnergyContainer energyContainer;
@@ -56,6 +60,19 @@ public class EnergyHatchPartMachine extends TieredIOPartMachine {
     @Override
     public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
         return false;
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2PreviewFancyPageImpl(this, player, holder, switch (io) {
+            case IN -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.import", 1);
+            case OUT -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.export", 2);
+            case BOTH -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.both", 3);
+            case NONE -> null;
+        });
     }
 
     @Override
