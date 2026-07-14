@@ -243,7 +243,7 @@ public class ConveyorCoverConfigActionTest {
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherKeepsConcreteConveyorHolderScope(GameTestHelper helper) {
         PumpCover pump = createPumpCover();
-        FakeActionTargetImpl fakeTarget = new FakeActionTargetImpl();
+        TestConveyorActionTarget fakeTarget = new TestConveyorActionTarget();
         SyncActionData action = ConveyorCoverConfigActions.createSetConfigAction(
                 32, IO.IN, DistributionMode.ROUND_ROBIN_PRIO, ManualIOMode.FILTERED);
 
@@ -446,7 +446,7 @@ public class ConveyorCoverConfigActionTest {
         }
     }
 
-    private static final class FakeActionTargetImpl implements ConveyorCoverConfigActionTarget {
+    private static final class TestConveyorActionTarget implements ConveyorCoverConfigActionTarget {
 
         private int setterCalls;
 
