@@ -444,7 +444,7 @@ public class EnderLinkCoverActionTest {
                 EnderLinkCoverActions.createSetDescriptionAction("channel", "new"),
                 EnderLinkCoverActions.createRequestChannelsAction(),
                 EnderLinkCoverActions.createClearDescriptionAction("channel"));
-        FakeActionTargetImpl fakeTarget = new FakeActionTargetImpl();
+        TestEnderLinkActionTarget fakeTarget = new TestEnderLinkActionTarget();
         for (SyncActionData action : actions) {
             helper.assertTrue(!dispatch(helper, fakeTarget, action),
                     "handler accepted an interface-only holder for " + action.actionId());
@@ -833,7 +833,7 @@ public class EnderLinkCoverActionTest {
         }
     }
 
-    private static final class FakeActionTargetImpl implements EnderLinkCoverActionTarget {
+    private static final class TestEnderLinkActionTarget implements EnderLinkCoverActionTarget {
 
         private int calls;
 
