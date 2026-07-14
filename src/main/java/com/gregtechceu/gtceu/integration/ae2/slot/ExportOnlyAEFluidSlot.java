@@ -23,6 +23,18 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot implements IFluidHan
     }
 
     @Override
+    public void setConfig(@Nullable GenericStack stack) {
+        if (this.config == null && stack == null) {
+            return;
+        }
+        if (stack != null && stack.equals(this.config)) {
+            return;
+        }
+        this.config = stack;
+        onContentsChanged();
+    }
+
+    @Override
     public void addStack(GenericStack stack) {
         if (this.stock == null) {
             this.stock = stack;
@@ -133,9 +145,7 @@ public class ExportOnlyAEFluidSlot extends ExportOnlyAESlot implements IFluidHan
     }
 
     public void onContentsChanged() {
-        if (onContentsChanged != null) {
-            onContentsChanged.run();
-        }
+        onContentsChanged.run();
     }
 
     @Override

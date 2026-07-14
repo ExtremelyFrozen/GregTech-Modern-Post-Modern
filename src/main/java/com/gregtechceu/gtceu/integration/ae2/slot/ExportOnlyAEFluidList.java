@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
@@ -19,6 +20,10 @@ public class ExportOnlyAEFluidList extends NotifiableFluidTank implements IConfi
     @SaveField
     protected ExportOnlyAEFluidSlot[] inventory;
 
+    /** Keeps construction-time and standalone slots callable before an owning snapshot subscribes. */
+    @Setter
+    private @NotNull Runnable snapshotChangeListener = () -> {};
+
     public ExportOnlyAEFluidList(MetaMachine machine, int slots) {
         this(machine, slots, ExportOnlyAEFluidSlot::new);
     }
@@ -28,9 +33,14 @@ public class ExportOnlyAEFluidList extends NotifiableFluidTank implements IConfi
         this.inventory = new ExportOnlyAEFluidSlot[slots];
         for (int i = 0; i < slots; i++) {
             this.inventory[i] = slotFactory.get();
-            this.inventory[i].setOnContentsChanged(this::onContentsChanged);
+            this.inventory[i].setOnContentsChanged(this::onSlotContentsChanged);
             this.storages[i] = new FluidStorageDelegate(inventory[i]);
         }
+    }
+
+    private void onSlotContentsChanged() {
+        onContentsChanged();
+        snapshotChangeListener.run();
     }
 
     @Override
