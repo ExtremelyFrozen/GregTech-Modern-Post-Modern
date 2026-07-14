@@ -57,7 +57,7 @@ public class PumpMachineActionTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void dispatcherExecutesBothShiftStatesExactlyOnce(GameTestHelper helper) {
         ServerPlayer player = preparePlayer(helper, ItemStack.EMPTY);
-        TestPumpFluidSlotActionTargetImpl target = new TestPumpFluidSlotActionTargetImpl();
+        TestPumpFluidSlotActionTarget target = new TestPumpFluidSlotActionTarget();
 
         helper.assertTrue(dispatch(player, target, PumpMachineActions.createClickPumpFluidSlotAction(false)),
                 "valid unshifted pump action was rejected");
@@ -76,7 +76,7 @@ public class PumpMachineActionTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void dispatcherRejectsMalformedPayloadsWithoutInvokingTarget(GameTestHelper helper) {
         ServerPlayer player = preparePlayer(helper, ItemStack.EMPTY);
-        TestPumpFluidSlotActionTargetImpl target = new TestPumpFluidSlotActionTargetImpl();
+        TestPumpFluidSlotActionTarget target = new TestPumpFluidSlotActionTarget();
 
         helper.assertTrue(!dispatch(player, target, rawAction(DataComponentMap.EMPTY)),
                 "pump action without field data was accepted");
@@ -96,7 +96,7 @@ public class PumpMachineActionTest {
     public static void dispatcherRejectsWrongHolderAndSpectatorWithoutInvokingTarget(GameTestHelper helper) {
         ServerPlayer player = preparePlayer(helper, ItemStack.EMPTY);
         SyncActionData action = PumpMachineActions.createClickPumpFluidSlotAction(true);
-        TestPumpFluidSlotActionTargetImpl target = new TestPumpFluidSlotActionTargetImpl();
+        TestPumpFluidSlotActionTarget target = new TestPumpFluidSlotActionTarget();
 
         helper.assertTrue(!dispatch(player, new Object(), action),
                 "pump action accepted an unrelated holder");
@@ -325,7 +325,7 @@ public class PumpMachineActionTest {
         return count;
     }
 
-    private static final class TestPumpFluidSlotActionTargetImpl implements PumpFluidSlotActionTarget {
+    private static final class TestPumpFluidSlotActionTarget implements PumpFluidSlotActionTarget {
 
         private int invocations;
         private boolean lastShiftDown;
