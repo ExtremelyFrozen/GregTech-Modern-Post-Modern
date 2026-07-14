@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.integration.ae2.machine;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
@@ -60,6 +61,7 @@ import com.lowdragmc.lowdraglib2.gui.util.ClickData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -221,6 +223,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     @SaveField
     private final Set<BlockPos> proxies = new ObjectOpenHashSet<>();
     private final Set<MEPatternBufferProxyPartMachine> proxyMachines = new ReferenceOpenHashSet<>();
+    private final Set<MEPatternBufferProxyUIContainerMenu> proxyUIMenus = new ReferenceOpenHashSet<>();
 
     @Getter
     protected final InternalSlotRecipeHandler internalRecipeHandler;
@@ -315,6 +318,34 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     public void removeProxy(MEPatternBufferProxyPartMachine proxy) {
         proxies.remove(proxy.getBlockPos());
         proxyMachines.remove(proxy);
+    }
+
+    void addProxyUIMenu(MEPatternBufferProxyUIContainerMenu menu) {
+        if (!proxyUIMenus.add(menu)) {
+            throw new IllegalStateException("Pattern Buffer Proxy menu was registered more than once.");
+        }
+    }
+
+    void removeProxyUIMenu(MEPatternBufferProxyUIContainerMenu menu) {
+        proxyUIMenus.remove(menu);
+    }
+
+    @Override
+    protected void onClientNetworkChanges(DataComponentMap changes) {
+        for (MEPatternBufferProxyUIContainerMenu menu : List.copyOf(proxyUIMenus)) {
+            try {
+                menu.sendBufferChanges(this, changes);
+            } catch (RuntimeException exception) {
+                proxyUIMenus.remove(menu);
+                try {
+                    menu.closeAfterSyncFailure();
+                } catch (RuntimeException closeException) {
+                    exception.addSuppressed(closeException);
+                }
+                GTCEu.LOGGER.error("Failed to forward client sync changes from Pattern Buffer at {} to Proxy menu {}",
+                        getBlockPos(), menu.containerId, exception);
+            }
+        }
     }
 
     @UnmodifiableView

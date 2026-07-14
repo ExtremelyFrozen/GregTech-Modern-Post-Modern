@@ -15,6 +15,8 @@ import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.component.DataComponentMap
+import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.codec.StreamCodec
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 
@@ -31,7 +33,27 @@ import java.util.UUID
  * @property linkRevision monotonically changing link generation captured when the page opened.
  */
 @JvmRecord
-data class MEPatternBufferProxyOpeningIdentity(val proxyIncarnation: UUID, val bufferPos: BlockPos, val linkRevision: Long)
+data class MEPatternBufferProxyOpeningIdentity(val proxyIncarnation: UUID, val bufferPos: BlockPos, val linkRevision: Long) {
+	private constructor(buffer: RegistryFriendlyByteBuf) : this(
+		buffer.readUUID(),
+		buffer.readBlockPos(),
+		buffer.readLong(),
+	)
+
+	private fun encode(buffer: RegistryFriendlyByteBuf) {
+		buffer.writeUUID(proxyIncarnation)
+		buffer.writeBlockPos(bufferPos)
+		buffer.writeLong(linkRevision)
+	}
+
+	companion object {
+
+		/** Encodes the immutable Proxy and linked-buffer generation captured by the server opening. */
+		@JvmField
+		val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, MEPatternBufferProxyOpeningIdentity> =
+			StreamCodec.ofMember(MEPatternBufferProxyOpeningIdentity::encode, ::MEPatternBufferProxyOpeningIdentity)
+	}
+}
 
 /** Exposes only Proxy operations that revalidate an immutable opening before touching its linked buffer. */
 @ApiStatus.Internal

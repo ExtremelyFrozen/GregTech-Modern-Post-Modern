@@ -43,6 +43,7 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.model.builder.PipeModelBuilder;
 import com.gregtechceu.gtceu.data.pack.event.RegisterDynamicResourcesEvent;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
+import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferProxyUIMenuType;
 import com.gregtechceu.gtceu.integration.map.ClientCacheManager;
 import com.gregtechceu.gtceu.integration.map.cache.client.GTClientCache;
 import com.gregtechceu.gtceu.integration.map.ftbchunks.FTBChunksPlugin;
@@ -92,6 +93,9 @@ public class ClientProxy {
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(GTMenuTypes.COVER_UI.get(), ModularUIContainerScreen::new);
+        if (GTCEu.Mods.isAE2Loaded()) {
+            event.register(MEPatternBufferProxyUIMenuType.MENU_TYPE.get(), ModularUIContainerScreen::new);
+        }
     }
 
     @SubscribeEvent

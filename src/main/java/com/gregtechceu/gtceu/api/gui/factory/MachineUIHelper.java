@@ -4,8 +4,6 @@ import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineActionToServer;
 
-import com.lowdragmc.lowdraglib2.gui.factory.BlockUIMenuType;
-
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -25,7 +23,7 @@ public final class MachineUIHelper {
         if (machine instanceof LDLib2MachineUIProvider uiProvider) {
             MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
             if (uiProvider.canCreateLDLib2UI(player, holder)) {
-                return BlockUIMenuType.openUI(player, machine.getBlockPos());
+                return uiProvider.openLDLib2UI(machine, player);
             }
         }
         return MachineUIFactory.INSTANCE.openUI(machine, player);

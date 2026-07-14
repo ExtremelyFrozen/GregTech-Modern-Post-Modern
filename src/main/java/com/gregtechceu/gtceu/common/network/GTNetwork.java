@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.network;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.common.network.packets.*;
 import com.gregtechceu.gtceu.common.network.packets.hazard.*;
@@ -24,6 +25,9 @@ public class GTNetwork {
         registar.playToServer(CPacketItemActionToServer.TYPE, CPacketItemActionToServer.CODEC, CPacketItemActionToServer::execute);
         registar.playToClient(SPacketImageResponse.TYPE, SPacketImageResponse.CODEC, SPacketImageResponse::execute);
         registar.playToClient(SPacketMachineSyncToClient.TYPE, SPacketMachineSyncToClient.CODEC, SPacketMachineSyncToClient::execute);
+        if (GTCEu.Mods.isAE2Loaded()) {
+            registar.playToClient(SPacketMEPatternBufferProxyViewToClient.TYPE, SPacketMEPatternBufferProxyViewToClient.CODEC, SPacketMEPatternBufferProxyViewToClient::execute);
+        }
         registar.playToClient(SPacketEnderLinkChannelsToClient.TYPE, SPacketEnderLinkChannelsToClient.CODEC, SPacketEnderLinkChannelsToClient::execute);
         registar.playToClient(SPacketProspectingMapData.TYPE, SPacketProspectingMapData.CODEC, SPacketProspectingMapData::execute);
 

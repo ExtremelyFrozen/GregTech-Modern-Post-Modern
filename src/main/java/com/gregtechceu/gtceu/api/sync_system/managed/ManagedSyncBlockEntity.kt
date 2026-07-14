@@ -131,6 +131,11 @@ abstract class ManagedSyncBlockEntity :
 					ChunkPos(blockPos),
 					SPacketMachineSyncToClient(blockPos, changes),
 				)
+				try {
+					onClientNetworkChanges(changes)
+				} catch (exception: RuntimeException) {
+					GTCEu.LOGGER.error("Failed to publish collected client sync changes for block entity at {}", blockPos, exception)
+				}
 			}
 			dirty = true
 		}
@@ -141,6 +146,9 @@ abstract class ManagedSyncBlockEntity :
 	}
 
 	open fun clientTick() {}
+
+	/** Publishes the exact GT client-sync delta after it has been sent to ordinary chunk observers. */
+	protected open fun onClientNetworkChanges(changes: DataComponentMap) {}
 
 	open fun sendServerSyncChanges() {
 		if (level == null || !level!!.isClientSide) {

@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -154,7 +155,20 @@ public class MEPatternBufferProxyPartMachine extends TieredIOPartMachine
     }
 
     @Override
+    public boolean openLDLib2UI(MetaMachine machine, ServerPlayer player) {
+        if (machine != this) {
+            throw new IllegalArgumentException("Pattern Buffer Proxy cannot open a menu for another machine.");
+        }
+        return MEPatternBufferProxyUIMenuType.openUI(this, player);
+    }
+
+    @Override
     public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        if (holder instanceof MEPatternBufferProxyUIContext context) {
+            return context.getMachine() == this &&
+                    context.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER_PROXY.getId()) &&
+                    getDefinition() == GTAEMachines.ME_PATTERN_BUFFER_PROXY && context.isOpeningValid(player);
+        }
         MEPatternBufferPartMachine linked = getBuffer();
         return holder.getMachine() == this &&
                 holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER_PROXY.getId()) &&
@@ -164,10 +178,30 @@ public class MEPatternBufferProxyPartMachine extends TieredIOPartMachine
 
     @Override
     public UI createLDLib2UI(Player player, MachineUIHolder holder) {
-        LDLib2FancyUIProvider page = createLDLib2Page(player, holder, MachineUIHelper::sendAction,
-                () -> player.level().isClientSide(), UIEvent::isShiftDown);
+        LDLib2FancyUIProvider page;
+        if (holder instanceof MEPatternBufferProxyUIContext context) {
+            page = createLDLib2Page(player, context);
+        } else {
+            page = createLDLib2Page(player, holder, MachineUIHelper::sendAction,
+                    () -> player.level().isClientSide(), UIEvent::isShiftDown);
+        }
         return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
                 page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    MEPatternBufferProxyUIHolder createLDLib2UIHolder(ServerPlayer player) {
+        MachineUIHolder preflight = new MachineUIHolderContext(player, this);
+        PatternBufferProxyOpening opening = requireOpening(player, preflight);
+        MEPatternBufferProxyViewSnapshot snapshot = MEPatternBufferProxyViewSnapshot.capture(
+                opening.buffer(), player.level().registryAccess());
+        return new MEPatternBufferProxyUIHolder(player, this, opening.buffer(), opening.identity(), snapshot);
+    }
+
+    private LDLib2FancyUIProvider createLDLib2Page(Player player, MEPatternBufferProxyUIContext context) {
+        BooleanSupplier openingValid = () -> context.isOpeningValid(player);
+        return createLDLib2Page(player, context, context.getPatternBufferView(), context.getOpeningIdentity(),
+                MachineUIHelper::sendAction, openingValid,
+                () -> player.level().isClientSide() && openingValid.getAsBoolean(), UIEvent::isShiftDown);
     }
 
     /**
@@ -178,12 +212,25 @@ public class MEPatternBufferProxyPartMachine extends TieredIOPartMachine
                                            BooleanSupplier canSendAction, Predicate<UIEvent> shiftDown) {
         PatternBufferProxyOpening opening = requireOpening(player, holder);
         BooleanSupplier openingValid = () -> matchesOpening(player, holder, opening);
+        return createLDLib2Page(player, holder, opening.buffer(), opening.identity(), actionSender, openingValid,
+                canSendAction, shiftDown);
+    }
+
+    private LDLib2FancyUIProvider createLDLib2Page(
+                                                   Player player, MachineUIHolder holder,
+                                                   MEPatternBufferPartMachine linkedBuffer,
+                                                   MEPatternBufferProxyOpeningIdentity opening,
+                                                   BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                                   BooleanSupplier openingValid,
+                                                   BooleanSupplier canSendAction,
+                                                   Predicate<UIEvent> shiftDown) {
+        if (!openingValid.getAsBoolean()) {
+            throw new IllegalStateException("Pattern Buffer Proxy page requires its exact opening context.");
+        }
         BooleanSupplier guardedCanSendAction = () -> openingValid.getAsBoolean() && canSendAction.getAsBoolean();
-        MEPatternBufferPartMachine.PatternBufferPageActions pageActions = createOpeningPageActions(
-                opening.identity());
-        return opening.buffer().createOpeningScopedLDLib2Page(
-                player, holder, actionSender, openingValid, guardedCanSendAction,
-                shiftDown, pageActions);
+        MEPatternBufferPartMachine.PatternBufferPageActions pageActions = createOpeningPageActions(opening);
+        return linkedBuffer.createOpeningScopedLDLib2Page(
+                player, holder, actionSender, openingValid, guardedCanSendAction, shiftDown, pageActions);
     }
 
     /**

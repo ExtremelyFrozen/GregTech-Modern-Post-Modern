@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.data;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.factory.GTCoverUIMenuType;
+import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferProxyUIMenuType;
 
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerMenu;
 
@@ -27,6 +28,9 @@ public final class GTMenuTypes {
     private GTMenuTypes() {}
 
     public static void init(IEventBus modBus) {
+        if (GTCEu.Mods.isAE2Loaded()) {
+            MEPatternBufferProxyUIMenuType.initialize();
+        }
         MENUS.register(modBus);
     }
 }

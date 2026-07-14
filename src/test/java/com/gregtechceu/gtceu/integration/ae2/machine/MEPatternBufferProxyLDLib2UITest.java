@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -30,20 +31,25 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.neoforge.network.handling.ServerPayloadContext;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import appeng.core.definitions.AEItems;
+import io.netty.buffer.Unpooled;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -59,6 +65,144 @@ public class MEPatternBufferProxyLDLib2UITest {
     private static final BlockPos BUFFER_B_POS = new BlockPos(1, 1, 0);
     private static final BlockPos PROXY_POS = new BlockPos(2, 1, 0);
     private static final BlockPos REMOTE_BUFFER_POS = new BlockPos(11, 1, 0);
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void openingIdentityCodecRetainsServerCapturedIdentityAfterProxyRebind(GameTestHelper helper) {
+        MEPatternBufferPartMachine bufferA = placeBuffer(helper, BUFFER_A_POS);
+        MEPatternBufferPartMachine bufferB = placeBuffer(helper, BUFFER_B_POS);
+        MEPatternBufferProxyPartMachine proxy = placeProxy(helper, PROXY_POS);
+        proxy.setBuffer(bufferA.getBlockPos());
+        MEPatternBufferProxyOpeningIdentity captured = opening(proxy, bufferA);
+        RegistryFriendlyByteBuf wire = newBuffer(helper);
+
+        try {
+            MEPatternBufferProxyOpeningIdentity.STREAM_CODEC.encode(wire, captured);
+            proxy.setBuffer(bufferB.getBlockPos());
+            MEPatternBufferProxyOpeningIdentity decoded = MEPatternBufferProxyOpeningIdentity.STREAM_CODEC
+                    .decode(wire);
+
+            helper.assertTrue(decoded.equals(captured),
+                    "opening identity codec read mutable Proxy link fields instead of its server-captured payload");
+            helper.assertTrue(!decoded.equals(opening(proxy, bufferB)) && wire.readableBytes() == 0,
+                    "opening identity codec followed the rebound Proxy or left trailing wire data");
+        } finally {
+            wire.release();
+        }
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void menuOpeningDataCarriesIdentityWithoutFullFieldSnapshot(GameTestHelper helper) {
+        ServerPlayer player = preparePlayer(helper);
+        MEPatternBufferPartMachine buffer = placeBuffer(helper, BUFFER_A_POS);
+        MEPatternBufferProxyPartMachine proxy = placeProxy(helper, PROXY_POS);
+        proxy.setBuffer(buffer.getBlockPos());
+        configureSnapshotSource(buffer, "Opening payload", AEItems.PROCESSING_PATTERN.stack(),
+                new ItemStack(Items.COPPER_INGOT, 7), IntCircuitBehaviour.stack(8),
+                new FluidStack(Fluids.WATER, 750), true);
+        MEPatternBufferProxyUIHolder holder = proxy.createLDLib2UIHolder(player);
+        var menu = holder.createMenu(23, player.getInventory(), player);
+        RegistryFriendlyByteBuf wire = newBuffer(helper);
+
+        try {
+            holder.writeClientSideData(menu, wire);
+            BlockPos decodedProxyPos = wire.readBlockPos();
+            ResourceLocation decodedDefinition = wire.readResourceLocation();
+            MEPatternBufferProxyOpeningIdentity decodedOpening = MEPatternBufferProxyOpeningIdentity.STREAM_CODEC
+                    .decode(wire);
+            UUID decodedSession = wire.readUUID();
+            MEPatternBufferProxyViewSnapshot decodedProjection = MEPatternBufferProxyViewSnapshot.STREAM_CODEC
+                    .decode(wire);
+
+            helper.assertTrue(decodedProxyPos.equals(proxy.getBlockPos()) &&
+                    decodedDefinition.equals(proxy.getDefinition().getId()) &&
+                    decodedOpening.equals(opening(proxy, buffer)) &&
+                    decodedSession.equals(holder.getMenuSessionId()),
+                    "Proxy menu opening data lost its server-captured identity");
+            helper.assertTrue(decodedProjection.data().isEmpty() &&
+                    !holder.getOpeningSnapshot().data().isEmpty() &&
+                    decodedProjection.blockState().equals(holder.getOpeningSnapshot().blockState()) &&
+                    wire.readableBytes() == 0,
+                    "Proxy menu opening data included the full field snapshot or lost its projection state");
+        } finally {
+            wire.release();
+            holder.close(player);
+        }
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void snapshotCodecCreatesCompleteViewWithoutWorldBuffer(GameTestHelper helper) {
+        MEPatternBufferPartMachine source = placeBuffer(helper, BUFFER_A_POS);
+        BlockPos sourcePos = source.getBlockPos();
+        ItemStack pattern = AEItems.PROCESSING_PATTERN.stack();
+        ItemStack sharedItem = new ItemStack(Items.COPPER_INGOT, 12);
+        ItemStack circuit = IntCircuitBehaviour.stack(17);
+        FluidStack sharedFluid = new FluidStack(Fluids.WATER, 2_500);
+        configureSnapshotSource(source, "Detached opening", pattern, sharedItem, circuit, sharedFluid, true);
+        MEPatternBufferProxyViewSnapshot captured = MEPatternBufferProxyViewSnapshot.capture(
+                source, helper.getLevel().registryAccess());
+        helper.assertTrue(source.getSyncDataHolder().scanAndMarkChanges(helper.getLevel().registryAccess()),
+                "capturing a Proxy opening snapshot consumed the source's ordinary client synchronization");
+        MEPatternBufferProxyViewSnapshot decoded = roundTripSnapshot(helper, captured);
+
+        helper.setBlock(BUFFER_A_POS, Blocks.AIR);
+        helper.assertTrue(MetaMachine.getMachine(helper.getLevel(), sourcePos) == null,
+                "detached-view fixture retained the linked Pattern Buffer in the world");
+        MEPatternBufferPartMachine view = decoded.createDetachedView(helper.getLevel(), sourcePos);
+
+        helper.assertTrue(view != source && view.getBlockPos().equals(sourcePos) &&
+                MetaMachine.getMachine(helper.getLevel(), sourcePos) == null,
+                "snapshot did not create an unregistered view at the linked buffer position");
+        helper.assertTrue(decoded.matchesContent(view, helper.getLevel().registryAccess()),
+                "detached Pattern Buffer view did not restore the complete encoded snapshot");
+        assertCoreSnapshotState(helper, view, "Detached opening", pattern, sharedItem, circuit, sharedFluid, true);
+        MEPatternBufferProxyViewSnapshot.discardDetachedView(view);
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void laterSnapshotRefreshesExistingDetachedView(GameTestHelper helper) {
+        MEPatternBufferPartMachine initialSource = placeBuffer(helper, BUFFER_A_POS);
+        BlockPos initialSourcePos = initialSource.getBlockPos();
+        configureSnapshotSource(initialSource, "Initial", AEItems.PROCESSING_PATTERN.stack(),
+                new ItemStack(Items.IRON_INGOT, 3), IntCircuitBehaviour.stack(2),
+                new FluidStack(Fluids.WATER, 1_000), false);
+        MEPatternBufferProxyViewSnapshot initial = MEPatternBufferProxyViewSnapshot.capture(
+                initialSource, helper.getLevel().registryAccess());
+        helper.setBlock(BUFFER_A_POS, Blocks.AIR);
+        MEPatternBufferPartMachine view = initial.createDetachedView(helper.getLevel(), initialSourcePos);
+
+        MEPatternBufferPartMachine updatedSource = placeBuffer(helper, BUFFER_B_POS);
+        ItemStack updatedPattern = AEItems.PROCESSING_PATTERN.stack(2);
+        ItemStack updatedSharedItem = new ItemStack(Items.GOLD_INGOT, 21);
+        ItemStack updatedCircuit = IntCircuitBehaviour.stack(24);
+        FluidStack updatedSharedFluid = new FluidStack(Fluids.LAVA, 4_000);
+        configureSnapshotSource(updatedSource, "Refreshed", updatedPattern, updatedSharedItem,
+                updatedCircuit, updatedSharedFluid, true);
+        MEPatternBufferProxyViewSnapshot updated = roundTripSnapshot(helper,
+                MEPatternBufferProxyViewSnapshot.capture(updatedSource, helper.getLevel().registryAccess()));
+
+        updated.applyTo(view, helper.getLevel().registryAccess());
+
+        helper.assertTrue(updated.matchesContent(view, helper.getLevel().registryAccess()) &&
+                !initial.matchesContent(view, helper.getLevel().registryAccess()),
+                "later Proxy snapshot did not replace the detached view's previous client state");
+        assertCoreSnapshotState(helper, view, "Refreshed", updatedPattern, updatedSharedItem,
+                updatedCircuit, updatedSharedFluid, true);
+        helper.assertTrue(MetaMachine.getMachine(helper.getLevel(), initialSourcePos) == null,
+                "snapshot refresh registered its detached Pattern Buffer in the world");
+        MEPatternBufferProxyViewSnapshot.discardDetachedView(view);
+        helper.succeed();
+    }
 
     @TestHolder
     @EmptyTemplate
@@ -423,6 +567,54 @@ public class MEPatternBufferProxyLDLib2UITest {
                                                                MEPatternBufferPartMachine buffer) {
         return new MEPatternBufferProxyOpeningIdentity(
                 proxy.getProxyIncarnation(), buffer.getBlockPos(), proxy.getLinkRevision());
+    }
+
+    private static void configureSnapshotSource(MEPatternBufferPartMachine source, String name,
+                                                ItemStack pattern, ItemStack sharedItem, ItemStack circuit,
+                                                FluidStack sharedFluid, boolean online) {
+        source.setCustomName(name);
+        source.getPatternInventory().setStackInSlot(4, pattern.copy());
+        source.getShareInventory().setStackInSlot(3, sharedItem.copy());
+        source.getCircuitInventory().setStackInSlot(0, circuit.copy());
+        source.getShareTank().setFluidInTank(5, sharedFluid.copy());
+        source.setOnline(online);
+    }
+
+    private static MEPatternBufferProxyViewSnapshot roundTripSnapshot(
+                                                                      GameTestHelper helper,
+                                                                      MEPatternBufferProxyViewSnapshot snapshot) {
+        RegistryFriendlyByteBuf wire = newBuffer(helper);
+        try {
+            MEPatternBufferProxyViewSnapshot.STREAM_CODEC.encode(wire, snapshot);
+            MEPatternBufferProxyViewSnapshot decoded = MEPatternBufferProxyViewSnapshot.STREAM_CODEC.decode(wire);
+            helper.assertTrue(wire.readableBytes() == 0,
+                    "Pattern Buffer Proxy snapshot codec left trailing wire data");
+            return decoded;
+        } finally {
+            wire.release();
+        }
+    }
+
+    private static void assertCoreSnapshotState(GameTestHelper helper, MEPatternBufferPartMachine view,
+                                                String name, ItemStack pattern, ItemStack sharedItem,
+                                                ItemStack circuit, FluidStack sharedFluid, boolean online) {
+        helper.assertTrue(name.equals(view.getCustomName()),
+                "detached Pattern Buffer view lost its custom name");
+        helper.assertTrue(ItemStack.matches(pattern, view.getPatternInventory().getStackInSlot(4)),
+                "detached Pattern Buffer view lost its pattern inventory");
+        helper.assertTrue(ItemStack.matches(sharedItem, view.getShareInventory().getStackInSlot(3)),
+                "detached Pattern Buffer view lost its shared item inventory");
+        helper.assertTrue(ItemStack.matches(circuit, view.getCircuitInventory().getStackInSlot(0)),
+                "detached Pattern Buffer view lost its programmed circuit");
+        helper.assertTrue(FluidStack.matches(sharedFluid, view.getShareTank().getFluidInTank(5)),
+                "detached Pattern Buffer view lost its shared fluid inventory");
+        helper.assertTrue(view.isOnline() == online,
+                "detached Pattern Buffer view lost its ME network status");
+    }
+
+    private static RegistryFriendlyByteBuf newBuffer(GameTestHelper helper) {
+        return new RegistryFriendlyByteBuf(
+                Unpooled.buffer(), helper.getLevel().registryAccess(), ConnectionType.OTHER);
     }
 
     private static ServerPlayer preparePlayer(GameTestHelper helper) {
