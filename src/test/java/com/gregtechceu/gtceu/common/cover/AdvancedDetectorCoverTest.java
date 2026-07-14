@@ -512,7 +512,7 @@ public class AdvancedDetectorCoverTest {
     }
 
     private static final class FluidDetectorSyncProbe extends AdvancedFluidDetectorCover
-                                                          implements AdvancedDetectorSyncProbe {
+                                                      implements AdvancedDetectorSyncProbe {
 
         private FluidDetectorSyncProbe(BufferMachine machine) {
             super(GTCovers.FLUID_DETECTOR_ADVANCED, machine.getCoverContainer(), Direction.WEST);
@@ -520,7 +520,7 @@ public class AdvancedDetectorCoverTest {
     }
 
     private static final class ItemDetectorSyncProbe extends AdvancedItemDetectorCover
-                                                         implements AdvancedDetectorSyncProbe {
+                                                     implements AdvancedDetectorSyncProbe {
 
         private ItemDetectorSyncProbe(BufferMachine machine) {
             super(GTCovers.ITEM_DETECTOR_ADVANCED, machine.getCoverContainer(), Direction.WEST);
