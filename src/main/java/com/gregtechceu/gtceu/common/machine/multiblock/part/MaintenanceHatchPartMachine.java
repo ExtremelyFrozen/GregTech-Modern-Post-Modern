@@ -12,10 +12,13 @@ import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
@@ -55,7 +58,7 @@ import java.util.function.DoubleSupplier;
 
 public class MaintenanceHatchPartMachine extends TieredPartMachine
                                          implements IMaintenanceMachine, LDLib2MachineUIProvider,
-                                         MaintenanceHatchActionTarget {
+                                         LDLib2FancyPartUIProvider, MaintenanceHatchActionTarget {
 
     private static final float MAX_DURATION_MULTIPLIER = 1.1f;
     private static final float MIN_DURATION_MULTIPLIER = 0.9f;
@@ -341,6 +344,9 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
 
     @Override
     public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException("Maintenance Hatch UI holder must resolve the opened part.");
+        }
         int rootWidth = isConfigurable ? 150 : 8 + 18;
         int rootHeight = isConfigurable ? 70 : 8 + 20 + 18;
         UIElement root = new UIElement();
@@ -353,6 +359,12 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
         root.addChild(createLDLib2DuctTapeSlot(rootWidth));
         root.addChild(createLDLib2MaintenanceButton(player, holder, rootWidth));
         return UI.of(root);
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2FancyPreviewPage(this, player, holder, null,
+                this::attachLDLib2MaintenanceTooltips);
     }
 
     private GTComponentPanelElement createLDLib2DurationPanel(Player player, MachineUIHolder holder) {

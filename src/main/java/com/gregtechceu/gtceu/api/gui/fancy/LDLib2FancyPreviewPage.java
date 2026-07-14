@@ -22,6 +22,7 @@ import com.tterrag.registrate.util.RegistrateDistExecutor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Opening-scoped LDLib2 implementation of the default Fancy machine preview page.
@@ -38,6 +39,7 @@ public final class LDLib2FancyPreviewPage implements LDLib2FancyUIProvider {
     private final MetaMachine machine;
     private final MachineUIHolder holder;
     private final LDLib2DirectionalFancyConfigurator directionalPage;
+    private final Consumer<LDLib2FancyTooltipsPanelElement> tooltipAttacher;
     @Nullable
     private final PageGroupingData groupingData;
 
@@ -50,7 +52,27 @@ public final class LDLib2FancyPreviewPage implements LDLib2FancyUIProvider {
      * @param groupingData optional page-switcher group for multipart navigation
      */
     public LDLib2FancyPreviewPage(MetaMachine machine, Player player, MachineUIHolder holder,
-                                      @Nullable PageGroupingData groupingData) {
+                                  @Nullable PageGroupingData groupingData) {
+        this(machine, player, holder, groupingData, createDefaultTooltipAttacher(machine));
+    }
+
+    /**
+     * Creates a contextual preview page with tooltip registration chosen by the owning surface.
+     *
+     * <p>
+     * Some controller-owned part pages intentionally expose only a conditional part warning instead of the
+     * previewed machine's generic tooltip. Capturing the strategy here keeps that policy opening-scoped alongside
+     * the validated holder.
+     *
+     * @param machine         machine rendered and configured by this page
+     * @param player          player whose cover permissions apply to the directional page
+     * @param holder          holder dedicated to the contextual machine rather than its controller
+     * @param groupingData    optional page-switcher group for multipart navigation
+     * @param tooltipAttacher strategy that registers exactly the tooltips exposed by this preview surface
+     */
+    public LDLib2FancyPreviewPage(MetaMachine machine, Player player, MachineUIHolder holder,
+                                  @Nullable PageGroupingData groupingData,
+                                  Consumer<LDLib2FancyTooltipsPanelElement> tooltipAttacher) {
         requireMatchingHolder(machine, holder);
         if (!(machine instanceof LDLib2FancyActionMachine)) {
             throw new IllegalArgumentException("Preview Fancy page machine must opt into LDLib2 Fancy actions.");
@@ -58,6 +80,7 @@ public final class LDLib2FancyPreviewPage implements LDLib2FancyUIProvider {
         this.machine = machine;
         this.holder = holder;
         this.groupingData = groupingData;
+        this.tooltipAttacher = tooltipAttacher;
         this.directionalPage = new LDLib2DirectionalFancyConfigurator(machine, player, holder);
     }
 
@@ -118,11 +141,7 @@ public final class LDLib2FancyPreviewPage implements LDLib2FancyUIProvider {
 
     @Override
     public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
-        tooltipsPanel.attachTooltips(machine);
-        machine.getTraitHolder().getAllTraits().stream()
-                .filter(IFancyTooltip.class::isInstance)
-                .map(IFancyTooltip.class::cast)
-                .forEach(tooltipsPanel::attachTooltips);
+        tooltipAttacher.accept(tooltipsPanel);
     }
 
     @Override
@@ -140,5 +159,15 @@ public final class LDLib2FancyPreviewPage implements LDLib2FancyUIProvider {
         if (holder.getMachine() != machine) {
             throw new IllegalArgumentException("Preview Fancy page holder must resolve the opened machine.");
         }
+    }
+
+    private static Consumer<LDLib2FancyTooltipsPanelElement> createDefaultTooltipAttacher(MetaMachine machine) {
+        return tooltipsPanel -> {
+            tooltipsPanel.attachTooltips(machine);
+            machine.getTraitHolder().getAllTraits().stream()
+                    .filter(IFancyTooltip.class::isInstance)
+                    .map(IFancyTooltip.class::cast)
+                    .forEach(tooltipsPanel::attachTooltips);
+        };
     }
 }
