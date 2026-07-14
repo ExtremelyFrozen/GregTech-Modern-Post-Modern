@@ -12,7 +12,7 @@ tasks.register('verifyGradleUserHomeOnE') {
 
 tasks.register('verifyDescriptiveTypeNames') {
     group = 'verification'
-    description = 'Rejects GTM source types and files that use generic implementation suffixes.'
+    description = 'Rejects GTM source types and files that contain generic implementation name segments.'
 
     doLast {
         var sourceRoots = [
@@ -26,18 +26,24 @@ tasks.register('verifyDescriptiveTypeNames') {
             include '**/*.kt'
             exclude 'src/generated/**'
         }
-        var genericTypeName = ~/\b(class|interface|record|enum|object)\s+[A-Za-z_$][A-Za-z0-9_$]*(Impl|Implementation)\b/
-        var genericFileName = ~/[A-Za-z_$][A-Za-z0-9_$]*(Impl|Implementation)\.(java|kt)/
+        var typeDeclaration = ~/(?m)^[\t ]*(?:(?:public|protected|private|abstract|static|final|strictfp|sealed|non-sealed|data|value|internal|open|expect|actual|fun|companion|inner|inline)\s+|@[A-Za-z_$][A-Za-z0-9_$.]*(?:\([^\r\n]*\))?\s+)*(?:@interface|enum\s+class|annotation\s+class|class|interface|record|enum|object|typealias)\s+(?:([A-Za-z_$][A-Za-z0-9_$]*)|`([^`\r\n]+)`)(?=\s|[<(:={]|$)/
+        var genericNameSegment = ~/(Implementation|Impl)(?=$|[A-Z0-9_$])/
         var matches = []
 
         sourceFiles.each { sourceFile ->
             var relativePath = rootProject.relativePath(sourceFile)
-            if (genericFileName.matcher(sourceFile.name).matches()) {
-                matches.add("${relativePath}: generic implementation file suffix")
+            var fileStem = sourceFile.name.substring(0, sourceFile.name.lastIndexOf('.'))
+            if (genericNameSegment.matcher(fileStem).find()) {
+                matches.add("${relativePath}: generic implementation file name segment")
             }
-            sourceFile.eachLine('UTF-8') { line, number ->
-                if (genericTypeName.matcher(line).find()) {
-                    matches.add("${relativePath}:${number}: generic implementation type suffix")
+            var sourceText = sourceFile.getText('UTF-8')
+            var declarationMatcher = typeDeclaration.matcher(sourceText)
+            while (declarationMatcher.find()) {
+                var typeNameGroup = declarationMatcher.group(1) == null ? 2 : 1
+                var typeName = declarationMatcher.group(typeNameGroup)
+                if (genericNameSegment.matcher(typeName).find()) {
+                    var lineNumber = sourceText.substring(0, declarationMatcher.start(typeNameGroup)).count('\n') + 1
+                    matches.add("${relativePath}:${lineNumber}: generic implementation type name segment (${typeName})")
                 }
             }
         }

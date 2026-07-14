@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import java.util.function.Function;
 
 @Mixin(targets = { "net.minecraft.client.resources.model.ModelBakery$ModelBakerImpl" })
-public abstract class ModelBakerImplMixin {
+public abstract class ModelBakerSpriteCaptureMixin {
 
     // the parameters aren't remapped because Parchment can't remap Forge's patches
     @SuppressWarnings("NameDoesntMatchTargetClass")

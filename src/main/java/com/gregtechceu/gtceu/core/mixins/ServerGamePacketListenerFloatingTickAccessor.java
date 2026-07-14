@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(ServerGamePacketListenerImpl.class)
-public interface ServerGamePacketListenerImplAccessor {
+public interface ServerGamePacketListenerFloatingTickAccessor {
 
     @Accessor
     void setAboveGroundTickCount(int aboveGroundTickCount);
