@@ -22,7 +22,7 @@ public class ExportOnlyAEFluidList extends NotifiableFluidTank implements IConfi
 
     /** Keeps construction-time and standalone slots callable before an owning snapshot subscribes. */
     @Setter
-    private @NotNull Runnable snapshotChangeListener = () -> {};
+    private Runnable snapshotChangeListener = () -> {};
 
     public ExportOnlyAEFluidList(MetaMachine machine, int slots) {
         this(machine, slots, ExportOnlyAEFluidSlot::new);
