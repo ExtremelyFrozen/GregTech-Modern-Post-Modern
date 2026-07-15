@@ -6,8 +6,10 @@ import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -65,6 +67,73 @@ public class MEPatternBufferProxyLDLib2UITest {
     private static final BlockPos BUFFER_B_POS = new BlockPos(1, 1, 0);
     private static final BlockPos PROXY_POS = new BlockPos(2, 1, 0);
     private static final BlockPos REMOTE_BUFFER_POS = new BlockPos(11, 1, 0);
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void contextualPreviewStaysIndependentFromLinkedBufferOpening(GameTestHelper helper) {
+        ServerPlayer player = preparePlayer(helper);
+        MEPatternBufferPartMachine buffer = placeBuffer(helper, BUFFER_A_POS);
+        MEPatternBufferProxyPartMachine proxy = placeProxy(helper, PROXY_POS);
+        MEPatternBufferProxyPartMachine replacement = placeProxy(helper, BUFFER_B_POS);
+        proxy.setBuffer(buffer.getBlockPos());
+        MutableProxyHolder holder = new MutableProxyHolder(proxy);
+        LDLib2FancyPartUIProvider pageProvider = proxy;
+
+        helper.assertTrue(proxy.canCreateLDLib2UI(player, holder),
+                "linked Pattern Buffer Proxy rejected its standalone opening");
+        UIElement standaloneRoot = proxy.createLDLib2UI(player, holder).getRootElement();
+        helper.assertTrue(descendants(standaloneRoot).stream().anyMatch(MEPatternBufferPageElement.class::isInstance),
+                "linked Pattern Buffer Proxy standalone opening omitted its buffer body");
+        LDLib2FancyUIProvider firstPage = pageProvider.createLDLib2FancyPage(player, holder);
+        LDLib2FancyUIProvider secondPage = pageProvider.createLDLib2FancyPage(player, holder);
+        helper.assertTrue(firstPage != secondPage,
+                "Pattern Buffer Proxy reused a contextual page across openings");
+        helper.assertTrue(firstPage.getLDLib2PageWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                firstPage.getLDLib2PageHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+                "Pattern Buffer Proxy contextual page did not preserve the default preview bounds");
+        LDLib2FancyUIProvider.PageGroupingData grouping = firstPage.getPageGroupingData();
+        helper.assertTrue(grouping != null &&
+                "gtpm.multiblock.page_switcher.io.import".equals(grouping.groupKey()) &&
+                grouping.groupPositionWeight() == 1,
+                "Pattern Buffer Proxy contextual page lost its legacy import grouping");
+
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(firstPage,
+                player.getInventory(), holder, firstPage.getLDLib2PageWidth(), firstPage.getLDLib2PageHeight());
+        helper.assertTrue(shell.getHolder() == holder,
+                "Pattern Buffer Proxy contextual shell lost its proxy holder");
+        helper.assertTrue(shell.getConfiguratorPanel().getChildren().size() == 1,
+                "Pattern Buffer Proxy contextual preview exposed linked-buffer configurators");
+        helper.assertTrue(shell.getSideTabsElement().getChildren().size() == 2,
+                "Pattern Buffer Proxy contextual preview lost its directional page");
+        UIElement preview = shell.getChildren().getFirst().getChildren().getFirst();
+        helper.assertTrue(preview.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                preview.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
+                preview.getChildren().isEmpty() &&
+                descendants(preview).stream().noneMatch(MEPatternBufferPageElement.class::isInstance),
+                "Pattern Buffer Proxy contextual page reused its linked-buffer standalone body");
+
+        boolean mismatchedHolderRejected = false;
+        try {
+            pageProvider.createLDLib2FancyPage(player, new MutableProxyHolder(replacement));
+        } catch (IllegalArgumentException expected) {
+            mismatchedHolderRejected = expected.getMessage().contains("holder");
+        }
+        helper.assertTrue(mismatchedHolderRejected,
+                "Pattern Buffer Proxy contextual page accepted another proxy holder");
+
+        holder.setMachine(replacement);
+        boolean replacementRejected = false;
+        try {
+            new LDLib2FancyMachineUIElement(firstPage, player.getInventory(), holder,
+                    firstPage.getLDLib2PageWidth(), firstPage.getLDLib2PageHeight());
+        } catch (IllegalStateException expected) {
+            replacementRejected = expected.getMessage().contains("holder");
+        }
+        helper.assertTrue(replacementRejected,
+                "Pattern Buffer Proxy contextual page accepted a same-definition replacement");
+        helper.succeed();
+    }
 
     @TestHolder
     @EmptyTemplate
@@ -643,4 +712,32 @@ public class MEPatternBufferProxyLDLib2UITest {
     }
 
     private record CapturedAction(MachineUIHolder holder, SyncActionData action) {}
+
+    private static final class MutableProxyHolder implements MachineUIHolder {
+
+        private MEPatternBufferProxyPartMachine machine;
+
+        private MutableProxyHolder(MEPatternBufferProxyPartMachine machine) {
+            this.machine = machine;
+        }
+
+        private void setMachine(MEPatternBufferProxyPartMachine machine) {
+            this.machine = machine;
+        }
+
+        @Override
+        public BlockPos getPos() {
+            return machine.getBlockPos();
+        }
+
+        @Override
+        public ResourceLocation getMachineDefinitionId() {
+            return machine.getDefinition().getId();
+        }
+
+        @Override
+        public MEPatternBufferProxyPartMachine getMachine() {
+            return machine;
+        }
+    }
 }

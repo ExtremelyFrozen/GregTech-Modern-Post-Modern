@@ -9,11 +9,13 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfiguratorActions;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalCoverActions;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
@@ -49,7 +51,7 @@ import java.util.function.Predicate;
 
 public class MEPatternBufferProxyPartMachine extends TieredIOPartMachine
                                              implements IDataStickInteractable, LDLib2MachineUIProvider,
-                                             MEPatternBufferProxyActionTarget {
+                                             LDLib2FancyPartUIProvider, MEPatternBufferProxyActionTarget {
 
     static {
         MEPatternBufferProxyActions.initialize();
@@ -187,6 +189,14 @@ public class MEPatternBufferProxyPartMachine extends TieredIOPartMachine
         }
         return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
                 page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    /** Creates the proxy-local preview used by a surrounding multiblock without opening its linked buffer. */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2FancyPreviewPage(this, player, holder,
+                new LDLib2FancyUIProvider.PageGroupingData(
+                        "gtpm.multiblock.page_switcher.io.import", 1));
     }
 
     MEPatternBufferProxyUIHolder createLDLib2UIHolder(ServerPlayer player) {
