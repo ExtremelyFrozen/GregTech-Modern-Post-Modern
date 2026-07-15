@@ -11,6 +11,8 @@ import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.PumpHatch;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
@@ -36,7 +38,7 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 public class PumpHatchPartMachine extends FluidHatchPartMachine
-                                  implements LDLib2MachineUIProvider, PumpHatch,
+                                  implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider, PumpHatch,
                                   PumpHatchFluidSlotActionTarget {
 
     static {
@@ -71,6 +73,16 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine
         root.addChild(createLDLib2WorkingEnabledToggle());
         root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 84, true));
         return UI.of(root);
+    }
+
+    @Override
+    protected boolean supportsGenericLDLib2Page() {
+        return true;
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return createLDLib2Page(player, holder);
     }
 
     GTToggleButtonElement createLDLib2WorkingEnabledToggle() {

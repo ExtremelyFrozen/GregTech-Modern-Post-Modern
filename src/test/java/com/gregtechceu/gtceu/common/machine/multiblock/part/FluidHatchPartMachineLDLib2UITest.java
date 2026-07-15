@@ -100,8 +100,8 @@ public class FluidHatchPartMachineLDLib2UITest {
 
         FluidHatchPartMachine pump = createFluidHatch(GTMachines.PUMP_HATCH);
         FluidHatchPartMachine steam = createFluidHatch(GTMachines.STEAM_HATCH);
-        helper.assertTrue(!(pump instanceof LDLib2FancyPartUIProvider),
-                "Pump Hatch inherited the generic contextual fluid hatch provider");
+        helper.assertTrue(pump instanceof LDLib2FancyPartUIProvider,
+                "Pump Hatch did not explicitly opt into its contextual fluid hatch provider");
         helper.assertTrue(!(steam instanceof LDLib2FancyPartUIProvider),
                 "Steam Hatch inherited the generic contextual fluid hatch provider");
         helper.succeed();
