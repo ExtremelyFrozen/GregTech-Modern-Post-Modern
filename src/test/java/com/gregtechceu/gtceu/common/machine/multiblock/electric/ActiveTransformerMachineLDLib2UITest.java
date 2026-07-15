@@ -13,8 +13,8 @@ import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
+import com.gregtechceu.gtceu.common.machine.multiblock.part.CokeOvenHatch;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.EnergyHatchPartMachine;
-import com.gregtechceu.gtceu.common.machine.multiblock.part.ItemBusPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.LaserHatchPartMachine;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
@@ -108,7 +108,7 @@ public class ActiveTransformerMachineLDLib2UITest {
     @GameTest(template = "empty", batch = "ActiveTransformerMachineLDLib2UI")
     public static void unsupportedPartsFailFastAndDisplaySnapshotUsesServerStatistics(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-        ItemBusPartMachine unsupportedPart = createItemBus(GTMachines.ITEM_IMPORT_BUS[LV]);
+        CokeOvenHatch unsupportedPart = createCokeOvenHatch(GTMachines.COKE_OVEN_HATCH);
         TestActiveTransformerMachine invalidTransformer = new TestActiveTransformerMachine(List.of(unsupportedPart));
 
         boolean unsupportedPartRejected = false;
@@ -164,12 +164,12 @@ public class ActiveTransformerMachineLDLib2UITest {
         return laserHatch;
     }
 
-    private static ItemBusPartMachine createItemBus(MachineDefinition definition) {
+    private static CokeOvenHatch createCokeOvenHatch(MachineDefinition definition) {
         MetaMachine machine = definition.getBlockEntityType().create(BlockPos.ZERO, definition.defaultBlockState());
-        if (!(machine instanceof ItemBusPartMachine itemBus)) {
-            throw new IllegalStateException("Item Bus definition did not create an Item Bus machine.");
+        if (!(machine instanceof CokeOvenHatch cokeOvenHatch)) {
+            throw new IllegalStateException("Coke Oven Hatch definition did not create a Coke Oven Hatch machine.");
         }
-        return itemBus;
+        return cokeOvenHatch;
     }
 
     private static List<UIElement> descendants(UIElement root) {
