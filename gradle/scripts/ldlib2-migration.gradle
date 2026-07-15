@@ -187,6 +187,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/StandardFluidHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamItemBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/hpca/HPCAComponentPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/primitive/CokeOvenMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/primitive/PrimitiveBlastFurnaceMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/steam/LargeBoilerMachine.java',
