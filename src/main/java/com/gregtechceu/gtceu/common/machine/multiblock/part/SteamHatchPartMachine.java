@@ -10,6 +10,8 @@ import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -35,10 +37,12 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 public class SteamHatchPartMachine extends FluidHatchPartMachine
-                                   implements LDLib2MachineUIProvider, SteamHatchFluidSlotActionTarget {
+                                   implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider,
+                                   SteamHatchFluidSlotActionTarget {
 
     public static final int INITIAL_TANK_CAPACITY = 64 * FluidType.BUCKET_VOLUME;
     public static final boolean IS_STEEL = ConfigHolder.INSTANCE.machines.steelSteamMultiblocks;
+
     static {
         SteamHatchPartMachineActions.initialize();
     }
@@ -71,6 +75,22 @@ public class SteamHatchPartMachine extends FluidHatchPartMachine
         root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(),
                 GuiTextures.SLOT_STEAM.get(IS_STEEL), 7, 84, true));
         return UI.of(root);
+    }
+
+    /**
+     * Allows the steam-specific standalone screen to reuse the ordinary Fluid Hatch body in a controller context.
+     */
+    @Override
+    protected boolean supportsGenericLDLib2Page() {
+        return true;
+    }
+
+    /**
+     * Creates a holder-scoped Fluid Hatch page for one surrounding steam multiblock UI opening.
+     */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return createLDLib2Page(player, holder);
     }
 
     private GTLabelElement createLDLib2TitleLabel() {
