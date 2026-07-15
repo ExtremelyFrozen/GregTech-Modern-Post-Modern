@@ -1,12 +1,20 @@
 package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.sync_system.codecs.MonitorGroupCodec;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
@@ -16,6 +24,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
+import java.util.UUID;
+
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
 public class MonitorGroupCodecTest {
@@ -24,9 +34,7 @@ public class MonitorGroupCodecTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "MonitorGroupCodec")
     public static void identityPersistsAndLegacyGroupsReceiveOne(GameTestHelper helper) {
-        ContextualFieldCodec.Context<MonitorGroup> context = new ContextualFieldCodec.Context<>(
-                new Object(), new TypeDeclaration(MonitorGroup.class), null, "monitorGroup", true, true,
-                helper.getLevel().registryAccess(), SyncSerializationTarget.DATA_COMPONENTS);
+        ContextualFieldCodec.Context<MonitorGroup> context = context(helper);
         MonitorGroup first = new MonitorGroup("first");
         MonitorGroup second = new MonitorGroup("second");
 
@@ -60,6 +68,94 @@ public class MonitorGroupCodecTest {
         }
         helper.assertTrue(malformedRejected, "monitor group codec accepted a malformed identity");
         helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "MonitorGroupCodec")
+    public static void moduleSlotIncarnationPersistsAndTracksPhysicalReplacement(GameTestHelper helper) {
+        ContextualFieldCodec.Context<MonitorGroup> context = context(helper);
+        MonitorGroup group = new MonitorGroup("module-slot");
+        MonitorGroup other = new MonitorGroup("other-module-slot");
+        helper.assertTrue(!group.getModuleSlotIncarnation().equals(other.getModuleSlotIncarnation()),
+                "new monitor groups reused the same module-slot incarnation");
+
+        JsonObject encoded = MonitorGroupCodec.INSTANCE.serializeField(group, context).getAsJsonObject();
+        MonitorGroup decoded = decode(encoded, context);
+        helper.assertTrue(decoded.getModuleSlotIncarnation().equals(group.getModuleSlotIncarnation()),
+                "module-slot incarnation changed during codec round-trip");
+
+        ItemStack module = GTItems.IMAGE_MODULE.get().getDefaultInstance();
+        UUID decodedIncarnation = decoded.getModuleSlotIncarnation();
+        decoded.getItemStackHandler().setStackInSlot(0, module.copy());
+        helper.assertTrue(decoded.getModuleSlotIncarnation().equals(decodedIncarnation),
+                "decoded client-side handler installed an authoritative replacement listener");
+
+        JsonObject legacyJson = encoded.deepCopy();
+        legacyJson.remove("moduleSlotIncarnation");
+        MonitorGroup legacyDecoded = decode(legacyJson, context);
+        helper.assertTrue(!legacyDecoded.getModuleSlotIncarnation().equals(group.getModuleSlotIncarnation()),
+                "legacy monitor group reused the removed module-slot incarnation");
+        JsonObject migratedJson = MonitorGroupCodec.INSTANCE.serializeField(legacyDecoded, context).getAsJsonObject();
+        helper.assertTrue(migratedJson.has("moduleSlotIncarnation"),
+                "re-serialized legacy monitor group omitted its generated module-slot incarnation");
+        helper.assertTrue(decode(migratedJson, context).getModuleSlotIncarnation()
+                .equals(legacyDecoded.getModuleSlotIncarnation()),
+                "generated legacy module-slot incarnation did not persist");
+
+        JsonObject malformedJson = encoded.deepCopy();
+        malformedJson.add("moduleSlotIncarnation", new JsonPrimitive("malformed"));
+        boolean malformedRejected = false;
+        try {
+            MonitorGroupCodec.INSTANCE.deserializeField(malformedJson, context);
+        } catch (RuntimeException expected) {
+            malformedRejected = true;
+        }
+        helper.assertTrue(malformedRejected, "monitor group codec accepted a malformed module-slot incarnation");
+
+        CustomItemStackHandler handler = group.getItemStackHandler();
+        handler.setOnContentsChanged(group::rotateModuleSlotIncarnation);
+        assertRotated(helper, group, () -> handler.setStackInSlot(0, module.copy()),
+                "setting the module slot");
+        assertRotated(helper, group, () -> handler.setStackInSlot(0, module.copy()),
+                "byte-identical module replacement");
+
+        UUID beforeConfiguration = group.getModuleSlotIncarnation();
+        handler.getStackInSlot(0).set(DataComponents.CUSTOM_NAME, Component.literal("configured"));
+        helper.assertTrue(group.getModuleSlotIncarnation().equals(beforeConfiguration),
+                "in-place module configuration rotated the physical slot incarnation");
+
+        UUID beforeCapacityQueries = group.getModuleSlotIncarnation();
+        int directCapacity = handler.getMaxStackSizeForEmptySlot(0, module);
+        SlotWidget legacyWidget = new SlotWidget();
+        Slot legacySlot = legacyWidget.new WidgetSlotItemHandler(handler, 0, 0, 0);
+        int legacyCapacity = legacySlot.getMaxStackSize(module);
+        int ldlib2Capacity = new GTItemSlotElement(handler, 0).getSlot().getMaxStackSize(module);
+        helper.assertTrue(directCapacity > 0 && directCapacity == legacyCapacity && directCapacity == ldlib2Capacity,
+                "slot capacity queries disagreed on the accepted empty-slot capacity");
+        helper.assertTrue(group.getModuleSlotIncarnation().equals(beforeCapacityQueries),
+                "slot capacity query triggered a physical module replacement");
+
+        assertRotated(helper, group, handler::clear, "clearing the module slot");
+        assertRotated(helper, group, () -> handler.insertItem(0, module.copy(), false),
+                "inserting a module");
+        assertRotated(helper, group, () -> handler.extractItem(0, 1, false),
+                "extracting a module");
+        helper.succeed();
+    }
+
+    private static ContextualFieldCodec.Context<MonitorGroup> context(GameTestHelper helper) {
+        return new ContextualFieldCodec.Context<>(
+                new Object(), new TypeDeclaration(MonitorGroup.class), null, "monitorGroup", true, true,
+                helper.getLevel().registryAccess(), SyncSerializationTarget.DATA_COMPONENTS);
+    }
+
+    private static void assertRotated(GameTestHelper helper, MonitorGroup group, Runnable replacement,
+                                      String description) {
+        UUID before = group.getModuleSlotIncarnation();
+        replacement.run();
+        helper.assertTrue(!group.getModuleSlotIncarnation().equals(before),
+                description + " did not rotate the module-slot incarnation");
     }
 
     private static MonitorGroup decode(JsonElement json, ContextualFieldCodec.Context<MonitorGroup> context) {

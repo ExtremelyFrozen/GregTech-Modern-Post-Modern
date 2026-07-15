@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.gui.widget;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.integration.jei.GTJEIPlugin;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
@@ -303,6 +304,10 @@ public class SlotWidget extends com.lowdragmc.lowdraglib.gui.widget.SlotWidget {
 
         @Override
         public int getMaxStackSize(@NotNull ItemStack stack) {
+            if (itemHandler instanceof CustomItemStackHandler customItemStackHandler &&
+                    customItemStackHandler.isNonMutatingEmptySlotCapacityQueryEnabled()) {
+                return customItemStackHandler.getMaxStackSizeForEmptySlot(index, stack);
+            }
             ItemStack maxAdd = stack.copy();
             int maxInput = stack.getMaxStackSize();
             maxAdd.setCount(maxInput);

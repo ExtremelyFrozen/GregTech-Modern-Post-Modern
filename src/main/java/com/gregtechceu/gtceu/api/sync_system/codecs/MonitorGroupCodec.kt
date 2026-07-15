@@ -14,6 +14,8 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.mojang.serialization.JsonOps
 
+import java.util.UUID
+
 class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGroup> {
 
 	override fun serializeField(value: MonitorGroup, context: ContextualFieldCodec.Context<MonitorGroup>): JsonElement {
@@ -23,6 +25,12 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 			"identity",
 			UUIDUtil.CODEC
 				.encodeStart(JsonOps.INSTANCE, value.getIdentity())
+				.getOrThrow(),
+		)
+		json.add(
+			"moduleSlotIncarnation",
+			UUIDUtil.CODEC
+				.encodeStart(JsonOps.INSTANCE, value.getModuleSlotIncarnation())
 				.getOrThrow(),
 		)
 
@@ -65,24 +73,21 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 		if (!value.isJsonObject) return null
 
 		val json = value.asJsonObject
-		val identity = if (json.has("identity")) {
-			UUIDUtil.CODEC
-				.parse(JsonOps.INSTANCE, json.get("identity"))
-				.getOrThrow()
-		} else {
-			null
-		}
+		val identity = deserializeUuidOrCreateLegacy(json, "identity")
+		val moduleSlotIncarnation = deserializeUuidOrCreateLegacy(json, "moduleSlotIncarnation")
 		val handler = deserializeItems(json.get("items"), context, MonitorGroup.createModuleHandler())
 		val placeholderSlotsHandler = deserializeItems(
 			json.get("placeholderSlots"),
 			context,
 			CustomItemStackHandler(8),
 		)
-		val group = if (identity == null) {
-			MonitorGroup(json.get("name").asString, handler, placeholderSlotsHandler)
-		} else {
-			MonitorGroup.restore(identity, json.get("name").asString, handler, placeholderSlotsHandler)
-		}
+		val group = MonitorGroup.restore(
+			identity,
+			moduleSlotIncarnation,
+			json.get("name").asString,
+			handler,
+			placeholderSlotsHandler,
+		)
 
 		val positions = json.getAsJsonArray("positions")
 		for (position in positions) {
@@ -116,6 +121,15 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 	private fun serializeItems(handler: CustomItemStackHandler, context: ContextualFieldCodec.Context<MonitorGroup>): JsonElement = DataComponentMap.CODEC
 		.encodeStart(context.lookup.createSerializationContext(JsonOps.INSTANCE), handler.exportComponents())
 		.getOrThrow()
+
+	private fun deserializeUuidOrCreateLegacy(json: JsonObject, fieldName: String): UUID {
+		if (!json.has(fieldName)) {
+			return UUID.randomUUID()
+		}
+		return UUIDUtil.CODEC
+			.parse(JsonOps.INSTANCE, json.get(fieldName))
+			.getOrThrow()
+	}
 
 	private fun deserializeItems(json: JsonElement?, context: ContextualFieldCodec.Context<MonitorGroup>, handler: CustomItemStackHandler): CustomItemStackHandler {
 		val itemData = json ?: throw IllegalArgumentException("Sync: monitor group is missing item handler data")

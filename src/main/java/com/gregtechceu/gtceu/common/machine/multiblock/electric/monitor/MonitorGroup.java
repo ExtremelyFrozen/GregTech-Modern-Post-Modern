@@ -27,6 +27,7 @@ import java.util.function.UnaryOperator;
 public class MonitorGroup {
 
     private final UUID identity;
+    private UUID moduleSlotIncarnation;
     private final Set<BlockPos> monitorPositions = new HashSet<>();
     private final String name;
     private final CustomItemStackHandler itemStackHandler;
@@ -47,6 +48,7 @@ public class MonitorGroup {
     public static CustomItemStackHandler createModuleHandler() {
         CustomItemStackHandler customItemStackHandler = new CustomItemStackHandler(1);
         customItemStackHandler.setFilter(MonitorGroup::isModule);
+        customItemStackHandler.setNonMutatingEmptySlotCapacityQueryEnabled(true);
         return customItemStackHandler;
     }
 
@@ -55,12 +57,13 @@ public class MonitorGroup {
     }
 
     public MonitorGroup(String name, CustomItemStackHandler handler, CustomItemStackHandler placeholderSlotsHandler) {
-        this(UUID.randomUUID(), name, handler, placeholderSlotsHandler);
+        this(UUID.randomUUID(), UUID.randomUUID(), name, handler, placeholderSlotsHandler);
     }
 
-    private MonitorGroup(UUID identity, String name, CustomItemStackHandler handler,
+    private MonitorGroup(UUID identity, UUID moduleSlotIncarnation, String name, CustomItemStackHandler handler,
                          CustomItemStackHandler placeholderSlotsHandler) {
         this.identity = identity;
+        this.moduleSlotIncarnation = moduleSlotIncarnation;
         this.name = name;
         this.itemStackHandler = handler;
         this.itemStackHandler.setFilter(MonitorGroup::isModule);
@@ -68,18 +71,20 @@ public class MonitorGroup {
     }
 
     /**
-     * Restores a group with the stable identity carried by saved or synchronized data.
+     * Restores a group with the stable identities carried by saved or synchronized data.
      */
-    public static MonitorGroup restore(UUID identity, String name, CustomItemStackHandler handler,
+    public static MonitorGroup restore(UUID identity, UUID moduleSlotIncarnation, String name,
+                                       CustomItemStackHandler handler,
                                        CustomItemStackHandler placeholderSlotsHandler) {
-        return new MonitorGroup(identity, name, handler, placeholderSlotsHandler);
+        return new MonitorGroup(identity, moduleSlotIncarnation, name, handler, placeholderSlotsHandler);
     }
 
     /**
      * Creates a new empty group with an identity already validated by the owning Central Monitor.
      */
     public static MonitorGroup createWithIdentity(UUID identity, String name) {
-        return new MonitorGroup(identity, name, createModuleHandler(), new CustomItemStackHandler(8));
+        return new MonitorGroup(identity, UUID.randomUUID(), name, createModuleHandler(),
+                new CustomItemStackHandler(8));
     }
 
     public Set<BlockPos> getMonitorPositions() {
@@ -88,6 +93,17 @@ public class MonitorGroup {
 
     public UUID getIdentity() {
         return identity;
+    }
+
+    public UUID getModuleSlotIncarnation() {
+        return moduleSlotIncarnation;
+    }
+
+    /**
+     * Invalidates actions opened for the previous physical module-slot occupant.
+     */
+    public void rotateModuleSlotIncarnation() {
+        moduleSlotIncarnation = UUID.randomUUID();
     }
 
     public String getName() {

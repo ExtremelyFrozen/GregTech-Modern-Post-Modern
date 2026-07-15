@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.transfer.item;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.transfer.DataComponentTransfer;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.datacomponents.TransferData;
@@ -29,6 +30,14 @@ public class CustomItemStackHandler extends ItemStackHandler implements DataComp
     @Setter
     protected Predicate<ItemStack> filter = stack -> true;
 
+    /**
+     * Enables the non-mutating capacity query only for handlers whose validation and insertion limits do not depend
+     * on the current occupant.
+     */
+    @Getter
+    @Setter
+    private boolean nonMutatingEmptySlotCapacityQueryEnabled;
+
     public CustomItemStackHandler() {
         super();
     }
@@ -53,6 +62,26 @@ public class CustomItemStackHandler extends ItemStackHandler implements DataComp
     @Override
     public void onContentsChanged(int slot) {
         onContentsChanged.run();
+    }
+
+    /**
+     * Returns the amount this handler would accept into an empty slot without mutating the current occupant.
+     */
+    public int getMaxStackSizeForEmptySlot(int slot, ItemStack stack) {
+        if (!isNonMutatingEmptySlotCapacityQueryEnabled()) {
+            GTCEu.LOGGER.error("Handler {} does not support the default non-mutating empty-slot capacity query",
+                    getClass().getSimpleName());
+            throw new UnsupportedOperationException(
+                    "Handler does not support the default non-mutating empty-slot capacity query");
+        }
+        validateSlotIndex(slot);
+        if (stack.isEmpty()) {
+            return stack.getMaxStackSize();
+        }
+        if (!isItemValid(slot, stack)) {
+            return 0;
+        }
+        return getStackLimit(slot, stack);
     }
 
     /**

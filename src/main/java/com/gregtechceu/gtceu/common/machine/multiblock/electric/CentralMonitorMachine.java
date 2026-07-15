@@ -159,6 +159,12 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
+    public void onLoad() {
+        super.onLoad();
+        monitorGroups.forEach(this::bindMonitorGroupModuleHandler);
+    }
+
+    @Override
     public void onUnload() {
         super.onUnload();
         this.clearPatternFindingState();
@@ -373,6 +379,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
         MonitorGroup group = MonitorGroup.createWithIdentity(groupIdentity, nextDefaultMonitorGroupName());
         positions.forEach(group::add);
         monitorGroups.add(group);
+        bindMonitorGroupModuleHandler(group);
         completeMonitorGroupMembershipChange(nextRevision);
         return true;
     }
@@ -530,6 +537,16 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             }
             suffix = Math.incrementExact(suffix);
         }
+    }
+
+    private void bindMonitorGroupModuleHandler(MonitorGroup group) {
+        if (isRemote()) {
+            return;
+        }
+        group.getItemStackHandler().setOnContentsChanged(() -> {
+            group.rotateModuleSlotIncarnation();
+            getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        });
     }
 
     private void completeMonitorGroupMembershipChange(long nextRevision) {

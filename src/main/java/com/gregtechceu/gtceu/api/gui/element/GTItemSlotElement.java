@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.gui.element;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.texture.GuiTextureMetadata;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib2Adapter;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
@@ -75,7 +76,7 @@ public class GTItemSlotElement extends ItemSlot {
     @Override
     public GTItemSlotElement bind(IItemHandlerModifiable itemHandlerModifiable, int index) {
         validateSlotIndex(itemHandlerModifiable, index);
-        var itemHandlerSlot = new ItemHandlerSlot(itemHandlerModifiable, index);
+        var itemHandlerSlot = new CapacityAwareItemHandlerSlot(itemHandlerModifiable, index);
         configureItemHandlerSlot(itemHandlerSlot, true);
         super.bind(itemHandlerSlot);
         if (itemHandlerModifiable instanceof CycleItemEntryHandler handler) {
@@ -420,6 +421,25 @@ public class GTItemSlotElement extends ItemSlot {
     private Stream<ItemStack> getCurrentItemStream() {
         var itemStack = getValue();
         return itemStack.isEmpty() ? Stream.empty() : Stream.of(itemStack);
+    }
+
+    private static final class CapacityAwareItemHandlerSlot extends ItemHandlerSlot {
+
+        private final int slotIndex;
+
+        private CapacityAwareItemHandlerSlot(IItemHandlerModifiable itemHandler, int slotIndex) {
+            super(itemHandler, slotIndex);
+            this.slotIndex = slotIndex;
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            if (getItemHandler() instanceof CustomItemStackHandler customItemStackHandler &&
+                    customItemStackHandler.isNonMutatingEmptySlotCapacityQueryEnabled()) {
+                return customItemStackHandler.getMaxStackSizeForEmptySlot(slotIndex, stack);
+            }
+            return super.getMaxStackSize(stack);
+        }
     }
 
     private static void validateSlotIndex(IItemHandlerModifiable itemHandler, int slotIndex) {
