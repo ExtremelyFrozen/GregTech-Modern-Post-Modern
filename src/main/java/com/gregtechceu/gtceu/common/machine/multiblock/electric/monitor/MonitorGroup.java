@@ -122,6 +122,15 @@ public class MonitorGroup {
         this.dataSlot = dataSlot;
     }
 
+    /**
+     * Atomically replaces the raw target configuration and invalidates the cover side derived from its old target.
+     */
+    public void setTargetAndDataSlot(@Nullable BlockPos target, int dataSlot) {
+        this.target = target;
+        this.dataSlot = dataSlot;
+        this.targetCoverSide = null;
+    }
+
     public void add(BlockPos pos) {
         monitorPositions.add(pos);
     }

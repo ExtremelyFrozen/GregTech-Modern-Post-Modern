@@ -66,10 +66,11 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                                    implements IMonitorComponent, IDataInfoProvider,
-                                   CentralMonitorMembershipActionTarget {
+                                   CentralMonitorMembershipActionTarget, CentralMonitorGroupTargetActionHost {
 
     static {
         CentralMonitorMembershipActions.initialize();
+        CentralMonitorGroupTargetActions.initialize();
     }
 
     private static final String MONITOR_GROUPS_SYNC_FIELD = "monitorGroups";
@@ -419,6 +420,44 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
         return true;
     }
 
+    @Override
+    public boolean canSetCentralMonitorGroupTarget(UUID groupIdentity, CentralMonitorGroupTargetState expected,
+                                                   CentralMonitorGroupTargetState requested) {
+        if (!isMembershipStructureAvailable() || expected.dataSlot() < 0 || requested.dataSlot() < 0 ||
+                expected.equals(requested)) {
+            return false;
+        }
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null || !readMonitorGroupTargetState(group).equals(expected)) {
+            return false;
+        }
+        BlockPos requestedPosition = requested.targetPos();
+        if (requestedPosition == null) {
+            return requested.dataSlot() == 0;
+        }
+        IMonitorComponent component = resolveMembershipComponents().get(requestedPosition);
+        if (component == null) {
+            return false;
+        }
+        IItemHandler dataItems = component.getDataItems();
+        return dataItems == null ? requested.dataSlot() == 0 : requested.dataSlot() < dataItems.getSlots();
+    }
+
+    @Override
+    public boolean setCentralMonitorGroupTarget(UUID groupIdentity, CentralMonitorGroupTargetState expected,
+                                                CentralMonitorGroupTargetState requested) {
+        if (!canSetCentralMonitorGroupTarget(groupIdentity, expected, requested)) {
+            return false;
+        }
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null) {
+            return false;
+        }
+        group.setTargetAndDataSlot(requested.targetPos(), requested.dataSlot());
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        return true;
+    }
+
     /**
      * Returns whether membership actions may resolve components from the currently formed structure.
      */
@@ -475,6 +514,10 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             match = group;
         }
         return match;
+    }
+
+    private CentralMonitorGroupTargetState readMonitorGroupTargetState(MonitorGroup group) {
+        return new CentralMonitorGroupTargetState(group.getTargetRaw(), group.getDataSlot());
     }
 
     private String nextDefaultMonitorGroupName() {
@@ -661,11 +704,16 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                 if (group != null) break;
             }
             if (group == null) return;
-            if (selectedTargets.isEmpty()) group.setTarget(null);
-            else {
-                group.setTarget(selectedTargets.get(0).getBlockPos());
-                group.setDataSlot(dataSlot[0] - 1);
+            CentralMonitorGroupTargetState expected = readMonitorGroupTargetState(group);
+            CentralMonitorGroupTargetState requested;
+            if (selectedTargets.isEmpty()) {
+                requested = new CentralMonitorGroupTargetState(null, 0);
+            } else {
+                IMonitorComponent target = selectedTargets.getFirst();
+                int requestedDataSlot = target.getDataItems() == null ? 0 : dataSlot[0] - 1;
+                requested = new CentralMonitorGroupTargetState(target.getBlockPos(), requestedDataSlot);
             }
+            setCentralMonitorGroupTarget(group.getIdentity(), expected, requested);
         });
         removeFromGroupButton.setOnPressCallback(click -> {
             for (MonitorGroup group : List.copyOf(monitorGroups)) {
