@@ -466,6 +466,13 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     }
 
     /**
+     * Publishes an in-place monitor group configuration change without treating it as a physical module replacement.
+     */
+    public void markMonitorGroupDataChanged() {
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+    }
+
+    /**
      * Returns whether membership actions may resolve components from the currently formed structure.
      */
     protected boolean isMembershipStructureAvailable() {
