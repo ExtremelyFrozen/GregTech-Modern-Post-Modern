@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorG
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.core.UUIDUtil
 import net.minecraft.core.component.DataComponentMap
 
 import com.google.gson.JsonArray
@@ -18,6 +19,12 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 	override fun serializeField(value: MonitorGroup, context: ContextualFieldCodec.Context<MonitorGroup>): JsonElement {
 		val json = JsonObject()
 		json.addProperty("name", value.name)
+		json.add(
+			"identity",
+			UUIDUtil.CODEC
+				.encodeStart(JsonOps.INSTANCE, value.getIdentity())
+				.getOrThrow(),
+		)
 
 		val positions = JsonArray()
 		value.monitorPositions.forEach { position ->
@@ -58,13 +65,24 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 		if (!value.isJsonObject) return null
 
 		val json = value.asJsonObject
+		val identity = if (json.has("identity")) {
+			UUIDUtil.CODEC
+				.parse(JsonOps.INSTANCE, json.get("identity"))
+				.getOrThrow()
+		} else {
+			null
+		}
 		val handler = deserializeItems(json.get("items"), context, MonitorGroup.createModuleHandler())
 		val placeholderSlotsHandler = deserializeItems(
 			json.get("placeholderSlots"),
 			context,
 			CustomItemStackHandler(8),
 		)
-		val group = MonitorGroup(json.get("name").asString, handler, placeholderSlotsHandler)
+		val group = if (identity == null) {
+			MonitorGroup(json.get("name").asString, handler, placeholderSlotsHandler)
+		} else {
+			MonitorGroup.restore(identity, json.get("name").asString, handler, placeholderSlotsHandler)
+		}
 
 		val positions = json.getAsJsonArray("positions")
 		for (position in positions) {

@@ -26,6 +26,7 @@ import java.util.function.UnaryOperator;
 
 public class MonitorGroup {
 
+    private final UUID identity;
     private final Set<BlockPos> monitorPositions = new HashSet<>();
     private final String name;
     private final CustomItemStackHandler itemStackHandler;
@@ -54,14 +55,32 @@ public class MonitorGroup {
     }
 
     public MonitorGroup(String name, CustomItemStackHandler handler, CustomItemStackHandler placeholderSlotsHandler) {
+        this(UUID.randomUUID(), name, handler, placeholderSlotsHandler);
+    }
+
+    private MonitorGroup(UUID identity, String name, CustomItemStackHandler handler,
+                         CustomItemStackHandler placeholderSlotsHandler) {
+        this.identity = identity;
         this.name = name;
         this.itemStackHandler = handler;
         this.itemStackHandler.setFilter(MonitorGroup::isModule);
         this.placeholderSlotsHandler = placeholderSlotsHandler;
     }
 
+    /**
+     * Restores a group with the stable identity carried by saved or synchronized data.
+     */
+    public static MonitorGroup restore(UUID identity, String name, CustomItemStackHandler handler,
+                                       CustomItemStackHandler placeholderSlotsHandler) {
+        return new MonitorGroup(identity, name, handler, placeholderSlotsHandler);
+    }
+
     public Set<BlockPos> getMonitorPositions() {
         return monitorPositions;
+    }
+
+    public UUID getIdentity() {
+        return identity;
     }
 
     public String getName() {
