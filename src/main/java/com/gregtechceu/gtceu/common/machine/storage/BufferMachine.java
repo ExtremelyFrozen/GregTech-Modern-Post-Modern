@@ -31,6 +31,7 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import lombok.Getter;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -126,8 +127,10 @@ public class BufferMachine extends TieredMachine implements LDLib2FancyUIMachine
                 .setAllowClickFilled(true)
                 .setAllowClickDrained(true)
                 .setBackgroundTexture(GuiTextures.FLUID_SLOT);
+        var openingPlayer = shell.getOpeningPlayer();
         fluidSlot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
-            if (event.button == 0 && isRemote()) {
+            ItemStack carried = openingPlayer.containerMenu.getCarried();
+            if (canSendFluidSlotAction(event.button, openingPlayer.level().isClientSide(), carried)) {
                 MachineUIHelper.sendAction(shell.getHolder(),
                         BufferMachineActions.createClickFluidSlotAction(tankIndex, event.isShiftDown()));
                 event.stopImmediatePropagation();
@@ -145,12 +148,20 @@ public class BufferMachine extends TieredMachine implements LDLib2FancyUIMachine
         new LDLib2FluidClickTarget(tank.getStorages()[tankIndex], true, true).click(player, shiftDown);
     }
 
+    static boolean canSendFluidSlotAction(int button, boolean clientSide, ItemStack carried) {
+        return button == GLFW.GLFW_MOUSE_BUTTON_LEFT && clientSide && hasFluidContainer(carried);
+    }
+
+    private static boolean hasFluidContainer(ItemStack stack) {
+        return FluidUtil.getFluidHandler(stack).isPresent();
+    }
+
     private record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
                                           boolean allowClickDrained) {
 
         private void click(ServerPlayer player, boolean shiftDown) {
             ItemStack currentStack = player.containerMenu.getCarried();
-            if (FluidUtil.getFluidHandler(currentStack).isEmpty()) {
+            if (!hasFluidContainer(currentStack)) {
                 return;
             }
             int maxAttempts = shiftDown ? currentStack.getCount() : 1;

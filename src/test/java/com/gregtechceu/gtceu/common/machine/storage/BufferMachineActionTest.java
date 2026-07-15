@@ -30,6 +30,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.lwjgl.glfw.GLFW;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -67,6 +68,24 @@ public class BufferMachineActionTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
+    public static void fluidSlotActionRequiresLeftClientFluidContainer(GameTestHelper helper) {
+        ItemStack bucket = new ItemStack(Items.BUCKET);
+        ItemStack stone = new ItemStack(Items.STONE);
+
+        helper.assertTrue(BufferMachine.canSendFluidSlotAction(GLFW.GLFW_MOUSE_BUTTON_LEFT, true, bucket),
+                "client left click with a fluid container was rejected");
+        helper.assertTrue(!BufferMachine.canSendFluidSlotAction(GLFW.GLFW_MOUSE_BUTTON_LEFT, true, stone),
+                "client left click with a non-fluid item was accepted");
+        helper.assertTrue(!BufferMachine.canSendFluidSlotAction(GLFW.GLFW_MOUSE_BUTTON_LEFT, false, bucket),
+                "server-side fluid-container click was accepted");
+        helper.assertTrue(!BufferMachine.canSendFluidSlotAction(GLFW.GLFW_MOUSE_BUTTON_RIGHT, true, bucket),
+                "client right click with a fluid container was accepted");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
     public static void dispatcherRoutesValidClickToSelectedTankAndPlayerCursor(GameTestHelper helper) {
         BufferMachine machine = createMachine();
         machine.getTank().setFluidInTank(0, new FluidStack(Fluids.WATER, 3 * FluidType.BUCKET_VOLUME));
@@ -82,6 +101,26 @@ public class BufferMachineActionTest {
                 "selected tank action did not transfer exactly one bucket");
         helper.assertTrue(player.containerMenu.getCarried().is(Items.WATER_BUCKET),
                 "selected tank action did not return the filled container to the opening player cursor");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void dispatcherIgnoresNonFluidCursorWithoutMutation(GameTestHelper helper) {
+        BufferMachine machine = createMachine();
+        int initialAmount = 2 * FluidType.BUCKET_VOLUME;
+        machine.getTank().setFluidInTank(0, new FluidStack(Fluids.WATER, initialAmount));
+        ServerPlayer player = preparePlayer(helper, new ItemStack(Items.STONE));
+
+        boolean result = dispatch(player, machine, payload(new JsonPrimitive(0), new JsonPrimitive(false)));
+
+        helper.assertTrue(result, "valid buffer action with a non-fluid cursor was rejected");
+        helper.assertTrue(machine.getTank().getFluidInTank(0).getAmount() == initialAmount,
+                "non-fluid cursor changed the selected buffer tank");
+        helper.assertTrue(player.containerMenu.getCarried().is(Items.STONE) &&
+                player.containerMenu.getCarried().getCount() == 1,
+                "non-fluid buffer action changed the opening player cursor");
         helper.succeed();
     }
 

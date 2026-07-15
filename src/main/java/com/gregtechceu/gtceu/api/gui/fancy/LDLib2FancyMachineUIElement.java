@@ -7,7 +7,9 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -30,6 +32,11 @@ public class LDLib2FancyMachineUIElement extends UIElement {
     private static final int DEFAULT_BORDER = 4;
 
     private final LDLib2FancyUIProvider mainPage;
+    /**
+     * Player whose inventory was captured when this Fancy screen opened.
+     */
+    @Getter
+    private final Player openingPlayer;
     private final MachineUIHolder holder;
     private final UIElement pageContainer;
     private final LDLib2FancyTitleBarElement titleBar;
@@ -66,6 +73,7 @@ public class LDLib2FancyMachineUIElement extends UIElement {
                                        int width, int height,
                                        List<? extends LDLib2FancyUIProvider> contextualSubTabs) {
         this.mainPage = mainPage;
+        this.openingPlayer = inventory.player;
         this.holder = holder;
         this.contextualSubTabs = List.copyOf(contextualSubTabs);
         UITemplate.setLDLib2Bounds(this, 0, 0, width, height);
