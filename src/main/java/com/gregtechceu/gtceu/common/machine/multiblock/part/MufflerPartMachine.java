@@ -10,9 +10,12 @@ import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.IWorkLogicMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IWorkableMultiController;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -46,7 +49,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class MufflerPartMachine extends TieredPartMachine implements LDLib2MachineUIProvider {
+public class MufflerPartMachine extends TieredPartMachine
+                                implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider {
 
     @Getter
     private final int recoveryChance;
@@ -204,6 +208,12 @@ public class MufflerPartMachine extends TieredPartMachine implements LDLib2Machi
             }
         }
         return UI.of(root);
+    }
+
+    /** Creates the holder-scoped default preview used by a surrounding multiblock controller. */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2FancyPreviewPage(this, player, holder, null);
     }
 
     private GTLabelElement createLDLib2TitleLabel(int rootWidth) {
