@@ -599,7 +599,7 @@ public class GTMachines {
     // ********** Part **********//
     //////////////////////////////////////
     public static final MachineDefinition[] ITEM_IMPORT_BUS = registerTieredMachines("input_bus",
-            (holder, tier) -> new ItemBusPartMachine(holder, tier, IN),
+            (holder, tier) -> new StandardItemBusPartMachine(holder, tier, IN),
             (tier, builder) -> builder
                     .langValue(VNF[tier] + " Input Bus")
                     .rotationState(RotationState.ALL)
@@ -614,7 +614,7 @@ public class GTMachines {
             ALL_TIERS);
 
     public static final MachineDefinition[] ITEM_EXPORT_BUS = registerTieredMachines("output_bus",
-            (holder, tier) -> new ItemBusPartMachine(holder, tier, OUT),
+            (holder, tier) -> new StandardItemBusPartMachine(holder, tier, OUT),
             (tier, builder) -> builder
                     .langValue(VNF[tier] + " Output Bus")
                     .rotationState(RotationState.ALL)
@@ -930,7 +930,7 @@ public class GTMachines {
             .register();
 
     public static final MachineDefinition[] ITEM_PASSTHROUGH_HATCH = registerTieredMachines("item_passthrough_hatch",
-            (holder, tier) -> new ItemBusPartMachine(holder, tier, IO.BOTH),
+            (holder, tier) -> new StandardItemBusPartMachine(holder, tier, IO.BOTH),
             (tier, builder) -> builder
                     .langValue("%s Item Passthrough Hatch".formatted(VNF[tier]))
                     .rotationState(RotationState.ALL)

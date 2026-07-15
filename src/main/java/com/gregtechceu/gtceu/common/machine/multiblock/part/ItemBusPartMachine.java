@@ -306,14 +306,35 @@ public class ItemBusPartMachine extends TieredIOPartMachine
 
     @Override
     public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
-        // Specialized subclasses keep their own page until they explicitly override this opening contract.
-        return holder.getMachine() == this && getClass() == ItemBusPartMachine.class;
+        return holder.getMachine() == this && supportsGenericLDLib2Page();
     }
 
     @Override
     public UI createLDLib2UI(Player player, MachineUIHolder holder) {
-        return UI.of(new LDLib2FancyMachineUIElement(new ItemBusLDLib2Page(player, holder),
-                player.getInventory(), holder, getLDLib2PageWidth(), getLDLib2PageHeight()));
+        LDLib2FancyUIProvider page = createLDLib2Page(player, holder);
+        return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder) {
+        requireMatchingLDLib2Holder(holder);
+        if (!supportsGenericLDLib2Page()) {
+            throw new IllegalStateException("Item Bus definition requires its specialized UI provider.");
+        }
+        return new ItemBusLDLib2Page(player, holder);
+    }
+
+    private void requireMatchingLDLib2Holder(MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException("Item Bus page holder must resolve the opened machine.");
+        }
+    }
+
+    /**
+     * Determines whether this definition may reuse the generic holder-scoped LDLib2 Item Bus page.
+     */
+    protected boolean supportsGenericLDLib2Page() {
+        return getClass() == ItemBusPartMachine.class;
     }
 
     int getLDLib2PageWidth() {
@@ -421,7 +442,7 @@ public class ItemBusPartMachine extends TieredIOPartMachine
     }
 
     /**
-     * Captures the validated standalone holder for all Item Bus page actions and contextual tabs.
+     * Captures the validated opening-scoped holder for all Item Bus page actions and contextual tabs.
      */
     private final class ItemBusLDLib2Page implements LDLib2FancyUIProvider {
 
@@ -429,12 +450,16 @@ public class ItemBusPartMachine extends TieredIOPartMachine
         private final LDLib2DirectionalFancyConfigurator directionalPage;
 
         private ItemBusLDLib2Page(Player player, MachineUIHolder holder) {
+            requireMatchingLDLib2Holder(holder);
             this.holder = holder;
             this.directionalPage = new LDLib2DirectionalFancyConfigurator(ItemBusPartMachine.this, player, holder);
         }
 
         @Override
         public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != ItemBusPartMachine.this) {
+                throw new IllegalStateException("Item Bus page holder no longer resolves its opened machine.");
+            }
             return createLDLib2MainElement();
         }
 

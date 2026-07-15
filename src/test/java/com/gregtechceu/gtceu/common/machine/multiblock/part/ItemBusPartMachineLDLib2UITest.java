@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 
 import com.lowdragmc.lowdraglib2.gui.slot.ItemHandlerSlot;
@@ -26,6 +27,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -47,16 +49,14 @@ public class ItemBusPartMachineLDLib2UITest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ItemBusPartMachineLDLib2UI")
-    public static void standalonePagePreservesInventoryAndFancySemantics(GameTestHelper helper) {
+    public static void holderIdentityRegistrationsAndSpecializedTypesAreEnforced(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         ItemBusPartMachine input = createStandardBus(GTMachines.ITEM_IMPORT_BUS[LV]);
         ItemBusPartMachine output = createStandardBus(GTMachines.ITEM_EXPORT_BUS[LV]);
         ItemBusPartMachine passthrough = createStandardBus(GTMachines.ITEM_PASSTHROUGH_HATCH[LV]);
-        EightSlotItemBusPartMachine eightSlot = createEightSlotBus();
         MachineUIHolder inputHolder = new TestMachineUIHolder(input);
         MachineUIHolder outputHolder = new TestMachineUIHolder(output);
         MachineUIHolder passthroughHolder = new TestMachineUIHolder(passthrough);
-        MachineUIHolder eightSlotHolder = new TestMachineUIHolder(eightSlot);
 
         helper.assertTrue(input.canCreateLDLib2UI(player, inputHolder),
                 "standard input bus rejected its matching holder");
@@ -66,21 +66,111 @@ public class ItemBusPartMachineLDLib2UITest {
                 "standard output bus rejected its matching holder");
         helper.assertTrue(passthrough.canCreateLDLib2UI(player, passthroughHolder),
                 "standard passthrough bus rejected its matching holder");
-        helper.assertFalse(eightSlot.canCreateLDLib2UI(player, eightSlotHolder),
+
+        boolean mismatchedHolderRejected = false;
+        try {
+            requireContextualProvider(input).createLDLib2FancyPage(player, outputHolder);
+        } catch (IllegalArgumentException expected) {
+            mismatchedHolderRejected = expected.getMessage().contains("holder");
+        }
+        helper.assertTrue(mismatchedHolderRejected,
+                "contextual Item Bus page creation accepted another machine's holder");
+
+        StandardItemBusPartMachine addonBus = new StandardItemBusPartMachine(
+                info(GTMachines.FLUID_IMPORT_HATCH[LV]), LV, IO.IN);
+        MachineUIHolder addonHolder = new TestMachineUIHolder(addonBus);
+        helper.assertTrue(addonBus.canCreateLDLib2UI(player, addonHolder),
+                "addon-style ordinary Item Bus definition was rejected by the generic LDLib2 page");
+        helper.assertTrue(addonBus.createLDLib2FancyPage(player, addonHolder).getLDLib2PageWidth() == 52,
+                "addon-style ordinary Item Bus definition could not create its contextual page");
+
+        ItemBusPartMachine exactBaseAddon = new ItemBusPartMachine(
+                info(GTMachines.FLUID_IMPORT_HATCH[LV]), LV, IO.IN);
+        MachineUIHolder exactBaseHolder = new TestMachineUIHolder(exactBaseAddon);
+        helper.assertTrue(exactBaseAddon.canCreateLDLib2UI(player, exactBaseHolder),
+                "exact-base addon Item Bus lost its standalone generic LDLib2 page");
+        helper.assertTrue(!(exactBaseAddon instanceof LDLib2FancyPartUIProvider),
+                "exact-base addon Item Bus gained an implicit contextual page contract");
+        helper.assertTrue(createShell(player, exactBaseAddon, exactBaseHolder).getHolder() == exactBaseHolder,
+                "exact-base addon Item Bus could not create its standalone generic LDLib2 page");
+
+        ItemBusPartMachine specialized = createSpecializedEightSlotBus();
+        MachineUIHolder specializedHolder = new TestMachineUIHolder(specialized);
+        helper.assertFalse(specialized.canCreateLDLib2UI(player, specializedHolder),
                 "specialized Item Bus subclass used the standard page without explicitly opting in");
+        boolean specializedPageRejected = false;
+        try {
+            specialized.createLDLib2Page(player, specializedHolder);
+        } catch (IllegalStateException expected) {
+            specializedPageRejected = expected.getMessage().contains("specialized");
+        }
+        helper.assertTrue(specializedPageRejected,
+                "specialized Item Bus subclass bypassed the generic page opt-in gate");
+
+        MetaMachine steam = createMachine(GTMachines.STEAM_IMPORT_BUS);
+        helper.assertTrue(!(steam instanceof LDLib2FancyPartUIProvider),
+                "Steam Item Bus inherited the ordinary contextual Item Bus provider");
+
+        StandardItemBusPartMachine replacement = new StandardItemBusPartMachine(
+                info(GTMachines.ITEM_IMPORT_BUS[LV]), LV, IO.IN);
+        MutableMachineUIHolder staleHolder = new MutableMachineUIHolder(input);
+        LDLib2FancyUIProvider stalePage = requireContextualProvider(input)
+                .createLDLib2FancyPage(player, staleHolder);
+        staleHolder.setMachine(replacement);
+        boolean stalePageRejected = false;
+        try {
+            new LDLib2FancyMachineUIElement(stalePage, player.getInventory(), staleHolder,
+                    stalePage.getLDLib2PageWidth(), stalePage.getLDLib2PageHeight());
+        } catch (IllegalStateException expected) {
+            stalePageRejected = expected.getMessage().contains("no longer");
+        }
+        helper.assertTrue(stalePageRejected,
+                "Item Bus page accepted a same-definition holder replacement after opening");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "ItemBusPartMachineLDLib2UI")
+    public static void standaloneAndContextualPagesPreserveInventoryAndFancySemantics(GameTestHelper helper) {
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        ItemBusPartMachine input = createStandardBus(GTMachines.ITEM_IMPORT_BUS[LV]);
+        ItemBusPartMachine output = createStandardBus(GTMachines.ITEM_EXPORT_BUS[LV]);
+        ItemBusPartMachine passthrough = createStandardBus(GTMachines.ITEM_PASSTHROUGH_HATCH[LV]);
+        EightSlotGenericItemBusPartMachine eightSlot = createGenericEightSlotBus();
+        MachineUIHolder inputHolder = new TestMachineUIHolder(input);
+        MachineUIHolder outputHolder = new TestMachineUIHolder(output);
+        MachineUIHolder passthroughHolder = new TestMachineUIHolder(passthrough);
+        MachineUIHolder eightSlotHolder = new TestMachineUIHolder(eightSlot);
 
         assertPage(helper, createShell(player, input, inputHolder), input, inputHolder,
                 52, 52, IngredientIO.INPUT, true, false, 3);
+        assertPage(helper, createContextualShell(player, input, inputHolder), input, inputHolder,
+                52, 52, IngredientIO.INPUT, true, false, 3);
         assertPage(helper, createShell(player, output, outputHolder), output, outputHolder,
+                52, 52, IngredientIO.OUTPUT, false, true, 1);
+        assertPage(helper, createContextualShell(player, output, outputHolder), output, outputHolder,
                 52, 52, IngredientIO.OUTPUT, false, true, 1);
         assertPage(helper, createShell(player, passthrough, passthroughHolder), passthrough, passthroughHolder,
                 52, 52, IngredientIO.INPUT, true, false, 1);
+        assertPage(helper, createContextualShell(player, passthrough, passthroughHolder),
+                passthrough, passthroughHolder, 52, 52, IngredientIO.INPUT, true, false, 1);
         assertPage(helper, createShell(player, eightSlot, eightSlotHolder), eightSlot, eightSlotHolder,
                 88, 52, IngredientIO.INPUT, true, false, 3);
+        assertPage(helper, createContextualShell(player, eightSlot, eightSlotHolder),
+                eightSlot, eightSlotHolder, 88, 52, IngredientIO.INPUT, true, false, 3);
 
-        assertGrouping(helper, input, "gtpm.multiblock.page_switcher.io.import", 1);
-        assertGrouping(helper, output, "gtpm.multiblock.page_switcher.io.export", 2);
-        assertGrouping(helper, passthrough, "gtpm.multiblock.page_switcher.io.both", 3);
+        LDLib2FancyPartUIProvider inputContext = requireContextualProvider(input);
+        LDLib2FancyUIProvider firstInputPage = inputContext.createLDLib2FancyPage(player, inputHolder);
+        LDLib2FancyUIProvider secondInputPage = inputContext.createLDLib2FancyPage(player, inputHolder);
+        helper.assertTrue(firstInputPage != secondInputPage,
+                "ordinary Item Bus reused a contextual page provider across openings");
+        assertGrouping(helper, firstInputPage, "gtpm.multiblock.page_switcher.io.import", 1);
+        assertGrouping(helper, requireContextualProvider(output).createLDLib2FancyPage(player, outputHolder),
+                "gtpm.multiblock.page_switcher.io.export", 2);
+        assertGrouping(helper, requireContextualProvider(passthrough)
+                .createLDLib2FancyPage(player, passthroughHolder),
+                "gtpm.multiblock.page_switcher.io.both", 3);
 
         input.setCircuitSlotEnabled(false);
         LDLib2FancyMachineUIElement inputWithoutCircuit = createShell(player, input, inputHolder);
@@ -162,9 +252,9 @@ public class ItemBusPartMachineLDLib2UITest {
                 "Item Bus directional side tab did not navigate to its holder-scoped page");
     }
 
-    private static void assertGrouping(GameTestHelper helper, ItemBusPartMachine machine,
+    private static void assertGrouping(GameTestHelper helper, LDLib2FancyUIProvider page,
                                        String expectedKey, int expectedWeight) {
-        LDLib2FancyUIProvider.PageGroupingData grouping = machine.getLDLib2PageGroupingData();
+        LDLib2FancyUIProvider.PageGroupingData grouping = page.getPageGroupingData();
         helper.assertTrue(grouping != null && grouping.groupKey().equals(expectedKey) &&
                 grouping.groupPositionWeight() == expectedWeight,
                 "Item Bus LDLib2 page used the wrong IO grouping metadata");
@@ -179,18 +269,54 @@ public class ItemBusPartMachineLDLib2UITest {
         return shell;
     }
 
+    private static LDLib2FancyMachineUIElement createContextualShell(
+                                                                     ServerPlayer player,
+                                                                     ItemBusPartMachine machine,
+                                                                     MachineUIHolder holder) {
+        LDLib2FancyUIProvider page = requireContextualProvider(machine).createLDLib2FancyPage(player, holder);
+        return new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
+    }
+
     private static ItemBusPartMachine createStandardBus(MachineDefinition definition) {
-        MetaMachine machine = definition.getBlockEntityType().create(BlockPos.ZERO, definition.defaultBlockState());
-        if (!(machine instanceof ItemBusPartMachine itemBus) || machine.getClass() != ItemBusPartMachine.class) {
+        MetaMachine machine = createMachine(definition);
+        if (!(machine instanceof ItemBusPartMachine itemBus) ||
+                machine.getClass() != StandardItemBusPartMachine.class) {
             throw new IllegalStateException("Standard Item Bus definition did not create a standard Item Bus.");
         }
         return itemBus;
     }
 
-    private static EightSlotItemBusPartMachine createEightSlotBus() {
+    private static MetaMachine createMachine(MachineDefinition definition) {
+        MetaMachine machine = definition.getBlockEntityType().create(BlockPos.ZERO, definition.defaultBlockState());
+        if (machine == null) {
+            throw new IllegalStateException("Machine definition did not create a machine.");
+        }
+        return machine;
+    }
+
+    private static EightSlotItemBusPartMachine createSpecializedEightSlotBus() {
         MachineDefinition definition = GTMachines.ITEM_IMPORT_BUS[LV];
         return new EightSlotItemBusPartMachine(new BlockEntityCreationInfo(
                 definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()));
+    }
+
+    private static EightSlotGenericItemBusPartMachine createGenericEightSlotBus() {
+        MachineDefinition definition = GTMachines.ITEM_IMPORT_BUS[LV];
+        return new EightSlotGenericItemBusPartMachine(new BlockEntityCreationInfo(
+                definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()));
+    }
+
+    private static LDLib2FancyPartUIProvider requireContextualProvider(ItemBusPartMachine machine) {
+        if (machine instanceof LDLib2FancyPartUIProvider provider) {
+            return provider;
+        }
+        throw new IllegalStateException("Ordinary Item Bus definition has no contextual LDLib2 page provider.");
+    }
+
+    private static BlockEntityCreationInfo info(MachineDefinition definition) {
+        return new BlockEntityCreationInfo(definition.getBlockEntityType(), BlockPos.ZERO,
+                definition.defaultBlockState());
     }
 
     private static void click(UIElement element) {
@@ -212,7 +338,36 @@ public class ItemBusPartMachineLDLib2UITest {
         }
     }
 
-    private record TestMachineUIHolder(ItemBusPartMachine machine) implements MachineUIHolder {
+    private static final class EightSlotGenericItemBusPartMachine extends ItemBusPartMachine
+                                                                  implements LDLib2FancyPartUIProvider {
+
+        private EightSlotGenericItemBusPartMachine(BlockEntityCreationInfo info) {
+            super(info, LV, IO.IN);
+        }
+
+        @Override
+        protected int getInventorySize() {
+            return 8;
+        }
+
+        @Override
+        protected boolean supportsGenericLDLib2Page() {
+            return true;
+        }
+
+        @Override
+        public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+            return createLDLib2Page(player, holder);
+        }
+    }
+
+    private static class MutableMachineUIHolder implements MachineUIHolder {
+
+        private MetaMachine machine;
+
+        private MutableMachineUIHolder(MetaMachine machine) {
+            this.machine = machine;
+        }
 
         @Override
         public BlockPos getPos() {
@@ -225,8 +380,19 @@ public class ItemBusPartMachineLDLib2UITest {
         }
 
         @Override
-        public ItemBusPartMachine getMachine() {
+        public MetaMachine getMachine() {
             return machine;
+        }
+
+        private void setMachine(MetaMachine machine) {
+            this.machine = machine;
+        }
+    }
+
+    private static final class TestMachineUIHolder extends MutableMachineUIHolder {
+
+        private TestMachineUIHolder(ItemBusPartMachine machine) {
+            super(machine);
         }
     }
 }

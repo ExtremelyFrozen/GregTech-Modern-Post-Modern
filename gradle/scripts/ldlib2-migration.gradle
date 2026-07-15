@@ -190,6 +190,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ReservoirHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/RotorHolderPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/StandardFluidHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/StandardItemBusPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamItemBusPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/hpca/HPCAComponentPartMachine.java',
