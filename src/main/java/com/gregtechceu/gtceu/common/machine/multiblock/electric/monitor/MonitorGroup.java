@@ -75,6 +75,13 @@ public class MonitorGroup {
         return new MonitorGroup(identity, name, handler, placeholderSlotsHandler);
     }
 
+    /**
+     * Creates a new empty group with an identity already validated by the owning Central Monitor.
+     */
+    public static MonitorGroup createWithIdentity(UUID identity, String name) {
+        return new MonitorGroup(identity, name, createModuleHandler(), new CustomItemStackHandler(8));
+    }
+
     public Set<BlockPos> getMonitorPositions() {
         return monitorPositions;
     }

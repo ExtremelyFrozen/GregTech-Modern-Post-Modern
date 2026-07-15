@@ -65,7 +65,15 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
-                                   implements IMonitorComponent, IDataInfoProvider {
+                                   implements IMonitorComponent, IDataInfoProvider,
+                                   CentralMonitorMembershipActionTarget {
+
+    static {
+        CentralMonitorMembershipActions.initialize();
+    }
+
+    private static final String MONITOR_GROUPS_SYNC_FIELD = "monitorGroups";
+    private static final String MONITOR_GROUP_MEMBERSHIP_REVISION_SYNC_FIELD = "monitorGroupMembershipRevision";
 
     @SaveField
     @SyncToClient
@@ -76,6 +84,12 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     @Getter
     @RerenderOnChanged
     private List<MonitorGroup> monitorGroups = new ArrayList<>();
+    @SaveField
+    @SyncToClient
+    private UUID centralMonitorActionIncarnation = UUID.randomUUID();
+    @SaveField
+    @SyncToClient
+    private long monitorGroupMembershipRevision;
     private final Set<IMonitorComponent> selectedComponents = new HashSet<>();
     private final List<IMonitorComponent> selectedTargets = new ArrayList<>();
 
@@ -315,6 +329,173 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
+    public UUID getCentralMonitorActionIncarnation() {
+        return centralMonitorActionIncarnation;
+    }
+
+    @Override
+    public int getCentralMonitorMembershipCapacity() {
+        int width = Math.addExact(Math.addExact(leftDist, rightDist), 1);
+        int height = Math.addExact(Math.addExact(upDist, downDist), 1);
+        return Math.multiplyExact(width, height);
+    }
+
+    @Override
+    public long getCentralMonitorMembershipRevision() {
+        return monitorGroupMembershipRevision;
+    }
+
+    @Override
+    public boolean canCreateCentralMonitorGroup(long expectedRevision, UUID groupIdentity,
+                                                Set<BlockPos> positions) {
+        if (!isMembershipStructureAvailable() || monitorGroupMembershipRevision != expectedRevision ||
+                positions.isEmpty() || positions.size() > getCentralMonitorMembershipCapacity() ||
+                hasMonitorGroupIdentity(groupIdentity)) {
+            return false;
+        }
+        Map<BlockPos, IMonitorComponent> components = resolveMembershipComponents();
+        for (BlockPos position : positions) {
+            IMonitorComponent component = components.get(position);
+            if (component == null || !component.isMonitor() || isInAnyGroup(component)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean createCentralMonitorGroup(long expectedRevision, UUID groupIdentity, Set<BlockPos> positions) {
+        if (!canCreateCentralMonitorGroup(expectedRevision, groupIdentity, positions)) {
+            return false;
+        }
+        long nextRevision = Math.incrementExact(monitorGroupMembershipRevision);
+        MonitorGroup group = MonitorGroup.createWithIdentity(groupIdentity, nextDefaultMonitorGroupName());
+        positions.forEach(group::add);
+        monitorGroups.add(group);
+        completeMonitorGroupMembershipChange(nextRevision);
+        return true;
+    }
+
+    @Override
+    public boolean canRemoveCentralMonitorGroupMembers(long expectedRevision, UUID groupIdentity,
+                                                       Set<BlockPos> positions) {
+        if (!isMembershipStructureAvailable() || monitorGroupMembershipRevision != expectedRevision ||
+                positions.isEmpty() || positions.size() > getCentralMonitorMembershipCapacity()) {
+            return false;
+        }
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null) {
+            return false;
+        }
+        Map<BlockPos, IMonitorComponent> components = resolveMembershipComponents();
+        for (BlockPos position : positions) {
+            IMonitorComponent component = components.get(position);
+            if (component == null || !component.isMonitor() || !group.contains(position)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean removeCentralMonitorGroupMembers(long expectedRevision, UUID groupIdentity,
+                                                    Set<BlockPos> positions) {
+        if (!canRemoveCentralMonitorGroupMembers(expectedRevision, groupIdentity, positions)) {
+            return false;
+        }
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null) {
+            return false;
+        }
+        long nextRevision = Math.incrementExact(monitorGroupMembershipRevision);
+        boolean removesEntireGroup = positions.size() == group.getMonitorPositions().size();
+        if (removesEntireGroup) {
+            dropMonitorGroupInventory(group);
+            monitorGroups.remove(group);
+        } else {
+            positions.forEach(group::remove);
+        }
+        completeMonitorGroupMembershipChange(nextRevision);
+        return true;
+    }
+
+    /**
+     * Returns whether membership actions may resolve components from the currently formed structure.
+     */
+    protected boolean isMembershipStructureAvailable() {
+        return isFormed();
+    }
+
+    /**
+     * Resolves the current Central Monitor grid once for one atomic membership validation.
+     */
+    protected Map<BlockPos, IMonitorComponent> resolveMembershipComponents() {
+        Map<BlockPos, IMonitorComponent> components = new HashMap<>();
+        for (int row = 0; row <= downDist + upDist; row++) {
+            for (int column = 0; column <= leftDist + rightDist; column++) {
+                IMonitorComponent component = getComponent(row, column);
+                if (component == null) {
+                    continue;
+                }
+                IMonitorComponent previous = components.put(component.getBlockPos(), component);
+                if (previous != null) {
+                    throw new IllegalStateException("Central Monitor grid resolved the same position more than once: " +
+                            component.getBlockPos());
+                }
+            }
+        }
+        return components;
+    }
+
+    /**
+     * Drops both inventories exactly once before an empty group is removed.
+     */
+    protected void dropMonitorGroupInventory(MonitorGroup group) {
+        Level level = getLevel();
+        if (level == null) {
+            throw new IllegalStateException("Central Monitor cannot drop group inventory without a level.");
+        }
+        group.getItemStackHandler().dropInventoryInWorld(level, getBlockPos());
+        group.getPlaceholderSlotsHandler().dropInventoryInWorld(level, getBlockPos());
+    }
+
+    private boolean hasMonitorGroupIdentity(UUID identity) {
+        return monitorGroups.stream().anyMatch(group -> group.getIdentity().equals(identity));
+    }
+
+    private @Nullable MonitorGroup findUniqueMonitorGroup(UUID identity) {
+        MonitorGroup match = null;
+        for (MonitorGroup group : monitorGroups) {
+            if (!group.getIdentity().equals(identity)) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = group;
+        }
+        return match;
+    }
+
+    private String nextDefaultMonitorGroupName() {
+        int suffix = 1;
+        while (true) {
+            String candidate = Component.translatable("gtpm.gui.central_monitor.group_default_name", suffix)
+                    .getString();
+            if (monitorGroups.stream().noneMatch(group -> group.getName().equals(candidate))) {
+                return candidate;
+            }
+            suffix = Math.incrementExact(suffix);
+        }
+    }
+
+    private void completeMonitorGroupMembershipChange(long nextRevision) {
+        monitorGroupMembershipRevision = nextRevision;
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUP_MEMBERSHIP_REVISION_SYNC_FIELD);
+    }
+
+    @Override
     public void addDisplayText(List<Component> textList) {
         MultiblockDisplayText.builder(textList, isFormed())
                 .addWorkingStatusLine();
@@ -441,14 +622,19 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
         setTargetButton.setVisible(false);
         ButtonWidget createGroupButton = new ButtonWidget(0, 0, 60, 20, null);
         createGroupButton.setOnPressCallback(click -> {
-            MonitorGroup group = new MonitorGroup(
-                    Component.translatable("gtpm.gui.central_monitor.group_default_name", monitorGroups.size() + 1)
-                            .getString());
+            Set<BlockPos> requestedPositions = new LinkedHashSet<>();
             for (IMonitorComponent component : selectedComponents) {
                 if (isInAnyGroup(component)) return;
-                group.add(component.getBlockPos());
+                requestedPositions.add(component.getBlockPos());
             }
-            monitorGroups.add(group);
+            UUID groupIdentity = UUID.randomUUID();
+            if (!createCentralMonitorGroup(monitorGroupMembershipRevision, groupIdentity, requestedPositions)) {
+                return;
+            }
+            MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+            if (group == null) {
+                throw new IllegalStateException("Central Monitor lost a group immediately after creating it.");
+            }
             addGroupToList.accept(group);
 
             createGroupButton.setVisible(false);
@@ -482,16 +668,17 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             }
         });
         removeFromGroupButton.setOnPressCallback(click -> {
-            for (MonitorGroup group : monitorGroups) {
-                for (IMonitorComponent component : selectedComponents) group.remove(component.getBlockPos());
-            }
-            Iterator<MonitorGroup> itg = monitorGroups.iterator();
-            while (itg.hasNext()) {
-                MonitorGroup group = itg.next();
-                if (group.isEmpty()) {
-                    group.getItemStackHandler().dropInventoryInWorld(getLevel(), getBlockPos());
-                    group.getPlaceholderSlotsHandler().dropInventoryInWorld(getLevel(), getBlockPos());
-                    itg.remove();
+            for (MonitorGroup group : List.copyOf(monitorGroups)) {
+                Set<BlockPos> requestedPositions = new LinkedHashSet<>();
+                for (IMonitorComponent component : selectedComponents) {
+                    if (group.contains(component.getBlockPos())) {
+                        requestedPositions.add(component.getBlockPos());
+                    }
+                }
+                if (!requestedPositions.isEmpty() &&
+                        !removeCentralMonitorGroupMembers(
+                                monitorGroupMembershipRevision, group.getIdentity(), requestedPositions)) {
+                    return;
                 }
             }
             groupList.clearAllWidgets();
