@@ -17,6 +17,7 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -58,12 +59,42 @@ public class LDLib2CoverUIHolderContextTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "LDLib2CoverUIHolderContext")
+    public static void removalInvalidatesMenuAndNotifiesOpenedCoverOnce(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
+        CloseTrackingCover openedCover = installCover(machine, false);
+        ServerPlayer player = preparePlayer(helper, machine, "close_remove");
+        GTCoverUIContainerMenu menu = openMenu(player, openedCover, 2);
+
+        helper.assertTrue(machine.getCoverContainer().removeCover(false, COVER_SIDE, player),
+                "opened cover could not be removed");
+        helper.assertTrue(!menu.stillValid(player), "removed cover left its opened menu valid");
+
+        player.closeContainer();
+        menu.removed(player);
+        menu.removed(player);
+
+        helper.assertTrue(openedCover.closeCount == 1,
+                "removed cover did not receive exactly one close callback");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "LDLib2CoverUIHolderContext")
     public static void replacementDoesNotReceiveOpenedCoverClose(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         CloseTrackingCover openedCover = installCover(machine, false);
         ServerPlayer player = preparePlayer(helper, machine, "close_replace");
-        GTCoverUIContainerMenu menu = openMenu(player, openedCover, 2);
-        CloseTrackingCover replacement = installCover(machine, false);
+        GTCoverUIContainerMenu menu = openMenu(player, openedCover, 3);
+        CloseTrackingCover replacement = new CloseTrackingCover(machine, false);
+
+        helper.assertTrue(machine.getCoverContainer().canPlaceCoverOnSide(replacement.coverDefinition, COVER_SIDE),
+                "replacement cover placement was rejected");
+        helper.assertTrue(replacement.canAttach(), "replacement cover could not attach");
+        helper.assertTrue(machine.getCoverContainer().replaceCoverOnSide(
+                COVER_SIDE, openedCover, replacement, ItemStack.EMPTY, player),
+                "opened cover could not be replaced");
+        helper.assertTrue(!menu.stillValid(player), "replacement left the earlier cover menu valid");
 
         player.closeContainer();
         menu.removed(player);
@@ -80,7 +111,7 @@ public class LDLib2CoverUIHolderContextTest {
         BufferMachine machine = createBuffer(helper);
         CloseTrackingCover cover = installCover(machine, true);
         ServerPlayer player = preparePlayer(helper, machine, "close_failure");
-        GTCoverUIContainerMenu menu = openMenu(player, cover, 3);
+        GTCoverUIContainerMenu menu = openMenu(player, cover, 4);
 
         player.closeContainer();
         menu.removed(player);
