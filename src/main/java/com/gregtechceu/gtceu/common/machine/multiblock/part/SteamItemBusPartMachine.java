@@ -9,7 +9,9 @@ import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.SteamItemBus;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -23,7 +25,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class SteamItemBusPartMachine extends ItemBusPartMachine implements LDLib2MachineUIProvider, SteamItemBus {
+public class SteamItemBusPartMachine extends ItemBusPartMachine
+                                     implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider, SteamItemBus {
 
     private final String autoTooltipKey;
 
@@ -63,6 +66,22 @@ public class SteamItemBusPartMachine extends ItemBusPartMachine implements LDLib
         }
 
         return UI.of(root);
+    }
+
+    /**
+     * Allows the steam-specific standalone screen to reuse the ordinary Item Bus body in a controller context.
+     */
+    @Override
+    protected boolean supportsGenericLDLib2Page() {
+        return true;
+    }
+
+    /**
+     * Creates a holder-scoped Item Bus page for one surrounding steam multiblock UI opening.
+     */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return createLDLib2Page(player, holder);
     }
 
     private GTLabelElement createLDLib2TitleLabel(int rootWidth) {

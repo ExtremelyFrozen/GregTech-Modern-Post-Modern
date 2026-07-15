@@ -108,8 +108,8 @@ public class ItemBusPartMachineLDLib2UITest {
                 "specialized Item Bus subclass bypassed the generic page opt-in gate");
 
         MetaMachine steam = createMachine(GTMachines.STEAM_IMPORT_BUS);
-        helper.assertTrue(!(steam instanceof LDLib2FancyPartUIProvider),
-                "Steam Item Bus inherited the ordinary contextual Item Bus provider");
+        helper.assertTrue(steam instanceof LDLib2FancyPartUIProvider,
+                "Steam Item Bus did not explicitly opt into the ordinary contextual Item Bus provider");
 
         StandardItemBusPartMachine replacement = new StandardItemBusPartMachine(
                 info(GTMachines.ITEM_IMPORT_BUS[LV]), LV, IO.IN);
