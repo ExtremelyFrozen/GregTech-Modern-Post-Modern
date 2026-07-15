@@ -13,9 +13,16 @@ import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
@@ -53,8 +60,8 @@ import java.util.List;
 import java.util.Set;
 
 public class DataAccessHatchMachine extends TieredPartMachine
-                                    implements LDLib2MachineUIProvider, IDataAccessMachine, IDataInfoProvider,
-                                    IMonitorComponent {
+                                    implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider,
+                                    IDataAccessMachine, IDataInfoProvider, IMonitorComponent {
 
     private final Set<GTRecipeDefinition> recipeDefinitions;
     @Getter
@@ -130,6 +137,37 @@ public class DataAccessHatchMachine extends TieredPartMachine
         return UI.of(root);
     }
 
+    /** Creates one holder-scoped inventory page for a surrounding multiblock controller. */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        if (isCreative) {
+            throw new IllegalStateException(
+                    "Creative Data Access Hatch is excluded from controller contextual pages.");
+        }
+        requireMatchingLDLib2Holder(holder);
+        return new DataAccessHatchLDLib2Page(player, holder);
+    }
+
+    private void requireMatchingLDLib2Holder(MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException(
+                    "Data Access Hatch contextual page holder must resolve the opened hatch.");
+        }
+    }
+
+    private UIElement createLDLib2ContextualMainElement() {
+        int rowSize = (int) Math.sqrt(getInventorySize());
+        int pageSize = rowSize * 18;
+        UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, pageSize, pageSize);
+        for (int y = 0; y < rowSize; y++) {
+            for (int x = 0; x < rowSize; x++) {
+                int index = y * rowSize + x;
+                root.addChild(createLDLib2DataSlot(index, x * 18, y * 18));
+            }
+        }
+        return root;
+    }
+
     private GTLabelElement createLDLib2TitleLabel(int rootWidth) {
         GTLabelElement label = new GTLabelElement(10, 5, rootWidth - 20, 10,
                 getBlockState().getBlock().getDescriptionId(), true);
@@ -148,6 +186,68 @@ public class DataAccessHatchMachine extends TieredPartMachine
                 .setCanTakeItems(true);
         UITemplate.setLDLib2Bounds(slot, x, y, 18, 18);
         return slot;
+    }
+
+    /** Keeps contextual inventory state and actions scoped to one validated menu opening. */
+    private final class DataAccessHatchLDLib2Page implements LDLib2FancyUIProvider {
+
+        private final MachineUIHolder holder;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+
+        private DataAccessHatchLDLib2Page(Player player, MachineUIHolder holder) {
+            requireMatchingLDLib2Holder(holder);
+            this.holder = holder;
+            this.directionalPage = new LDLib2DirectionalFancyConfigurator(
+                    DataAccessHatchMachine.this, player, holder);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != DataAccessHatchMachine.this) {
+                throw new IllegalStateException(
+                        "Data Access Hatch contextual page holder no longer resolves its opened hatch.");
+            }
+            return createLDLib2ContextualMainElement();
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return (int) Math.sqrt(getInventorySize()) * 18;
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return getLDLib2PageWidth();
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            tooltipsPanel.attachTooltips(DataAccessHatchMachine.this);
+            getTraitHolder().getAllTraits().stream()
+                    .filter(IFancyTooltip.class::isInstance)
+                    .map(IFancyTooltip.class::cast)
+                    .forEach(tooltipsPanel::attachTooltips);
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(Component.translatable(getDefinition().getDescriptionId()));
+        }
     }
 
     @Override
