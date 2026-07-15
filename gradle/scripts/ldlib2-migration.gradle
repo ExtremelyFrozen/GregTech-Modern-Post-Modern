@@ -172,6 +172,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/BedrockOreMinerMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/DistillationTowerMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/FluidDrillMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/LargeMinerMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/MultiblockTankMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/PowerSubstationMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/gcym/LargeChemicalBathMachine.java',
