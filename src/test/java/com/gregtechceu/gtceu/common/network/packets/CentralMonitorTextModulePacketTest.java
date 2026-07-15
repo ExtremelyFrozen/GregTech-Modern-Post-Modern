@@ -133,16 +133,8 @@ public class CentralMonitorTextModulePacketTest {
 
         ItemStack imageModule = GTItems.IMAGE_MODULE.get().getDefaultInstance();
         fixture.group().getItemStackHandler().setStackInSlot(0, imageModule);
-        ItemStack requestedImageModule = imageModule.copy();
-        requestedImageModule.set(GTDataComponents.IMAGE_MODULE_URL.get(), "legacy-image");
-        helper.assertTrue(SCPacketMonitorGroupDataChange.applyServerTextConfiguration(
-                fixture.machine(), 0, fixture.machine().getCentralMonitorActionIncarnation(),
-                fixture.group().getIdentity(), fixture.group().getModuleSlotIncarnation(),
-                requestedImageModule, fixture.player()),
-                "legacy packet rejected a same-item image module write before its action migration");
-        helper.assertTrue(ItemStack.matches(
-                requestedImageModule, fixture.group().getItemStackHandler().getStackInSlot(0)),
-                "legacy packet did not apply the same-item image module write");
+        assertRejected(helper, fixture, 0, imageModule.copy(),
+                "legacy packet accepted an image module write");
 
         fixture.group().getItemStackHandler().clear();
         assertRejected(helper, fixture, 0, validRequest,

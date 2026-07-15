@@ -25,6 +25,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
@@ -40,6 +41,9 @@ import com.lowdragmc.lowdraglib.gui.widget.*;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -55,6 +59,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UTFDataFormatException;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
@@ -66,11 +74,13 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                                    implements IMonitorComponent, IDataInfoProvider,
-                                   CentralMonitorMembershipActionTarget, CentralMonitorGroupTargetActionHost {
+                                   CentralMonitorMembershipActionTarget, CentralMonitorGroupTargetActionHost,
+                                   CentralMonitorImageModuleActionHost {
 
     static {
         CentralMonitorMembershipActions.initialize();
         CentralMonitorGroupTargetActions.initialize();
+        CentralMonitorImageModuleActions.initialize();
     }
 
     private static final String MONITOR_GROUPS_SYNC_FIELD = "monitorGroups";
@@ -470,6 +480,119 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
      */
     public void markMonitorGroupDataChanged() {
         getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+    }
+
+    @Override
+    public void resyncCentralMonitorImageModuleState() {
+        markMonitorGroupDataChanged();
+    }
+
+    /**
+     * Resolves the current synchronized image module for a page opened against one physical module-slot occupant.
+     */
+    public @Nullable ItemStack resolveCentralMonitorImageModuleForOpening(UUID groupIdentity,
+                                                                          UUID moduleSlotIncarnation) {
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation)) {
+            return null;
+        }
+        ItemStack module = group.getItemStackHandler().getStackInSlot(0);
+        return CentralMonitorImageModuleActions.isImageModule(module) ? module : null;
+    }
+
+    @Override
+    public boolean canSetCentralMonitorImageModuleUrl(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                      ItemStack expectedModule, @Nullable String expectedUrl,
+                                                      String requestedUrl) {
+        return resolveImageModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedModule, expectedUrl, requestedUrl) != null;
+    }
+
+    @Override
+    public boolean setCentralMonitorImageModuleUrl(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                   ItemStack expectedModule, @Nullable String expectedUrl,
+                                                   String requestedUrl) {
+        MonitorGroup group = resolveImageModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedModule, expectedUrl, requestedUrl);
+        if (group == null) {
+            return false;
+        }
+        group.getItemStackHandler().getStackInSlot(0).set(GTDataComponents.IMAGE_MODULE_URL.get(), requestedUrl);
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        return true;
+    }
+
+    private @Nullable MonitorGroup resolveImageModuleChangeTarget(
+                                                                  UUID groupIdentity,
+                                                                  UUID moduleSlotIncarnation,
+                                                                  ItemStack expectedModule,
+                                                                  @Nullable String expectedUrl,
+                                                                  String requestedUrl) {
+        if (!isMembershipStructureAvailable() ||
+                !CentralMonitorImageModuleActions.isValidUrl(requestedUrl) ||
+                sameNullableString(expectedUrl, requestedUrl)) {
+            return null;
+        }
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation)) {
+            return null;
+        }
+        ItemStack currentModule = group.getItemStackHandler().getStackInSlot(0);
+        if (!CentralMonitorImageModuleActions.isImageModule(currentModule) ||
+                !CentralMonitorImageModuleActions.matchesExpectedModule(currentModule, expectedModule)) {
+            return null;
+        }
+        String snapshotUrl = expectedModule.get(GTDataComponents.IMAGE_MODULE_URL.get());
+        String currentUrl = currentModule.get(GTDataComponents.IMAGE_MODULE_URL.get());
+        if (!sameNullableString(snapshotUrl, expectedUrl) || !sameNullableString(currentUrl, expectedUrl)) {
+            return null;
+        }
+        return canPersistCentralMonitorImageModuleUrl(group, currentModule, requestedUrl) ? group : null;
+    }
+
+    private boolean canPersistCentralMonitorImageModuleUrl(MonitorGroup group, ItemStack currentModule,
+                                                           String requestedUrl) {
+        Level level = getLevel();
+        if (level == null) {
+            GTCEu.LOGGER.error("Central Monitor at {} cannot validate image module save data without a level",
+                    getBlockPos());
+            return false;
+        }
+
+        ItemStack candidate = currentModule.copy();
+        candidate.set(GTDataComponents.IMAGE_MODULE_URL.get(), requestedUrl);
+        var stacks = group.getItemStackHandler().getStacks();
+        ItemStack previous = stacks.set(0, candidate);
+        try {
+            DataComponentMap savedData = getSyncDataHolder()
+                    .serializeToComponents(level.registryAccess(), false, false);
+            Tag savedTag = DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(NbtOps.INSTANCE), savedData)
+                    .getOrThrow();
+            try (DataOutputStream output = new DataOutputStream(OutputStream.nullOutputStream())) {
+                savedTag.write(output);
+            }
+            return true;
+        } catch (UTFDataFormatException exception) {
+            GTCEu.LOGGER.warn(
+                    "Rejecting Central Monitor image module URL with {} characters for group {} at {} because its save data exceeds the modified-UTF limit",
+                    requestedUrl.length(), group.getIdentity(), getBlockPos());
+            return false;
+        } catch (IOException exception) {
+            GTCEu.LOGGER.error("Failed to validate Central Monitor save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw new IllegalStateException("Failed to validate Central Monitor save data", exception);
+        } catch (RuntimeException exception) {
+            GTCEu.LOGGER.error("Failed to encode Central Monitor save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw exception;
+        } finally {
+            stacks.set(0, previous);
+        }
+    }
+
+    private static boolean sameNullableString(@Nullable String first, @Nullable String second) {
+        return first == null ? second == null : first.equals(second);
     }
 
     /**

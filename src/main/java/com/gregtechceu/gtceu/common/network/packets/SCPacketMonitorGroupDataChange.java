@@ -147,14 +147,10 @@ public class SCPacketMonitorGroupDataChange implements CustomPacketPayload {
         IItemHandlerModifiable itemHandler = group.getItemStackHandler();
         ItemStack currentStack = itemHandler.getStackInSlot(0);
         if (!isTextModule(currentStack)) {
-            if (!ItemStack.isSameItem(currentStack, requestedStack)) {
-                GTCEu.LOGGER.warn(
-                        "Rejecting legacy non-text module write from {} because group {} at {} has a mismatched module snapshot",
-                        player.getGameProfile().getName(), monitorGroupId, centralMonitor.getBlockPos());
-                return false;
-            }
-            itemHandler.setStackInSlot(0, requestedStack);
-            return true;
+            GTCEu.LOGGER.warn(
+                    "Rejecting non-text legacy module write from {} for group {} at {}",
+                    player.getGameProfile().getName(), monitorGroupId, centralMonitor.getBlockPos());
+            return false;
         }
         if (!matchesTextModuleSnapshot(currentStack, requestedStack)) {
             GTCEu.LOGGER.warn(
