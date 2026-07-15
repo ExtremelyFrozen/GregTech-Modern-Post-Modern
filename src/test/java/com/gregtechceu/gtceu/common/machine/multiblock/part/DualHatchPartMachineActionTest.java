@@ -5,9 +5,13 @@ import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider.PageGroupingData;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -447,6 +451,74 @@ public class DualHatchPartMachineActionTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "DualHatchPartMachineAction")
+    public static void contextualPagesPreservePreviewGroupingAndHolderScope(GameTestHelper helper) {
+        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        DualHatchPartMachine input = createDualHatch(GTMachines.DUAL_IMPORT_HATCH[LuV]);
+        DualHatchPartMachine output = createDualHatch(GTMachines.DUAL_EXPORT_HATCH[LuV]);
+
+        boolean mismatchedHolderRejected = false;
+        try {
+            LDLib2FancyPartUIProvider inputProvider = input;
+            inputProvider.createLDLib2FancyPage(player, new MutableDualHatchHolder(output));
+        } catch (IllegalArgumentException expected) {
+            mismatchedHolderRejected = expected.getMessage().contains("holder");
+        }
+        helper.assertTrue(mismatchedHolderRejected,
+                "input dual hatch contextual page accepted the output hatch holder");
+
+        assertContextualPage(helper, player, input,
+                "gtpm.multiblock.page_switcher.io.import", 1, 3, "input dual hatch");
+        assertContextualPage(helper, player, output,
+                "gtpm.multiblock.page_switcher.io.export", 2, 1, "output dual hatch");
+        helper.succeed();
+    }
+
+    private static void assertContextualPage(GameTestHelper helper, ServerPlayer player,
+                                             DualHatchPartMachine machine, String expectedGroupKey,
+                                             int expectedGroupWeight, int expectedConfigurators, String description) {
+        LDLib2FancyPartUIProvider pageProvider = machine;
+        MutableDualHatchHolder holder = new MutableDualHatchHolder(machine);
+        LDLib2FancyUIProvider firstPage = pageProvider.createLDLib2FancyPage(player, holder);
+        LDLib2FancyUIProvider secondPage = pageProvider.createLDLib2FancyPage(player, holder);
+        helper.assertTrue(firstPage != secondPage,
+                description + " reused its contextual page provider across openings");
+        helper.assertTrue(firstPage.getLDLib2PageWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                firstPage.getLDLib2PageHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+                description + " did not preserve the 100x100 contextual preview");
+        PageGroupingData grouping = firstPage.getPageGroupingData();
+        helper.assertTrue(grouping != null && expectedGroupKey.equals(grouping.groupKey()) &&
+                grouping.groupWeight() == expectedGroupWeight,
+                description + " lost its legacy IO grouping");
+
+        LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(firstPage,
+                player.getInventory(), holder, firstPage.getLDLib2PageWidth(), firstPage.getLDLib2PageHeight());
+        helper.assertTrue(shell.getHolder() == holder,
+                description + " contextual shell lost its dedicated holder");
+        helper.assertTrue(shell.getConfiguratorPanel().getChildren().size() == expectedConfigurators,
+                description + " contextual preview lost its ItemBus configurators");
+        helper.assertTrue(shell.getSideTabsElement().getChildren().size() == 2,
+                description + " contextual preview lost its directional page");
+        UIElement preview = shell.getChildren().getFirst().getChildren().getFirst();
+        helper.assertTrue(preview.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                preview.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
+                preview.getChildren().isEmpty(),
+                description + " contextual page did not create the server-safe preview body");
+
+        holder.setMachine(createDualHatch(machine.getDefinition()));
+        boolean replacementRejected = false;
+        try {
+            new LDLib2FancyMachineUIElement(firstPage, player.getInventory(), holder,
+                    firstPage.getLDLib2PageWidth(), firstPage.getLDLib2PageHeight());
+        } catch (IllegalStateException expected) {
+            replacementRejected = expected.getMessage().contains("holder");
+        }
+        helper.assertTrue(replacementRejected,
+                description + " contextual page accepted a same-definition replacement");
+    }
+
     private static void assertPageSemantics(GameTestHelper helper, LDLib2FancyMachineUIElement shell,
                                             IngredientIO itemRole, boolean allowFluidDraining,
                                             int configuratorCount, String description) {
@@ -635,6 +707,34 @@ public class DualHatchPartMachineActionTest {
         @Override
         public BlockPos getPos() {
             return BlockPos.ZERO;
+        }
+
+        @Override
+        public ResourceLocation getMachineDefinitionId() {
+            return machine.getDefinition().getId();
+        }
+
+        @Override
+        public DualHatchPartMachine getMachine() {
+            return machine;
+        }
+    }
+
+    private static final class MutableDualHatchHolder implements MachineUIHolder {
+
+        private DualHatchPartMachine machine;
+
+        private MutableDualHatchHolder(DualHatchPartMachine machine) {
+            this.machine = machine;
+        }
+
+        private void setMachine(DualHatchPartMachine machine) {
+            this.machine = machine;
+        }
+
+        @Override
+        public BlockPos getPos() {
+            return machine.getBlockPos();
         }
 
         @Override

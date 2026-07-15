@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
@@ -21,6 +22,7 @@ import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyCon
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DistinctPartFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -59,7 +61,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 public class DualHatchPartMachine extends ItemBusPartMachine
-                                  implements LDLib2MachineUIProvider, DualHatchFluidSlotActionTarget {
+                                  implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider,
+                                  DualHatchFluidSlotActionTarget {
 
     public static final int INITIAL_TANK_CAPACITY = 16 * FluidType.BUCKET_VOLUME;
 
@@ -202,12 +205,20 @@ public class DualHatchPartMachine extends ItemBusPartMachine
                 player.getInventory(), holder, pageWidth, pageHeight));
     }
 
-    private int getLDLib2PageWidth() {
+    /** Creates the preview-style page used when a multiblock controller exposes this hatch. */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new DualHatchContextualPreviewPage(player, holder);
+    }
+
+    @Override
+    int getLDLib2PageWidth() {
         int tanks = (int) Math.sqrt(getInventorySize());
         return 18 * (tanks + 1) + 16;
     }
 
-    private int getLDLib2PageHeight() {
+    @Override
+    int getLDLib2PageHeight() {
         int tanks = (int) Math.sqrt(getInventorySize());
         return 18 * tanks + 16;
     }
@@ -398,6 +409,105 @@ public class DualHatchPartMachine extends ItemBusPartMachine
         return remainingStack.copy();
     }
 
+    private void attachLDLib2Configurators(LDLib2ConfiguratorPanelElement configuratorPanel,
+                                           MachineUIHolder holder) {
+        configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(
+                this, holder));
+        if (io != IO.IN) {
+            return;
+        }
+        LDLib2DistinctPartFancyConfigurator.attachConfigurators(configuratorPanel, this);
+        if (isHasCircuitSlot() && isCircuitSlotEnabled()) {
+            configuratorPanel.attachConfigurators(new LDLib2CircuitFancyConfigurator(
+                    this, holder));
+        }
+    }
+
+    private void attachLDLib2Tooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+        tooltipsPanel.attachTooltips(this);
+        getTraitHolder().getAllTraits().stream()
+                .filter(IFancyTooltip.class::isInstance)
+                .map(IFancyTooltip.class::cast)
+                .forEach(tooltipsPanel::attachTooltips);
+    }
+
+    @Nullable
+    private LDLib2FancyUIProvider.PageGroupingData createLDLib2PageGroupingData() {
+        return switch (io) {
+            case IN -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.import", 1);
+            case OUT -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.export", 2);
+            case BOTH -> new LDLib2FancyUIProvider.PageGroupingData(
+                    "gtpm.multiblock.page_switcher.io.both", 3);
+            case NONE -> null;
+        };
+    }
+
+    /** Keeps the legacy controller page as a preview while retaining Dual Hatch controls and grouping. */
+    private final class DualHatchContextualPreviewPage implements LDLib2FancyUIProvider {
+
+        private final MachineUIHolder holder;
+        private final LDLib2FancyPreviewPage previewPage;
+
+        private DualHatchContextualPreviewPage(Player player, MachineUIHolder holder) {
+            this.holder = holder;
+            this.previewPage = new LDLib2FancyPreviewPage(DualHatchPartMachine.this, player, holder,
+                    createLDLib2PageGroupingData());
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            return previewPage.createLDLib2MainPage(shell);
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return previewPage.getTabIcon();
+        }
+
+        @Override
+        public Component getTitle() {
+            return previewPage.getTitle();
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return previewPage.getLDLib2PageWidth();
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return previewPage.getLDLib2PageHeight();
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            previewPage.attachSideTabs(tabs);
+        }
+
+        @Override
+        public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+            attachLDLib2Configurators(configuratorPanel, holder);
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            attachLDLib2Tooltips(tooltipsPanel);
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return previewPage.getTabTooltips();
+        }
+
+        @Override
+        @Nullable
+        public LDLib2FancyUIProvider.PageGroupingData getPageGroupingData() {
+            return previewPage.getPageGroupingData();
+        }
+    }
+
     /**
      * Adapts the inherited legacy Fancy machine metadata to an LDLib2 page without making the machine implement two
      * incompatible Fancy provider contracts.
@@ -450,25 +560,12 @@ public class DualHatchPartMachine extends ItemBusPartMachine
 
         @Override
         public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
-            configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(
-                    DualHatchPartMachine.this, holder));
-            if (io != IO.IN) {
-                return;
-            }
-            LDLib2DistinctPartFancyConfigurator.attachConfigurators(configuratorPanel, DualHatchPartMachine.this);
-            if (isHasCircuitSlot() && isCircuitSlotEnabled()) {
-                configuratorPanel.attachConfigurators(new LDLib2CircuitFancyConfigurator(
-                        DualHatchPartMachine.this, holder));
-            }
+            attachLDLib2Configurators(configuratorPanel, holder);
         }
 
         @Override
         public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
-            tooltipsPanel.attachTooltips(DualHatchPartMachine.this);
-            getTraitHolder().getAllTraits().stream()
-                    .filter(IFancyTooltip.class::isInstance)
-                    .map(IFancyTooltip.class::cast)
-                    .forEach(tooltipsPanel::attachTooltips);
+            attachLDLib2Tooltips(tooltipsPanel);
         }
 
         @Override
@@ -479,15 +576,7 @@ public class DualHatchPartMachine extends ItemBusPartMachine
         @Override
         @Nullable
         public LDLib2FancyUIProvider.PageGroupingData getPageGroupingData() {
-            return switch (io) {
-                case IN -> new LDLib2FancyUIProvider.PageGroupingData(
-                        "gtpm.multiblock.page_switcher.io.import", 1);
-                case OUT -> new LDLib2FancyUIProvider.PageGroupingData(
-                        "gtpm.multiblock.page_switcher.io.export", 2);
-                case BOTH -> new LDLib2FancyUIProvider.PageGroupingData(
-                        "gtpm.multiblock.page_switcher.io.both", 3);
-                case NONE -> null;
-            };
+            return createLDLib2PageGroupingData();
         }
     }
 }
