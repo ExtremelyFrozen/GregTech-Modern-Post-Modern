@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
+import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.CentralMonitorGroupItemHandler;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 
 import net.minecraft.core.BlockPos;
@@ -38,6 +39,94 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CentralMonitorModuleSlotTest {
 
     private static final BlockPos MONITOR_POSITION = new BlockPos(1, 0, 0);
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "CentralMonitorModuleSlot")
+    public static void groupItemHandlerPreservesPlaceholderFirstSlotSemantics(GameTestHelper helper) {
+        MonitorGroup group = new MonitorGroup("group-handler-test");
+        CentralMonitorGroupItemHandler groupHandler = new CentralMonitorGroupItemHandler(group);
+        AtomicInteger placeholderChanges = new AtomicInteger();
+        AtomicInteger moduleChanges = new AtomicInteger();
+        group.getPlaceholderSlotsHandler().setOnContentsChanged(placeholderChanges::incrementAndGet);
+        group.getItemStackHandler().setOnContentsChanged(moduleChanges::incrementAndGet);
+
+        helper.assertTrue(groupHandler.getSlots() == CentralMonitorGroupItemHandler.SLOT_COUNT &&
+                CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET == 8,
+                "Central Monitor group handler did not expose the legacy nine-slot shape");
+        for (int slot = 0; slot < CentralMonitorGroupItemHandler.PLACEHOLDER_SLOT_COUNT; slot++) {
+            ItemStack placeholder = new ItemStack(Items.COBBLESTONE, slot + 1);
+            groupHandler.setStackInSlot(slot, placeholder);
+            helper.assertTrue(ItemStack.matches(
+                    group.getPlaceholderSlotsHandler().getStackInSlot(slot), placeholder) &&
+                    ItemStack.matches(groupHandler.getStackInSlot(slot), placeholder),
+                    "Central Monitor group handler remapped placeholder slot " + slot);
+        }
+
+        ItemStack module = GTItems.IMAGE_MODULE.get().getDefaultInstance();
+        groupHandler.setStackInSlot(CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET, module.copy());
+        helper.assertTrue(ItemStack.matches(group.getItemStackHandler().getStackInSlot(0), module) &&
+                ItemStack.matches(groupHandler.getStackInSlot(CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET),
+                        module),
+                "Central Monitor group handler did not map offset eight to the module slot");
+        helper.assertTrue(groupHandler.isItemValid(0, Items.IRON_INGOT.getDefaultInstance()) &&
+                groupHandler.isItemValid(CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET, module) &&
+                !groupHandler.isItemValid(CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET,
+                        Items.IRON_INGOT.getDefaultInstance()),
+                "Central Monitor group handler did not preserve placeholder and module filters");
+
+        ItemStack extracted = groupHandler.extractItem(7, 8, false);
+        helper.assertTrue(extracted.getCount() == 8 && group.getPlaceholderSlotsHandler().getStackInSlot(7).isEmpty(),
+                "Central Monitor group handler did not forward placeholder extraction");
+        ItemStack placeholderRemainder = groupHandler.insertItem(7, Items.GOLD_INGOT.getDefaultInstance(), false);
+        helper.assertTrue(placeholderRemainder.isEmpty() &&
+                group.getPlaceholderSlotsHandler().getStackInSlot(7).is(Items.GOLD_INGOT),
+                "Central Monitor group handler did not forward placeholder insertion");
+
+        ItemStack extractedModule = groupHandler.extractItem(
+                CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET, 1, false);
+        helper.assertTrue(ItemStack.matches(extractedModule, module) &&
+                group.getItemStackHandler().getStackInSlot(0).isEmpty(),
+                "Central Monitor group handler did not forward module extraction");
+        ItemStack rejectedModuleInsert = groupHandler.insertItem(
+                CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET, Items.IRON_INGOT.getDefaultInstance(), false);
+        helper.assertTrue(!rejectedModuleInsert.isEmpty() && group.getItemStackHandler().getStackInSlot(0).isEmpty(),
+                "Central Monitor group handler bypassed the module filter during insertion");
+        ItemStack moduleRemainder = groupHandler.insertItem(
+                CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET, module.copy(), false);
+        helper.assertTrue(moduleRemainder.isEmpty() &&
+                ItemStack.matches(group.getItemStackHandler().getStackInSlot(0), module),
+                "Central Monitor group handler rejected a valid module insertion");
+
+        groupHandler.setStackInSlot(0, ItemStack.EMPTY);
+        groupHandler.setStackInSlot(CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET, ItemStack.EMPTY);
+        placeholderChanges.set(0);
+        moduleChanges.set(0);
+        int placeholderCapacity = groupHandler.getMaxStackSizeForEmptySlot(
+                0, Items.COBBLESTONE.getDefaultInstance());
+        int moduleCapacity = groupHandler.getMaxStackSizeForEmptySlot(
+                CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET, module);
+        helper.assertTrue(groupHandler.isNonMutatingEmptySlotCapacityQueryEnabled() &&
+                placeholderCapacity > 0 && moduleCapacity > 0,
+                "Central Monitor group handler did not expose both non-mutating capacity paths");
+        helper.assertTrue(placeholderChanges.get() == 0 && moduleChanges.get() == 0 &&
+                groupHandler.getStackInSlot(0).isEmpty() &&
+                groupHandler.getStackInSlot(CentralMonitorGroupItemHandler.MODULE_SLOT_OFFSET).isEmpty(),
+                "Central Monitor group capacity query mutated a handler or fired a contents callback");
+
+        CustomItemStackHandler externalModuleHandler = new CustomItemStackHandler(1);
+        CustomItemStackHandler externalPlaceholderHandler = new CustomItemStackHandler(
+                CentralMonitorGroupItemHandler.PLACEHOLDER_SLOT_COUNT);
+        MonitorGroup externalGroup = MonitorGroup.restore(
+                UUID.randomUUID(), UUID.randomUUID(), "external-handler-test", externalModuleHandler,
+                externalPlaceholderHandler);
+        helper.assertTrue(!externalModuleHandler.isNonMutatingEmptySlotCapacityQueryEnabled() &&
+                !externalPlaceholderHandler.isNonMutatingEmptySlotCapacityQueryEnabled() &&
+                !new CentralMonitorGroupItemHandler(externalGroup)
+                        .isNonMutatingEmptySlotCapacityQueryEnabled(),
+                "Monitor group incorrectly opted external handlers into non-mutating capacity queries");
+        helper.succeed();
+    }
 
     @TestHolder
     @EmptyTemplate
@@ -163,6 +252,9 @@ public class CentralMonitorModuleSlotTest {
         MonitorGroup restoredGroup = restored.getMonitorGroups().getFirst();
         helper.assertTrue(restoredGroup.getModuleSlotIncarnation().equals(serverGroup.getModuleSlotIncarnation()),
                 "restoration changed the saved module-slot incarnation before listener binding");
+        helper.assertTrue(new CentralMonitorGroupItemHandler(restoredGroup)
+                .isNonMutatingEmptySlotCapacityQueryEnabled(),
+                "restored monitor group lost its codec-owned non-mutating capacity handlers");
 
         restored.onLoad();
         restored.getSyncDataHolder().serializeToComponents(helper.getLevel().registryAccess(), true, false);

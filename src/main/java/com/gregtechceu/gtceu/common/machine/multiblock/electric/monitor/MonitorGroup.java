@@ -54,8 +54,16 @@ public class MonitorGroup {
         return customItemStackHandler;
     }
 
+    /** Creates the fixed placeholder inventory used by new and codec-restored groups. */
+    public static CustomItemStackHandler createPlaceholderHandler() {
+        CustomItemStackHandler placeholderHandler = new CustomItemStackHandler(
+                CentralMonitorGroupItemHandler.PLACEHOLDER_SLOT_COUNT);
+        placeholderHandler.setNonMutatingEmptySlotCapacityQueryEnabled(true);
+        return placeholderHandler;
+    }
+
     public MonitorGroup(String name) {
-        this(name, createModuleHandler(), new CustomItemStackHandler(8));
+        this(name, createModuleHandler(), createPlaceholderHandler());
     }
 
     public MonitorGroup(String name, CustomItemStackHandler handler, CustomItemStackHandler placeholderSlotsHandler) {
@@ -99,7 +107,7 @@ public class MonitorGroup {
      */
     public static MonitorGroup createWithIdentity(UUID identity, String name) {
         return new MonitorGroup(identity, UUID.randomUUID(), 0, name, createModuleHandler(),
-                new CustomItemStackHandler(8));
+                createPlaceholderHandler());
     }
 
     public Set<BlockPos> getMonitorPositions() {

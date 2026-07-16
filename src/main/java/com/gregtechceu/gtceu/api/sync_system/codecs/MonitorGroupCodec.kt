@@ -81,7 +81,7 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 		val placeholderSlotsHandler = deserializeItems(
 			json.get("placeholderSlots"),
 			context,
-			CustomItemStackHandler(8),
+			MonitorGroup.createPlaceholderHandler(),
 		)
 		val group = MonitorGroup.restore(
 			identity,
