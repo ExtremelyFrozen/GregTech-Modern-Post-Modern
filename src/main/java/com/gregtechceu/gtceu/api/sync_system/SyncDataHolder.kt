@@ -33,7 +33,7 @@ data class ServerFieldUpdateResult(val accepted: Boolean, val changed: Boolean, 
 }
 
 /**
- * Class that holds all sync info for an [com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged] object.
+ * Class that holds all sync info for an [ISyncManaged] object.
  */
 class SyncDataHolder(private val holder: ISyncManaged) {
 	private val syncData: ClassSyncData = ClassSyncData.getClassData(holder.javaClass)
@@ -101,6 +101,21 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 	}
 
 	fun serializeFullClientSyncComponents(registries: HolderLookup.Provider): DataComponentMap = componentsOf(serializeFullClientSyncData(registries))
+
+	/**
+	 * Serializes one client field for validation without consuming pending changes or updating synchronization caches.
+	 */
+	fun serializeClientFieldSnapshot(registries: HolderLookup.Provider, fieldName: String): JsonElement {
+		val field = syncData.getClientSyncFields().singleOrNull { candidate -> candidate.fieldName == fieldName }
+			?: throw IllegalArgumentException("Unknown or ambiguous client sync field: $fieldName")
+		return FieldSyncHandler.serializeFieldData(
+			registries,
+			holder,
+			field,
+			writeClientFields = true,
+			fullSync = true,
+		)
+	}
 
 	fun serializeToFieldData(registries: HolderLookup.Provider, writeClientFields: Boolean, fullSync: Boolean): SyncFieldData = if (writeClientFields) {
 		if (fullSync) {

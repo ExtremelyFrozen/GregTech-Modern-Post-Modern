@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.item.component.IItemComponent;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.item.datacomponents.TextLineList;
 import com.gregtechceu.gtceu.utils.GlobalPosWithRot;
 
 import net.minecraft.core.BlockPos;
@@ -28,6 +29,7 @@ public class MonitorGroup {
 
     private final UUID identity;
     private UUID moduleSlotIncarnation;
+    private long textConfigurationRevision;
     private final Set<BlockPos> monitorPositions = new HashSet<>();
     private final String name;
     private final CustomItemStackHandler itemStackHandler;
@@ -57,13 +59,15 @@ public class MonitorGroup {
     }
 
     public MonitorGroup(String name, CustomItemStackHandler handler, CustomItemStackHandler placeholderSlotsHandler) {
-        this(UUID.randomUUID(), UUID.randomUUID(), name, handler, placeholderSlotsHandler);
+        this(UUID.randomUUID(), UUID.randomUUID(), 0, name, handler, placeholderSlotsHandler);
     }
 
-    private MonitorGroup(UUID identity, UUID moduleSlotIncarnation, String name, CustomItemStackHandler handler,
+    private MonitorGroup(UUID identity, UUID moduleSlotIncarnation, long textConfigurationRevision,
+                         String name, CustomItemStackHandler handler,
                          CustomItemStackHandler placeholderSlotsHandler) {
         this.identity = identity;
         this.moduleSlotIncarnation = moduleSlotIncarnation;
+        setTextConfigurationRevision(textConfigurationRevision);
         this.name = name;
         this.itemStackHandler = handler;
         this.itemStackHandler.setFilter(MonitorGroup::isModule);
@@ -76,14 +80,25 @@ public class MonitorGroup {
     public static MonitorGroup restore(UUID identity, UUID moduleSlotIncarnation, String name,
                                        CustomItemStackHandler handler,
                                        CustomItemStackHandler placeholderSlotsHandler) {
-        return new MonitorGroup(identity, moduleSlotIncarnation, name, handler, placeholderSlotsHandler);
+        return restore(identity, moduleSlotIncarnation, 0, name, handler, placeholderSlotsHandler);
+    }
+
+    /**
+     * Restores a group with its stable identities and text configuration revision.
+     */
+    public static MonitorGroup restore(UUID identity, UUID moduleSlotIncarnation, long textConfigurationRevision,
+                                       String name,
+                                       CustomItemStackHandler handler,
+                                       CustomItemStackHandler placeholderSlotsHandler) {
+        return new MonitorGroup(identity, moduleSlotIncarnation, textConfigurationRevision, name, handler,
+                placeholderSlotsHandler);
     }
 
     /**
      * Creates a new empty group with an identity already validated by the owning Central Monitor.
      */
     public static MonitorGroup createWithIdentity(UUID identity, String name) {
-        return new MonitorGroup(identity, UUID.randomUUID(), name, createModuleHandler(),
+        return new MonitorGroup(identity, UUID.randomUUID(), 0, name, createModuleHandler(),
                 new CustomItemStackHandler(8));
     }
 
@@ -99,11 +114,35 @@ public class MonitorGroup {
         return moduleSlotIncarnation;
     }
 
+    public long getTextConfigurationRevision() {
+        return textConfigurationRevision;
+    }
+
     /**
      * Invalidates actions opened for the previous physical module-slot occupant.
      */
     public void rotateModuleSlotIncarnation() {
         moduleSlotIncarnation = UUID.randomUUID();
+        textConfigurationRevision = 0;
+    }
+
+    /**
+     * Restores the authoritative revision carried by save data or server synchronization.
+     */
+    public void setTextConfigurationRevision(long revision) {
+        if (revision < 0) {
+            throw new IllegalArgumentException("Monitor group text configuration revision must be non-negative");
+        }
+        textConfigurationRevision = revision;
+    }
+
+    /**
+     * Applies one validated text configuration without replacing the physical module-slot occupant.
+     */
+    public void applyTextConfiguration(TextLineList configuration) {
+        long nextRevision = Math.incrementExact(textConfigurationRevision);
+        itemStackHandler.getStackInSlot(0).set(GTDataComponents.FORMAT_STRING_LIST.get(), configuration);
+        textConfigurationRevision = nextRevision;
     }
 
     public String getName() {

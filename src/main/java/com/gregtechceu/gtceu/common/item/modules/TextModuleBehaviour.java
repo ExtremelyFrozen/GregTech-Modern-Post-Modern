@@ -12,13 +12,15 @@ import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
 import com.gregtechceu.gtceu.api.placeholder.MultiLineComponent;
 import com.gregtechceu.gtceu.api.placeholder.PlaceholderContext;
 import com.gregtechceu.gtceu.api.placeholder.PlaceholderHandler;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.client.renderer.monitor.IMonitorRenderer;
 import com.gregtechceu.gtceu.client.renderer.monitor.MonitorTextRenderer;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.datacomponents.TextLineList;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorMachine;
+import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorTextModuleActions;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
-import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupDataChange;
+import com.gregtechceu.gtceu.common.network.packets.CPacketMachineActionToServer;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 
@@ -48,8 +50,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation {
 
@@ -90,6 +92,11 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
 
     @Override
     public Widget createUIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
+        return createUIWidget(stack, machine, group, action -> sendMachineAction(machine, action));
+    }
+
+    Widget createUIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
+                          Consumer<SyncActionData> actionSender) {
         WidgetGroup builder = new WidgetGroup();
         CodeEditorWidget editor = new CodeEditorWidget(0, 0, 120, 80);
         // editor.codeEditor.setLanguageDefinition(PlaceholderHandler.LANG_DEFINITION);
@@ -98,19 +105,10 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
                 40, 10,
                 null,
                 null);
+        TextEditSession editSession = TextEditSession.open(machine, group, stack);
         ButtonWidget saveButton = new ButtonWidget(-40, 22, 20, 20, click -> {
             if (!click.isRemote) return;
-            List<Component> lines = editor.getLines().stream()
-                    .map(Component::literal)
-                    .collect(Collectors.toList());
-            float scale = 1.0f;
-            try {
-                scale = Float.parseFloat(scaleInput.getCurrentString());
-            } catch (NumberFormatException e) {
-                GTCEu.LOGGER.error("Invalid monitor text module scale: {}", scaleInput.getCurrentString(), e);
-            }
-            stack.set(GTDataComponents.FORMAT_STRING_LIST, new TextLineList(lines, scale));
-            PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
+            sendTextChange(editSession, editor.getLines(), scaleInput.getCurrentString(), actionSender);
         });
         saveButton.setButtonTexture(GuiTextures.BUTTON_CHECK);
         List<Boolean> tmp = new ArrayList<>();
@@ -121,9 +119,6 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
                 scaleInput.setTextSupplier(null);
             }
             if (!stack.has(GTDataComponents.FORMAT_STRING_LIST)) {
-                stack.update(GTDataComponents.FORMAT_STRING_LIST, TextLineList.EMPTY,
-                        lines -> lines.withScale(1.0f));
-                PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
                 return "1";
             }
             // noinspection DataFlowIssue
@@ -148,6 +143,11 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
 
     @Override
     public UIElement createLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
+        return createLDLib2UIWidget(stack, machine, group, action -> sendMachineAction(machine, action));
+    }
+
+    UIElement createLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
+                                   Consumer<SyncActionData> actionSender) {
         UIElement builder = new UIElement();
         UITemplate.setLDLib2Bounds(builder, 0, 0, EDITOR_WIDTH, EDITOR_HEIGHT);
 
@@ -156,11 +156,12 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
         editor.setLines(getFormatStringLines(stack));
 
         GTTextFieldElement scaleInput = createLDLib2ScaleInput(stack);
+        TextEditSession editSession = TextEditSession.open(machine, group, stack);
         GTButtonElement saveButton = new GTButtonElement(-40, 22, 20, 20,
                 GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_CHECK),
                 event -> {
-                    if (!machine.getLevel().isClientSide()) return;
-                    saveLDLib2Text(stack, machine, group, editor, scaleInput);
+                    if (!machine.isRemote()) return;
+                    saveLDLib2Text(editSession, editor, scaleInput, actionSender);
                 });
         saveButton.noText();
 
@@ -191,22 +192,87 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
         return String.valueOf(Mth.clamp(stack.get(GTDataComponents.FORMAT_STRING_LIST).scale(), .0001f, 1000f));
     }
 
-    private static void saveLDLib2Text(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
-                                       CodeEditor editor, GTTextFieldElement scaleInput) {
-        List<Component> lines = Arrays.stream(editor.getValue())
-                .map(Component::literal)
-                .collect(Collectors.toList());
-        stack.set(GTDataComponents.FORMAT_STRING_LIST, new TextLineList(lines, readScale(scaleInput)));
-        PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
+    private static void saveLDLib2Text(TextEditSession editSession, CodeEditor editor,
+                                       GTTextFieldElement scaleInput, Consumer<SyncActionData> actionSender) {
+        if (scaleInput.isError()) {
+            GTCEu.LOGGER.error("Invalid monitor text module scale: {}", scaleInput.getRawText());
+            return;
+        }
+        sendTextChange(editSession, Arrays.asList(editor.getValue()), scaleInput.getValue(), actionSender);
     }
 
-    private static float readScale(GTTextFieldElement scaleInput) {
-        String text = scaleInput.getValue();
+    private static void sendTextChange(TextEditSession editSession, List<String> requestedLines,
+                                       String scaleText, Consumer<SyncActionData> actionSender) {
+        Float requestedScale = readScale(scaleText);
+        if (requestedScale == null) {
+            return;
+        }
+        TextLineList requestedConfiguration = CentralMonitorTextModuleActions.createConfiguration(
+                requestedLines, requestedScale);
+        if (requestedConfiguration.equals(
+                editSession.expectedModule.get(GTDataComponents.FORMAT_STRING_LIST))) {
+            return;
+        }
+        long nextRevision = Math.incrementExact(editSession.expectedConfigurationRevision);
+        int nextSequence = Math.incrementExact(editSession.sequence);
+        var action = CentralMonitorTextModuleActions.createSetTextModuleConfigurationAction(
+                editSession.holderIncarnation,
+                editSession.groupIdentity,
+                editSession.moduleSlotIncarnation,
+                editSession.expectedConfigurationRevision,
+                editSession.expectedModule,
+                requestedConfiguration,
+                editSession.sequence);
+        actionSender.accept(action);
+        editSession.expectedModule.set(GTDataComponents.FORMAT_STRING_LIST, requestedConfiguration);
+        editSession.expectedConfigurationRevision = nextRevision;
+        editSession.sequence = nextSequence;
+    }
+
+    private static void sendMachineAction(CentralMonitorMachine machine, SyncActionData action) {
+        PacketDistributor.sendToServer(
+                new CPacketMachineActionToServer(machine.getBlockPos(), machine.getDefinition().getId(), action));
+    }
+
+    private static final class TextEditSession {
+
+        private final UUID holderIncarnation;
+        private final UUID groupIdentity;
+        private final UUID moduleSlotIncarnation;
+        private final ItemStack expectedModule;
+        private long expectedConfigurationRevision;
+        private int sequence;
+
+        private TextEditSession(UUID holderIncarnation, UUID groupIdentity, UUID moduleSlotIncarnation,
+                                long expectedConfigurationRevision, ItemStack expectedModule) {
+            this.holderIncarnation = holderIncarnation;
+            this.groupIdentity = groupIdentity;
+            this.moduleSlotIncarnation = moduleSlotIncarnation;
+            this.expectedConfigurationRevision = expectedConfigurationRevision;
+            this.expectedModule = expectedModule;
+        }
+
+        private static TextEditSession open(CentralMonitorMachine machine, MonitorGroup group, ItemStack module) {
+            return new TextEditSession(
+                    machine.getCentralMonitorActionIncarnation(),
+                    group.getIdentity(),
+                    group.getModuleSlotIncarnation(),
+                    group.getTextConfigurationRevision(),
+                    CentralMonitorTextModuleActions.captureExpectedModule(module));
+        }
+    }
+
+    private static @Nullable Float readScale(String text) {
         try {
-            return Float.parseFloat(text);
+            float scale = Float.parseFloat(text);
+            if (!CentralMonitorTextModuleActions.isValidScale(scale)) {
+                GTCEu.LOGGER.error("Monitor text module scale is outside the supported range: {}", text);
+                return null;
+            }
+            return scale;
         } catch (NumberFormatException e) {
             GTCEu.LOGGER.error("Invalid monitor text module scale: {}", text, e);
-            return 1.0f;
+            return null;
         }
     }
 
@@ -267,13 +333,12 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
         stack.update(GTDataComponents.TEXT_LINE_LIST, TextLineList.EMPTY, lines -> lines.withScale(scale));
     }
 
-    public void setPlaceholderText(ItemStack stack, String text) {
+    public TextLineList createPlaceholderConfiguration(ItemStack stack, String text) {
         List<Component> lines = Arrays.stream(text.split("\n"))
                 .map(Component::literal)
                 .map(Component.class::cast)
                 .toList();
-        stack.update(GTDataComponents.FORMAT_STRING_LIST, TextLineList.EMPTY,
-                formatStringList -> formatStringList.withLines(lines));
+        return stack.getOrDefault(GTDataComponents.FORMAT_STRING_LIST, TextLineList.EMPTY).withLines(lines);
     }
 
     public String getPlaceholderText(ItemStack stack) {

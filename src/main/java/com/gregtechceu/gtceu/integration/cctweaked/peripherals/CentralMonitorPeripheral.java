@@ -1,11 +1,15 @@
 package com.gregtechceu.gtceu.integration.cctweaked.peripherals;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.item.ComponentItem;
 import com.gregtechceu.gtceu.api.item.component.IItemComponent;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.item.datacomponents.TextLineList;
 import com.gregtechceu.gtceu.common.item.modules.ImageModuleBehaviour;
 import com.gregtechceu.gtceu.common.item.modules.TextModuleBehaviour;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorMachine;
+import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorTextModuleActions;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 
 import net.minecraft.world.item.ItemStack;
@@ -14,6 +18,8 @@ import dan200.computercraft.api.lua.*;
 import dan200.computercraft.api.peripheral.GenericPeripheral;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 public class CentralMonitorPeripheral implements GenericPeripheral {
 
     @Override
@@ -21,16 +27,20 @@ public class CentralMonitorPeripheral implements GenericPeripheral {
         return "gtpm:central_monitor";
     }
 
-    @LuaFunction
+    @LuaFunction(mainThread = true)
     public static MethodResult getGroups(CentralMonitorMachine centralMonitor) {
-        return MethodResult.of(centralMonitor.getMonitorGroups().stream().map(LuaMonitorGroup::new).toList());
+        return MethodResult.of(centralMonitor.getMonitorGroups().stream()
+                .map(group -> new LuaMonitorGroup(centralMonitor, group))
+                .toList());
     }
 
     public static class LuaMonitorGroup {
 
+        private final CentralMonitorMachine centralMonitor;
         private final MonitorGroup group;
 
-        public LuaMonitorGroup(MonitorGroup group) {
+        public LuaMonitorGroup(CentralMonitorMachine centralMonitor, MonitorGroup group) {
+            this.centralMonitor = centralMonitor;
             this.group = group;
         }
 
@@ -39,9 +49,9 @@ public class CentralMonitorPeripheral implements GenericPeripheral {
             return group.getName();
         }
 
-        @LuaFunction
+        @LuaFunction(mainThread = true)
         public LuaMonitorModule getModule() {
-            return new LuaMonitorModule(group.getItemStackHandler().getStackInSlot(0));
+            return new LuaMonitorModule(centralMonitor, group, group.getItemStackHandler().getStackInSlot(0));
         }
 
         // TODO item transfer (setModule, etc.)
@@ -49,10 +59,18 @@ public class CentralMonitorPeripheral implements GenericPeripheral {
 
     public static class LuaMonitorModule {
 
+        private final CentralMonitorMachine centralMonitor;
         private final ItemStack stack;
+        private final UUID groupIdentity;
+        private final UUID moduleSlotIncarnation;
+        private long expectedTextConfigurationRevision;
 
-        public LuaMonitorModule(ItemStack stack) {
+        public LuaMonitorModule(CentralMonitorMachine centralMonitor, MonitorGroup group, ItemStack stack) {
+            this.centralMonitor = centralMonitor;
             this.stack = stack;
+            this.groupIdentity = group.getIdentity();
+            this.moduleSlotIncarnation = group.getModuleSlotIncarnation();
+            this.expectedTextConfigurationRevision = group.getTextConfigurationRevision();
         }
 
         private @Nullable IMonitorModuleItem getModuleItem() {
@@ -81,10 +99,26 @@ public class CentralMonitorPeripheral implements GenericPeripheral {
             } else return MethodResult.of();
         }
 
-        @LuaFunction
-        public void setPlaceholderText(String text) {
+        @LuaFunction(mainThread = true)
+        public void setPlaceholderText(String text) throws LuaException {
             if (getModuleItem() instanceof TextModuleBehaviour textModule) {
-                textModule.setPlaceholderText(stack, text);
+                TextLineList requestedConfiguration = textModule.createPlaceholderConfiguration(stack, text);
+                if (requestedConfiguration.equals(stack.get(GTDataComponents.FORMAT_STRING_LIST.get()))) {
+                    return;
+                }
+                boolean applied = centralMonitor.setCentralMonitorTextModuleConfiguration(
+                        groupIdentity,
+                        moduleSlotIncarnation,
+                        expectedTextConfigurationRevision,
+                        CentralMonitorTextModuleActions.captureExpectedModule(stack),
+                        requestedConfiguration);
+                if (!applied) {
+                    GTCEu.LOGGER.warn(
+                            "ComputerCraft rejected stale Central Monitor text module configuration for group {}",
+                            groupIdentity);
+                    throw new LuaException("Central Monitor text module changed before the configuration was applied");
+                }
+                expectedTextConfigurationRevision = Math.incrementExact(expectedTextConfigurationRevision);
             }
         }
 

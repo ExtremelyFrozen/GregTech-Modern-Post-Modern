@@ -108,7 +108,9 @@ class SyncFieldData(fields: Map<ResourceLocation, @JvmSuppressWildcards JsonElem
 
 	companion object {
 		private val GSON = Gson()
-		private const val MAX_FIELD_JSON_LENGTH = 1_048_576
+
+		/** Maximum UTF-16 length accepted by the field stream codec for one JSON value. */
+		const val MAX_NETWORK_FIELD_JSON_LENGTH = 1_048_576
 
 		@JvmField
 		val EMPTY = SyncFieldData(emptyMap())
@@ -124,7 +126,7 @@ class SyncFieldData(fields: Map<ResourceLocation, @JvmSuppressWildcards JsonElem
 					val fields: MutableMap<ResourceLocation, JsonElement> = LinkedHashMap(size)
 					repeat(size) {
 						val key = ResourceLocation.STREAM_CODEC.decode(buffer)
-						fields[key] = JsonParser.parseString(buffer.readUtf(MAX_FIELD_JSON_LENGTH))
+						fields[key] = JsonParser.parseString(buffer.readUtf(MAX_NETWORK_FIELD_JSON_LENGTH))
 					}
 					return SyncFieldData(fields)
 				}
@@ -133,7 +135,7 @@ class SyncFieldData(fields: Map<ResourceLocation, @JvmSuppressWildcards JsonElem
 					buffer.writeVarInt(value.fields.size)
 					for ((key, fieldValue) in value.fields) {
 						ResourceLocation.STREAM_CODEC.encode(buffer, key)
-						buffer.writeUtf(GSON.toJson(fieldValue), MAX_FIELD_JSON_LENGTH)
+						buffer.writeUtf(GSON.toJson(fieldValue), MAX_NETWORK_FIELD_JSON_LENGTH)
 					}
 				}
 			}
@@ -170,6 +172,18 @@ class SyncFieldData(fields: Map<ResourceLocation, @JvmSuppressWildcards JsonElem
 
 		@JvmStatic
 		fun fromJson(json: JsonElement): SyncFieldData = CODEC.parse(JsonOps.INSTANCE, json).getOrThrow()
+
+		/** Returns whether one field value can be encoded by [STREAM_CODEC] without exceeding its UTF limit. */
+		@JvmStatic
+		fun isFieldValueWithinNetworkLimit(value: JsonElement): Boolean = GSON.toJson(value).length <= MAX_NETWORK_FIELD_JSON_LENGTH
+
+		/** Fails before state mutation when a locally-created field value cannot be written to the network. */
+		@JvmStatic
+		fun requireFieldValueWithinNetworkLimit(key: ResourceLocation, value: JsonElement) {
+			require(isFieldValueWithinNetworkLimit(value)) {
+				"Sync field $key exceeds the $MAX_NETWORK_FIELD_JSON_LENGTH-character network JSON limit."
+			}
+		}
 
 		private fun immutableFields(fields: Map<ResourceLocation, JsonElement?>): Map<ResourceLocation, JsonElement> {
 			val copy: MutableMap<ResourceLocation, JsonElement> = LinkedHashMap(fields.size)

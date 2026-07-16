@@ -16,7 +16,7 @@ public class GTNetwork {
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registar = event.registrar(GTCEuAPI.NETWORK_VERSION);
         // spotless:off
-        registar.playBidirectional(SCPacketMonitorGroupDataChange.TYPE, SCPacketMonitorGroupDataChange.CODEC, SCPacketMonitorGroupDataChange::execute);
+        registar.playToClient(SCPacketMonitorGroupDataChange.TYPE, SCPacketMonitorGroupDataChange.CODEC, SCPacketMonitorGroupDataChange::execute);
 
         registar.playToServer(CPacketImageRequest.TYPE, CPacketImageRequest.CODEC, CPacketImageRequest::execute);
         registar.playToServer(CPacketMachineSyncToServer.TYPE, CPacketMachineSyncToServer.CODEC, CPacketMachineSyncToServer::execute);

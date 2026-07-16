@@ -21,6 +21,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMa
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.multiblock.*;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -28,6 +29,7 @@ import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
+import com.gregtechceu.gtceu.common.item.datacomponents.TextLineList;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 import com.gregtechceu.gtceu.common.machine.trait.CentralMonitorLogic;
 import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupDataChange;
@@ -54,6 +56,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.google.gson.JsonElement;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,12 +78,13 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                                    implements IMonitorComponent, IDataInfoProvider,
                                    CentralMonitorMembershipActionTarget, CentralMonitorGroupTargetActionHost,
-                                   CentralMonitorImageModuleActionHost {
+                                   CentralMonitorImageModuleActionHost, CentralMonitorTextModuleActionHost {
 
     static {
         CentralMonitorMembershipActions.initialize();
         CentralMonitorGroupTargetActions.initialize();
         CentralMonitorImageModuleActions.initialize();
+        CentralMonitorTextModuleActions.initialize();
     }
 
     private static final String MONITOR_GROUPS_SYNC_FIELD = "monitorGroups";
@@ -487,6 +491,11 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
         markMonitorGroupDataChanged();
     }
 
+    @Override
+    public void resyncCentralMonitorTextModuleState() {
+        markMonitorGroupDataChanged();
+    }
+
     /**
      * Resolves the current synchronized image module for a page opened against one physical module-slot occupant.
      */
@@ -498,6 +507,132 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
         }
         ItemStack module = group.getItemStackHandler().getStackInSlot(0);
         return CentralMonitorImageModuleActions.isImageModule(module) ? module : null;
+    }
+
+    /**
+     * Resolves the current synchronized text module for a page opened against one physical module-slot occupant.
+     */
+    public @Nullable ItemStack resolveCentralMonitorTextModuleForOpening(UUID groupIdentity,
+                                                                         UUID moduleSlotIncarnation) {
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation)) {
+            return null;
+        }
+        ItemStack module = group.getItemStackHandler().getStackInSlot(0);
+        return CentralMonitorTextModuleActions.isTextModule(module) ? module : null;
+    }
+
+    @Override
+    public boolean canSetCentralMonitorTextModuleConfiguration(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                               long expectedConfigurationRevision,
+                                                               ItemStack expectedModule,
+                                                               TextLineList requestedConfiguration) {
+        return resolveTextModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedConfigurationRevision,
+                expectedModule, requestedConfiguration) != null;
+    }
+
+    @Override
+    public boolean setCentralMonitorTextModuleConfiguration(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                            long expectedConfigurationRevision,
+                                                            ItemStack expectedModule,
+                                                            TextLineList requestedConfiguration) {
+        MonitorGroup group = resolveTextModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedConfigurationRevision,
+                expectedModule, requestedConfiguration);
+        if (group == null) {
+            return false;
+        }
+        group.applyTextConfiguration(requestedConfiguration);
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        return true;
+    }
+
+    private @Nullable MonitorGroup resolveTextModuleChangeTarget(
+                                                                 UUID groupIdentity,
+                                                                 UUID moduleSlotIncarnation,
+                                                                 long expectedConfigurationRevision,
+                                                                 ItemStack expectedModule,
+                                                                 TextLineList requestedConfiguration) {
+        if (!isMembershipStructureAvailable() ||
+                !CentralMonitorTextModuleActions.isValidScale(requestedConfiguration.scale())) {
+            return null;
+        }
+        MonitorGroup group = findUniqueMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation) ||
+                group.getTextConfigurationRevision() != expectedConfigurationRevision) {
+            return null;
+        }
+        ItemStack currentModule = group.getItemStackHandler().getStackInSlot(0);
+        if (!CentralMonitorTextModuleActions.isTextModule(currentModule) ||
+                !CentralMonitorTextModuleActions.matchesExpectedModule(currentModule, expectedModule)) {
+            return null;
+        }
+        TextLineList currentConfiguration = currentModule.get(GTDataComponents.FORMAT_STRING_LIST.get());
+        if (requestedConfiguration.equals(currentConfiguration)) {
+            return null;
+        }
+        if (group.getTextConfigurationRevision() == Long.MAX_VALUE) {
+            GTCEu.LOGGER.error("Central Monitor text configuration revision is exhausted for group {} at {}",
+                    group.getIdentity(), getBlockPos());
+            return null;
+        }
+        long nextRevision = Math.incrementExact(group.getTextConfigurationRevision());
+        return canPersistCentralMonitorTextModuleConfiguration(
+                group, currentModule, requestedConfiguration, nextRevision) ? group : null;
+    }
+
+    private boolean canPersistCentralMonitorTextModuleConfiguration(MonitorGroup group, ItemStack currentModule,
+                                                                    TextLineList requestedConfiguration,
+                                                                    long nextRevision) {
+        Level level = getLevel();
+        if (level == null) {
+            GTCEu.LOGGER.error("Central Monitor at {} cannot validate text module save data without a level",
+                    getBlockPos());
+            return false;
+        }
+
+        ItemStack candidate = currentModule.copy();
+        candidate.set(GTDataComponents.FORMAT_STRING_LIST.get(), requestedConfiguration);
+        var stacks = group.getItemStackHandler().getStacks();
+        ItemStack previous = stacks.set(0, candidate);
+        long previousRevision = group.getTextConfigurationRevision();
+        group.setTextConfigurationRevision(nextRevision);
+        try {
+            DataComponentMap savedData = getSyncDataHolder()
+                    .serializeToComponents(level.registryAccess(), false, false);
+            Tag savedTag = DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(NbtOps.INSTANCE), savedData)
+                    .getOrThrow();
+            try (DataOutputStream output = new DataOutputStream(OutputStream.nullOutputStream())) {
+                savedTag.write(output);
+            }
+            JsonElement monitorGroupsData = getSyncDataHolder()
+                    .serializeClientFieldSnapshot(level.registryAccess(), MONITOR_GROUPS_SYNC_FIELD);
+            if (!SyncFieldData.isFieldValueWithinNetworkLimit(monitorGroupsData)) {
+                GTCEu.LOGGER.warn(
+                        "Rejecting Central Monitor text module configuration for group {} at {} because monitorGroups exceeds the network field limit",
+                        group.getIdentity(), getBlockPos());
+                return false;
+            }
+            return true;
+        } catch (UTFDataFormatException exception) {
+            GTCEu.LOGGER.warn(
+                    "Rejecting Central Monitor text module configuration for group {} at {} because its save data exceeds the modified-UTF limit",
+                    group.getIdentity(), getBlockPos());
+            return false;
+        } catch (IOException exception) {
+            GTCEu.LOGGER.error("Failed to validate Central Monitor text module save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw new IllegalStateException("Failed to validate Central Monitor text module save data", exception);
+        } catch (RuntimeException exception) {
+            GTCEu.LOGGER.error("Failed to encode Central Monitor text module save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw exception;
+        } finally {
+            stacks.set(0, previous);
+            group.setTextConfigurationRevision(previousRevision);
+        }
     }
 
     @Override

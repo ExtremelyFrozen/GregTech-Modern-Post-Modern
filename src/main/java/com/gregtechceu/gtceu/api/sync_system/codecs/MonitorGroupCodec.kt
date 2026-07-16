@@ -33,6 +33,7 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 				.encodeStart(JsonOps.INSTANCE, value.getModuleSlotIncarnation())
 				.getOrThrow(),
 		)
+		json.addProperty("textConfigurationRevision", value.getTextConfigurationRevision())
 
 		val positions = JsonArray()
 		value.monitorPositions.forEach { position ->
@@ -75,6 +76,7 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 		val json = value.asJsonObject
 		val identity = deserializeUuidOrCreateLegacy(json, "identity")
 		val moduleSlotIncarnation = deserializeUuidOrCreateLegacy(json, "moduleSlotIncarnation")
+		val textConfigurationRevision = deserializeTextConfigurationRevision(json)
 		val handler = deserializeItems(json.get("items"), context, MonitorGroup.createModuleHandler())
 		val placeholderSlotsHandler = deserializeItems(
 			json.get("placeholderSlots"),
@@ -84,6 +86,7 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 		val group = MonitorGroup.restore(
 			identity,
 			moduleSlotIncarnation,
+			textConfigurationRevision,
 			json.get("name").asString,
 			handler,
 			placeholderSlotsHandler,
@@ -129,6 +132,25 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 		return UUIDUtil.CODEC
 			.parse(JsonOps.INSTANCE, json.get(fieldName))
 			.getOrThrow()
+	}
+
+	private fun deserializeTextConfigurationRevision(json: JsonObject): Long {
+		if (!json.has("textConfigurationRevision")) {
+			return 0
+		}
+		val encodedRevision = json.get("textConfigurationRevision")
+		if (!encodedRevision.isJsonPrimitive || !encodedRevision.asJsonPrimitive.isNumber) {
+			throw IllegalArgumentException("Monitor group text configuration revision must be a number")
+		}
+		val revision = try {
+			encodedRevision.asBigDecimal.longValueExact()
+		} catch (exception: NumberFormatException) {
+			throw IllegalArgumentException("Monitor group text configuration revision must be an integer", exception)
+		} catch (exception: ArithmeticException) {
+			throw IllegalArgumentException("Monitor group text configuration revision is outside the long range", exception)
+		}
+		require(revision >= 0) { "Monitor group text configuration revision must be non-negative" }
+		return revision
 	}
 
 	private fun deserializeItems(json: JsonElement?, context: ContextualFieldCodec.Context<MonitorGroup>, handler: CustomItemStackHandler): CustomItemStackHandler {
