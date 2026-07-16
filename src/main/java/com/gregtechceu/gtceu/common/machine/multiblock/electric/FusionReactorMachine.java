@@ -7,11 +7,30 @@ import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2BatchModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2VoidingModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
@@ -30,10 +49,16 @@ import com.gregtechceu.gtceu.common.block.FusionCasingBlock;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.data.TextWrap;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
@@ -42,19 +67,22 @@ import it.unimi.dsi.fastutil.longs.Long2IntAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.Long2IntSortedMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.gregtechceu.gtceu.api.GTValues.*;
 import static com.gregtechceu.gtceu.api.recipe.OverclockingLogic.PERFECT_HALF_DURATION_FACTOR;
 import static com.gregtechceu.gtceu.api.recipe.OverclockingLogic.PERFECT_HALF_VOLTAGE_FACTOR;
 import static com.gregtechceu.gtceu.common.data.GTBlocks.*;
 
-public class FusionReactorMachine extends WorkableElectricMultiblockMachine implements ITieredMachine {
+public class FusionReactorMachine extends WorkableElectricMultiblockMachine
+                                  implements ITieredMachine, LDLib2MachineUIProvider, LDLib2FancyActionMachine {
 
     // Standard OC used for Fusion
     public static final OverclockingLogic FUSION_OC = OverclockingLogic.create(PERFECT_HALF_DURATION_FACTOR,
@@ -69,6 +97,11 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
 
     @Getter
     private final int tier;
+    @Getter(AccessLevel.PACKAGE)
+    private final ConditionalSubscriptionHandler displaySnapshotSubscription;
+    @Getter(AccessLevel.PACKAGE)
+    @SyncToClient
+    private List<Component> displaySnapshot = List.of();
     @Nullable
     protected EnergyContainerList inputEnergyContainers;
     @SaveField
@@ -92,7 +125,9 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         super(info);
         this.tier = tier;
         this.energyContainer = attachTrait(new NotifiableEnergyContainer(0, 0, 0, 0, 0));
-        energyContainer.setCapabilityValidator(Objects::isNull);
+        this.displaySnapshotSubscription = new ConditionalSubscriptionHandler(this, this::refreshDisplaySnapshot,
+                this::isFormed);
+        energyContainer.setCapabilityValidator(candidate -> candidate == null);
     }
 
     //////////////////////////////////////
@@ -104,6 +139,8 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         super.onLoad();
         if (!isRemote()) {
             updatePreHeatSubscription();
+            refreshDisplaySnapshot();
+            displaySnapshotSubscription.initialize(getLevel());
         }
     }
 
@@ -132,6 +169,10 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         this.inputEnergyContainers = new EnergyContainerList(energyContainers);
         energyContainer.resetBasicInfo(calculateEnergyStorageFactor(getTier(), energyContainers.size()), 0, 0, 0, 0);
         updatePreHeatSubscription();
+        if (!isRemote()) {
+            refreshDisplaySnapshot();
+            displaySnapshotSubscription.updateSubscription();
+        }
     }
 
     @Override
@@ -143,6 +184,27 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
         energyContainer.resetBasicInfo(0, 0, 0, 0, 0);
         energyContainer.setEnergyStored(0);
         updatePreHeatSubscription();
+        if (!isRemote()) {
+            refreshDisplaySnapshot();
+            displaySnapshotSubscription.updateSubscription();
+        }
+    }
+
+    @Override
+    public void onUnload() {
+        super.onUnload();
+        clearDisplayRuntimeState();
+    }
+
+    @Override
+    public void onPartUnload() {
+        super.onPartUnload();
+        clearDisplayRuntimeState();
+    }
+
+    private void clearDisplayRuntimeState() {
+        displaySnapshot = List.of();
+        displaySnapshotSubscription.unsubscribe();
     }
 
     //////////////////////////////////////
@@ -229,7 +291,7 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
                 var stack = FluidRecipeCapability.CAP
                         .of(recipe.getOutputContents(FluidRecipeCapability.CAP).getFirst().getContent()).getFluids()[0];
                 int newColor = 0xFF000000 | GTUtil.getFluidColor(stack);
-                if (!Objects.equals(color, newColor)) {
+                if (color != newColor) {
                     color = newColor;
                     syncDataHolder.markClientSyncFieldDirty("color");
                 }
@@ -281,11 +343,164 @@ public class FusionReactorMachine extends WorkableElectricMultiblockMachine impl
     //////////////////////////////////////
     @Override
     public void addDisplayText(List<Component> textList) {
+        textList.addAll(displaySnapshot);
+    }
+
+    void refreshDisplaySnapshot() {
+        List<Component> nextSnapshot = new ArrayList<>();
+        collectServerDisplayText(nextSnapshot);
+        nextSnapshot = List.copyOf(nextSnapshot);
+        if (!displaySnapshot.equals(nextSnapshot)) {
+            displaySnapshot = nextSnapshot;
+        }
+    }
+
+    protected void collectServerDisplayText(List<Component> textList) {
         super.addDisplayText(textList);
-        if (isFormed()) {
-            textList.add(Component.translatable("gtpm.multiblock.fusion_reactor.energy",
-                    this.energyContainer.getEnergyStored(), this.energyContainer.getEnergyCapacity()));
-            textList.add(Component.translatable("gtpm.multiblock.fusion_reactor.heat", heat));
+        textList.addAll(createFusionDisplayText(captureDisplayState()));
+    }
+
+    protected DisplayState captureDisplayState() {
+        return new DisplayState(isFormed(), energyContainer.getEnergyStored(), energyContainer.getEnergyCapacity(),
+                heat);
+    }
+
+    static List<Component> createFusionDisplayText(DisplayState state) {
+        if (!state.formed()) {
+            return List.of();
+        }
+        return List.of(
+                Component.translatable("gtpm.multiblock.fusion_reactor.energy",
+                        state.energyStored(), state.energyCapacity()),
+                Component.translatable("gtpm.multiblock.fusion_reactor.heat", state.heat()));
+    }
+
+    record DisplayState(boolean formed, long energyStored, long energyCapacity, long heat) {}
+
+    @Override
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        LDLib2FancyUIProvider page = createLDLib2Page(player, holder);
+        return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder) {
+        requireMatchingHolder(holder);
+        return new FusionReactorFancyPage(player, holder);
+    }
+
+    private void requireMatchingHolder(MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException("Fusion Reactor UI holder must resolve the opened controller.");
+        }
+    }
+
+    private final class FusionReactorFancyPage implements LDLib2FancyUIProvider {
+
+        private static final int PAGE_WIDTH = 190;
+        private static final int PAGE_HEIGHT = 125;
+
+        private final MachineUIHolder holder;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+        private final List<LDLib2FancyUIProvider> partPages;
+
+        private FusionReactorFancyPage(Player player, MachineUIHolder holder) {
+            requireMatchingHolder(holder);
+            this.holder = holder;
+            this.directionalPage = new LDLib2DirectionalFancyConfigurator(FusionReactorMachine.this, player, holder);
+
+            List<LDLib2FancyUIProvider> pages = new ArrayList<>();
+            for (IMultiPart part : getParts()) {
+                if (!(part instanceof LDLib2FancyPartUIProvider pageProvider)) {
+                    throw new IllegalStateException("Fusion Reactor part has no LDLib2 Fancy page: " +
+                            part.self().getDefinition().getId());
+                }
+                MachineUIHolder partHolder = new MachineUIHolderContext(player, part.self());
+                pages.add(pageProvider.createLDLib2FancyPage(player, partHolder));
+            }
+            this.partPages = List.copyOf(pages);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != FusionReactorMachine.this) {
+                throw new IllegalStateException("Fusion Reactor page holder no longer resolves its controller.");
+            }
+
+            UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+            root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+
+            GTScrollerViewElement screen = new GTScrollerViewElement(4, 4, 182, 117);
+            screen.style(style -> style.backgroundTexture(getScreenTexture()));
+            screen.viewPort(viewPort -> viewPort
+                    .layout(layout -> layout.paddingAll(0))
+                    .style(style -> style.backgroundTexture(getScreenTexture())));
+            screen.scrollerStyle(style -> style
+                    .mode(ScrollerMode.VERTICAL)
+                    .verticalScrollDisplay(ScrollDisplay.AUTO)
+                    .horizontalScrollDisplay(ScrollDisplay.NEVER));
+
+            GTLabelElement title = new GTLabelElement(4, 5, 174, 10,
+                    getBlockState().getBlock().getDescriptionId(), true);
+            title.textStyle(style -> style
+                    .textColor(0x404040)
+                    .textShadow(false)
+                    .textAlignHorizontal(Horizontal.LEFT)
+                    .textAlignVertical(Vertical.CENTER));
+            screen.addScrollViewChild(title);
+            screen.addScrollViewChild(new GTComponentPanelElement(4, 17, FusionReactorMachine.this::addDisplayText)
+                    .setMaxWidthLimit(200)
+                    .clickHandler(FusionReactorMachine.this::handleDisplayClick));
+            root.addChild(screen);
+            return root;
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return PAGE_WIDTH;
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return PAGE_HEIGHT;
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+            LDLib2VoidingModeFancyConfigurator.attachConfigurators(configuratorPanel, FusionReactorMachine.this);
+            LDLib2BatchModeFancyConfigurator.attachConfigurators(configuratorPanel, FusionReactorMachine.this);
+            configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(
+                    FusionReactorMachine.this, holder));
+        }
+
+        @Override
+        public List<LDLib2FancyUIProvider> getSubTabs() {
+            return partPages;
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(Component.translatable(getDefinition().getDescriptionId()));
         }
     }
 
