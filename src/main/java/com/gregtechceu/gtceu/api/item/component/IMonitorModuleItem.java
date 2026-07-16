@@ -21,9 +21,9 @@ public interface IMonitorModuleItem extends IItemComponent {
     Widget createUIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group);
 
     /**
-     * Builds the parallel LDLib2 configuration element for this monitor module.
+     * Builds the LDLib2 configuration element shown for this monitor module.
      */
-    UIElement createLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group);
+    UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group);
 
     default String getType() {
         return "unknown";

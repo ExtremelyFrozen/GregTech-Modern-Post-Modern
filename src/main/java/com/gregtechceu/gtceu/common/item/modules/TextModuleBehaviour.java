@@ -142,12 +142,12 @@ public class TextModuleBehaviour implements IMonitorModuleItem, IAddInformation 
     }
 
     @Override
-    public UIElement createLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
-        return createLDLib2UIWidget(stack, machine, group, action -> sendMachineAction(machine, action));
+    public UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
+        return createConfigurationElement(stack, machine, group, action -> sendMachineAction(machine, action));
     }
 
-    UIElement createLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
-                                   Consumer<SyncActionData> actionSender) {
+    UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
+                                         Consumer<SyncActionData> actionSender) {
         UIElement builder = new UIElement();
         UITemplate.setLDLib2Bounds(builder, 0, 0, EDITOR_WIDTH, EDITOR_HEIGHT);
 

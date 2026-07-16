@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.client.renderer.monitor.IMonitorRenderer;
 import com.gregtechceu.gtceu.client.renderer.monitor.MonitorImageRenderer;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
@@ -24,6 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ImageModuleBehaviour implements IMonitorModuleItem {
 
@@ -37,13 +39,12 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
         WidgetGroup builder = new WidgetGroup();
         TextFieldWidget textField = new TextFieldWidget(0, 0, 100, 10, null, null);
         textField.setCurrentString(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, ""));
-        UUID openingGroupIdentity = group.getIdentity();
-        UUID openingSlotIncarnation = group.getModuleSlotIncarnation();
+        ImageEditSession editSession = ImageEditSession.open(machine, group, stack);
 
         ButtonWidget saveButton = new ButtonWidget(-40, 22, 20, 20, click -> {
             if (!click.isRemote) return;
 
-            sendUrlChange(machine, openingGroupIdentity, openingSlotIncarnation, textField.getCurrentString());
+            sendUrlChange(editSession, textField.getCurrentString(), action -> sendMachineAction(machine, action));
         });
         saveButton.setButtonTexture(GuiTextures.BUTTON_CHECK);
         builder.addWidget(textField);
@@ -52,7 +53,12 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
     }
 
     @Override
-    public UIElement createLDLib2UIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
+    public UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
+        return createConfigurationElement(stack, machine, group, action -> sendMachineAction(machine, action));
+    }
+
+    UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
+                                         Consumer<SyncActionData> actionSender) {
         UIElement builder = new UIElement();
         UITemplate.setLDLib2Bounds(builder, 0, 0, 100, 42);
 
@@ -60,15 +66,19 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
         textField.setAnyString();
         textField.setTextValidator(CentralMonitorImageModuleActions::isValidUrl);
         textField.setText(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, ""), false);
-        UUID openingGroupIdentity = group.getIdentity();
-        UUID openingSlotIncarnation = group.getModuleSlotIncarnation();
+        ImageEditSession editSession = ImageEditSession.open(machine, group, stack);
 
         GTButtonElement saveButton = new GTButtonElement(-40, 22, 20, 20,
                 GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_CHECK),
                 event -> {
-                    if (!machine.getLevel().isClientSide()) return;
+                    if (!machine.isRemote()) return;
+                    if (textField.isError()) {
+                        GTCEu.LOGGER.error("Central Monitor image module URL exceeds the network limit: {} characters",
+                                textField.getRawText().length());
+                        return;
+                    }
 
-                    sendUrlChange(machine, openingGroupIdentity, openingSlotIncarnation, textField.getValue());
+                    sendUrlChange(editSession, textField.getValue(), actionSender);
                 });
         saveButton.noText();
 
@@ -76,35 +86,58 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
         return builder;
     }
 
-    private static void sendUrlChange(CentralMonitorMachine machine, UUID openingGroupIdentity,
-                                      UUID openingSlotIncarnation, String requestedUrl) {
+    private static void sendUrlChange(ImageEditSession editSession, String requestedUrl,
+                                      Consumer<SyncActionData> actionSender) {
         if (!CentralMonitorImageModuleActions.isValidUrl(requestedUrl)) {
             GTCEu.LOGGER.error("Central Monitor image module URL exceeds the network limit: {} characters",
                     requestedUrl.length());
             return;
         }
-        ItemStack stack = machine.resolveCentralMonitorImageModuleForOpening(
-                openingGroupIdentity, openingSlotIncarnation);
-        if (stack == null) {
-            GTCEu.LOGGER.warn(
-                    "Central Monitor image module page no longer matches group {} slot incarnation {}",
-                    openingGroupIdentity, openingSlotIncarnation);
+        String expectedUrl = editSession.expectedModule.get(GTDataComponents.IMAGE_MODULE_URL);
+        if (requestedUrl.equals(expectedUrl)) {
             return;
         }
-        String expectedUrl = stack.get(GTDataComponents.IMAGE_MODULE_URL);
-        if (expectedUrl != null && expectedUrl.equals(requestedUrl)) {
-            return;
-        }
+        int nextSequence = Math.incrementExact(editSession.sequence);
         var action = CentralMonitorImageModuleActions.createSetImageModuleUrlAction(
-                machine.getCentralMonitorActionIncarnation(),
-                openingGroupIdentity,
-                openingSlotIncarnation,
-                stack,
+                editSession.holderIncarnation,
+                editSession.groupIdentity,
+                editSession.moduleSlotIncarnation,
+                editSession.expectedModule,
                 requestedUrl,
-                0);
-        stack.set(GTDataComponents.IMAGE_MODULE_URL, requestedUrl);
+                editSession.sequence);
+        actionSender.accept(action);
+        editSession.expectedModule.set(GTDataComponents.IMAGE_MODULE_URL, requestedUrl);
+        editSession.sequence = nextSequence;
+    }
+
+    private static void sendMachineAction(CentralMonitorMachine machine, SyncActionData action) {
         PacketDistributor.sendToServer(
                 new CPacketMachineActionToServer(machine.getBlockPos(), machine.getDefinition().getId(), action));
+    }
+
+    private static final class ImageEditSession {
+
+        private final UUID holderIncarnation;
+        private final UUID groupIdentity;
+        private final UUID moduleSlotIncarnation;
+        private final ItemStack expectedModule;
+        private int sequence;
+
+        private ImageEditSession(UUID holderIncarnation, UUID groupIdentity, UUID moduleSlotIncarnation,
+                                 ItemStack expectedModule) {
+            this.holderIncarnation = holderIncarnation;
+            this.groupIdentity = groupIdentity;
+            this.moduleSlotIncarnation = moduleSlotIncarnation;
+            this.expectedModule = expectedModule;
+        }
+
+        private static ImageEditSession open(CentralMonitorMachine machine, MonitorGroup group, ItemStack module) {
+            return new ImageEditSession(
+                    machine.getCentralMonitorActionIncarnation(),
+                    group.getIdentity(),
+                    group.getModuleSlotIncarnation(),
+                    CentralMonitorImageModuleActions.captureExpectedModule(module));
+        }
     }
 
     @Override
