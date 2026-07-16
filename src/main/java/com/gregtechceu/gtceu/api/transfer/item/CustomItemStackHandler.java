@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-public class CustomItemStackHandler extends ItemStackHandler implements DataComponentTransfer {
+public class CustomItemStackHandler extends ItemStackHandler implements DataComponentTransfer, NonMutatingItemCapacity {
 
     @Getter
     @Setter
@@ -67,6 +67,7 @@ public class CustomItemStackHandler extends ItemStackHandler implements DataComp
     /**
      * Returns the amount this handler would accept into an empty slot without mutating the current occupant.
      */
+    @Override
     public int getMaxStackSizeForEmptySlot(int slot, ItemStack stack) {
         if (!isNonMutatingEmptySlotCapacityQueryEnabled()) {
             GTCEu.LOGGER.error("Handler {} does not support the default non-mutating empty-slot capacity query",

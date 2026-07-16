@@ -3,7 +3,7 @@ package com.gregtechceu.gtceu.api.gui.element;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.texture.GuiTextureMetadata;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.api.transfer.item.NonMutatingItemCapacity;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRole;
 import com.gregtechceu.gtceu.integration.xei.GTXEIIngredientRoleLDLib2Adapter;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
@@ -434,9 +434,9 @@ public class GTItemSlotElement extends ItemSlot {
 
         @Override
         public int getMaxStackSize(ItemStack stack) {
-            if (getItemHandler() instanceof CustomItemStackHandler customItemStackHandler &&
-                    customItemStackHandler.isNonMutatingEmptySlotCapacityQueryEnabled()) {
-                return customItemStackHandler.getMaxStackSizeForEmptySlot(slotIndex, stack);
+            if (getItemHandler() instanceof NonMutatingItemCapacity itemCapacity &&
+                    itemCapacity.isNonMutatingEmptySlotCapacityQueryEnabled()) {
+                return itemCapacity.getMaxStackSizeForEmptySlot(slotIndex, stack);
             }
             return super.getMaxStackSize(stack);
         }

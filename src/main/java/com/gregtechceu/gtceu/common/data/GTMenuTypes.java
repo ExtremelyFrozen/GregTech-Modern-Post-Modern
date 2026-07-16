@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.common.data;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.factory.DynamicItemSlotMachineUIMenuType;
 import com.gregtechceu.gtceu.api.gui.factory.GTCoverUIMenuType;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferProxyUIMenuType;
 
@@ -24,6 +25,10 @@ public final class GTMenuTypes {
 
     public static final Supplier<MenuType<ModularUIContainerMenu>> COVER_UI = MENUS.register("cover_ui",
             () -> IMenuTypeExtension.create(GTCoverUIMenuType::create));
+
+    public static final Supplier<MenuType<ModularUIContainerMenu>> DYNAMIC_ITEM_SLOT_MACHINE_UI = MENUS.register(
+            "dynamic_item_slot_machine_ui",
+            () -> IMenuTypeExtension.create(DynamicItemSlotMachineUIMenuType::create));
 
     private GTMenuTypes() {}
 

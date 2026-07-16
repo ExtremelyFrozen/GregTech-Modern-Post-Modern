@@ -23,8 +23,14 @@ public class GTNetwork {
         registar.playToServer(CPacketMachineActionToServer.TYPE, CPacketMachineActionToServer.CODEC, CPacketMachineActionToServer::execute);
         registar.playToServer(CPacketCoverActionToServer.TYPE, CPacketCoverActionToServer.CODEC, CPacketCoverActionToServer::execute);
         registar.playToServer(CPacketItemActionToServer.TYPE, CPacketItemActionToServer.CODEC, CPacketItemActionToServer::execute);
+        registar.playToServer(CPacketDynamicItemSlotPreparedToServer.TYPE, CPacketDynamicItemSlotPreparedToServer.CODEC, CPacketDynamicItemSlotPreparedToServer::execute);
+        registar.playToServer(CPacketDynamicItemSlotActivatedToServer.TYPE, CPacketDynamicItemSlotActivatedToServer.CODEC, CPacketDynamicItemSlotActivatedToServer::execute);
+        registar.playToServer(CPacketDynamicItemSlotSelectionToServer.TYPE, CPacketDynamicItemSlotSelectionToServer.CODEC, CPacketDynamicItemSlotSelectionToServer::execute);
         registar.playToClient(SPacketImageResponse.TYPE, SPacketImageResponse.CODEC, SPacketImageResponse::execute);
         registar.playToClient(SPacketMachineSyncToClient.TYPE, SPacketMachineSyncToClient.CODEC, SPacketMachineSyncToClient::execute);
+        registar.playToClient(SPacketDynamicItemSlotManifestToClient.TYPE, SPacketDynamicItemSlotManifestToClient.CODEC, SPacketDynamicItemSlotManifestToClient::execute);
+        registar.playToClient(SPacketDynamicItemSlotActivationToClient.TYPE, SPacketDynamicItemSlotActivationToClient.CODEC, SPacketDynamicItemSlotActivationToClient::execute);
+        registar.playToClient(SPacketDynamicItemSlotSelectionToClient.TYPE, SPacketDynamicItemSlotSelectionToClient.CODEC, SPacketDynamicItemSlotSelectionToClient::execute);
         if (GTCEu.Mods.isAE2Loaded()) {
             registar.playToClient(SPacketMEPatternBufferProxyViewToClient.TYPE, SPacketMEPatternBufferProxyViewToClient.CODEC, SPacketMEPatternBufferProxyViewToClient::execute);
             registar.playToClient(SPacketMEOutputWaitingListSessionToClient.TYPE, SPacketMEOutputWaitingListSessionToClient.CODEC, SPacketMEOutputWaitingListSessionToClient::execute);
