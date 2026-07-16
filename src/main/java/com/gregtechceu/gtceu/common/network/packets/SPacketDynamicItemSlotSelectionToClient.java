@@ -12,7 +12,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-/** Acknowledges the exact selection sequence and binding accepted by the authoritative server menu. */
+/**
+ * Acknowledges the exact selection sequence and binding or overview accepted by the authoritative server menu.
+ */
 public record SPacketDynamicItemSlotSelectionToClient(DynamicItemSlotOpeningToken token,
                                                       DynamicItemSlotSelection selection)
         implements CustomPacketPayload {

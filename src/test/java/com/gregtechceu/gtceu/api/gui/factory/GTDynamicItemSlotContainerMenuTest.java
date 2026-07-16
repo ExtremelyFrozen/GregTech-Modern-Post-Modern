@@ -8,11 +8,18 @@ import com.gregtechceu.gtceu.api.gui.element.GTDynamicItemSlotSessionElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.slot.DynamicItemHandlerRoute;
 import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotBinding;
+import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotClientOpening;
 import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotDefinition;
+import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotManifest;
+import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotOpeningToken;
+import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotServerOpening;
+import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotTransition;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTMachines;
+import com.gregtechceu.gtceu.common.network.packets.CPacketDynamicItemSlotSelectionToServer;
+import com.gregtechceu.gtceu.common.network.packets.SPacketDynamicItemSlotSelectionToClient;
 
 import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerMenu;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -37,6 +44,8 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @SuppressWarnings("unused")
@@ -169,6 +178,64 @@ public class GTDynamicItemSlotContainerMenuTest {
         helper.succeed();
     }
 
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void targetAndOverviewSelectionApplyOnlyAfterServerAcknowledgement(GameTestHelper helper) {
+        MenuFixture fixture = createFixture(helper);
+        OpeningFixture opening = activateOpening(helper, fixture);
+
+        CPacketDynamicItemSlotSelectionToServer targetRequest = fixture.menu()
+                .prepareTargetSelectionRequest(opening.client(), TARGET_ID)
+                .orElseThrow();
+        helper.assertTrue(targetRequest.selection().bindingId().equals(Optional.of(BINDING_ID)),
+                "logical target did not resolve to its unique active binding");
+        helper.assertFalse(fixture.dynamicElement().isInteractionEnabled(),
+                "target request enabled its binding before the server ACK");
+        helper.assertTrue(fixture.machine().selectedBindings.isEmpty(),
+                "target request changed the business page before the server ACK");
+
+        helper.assertTrue(opening.server().receiveSelectionRequest(
+                targetRequest.token(), targetRequest.selection(),
+                binding -> binding.targetId().equals(TARGET_ID)) == DynamicItemSlotTransition.ACCEPTED,
+                "server rejected the target request produced by the menu");
+        SPacketDynamicItemSlotSelectionToClient targetAcknowledgement = new SPacketDynamicItemSlotSelectionToClient(
+                targetRequest.token(), targetRequest.selection());
+        helper.assertTrue(fixture.menu().applySelectionAcknowledgement(
+                opening.client(), targetAcknowledgement.token(), targetAcknowledgement.selection()) ==
+                DynamicItemSlotTransition.ACCEPTED,
+                "menu rejected the server target acknowledgement");
+        helper.assertTrue(fixture.dynamicElement().isInteractionEnabled() &&
+                fixture.machine().selectedBindings.equals(List.of(opening.binding())),
+                "target acknowledgement did not enable and publish the confirmed binding");
+
+        CPacketDynamicItemSlotSelectionToServer overviewRequest = fixture.menu()
+                .prepareOverviewRequest(opening.client())
+                .orElseThrow();
+        helper.assertTrue(overviewRequest.selection().bindingId().isEmpty(),
+                "overview request unexpectedly carried a binding");
+        helper.assertFalse(fixture.dynamicElement().isInteractionEnabled(),
+                "overview request left the old binding interactive before the server ACK");
+        helper.assertTrue(fixture.machine().selectedBindings.equals(List.of(opening.binding())),
+                "overview request changed the business page before the server ACK");
+
+        helper.assertTrue(opening.server().receiveSelectionRequest(
+                overviewRequest.token(), overviewRequest.selection(), binding -> false) ==
+                DynamicItemSlotTransition.ACCEPTED,
+                "server rejected the overview request produced by the menu");
+        SPacketDynamicItemSlotSelectionToClient overviewAcknowledgement = new SPacketDynamicItemSlotSelectionToClient(
+                overviewRequest.token(), overviewRequest.selection());
+        helper.assertTrue(fixture.menu().applySelectionAcknowledgement(
+                opening.client(), overviewAcknowledgement.token(), overviewAcknowledgement.selection()) ==
+                DynamicItemSlotTransition.ACCEPTED,
+                "menu rejected the server overview acknowledgement");
+        helper.assertFalse(fixture.dynamicElement().isInteractionEnabled(),
+                "overview acknowledgement enabled a dynamic binding");
+        helper.assertTrue(fixture.machine().selectedBindings.isEmpty(),
+                "overview acknowledgement did not publish an empty selection");
+        helper.succeed();
+    }
+
     private static void assertQuickCraftReset(GameTestHelper helper, MenuFixture fixture,
                                               int rejectedSlotId, String rejectedTarget) {
         fixture.machine().fixedHandler.setStackInSlot(0, ItemStack.EMPTY);
@@ -239,6 +306,36 @@ public class GTDynamicItemSlotContainerMenuTest {
         return new MenuFixture(player, menu, machine, dynamicElement);
     }
 
+    private static OpeningFixture activateOpening(GameTestHelper helper, MenuFixture fixture) {
+        int baseSlotCount = fixture.dynamicElement().getSlot().index;
+        DynamicItemSlotBinding binding = new DynamicItemSlotBinding(
+                BINDING_ID, TARGET_ID, baseSlotCount, 1, true);
+        DynamicItemSlotManifest manifest = new DynamicItemSlotManifest(
+                0, 1, new UUID(0, 3), 0, baseSlotCount, List.of(binding));
+        DynamicItemSlotOpeningToken token = DynamicItemSlotOpeningToken.of(
+                fixture.menu().containerId, fixture.menu().getMenuSessionId(), manifest);
+        DynamicItemSlotClientOpening client = new DynamicItemSlotClientOpening(
+                fixture.menu().containerId, fixture.menu().getMenuSessionId(), baseSlotCount);
+        DynamicItemSlotServerOpening server = new DynamicItemSlotServerOpening(
+                fixture.menu().containerId, fixture.menu().getMenuSessionId(), baseSlotCount);
+
+        helper.assertTrue(server.beginManifest(manifest) == DynamicItemSlotTransition.ACCEPTED &&
+                client.receiveManifest(token, manifest) == DynamicItemSlotTransition.ACCEPTED,
+                "opening states rejected the initial manifest");
+        helper.assertTrue(client.completePreparation(token, Set.of(BINDING_ID), Set.of(BINDING_ID)) ==
+                DynamicItemSlotTransition.ACCEPTED,
+                "client opening rejected the real appended and resolved binding");
+        helper.assertTrue(server.receivePreparedAcknowledgement(token) == DynamicItemSlotTransition.ACCEPTED &&
+                server.markDisabledSlotsAppended(token, Set.of(BINDING_ID)) ==
+                        DynamicItemSlotTransition.ACCEPTED &&
+                server.markFullSnapshotSent(token) == DynamicItemSlotTransition.ACCEPTED,
+                "server opening rejected the prepared dynamic slot");
+        helper.assertTrue(client.receiveActivation(token, Optional.empty()) == DynamicItemSlotTransition.ACCEPTED &&
+                server.receiveActivatedAcknowledgement(token) == DynamicItemSlotTransition.ACCEPTED,
+                "opening states rejected activation without a selected page");
+        return new OpeningFixture(client, server, binding);
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static MenuType<ModularUIContainerMenu> menuType() {
         return (MenuType) MenuType.GENERIC_9x1;
@@ -265,6 +362,9 @@ public class GTDynamicItemSlotContainerMenuTest {
             menu.setCarried(new ItemStack(Items.IRON_INGOT, 4));
         }
     }
+
+    private record OpeningFixture(DynamicItemSlotClientOpening client, DynamicItemSlotServerOpening server,
+                                  DynamicItemSlotBinding binding) {}
 
     private record MenuState(ItemStack fixed, ItemStack dynamic, ItemStack player, ItemStack carried) {
 

@@ -12,7 +12,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-/** Requests one present binding page without changing client interaction before the server ACK. */
+/**
+ * Requests one present binding page or the overview without changing pages before the server ACK.
+ */
 public record CPacketDynamicItemSlotSelectionToServer(DynamicItemSlotOpeningToken token,
                                                       DynamicItemSlotSelection selection)
         implements CustomPacketPayload {

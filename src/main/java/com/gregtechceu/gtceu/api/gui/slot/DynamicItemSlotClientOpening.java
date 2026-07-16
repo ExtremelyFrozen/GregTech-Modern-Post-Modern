@@ -184,8 +184,22 @@ public final class DynamicItemSlotClientOpening {
      * Creates a selection request without changing the interactive binding before the server ACK.
      */
     public Optional<DynamicItemSlotSelection> requestSelection(UUID bindingId) {
-        if (closed || pendingManifest != null || pendingSelection != null ||
-                findPresentBinding(activeManifest, bindingId).isEmpty()) {
+        if (bindingId == null) {
+            throw new IllegalArgumentException("selection binding id must not be null");
+        }
+        return requestSelection(Optional.of(bindingId));
+    }
+
+    /**
+     * Creates an overview request that disables the current binding until the server acknowledges no selection.
+     */
+    public Optional<DynamicItemSlotSelection> requestOverview() {
+        return requestSelection(Optional.empty());
+    }
+
+    private Optional<DynamicItemSlotSelection> requestSelection(Optional<UUID> bindingId) {
+        if (closed || activeManifest == null || pendingManifest != null || pendingSelection != null ||
+                (bindingId.isPresent() && findPresentBinding(activeManifest, bindingId.orElseThrow()).isEmpty())) {
             return Optional.empty();
         }
         DynamicItemSlotSelection selection = new DynamicItemSlotSelection(nextSelectionSequence, bindingId);
@@ -220,11 +234,13 @@ public final class DynamicItemSlotClientOpening {
             return selection.sequence() == pendingSelection.sequence() ?
                     closeOpening() : DynamicItemSlotTransition.REJECTED;
         }
-        if (findPresentBinding(activeManifest, selection.bindingId()).isEmpty()) {
+        Optional<UUID> acknowledgedBindingId = selection.bindingId();
+        if (acknowledgedBindingId.isPresent() &&
+                findPresentBinding(activeManifest, acknowledgedBindingId.orElseThrow()).isEmpty()) {
             return closeOpening();
         }
 
-        selectedBindingId = selection.bindingId();
+        selectedBindingId = acknowledgedBindingId.orElse(null);
         confirmedSelection = selection;
         pendingSelection = null;
         return DynamicItemSlotTransition.ACCEPTED;

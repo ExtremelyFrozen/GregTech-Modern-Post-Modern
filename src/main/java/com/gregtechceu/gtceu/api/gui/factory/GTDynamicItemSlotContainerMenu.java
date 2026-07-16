@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.gui.factory;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.element.GTDynamicItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTDynamicItemSlotSessionElement;
+import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotBinding;
 import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotClientOpening;
 import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotManifest;
 import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotManifestSequence;
@@ -230,22 +231,77 @@ public final class GTDynamicItemSlotContainerMenu extends ModularUIContainerMenu
     }
 
     /**
-     * Starts a client page request and immediately disables interaction until the matching server ACK arrives.
+     * Requests the active lifecycle for one logical target without exposing its opening-local binding id to UI code.
      */
-    public boolean requestSelection(UUID bindingId) {
+    public boolean requestTargetSelection(UUID targetId) {
+        if (targetId == null) {
+            GTCEu.LOGGER.error("Dynamic item-slot menu {} cannot select a null target", containerId);
+            throw new IllegalArgumentException("targetId must not be null");
+        }
         Player player = inventory.player;
         DynamicItemSlotClientOpening opening = requireClientOpening(player);
+        Optional<CPacketDynamicItemSlotSelectionToServer> request = prepareTargetSelectionRequest(opening, targetId);
+        request.ifPresent(PacketDistributor::sendToServer);
+        return request.isPresent();
+    }
+
+    /**
+     * Resolves one logical target against the active manifest and prepares its exact protocol request.
+     */
+    Optional<CPacketDynamicItemSlotSelectionToServer> prepareTargetSelectionRequest(
+                                                                                    DynamicItemSlotClientOpening opening,
+                                                                                    UUID targetId) {
+        Optional<DynamicItemSlotManifest> activeManifest = opening.activeManifest();
+        if (activeManifest.isEmpty()) {
+            GTCEu.LOGGER.warn("Dynamic item-slot menu {} rejected target selection before activation", containerId);
+            return Optional.empty();
+        }
+        List<DynamicItemSlotBinding> matches = activeManifest.orElseThrow().bindings().stream()
+                .filter(binding -> binding.present() && binding.targetId().equals(targetId))
+                .toList();
+        if (matches.size() != 1) {
+            GTCEu.LOGGER.warn("Dynamic item-slot menu {} resolved {} active bindings for target {}",
+                    containerId, matches.size(), targetId);
+            return Optional.empty();
+        }
+        return prepareSelectionRequest(opening, Optional.of(matches.getFirst().bindingId()), targetId.toString());
+    }
+
+    /**
+     * Requests the overview and immediately disables every selected binding until the matching server ACK arrives.
+     */
+    public boolean requestOverview() {
+        Player player = inventory.player;
+        DynamicItemSlotClientOpening opening = requireClientOpening(player);
+        Optional<CPacketDynamicItemSlotSelectionToServer> request = prepareOverviewRequest(opening);
+        request.ifPresent(PacketDistributor::sendToServer);
+        return request.isPresent();
+    }
+
+    /**
+     * Prepares an overview request through the same sequence and interaction gate as a binding request.
+     */
+    Optional<CPacketDynamicItemSlotSelectionToServer> prepareOverviewRequest(
+                                                                             DynamicItemSlotClientOpening opening) {
+        return prepareSelectionRequest(opening, Optional.empty(), "overview");
+    }
+
+    private Optional<CPacketDynamicItemSlotSelectionToServer> prepareSelectionRequest(
+                                                                                      DynamicItemSlotClientOpening opening,
+                                                                                      Optional<UUID> bindingId,
+                                                                                      String requestedPage) {
         Optional<DynamicItemSlotOpeningToken> token = opening.activeToken();
-        Optional<DynamicItemSlotSelection> selection = opening.requestSelection(bindingId);
+        Optional<DynamicItemSlotSelection> selection = bindingId
+                .map(opening::requestSelection)
+                .orElseGet(opening::requestOverview);
         if (token.isEmpty() || selection.isEmpty()) {
-            GTCEu.LOGGER.warn("Dynamic item-slot menu {} rejected local selection request for binding {}",
-                    containerId, bindingId);
-            return false;
+            GTCEu.LOGGER.warn("Dynamic item-slot menu {} rejected local selection request for {}",
+                    containerId, requestedPage);
+            return Optional.empty();
         }
         applyInteractionState(opening::isBindingInteractive);
-        PacketDistributor.sendToServer(new CPacketDynamicItemSlotSelectionToServer(
+        return Optional.of(new CPacketDynamicItemSlotSelectionToServer(
                 token.orElseThrow(), selection.orElseThrow()));
-        return true;
     }
 
     /**
@@ -276,16 +332,29 @@ public final class GTDynamicItemSlotContainerMenu extends ModularUIContainerMenu
                                                 DynamicItemSlotSelection selection) {
         DynamicItemSlotClientOpening opening = requireClientOpening(player);
         try {
-            DynamicItemSlotTransition transition = opening.receiveSelectionAcknowledgement(token, selection);
+            DynamicItemSlotTransition transition = applySelectionAcknowledgement(opening, token, selection);
             if (!continueClientTransition(player, "selection acknowledgement", transition)) {
                 return;
             }
-            DynamicItemSlotManifest activeManifest = opening.activeManifest().orElseThrow();
-            applyInteractionState(opening::isBindingInteractive);
-            sessionElement.applySelection(opening.selectedBindingId(), activeManifest);
         } catch (RuntimeException exception) {
             closeAfterFailure(player, "applying dynamic item slot selection acknowledgement", exception);
         }
+    }
+
+    /**
+     * Applies an accepted acknowledgement to both Vanilla slot gates and the business page listener.
+     */
+    DynamicItemSlotTransition applySelectionAcknowledgement(DynamicItemSlotClientOpening opening,
+                                                            DynamicItemSlotOpeningToken token,
+                                                            DynamicItemSlotSelection selection) {
+        DynamicItemSlotTransition transition = opening.receiveSelectionAcknowledgement(token, selection);
+        if (transition == DynamicItemSlotTransition.ACCEPTED ||
+                transition == DynamicItemSlotTransition.DUPLICATE) {
+            DynamicItemSlotManifest activeManifest = opening.activeManifest().orElseThrow();
+            applyInteractionState(opening::isBindingInteractive);
+            sessionElement.applySelection(opening.selectedBindingId(), activeManifest);
+        }
+        return transition;
     }
 
     /**

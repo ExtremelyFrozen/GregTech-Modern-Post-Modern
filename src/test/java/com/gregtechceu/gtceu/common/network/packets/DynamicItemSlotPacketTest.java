@@ -35,19 +35,24 @@ public class DynamicItemSlotPacketTest {
     public static void allHandshakePacketsRoundTripInProtocolOrder(GameTestHelper helper) {
         DynamicItemSlotManifest manifest = manifest();
         DynamicItemSlotOpeningToken token = DynamicItemSlotOpeningToken.of(7, id(1), manifest);
-        DynamicItemSlotSelection selection = new DynamicItemSlotSelection(3, id(4));
+        DynamicItemSlotSelection selection = new DynamicItemSlotSelection(3, Optional.of(id(4)));
+        DynamicItemSlotSelection overviewSelection = new DynamicItemSlotSelection(4, Optional.empty());
         SPacketDynamicItemSlotManifestToClient manifestPacket = new SPacketDynamicItemSlotManifestToClient(token,
                 manifest);
         CPacketDynamicItemSlotPreparedToServer preparedPacket = new CPacketDynamicItemSlotPreparedToServer(token);
         SPacketDynamicItemSlotActivationToClient activationPacket = new SPacketDynamicItemSlotActivationToClient(token,
-                Optional.of(selection.bindingId()));
+                selection.bindingId());
         SPacketDynamicItemSlotActivationToClient emptyActivationPacket = new SPacketDynamicItemSlotActivationToClient(
                 token, Optional.empty());
         CPacketDynamicItemSlotActivatedToServer activatedPacket = new CPacketDynamicItemSlotActivatedToServer(token);
         CPacketDynamicItemSlotSelectionToServer selectionRequest = new CPacketDynamicItemSlotSelectionToServer(token,
                 selection);
+        CPacketDynamicItemSlotSelectionToServer overviewRequest = new CPacketDynamicItemSlotSelectionToServer(token,
+                overviewSelection);
         SPacketDynamicItemSlotSelectionToClient selectionAcknowledgement = new SPacketDynamicItemSlotSelectionToClient(
                 token, selection);
+        SPacketDynamicItemSlotSelectionToClient overviewAcknowledgement = new SPacketDynamicItemSlotSelectionToClient(
+                token, overviewSelection);
 
         RegistryFriendlyByteBuf buffer = newBuffer(helper);
         try {
@@ -57,7 +62,9 @@ public class DynamicItemSlotPacketTest {
             SPacketDynamicItemSlotActivationToClient.CODEC.encode(buffer, emptyActivationPacket);
             CPacketDynamicItemSlotActivatedToServer.CODEC.encode(buffer, activatedPacket);
             CPacketDynamicItemSlotSelectionToServer.CODEC.encode(buffer, selectionRequest);
+            CPacketDynamicItemSlotSelectionToServer.CODEC.encode(buffer, overviewRequest);
             SPacketDynamicItemSlotSelectionToClient.CODEC.encode(buffer, selectionAcknowledgement);
+            SPacketDynamicItemSlotSelectionToClient.CODEC.encode(buffer, overviewAcknowledgement);
 
             helper.assertTrue(manifestPacket.equals(SPacketDynamicItemSlotManifestToClient.CODEC.decode(buffer)),
                     "MANIFEST packet codec changed the authoritative layout");
@@ -73,9 +80,15 @@ public class DynamicItemSlotPacketTest {
             helper.assertTrue(selectionRequest.equals(
                     CPacketDynamicItemSlotSelectionToServer.CODEC.decode(buffer)),
                     "selection request codec changed its sequence or binding");
+            helper.assertTrue(overviewRequest.equals(
+                    CPacketDynamicItemSlotSelectionToServer.CODEC.decode(buffer)),
+                    "overview request codec added a binding or changed its sequence");
             helper.assertTrue(selectionAcknowledgement.equals(
                     SPacketDynamicItemSlotSelectionToClient.CODEC.decode(buffer)),
                     "selection acknowledgement codec changed its sequence or binding");
+            helper.assertTrue(overviewAcknowledgement.equals(
+                    SPacketDynamicItemSlotSelectionToClient.CODEC.decode(buffer)),
+                    "overview acknowledgement codec added a binding or changed its sequence");
             helper.assertTrue(!buffer.isReadable(), "dynamic item-slot packet codecs left unread bytes");
         } finally {
             buffer.release();

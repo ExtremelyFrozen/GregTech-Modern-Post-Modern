@@ -238,11 +238,15 @@ public final class DynamicItemSlotServerOpening {
             return closeOpening();
         }
 
-        Optional<DynamicItemSlotBinding> binding = findPresentBinding(activeManifest, selection.bindingId());
-        if (binding.isEmpty() || !selectable.test(binding.get())) {
-            return DynamicItemSlotTransition.REJECTED;
+        Optional<UUID> requestedBindingId = selection.bindingId();
+        if (requestedBindingId.isPresent()) {
+            Optional<DynamicItemSlotBinding> binding = findPresentBinding(
+                    activeManifest, requestedBindingId.orElseThrow());
+            if (binding.isEmpty() || !selectable.test(binding.orElseThrow())) {
+                return DynamicItemSlotTransition.REJECTED;
+            }
         }
-        selectedBindingId = selection.bindingId();
+        selectedBindingId = requestedBindingId.orElse(null);
         confirmedSelection = selection;
         return DynamicItemSlotTransition.ACCEPTED;
     }

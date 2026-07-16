@@ -136,6 +136,24 @@ public final class GTDynamicItemSlotSessionElement extends UIElement {
     }
 
     /**
+     * Requests the active binding for one logical target; the visible page changes only after the server ACK.
+     */
+    public boolean requestTargetSelection(UUID targetId) {
+        if (targetId == null) {
+            GTCEu.LOGGER.error("Dynamic item-slot session cannot request a null target");
+            throw new IllegalArgumentException("targetId must not be null");
+        }
+        return requireInstalledMenu().requestTargetSelection(targetId);
+    }
+
+    /**
+     * Requests the opening overview; every dynamic binding remains disabled until the server ACK confirms it.
+     */
+    public boolean requestOverview() {
+        return requireInstalledMenu().requestOverview();
+    }
+
+    /**
      * Applies the state machine's exact per-binding interaction decision to every registered slot.
      */
     public void applyInteractionState(Predicate<UUID> interactiveBinding) {
@@ -202,6 +220,15 @@ public final class GTDynamicItemSlotSessionElement extends UIElement {
                         "dynamic item slot bundle was not registered at manifest slot id " + expectedSlotId);
             }
         }
+    }
+
+    private GTDynamicItemSlotContainerMenu requireInstalledMenu() {
+        ModularUI modularUI = getModularUI();
+        if (modularUI == null || !(modularUI.getMenu() instanceof GTDynamicItemSlotContainerMenu menu)) {
+            GTCEu.LOGGER.error("Dynamic item-slot page selection requires its installed menu");
+            throw new IllegalStateException("dynamic item-slot session has no installed menu");
+        }
+        return menu;
     }
 
     private static <T> T requireCallback(T callback, String name) {

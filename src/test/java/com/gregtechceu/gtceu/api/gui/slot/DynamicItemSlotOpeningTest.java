@@ -92,6 +92,75 @@ public class DynamicItemSlotOpeningTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
+    public static void overviewSelectionUsesTheAcknowledgedSequenceAndDisablesEveryBinding(GameTestHelper helper) {
+        DynamicItemSlotManifest manifest = new DynamicItemSlotManifest(
+                0,
+                1,
+                id(130),
+                1,
+                BASE_SLOT_COUNT,
+                List.of(
+                        binding(FIRST_BINDING_ID, TARGET_ID, BASE_SLOT_COUNT, 9, true),
+                        binding(SECOND_BINDING_ID, id(11), BASE_SLOT_COUNT + 9, 9, true)));
+        DynamicItemSlotClientOpening client = clientOpening();
+        DynamicItemSlotServerOpening server = serverOpening();
+        completeHandshake(helper, client, server, manifest);
+        DynamicItemSlotOpeningToken token = token(manifest);
+
+        DynamicItemSlotSelection firstSelection = client.requestSelection(FIRST_BINDING_ID).orElseThrow();
+        assertTransition(helper, server.receiveSelectionRequest(token, firstSelection, binding -> true),
+                DynamicItemSlotTransition.ACCEPTED, "server rejected selection setup");
+        assertTransition(helper, client.receiveSelectionAcknowledgement(token, firstSelection),
+                DynamicItemSlotTransition.ACCEPTED, "client rejected selection setup");
+        helper.assertTrue(client.isBindingInteractive(FIRST_BINDING_ID) &&
+                server.isBindingInteractive(FIRST_BINDING_ID),
+                "selection setup did not activate the first binding");
+
+        DynamicItemSlotSelection overview = client.requestOverview().orElseThrow();
+        helper.assertTrue(overview.sequence() == firstSelection.sequence() + 1 && overview.bindingId().isEmpty(),
+                "overview request did not consume the next empty selection sequence");
+        helper.assertTrue(!client.isBindingInteractive(FIRST_BINDING_ID) &&
+                client.selectedBindingId().equals(Optional.of(FIRST_BINDING_ID)),
+                "client changed pages instead of only disabling interaction before the overview ACK");
+        helper.assertTrue(server.isBindingInteractive(FIRST_BINDING_ID),
+                "client request changed authoritative interaction before reaching the server");
+
+        assertTransition(helper, server.receiveSelectionRequest(token, overview, binding -> false),
+                DynamicItemSlotTransition.ACCEPTED, "server rejected a valid overview request");
+        helper.assertTrue(server.selectedBindingId().isEmpty() &&
+                !server.isBindingInteractive(FIRST_BINDING_ID) &&
+                !server.isBindingInteractive(SECOND_BINDING_ID),
+                "server overview acknowledgement left a binding interactive");
+        assertTransition(helper, server.receiveSelectionRequest(token, overview, binding -> false),
+                DynamicItemSlotTransition.DUPLICATE, "server did not replay the exact overview request idempotently");
+        helper.assertTrue(client.selectedBindingId().equals(Optional.of(FIRST_BINDING_ID)),
+                "server acceptance changed the client page before its acknowledgement arrived");
+
+        assertTransition(helper, client.receiveSelectionAcknowledgement(token, overview),
+                DynamicItemSlotTransition.ACCEPTED, "client rejected the exact overview acknowledgement");
+        helper.assertTrue(client.selectedBindingId().isEmpty() &&
+                !client.isBindingInteractive(FIRST_BINDING_ID) &&
+                !client.isBindingInteractive(SECOND_BINDING_ID),
+                "empty overview acknowledgement left a client binding interactive");
+        assertTransition(helper, client.receiveSelectionAcknowledgement(token, overview),
+                DynamicItemSlotTransition.DUPLICATE, "client repeated the acknowledged overview transition");
+
+        DynamicItemSlotSelection secondSelection = client.requestSelection(SECOND_BINDING_ID).orElseThrow();
+        helper.assertTrue(secondSelection.sequence() == overview.sequence() + 1,
+                "selection after overview did not retain the shared sequence");
+        assertTransition(helper, server.receiveSelectionRequest(token, secondSelection, binding -> true),
+                DynamicItemSlotTransition.ACCEPTED, "server rejected selection after overview");
+        assertTransition(helper, client.receiveSelectionAcknowledgement(token, secondSelection),
+                DynamicItemSlotTransition.ACCEPTED, "client rejected selection after overview");
+        helper.assertTrue(client.isBindingInteractive(SECOND_BINDING_ID) &&
+                server.isBindingInteractive(SECOND_BINDING_ID),
+                "selection after overview did not reactivate the requested binding");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
     public static void duplicateAndOutOfOrderHandshakeMessagesAreIdempotentOrRejected(GameTestHelper helper) {
         DynamicItemSlotClientOpening client = clientOpening();
         DynamicItemSlotServerOpening server = serverOpening();
@@ -361,7 +430,7 @@ public class DynamicItemSlotOpeningTest {
 
         DynamicItemSlotSelection requested = client.requestSelection(FIRST_BINDING_ID).orElseThrow();
         DynamicItemSlotSelection wrongBinding = new DynamicItemSlotSelection(
-                requested.sequence(), SECOND_BINDING_ID);
+                requested.sequence(), Optional.of(SECOND_BINDING_ID));
         assertTransition(helper, client.receiveSelectionAcknowledgement(token, wrongBinding),
                 DynamicItemSlotTransition.CLOSE_OPENING,
                 "client accepted a selection ACK for another binding");
@@ -396,19 +465,51 @@ public class DynamicItemSlotOpeningTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
+    public static void overviewAndBindingCannotShareSelectionSequence(GameTestHelper helper) {
+        DynamicItemSlotManifest manifest = initialManifest();
+        DynamicItemSlotOpeningToken token = token(manifest);
+
+        DynamicItemSlotClientOpening client = clientOpening();
+        DynamicItemSlotServerOpening server = serverOpening();
+        completeHandshake(helper, client, server, manifest);
+        DynamicItemSlotSelection overview = client.requestOverview().orElseThrow();
+        DynamicItemSlotSelection conflictingBinding = new DynamicItemSlotSelection(
+                overview.sequence(), Optional.of(FIRST_BINDING_ID));
+
+        assertTransition(helper, server.receiveSelectionRequest(token, overview, binding -> false),
+                DynamicItemSlotTransition.ACCEPTED, "server rejected the overview setup");
+        assertTransition(helper, server.receiveSelectionRequest(token, conflictingBinding, binding -> true),
+                DynamicItemSlotTransition.CLOSE_OPENING,
+                "server accepted one selection sequence for both overview and binding");
+        assertTransition(helper, client.receiveSelectionAcknowledgement(token, conflictingBinding),
+                DynamicItemSlotTransition.CLOSE_OPENING,
+                "client accepted a binding ACK for its pending overview sequence");
+        helper.assertTrue(client.selectedBindingId().isEmpty() &&
+                !client.isBindingInteractive(FIRST_BINDING_ID),
+                "conflicting overview ACK changed the client interaction state");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
     public static void openingTokenAndSelectionCodecsRoundTrip(GameTestHelper helper) {
         DynamicItemSlotOpeningToken token = token(initialManifest());
-        DynamicItemSlotSelection selection = new DynamicItemSlotSelection(3, FIRST_BINDING_ID);
+        DynamicItemSlotSelection selection = new DynamicItemSlotSelection(3, Optional.of(FIRST_BINDING_ID));
+        DynamicItemSlotSelection overview = new DynamicItemSlotSelection(4, Optional.empty());
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
                 Unpooled.buffer(), helper.getLevel().registryAccess(), ConnectionType.OTHER);
         try {
             DynamicItemSlotOpeningToken.STREAM_CODEC.encode(buffer, token);
             DynamicItemSlotSelection.STREAM_CODEC.encode(buffer, selection);
+            DynamicItemSlotSelection.STREAM_CODEC.encode(buffer, overview);
 
             helper.assertTrue(token.equals(DynamicItemSlotOpeningToken.STREAM_CODEC.decode(buffer)),
                     "opening token codec changed the handshake identity");
             helper.assertTrue(selection.equals(DynamicItemSlotSelection.STREAM_CODEC.decode(buffer)),
                     "selection codec changed the request identity");
+            helper.assertTrue(overview.equals(DynamicItemSlotSelection.STREAM_CODEC.decode(buffer)),
+                    "selection codec added a binding to the overview request");
             helper.assertTrue(!buffer.isReadable(), "opening protocol codecs left unread bytes");
         } finally {
             buffer.release();
