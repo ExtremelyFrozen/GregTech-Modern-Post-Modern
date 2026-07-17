@@ -22,9 +22,9 @@ import java.util.Set;
 
 public class TemplateTab extends MenuTab {
 
-    private static final String MACHINE_MENU_KEY = "gtpm.gui.editor.register.editor.gtpm.mui";
-    private static final String RECIPE_TYPE_MENU_KEY = "gtpm.gui.editor.register.editor.gtpm.rtui";
-    private static final String TEMPLATE_TAB_KEY = "gtpm.gui.editor.register.editor.gtpm.template_tab";
+    private static final String MACHINE_MENU_KEY = "gtpm.gui.editor.templates.machine";
+    private static final String RECIPE_TYPE_MENU_KEY = "gtpm.gui.editor.templates.recipe_type";
+    private static final String TEMPLATE_TAB_KEY = "gtpm.gui.editor.templates";
 
     public TemplateTab(GTUIEditor editor) {
         super(editor);

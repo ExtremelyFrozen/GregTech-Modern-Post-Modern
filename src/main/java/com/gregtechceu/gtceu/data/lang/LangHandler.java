@@ -31,29 +31,10 @@ public class LangHandler {
         ConfigurationLang.init(provider);
         RecipeLogicLang.init(provider);
 
-        provider.add("gtpm.gui.editor.tips.citation", "Number of citations");
-        provider.add("gtpm.gui.editor.group.recipe_type", "cap");
-        provider.add("gtpm.gui.editor.menu.save", "Save");
-        provider.add("gtpm.gui.editor.name.showAmount", "Show Amount");
-        provider.add("gtpm.gui.editor.name.allowClickFilled", "Allow Click Filled");
-        provider.add("gtpm.gui.editor.name.allowClickDrained", "Allow Click Drained");
-        provider.add("gtpm.gui.editor.name.drawHoverOverlay", "Draw Hover Overlay");
-        provider.add("gtpm.gui.editor.name.drawHoverTips", "Draw Hover Tips");
-        provider.add("gtpm.gui.editor.name.fillDirection", "Fill Direction");
-        provider.add("gtpm.gui.editor.group.preview", "Preview");
-        provider.add("gtpm.gui.editor.register.editor.gtpm", "GTPM UI Editor");
-        provider.add("gtpm.gui.editor.register.editor.gtpm.rtui", "RecipeType UI Project");
-        provider.add("gtpm.gui.editor.register.editor.gtpm.mui", "Machine UI Project");
-        provider.add("gtpm.gui.editor.register.editor.gtpm.template_tab", "templates");
-        provider.add("gtpm.gui.editor.group.widget.basic", "Basic Widgets");
-        provider.add("gtpm.gui.editor.group.widget.group", "Group Widgets");
-        provider.add("gtpm.gui.editor.group.widget.container", "Container Widgets");
-        provider.add("gtpm.gui.editor.group.widget.custom", "Custom Widgets");
-        provider.add("gtpm.gui.editor.group.widget.gtm_container", "GTM Container Widgets");
-        provider.add("gtpm.gui.editor.register.widget.container.gtm_item_slot", "GTM Item Slot");
-        provider.add("gtpm.gui.editor.register.widget.container.gtm_fluid_slot", "GTM Fluid Slot");
-        provider.add("gtpm.gui.editor.register.widget.container.gtm_phantom_item_slot", "GTM Phantom Item Slot");
-        provider.add("gtpm.gui.editor.register.widget.container.gtm_phantom_fluid_slot", "GTM Phantom Fluid Slot");
+        provider.add("gtpm.gui.editor.project.xml", "GTPM XML UI Project");
+        provider.add("gtpm.gui.editor.templates", "Templates");
+        provider.add("gtpm.gui.editor.templates.machine", "Machine UI Templates");
+        provider.add("gtpm.gui.editor.templates.recipe_type", "Recipe Type UI Templates");
 
         provider.add("curios.identifier.gtpm_magnet", "GTCEu Magnet");
         // capabilities
@@ -149,6 +130,7 @@ public class LangHandler {
         provider.add("command.gtpm.place_vein.failure", "Failed to place vein %s at position %s");
         provider.add("command.gtpm.place_vein.success", "Placed vein %s at position %s");
         provider.add("command.gtpm.share_prospection_data.notification", "%s is sharing prospecting data with you!");
+        provider.add("command.gtpm.ui_editor.open.failed", "Failed to open the GT UI editor");
         provider.add("command.gtpm.cape.failure.does_not_exist", "Cape %s does not exist");
         provider.add("command.gtpm.cape.give.failed", "No new capes were unlocked");
         provider.add("command.gtpm.cape.give.success.multiple", "Unlocked %s capes for %s players");

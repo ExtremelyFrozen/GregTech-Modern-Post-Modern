@@ -17,7 +17,7 @@ public final class GTUIXmlProjectType extends ProjectType {
     public static final GTUIXmlProjectType TYPE = new GTUIXmlProjectType();
 
     private GTUIXmlProjectType() {
-        super(Icons.XML, "gtpm.gui.editor.register.editor.gtpm", ".xml", GTUIXmlProject::new);
+        super(Icons.XML, "gtpm.gui.editor.project.xml", ".xml", GTUIXmlProject::new);
     }
 
     @Override
