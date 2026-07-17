@@ -160,6 +160,12 @@ public interface IMaintenanceMachine extends IMultiPart {
     }
 
     @Override
+    default void attachLDLib2FancyTooltipsToController(MultiblockControllerMachine controller,
+                                                       LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+        attachLDLib2MaintenanceTooltips(tooltipsPanel);
+    }
+
+    @Override
     default void attachTooltips(TooltipsPanel tooltipsPanel) {
         if (ConfigHolder.INSTANCE.machines.enableMaintenance) {
             tooltipsPanel.attachTooltips(createMaintenanceFancyTooltip());

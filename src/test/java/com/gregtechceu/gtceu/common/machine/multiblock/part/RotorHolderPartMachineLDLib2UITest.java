@@ -7,11 +7,14 @@ import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.ItemStackTexture;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.common.data.GTMachines;
+import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
 
 import com.lowdragmc.lowdraglib2.gui.slot.ItemHandlerSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -87,6 +90,40 @@ public class RotorHolderPartMachineLDLib2UITest {
                 .filter(child -> child.getChildren().stream().allMatch(GTItemSlotElement.class::isInstance))
                 .count() == 1,
                 "contextual Rotor Holder shell did not contain exactly one player inventory");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void controllerHookReusesOnlyRotorObstructionWarning(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos machinePos = helper.absolutePos(new BlockPos(2, 3, 2));
+        RotorHolderPartMachine machine = createMachine(machinePos);
+        machine.setLevel(level);
+        machine.setFrontFacing(Direction.NORTH);
+        clearRotorPlane(level, machinePos);
+        MultiblockControllerMachine controller = createController(helper.absolutePos(new BlockPos(1, 3, 2)));
+        controller.setLevel(level);
+        LDLib2FancyTooltipsPanelElement controllerTooltips = new LDLib2FancyTooltipsPanelElement(0, 0);
+
+        machine.attachLDLib2FancyTooltipsToController(controller, controllerTooltips);
+        helper.assertTrue(controllerTooltips.getChildren().isEmpty(),
+                "unobstructed Rotor Holder controller hook added a generic machine tooltip");
+
+        level.setBlockAndUpdate(machinePos.relative(Direction.NORTH), Blocks.STONE.defaultBlockState());
+        controllerTooltips.screenTick();
+        helper.assertTrue(controllerTooltips.getChildren().size() == 1,
+                "obstructed Rotor Holder controller hook did not expose exactly one warning tooltip");
+        Component expectedWarning = Component.translatable("gtpm.multiblock.universal.rotor_obstructed")
+                .setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+        helper.assertTrue(tooltips(controllerTooltips.getChildren().getFirst()).equals(List.of(expectedWarning)),
+                "Rotor Holder controller hook did not reuse its obstruction warning");
+
+        clearRotorPlane(level, machinePos);
+        controllerTooltips.screenTick();
+        helper.assertTrue(controllerTooltips.getChildren().isEmpty(),
+                "Rotor Holder controller hook retained its warning after the rotor plane was cleared");
         helper.succeed();
     }
 
@@ -288,6 +325,15 @@ public class RotorHolderPartMachineLDLib2UITest {
             return rotorHolder;
         }
         throw new IllegalStateException("Rotor Holder definition did not create its expected machine.");
+    }
+
+    private static MultiblockControllerMachine createController(BlockPos pos) {
+        MachineDefinition definition = GTMultiMachines.LARGE_CHEMICAL_REACTOR;
+        MetaMachine machine = definition.getBlockEntityType().create(pos, definition.defaultBlockState());
+        if (machine instanceof MultiblockControllerMachine controller) {
+            return controller;
+        }
+        throw new IllegalStateException("Large Chemical Reactor definition did not create a multiblock controller.");
     }
 
     private static final class MutableMachineUIHolder implements MachineUIHolder {

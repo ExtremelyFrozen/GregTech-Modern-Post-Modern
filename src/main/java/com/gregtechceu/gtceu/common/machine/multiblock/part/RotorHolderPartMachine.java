@@ -381,6 +381,12 @@ public class RotorHolderPartMachine extends TieredPartMachine
     }
 
     @Override
+    public void attachLDLib2FancyTooltipsToController(MultiblockControllerMachine controller,
+                                                      LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+        tooltipsPanel.attachTooltips(createRotorObstructionTooltip());
+    }
+
+    @Override
     public void attachTooltips(TooltipsPanel tooltipsPanel) {
         tooltipsPanel.attachTooltips(createRotorObstructionTooltip());
     }
