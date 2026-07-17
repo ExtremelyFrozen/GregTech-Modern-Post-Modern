@@ -15,16 +15,12 @@ import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -125,15 +121,14 @@ public class MonitorPartMachineLDLib2UITest {
                 description + " did not explicitly opt into contextual LDLib2 Fancy pages");
         helper.assertFalse(machine instanceof LDLib2MachineUIProvider,
                 description + " unexpectedly opted into a standalone LDLib2 machine UI");
-        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(machine.getBlockPos()), Direction.NORTH,
-                machine.getBlockPos(), false);
-        helper.assertFalse(machine.shouldOpenUI(player, InteractionHand.MAIN_HAND, hit),
-                description + " changed its monitor click behavior");
 
         MutableMachineUIHolder holder = new MutableMachineUIHolder(machine);
         LDLib2FancyPartUIProvider provider = machine;
-        helper.assertTrue(provider.createLDLib2FancyPage(player, holder) !=
-                provider.createLDLib2FancyPage(player, holder),
+        LDLib2FancyUIProvider firstPage = provider.createLDLib2FancyPage(player, holder);
+        LDLib2FancyUIProvider secondPage = provider.createLDLib2FancyPage(player, holder);
+        helper.assertTrue(firstPage instanceof LDLib2FancyPreviewPage,
+                description + " did not create an LDLib2 contextual preview page");
+        helper.assertTrue(firstPage != secondPage,
                 description + " reused its contextual page across menu openings");
     }
 

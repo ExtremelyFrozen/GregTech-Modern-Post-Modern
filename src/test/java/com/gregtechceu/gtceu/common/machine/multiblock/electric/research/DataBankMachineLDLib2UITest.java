@@ -121,7 +121,7 @@ public class DataBankMachineLDLib2UITest {
                     .map(IMultiPart::self)
                     .map(MetaMachine::getDefinition)
                     .map(MachineDefinition::getDescriptionId)
-                    .map(Component::translatable)
+                    .<Component>map(Component::translatable)
                     .toList();
             helper.assertTrue(contextualTitles.equals(expectedContextualTitles),
                     "Data Bank contextual page list did not preserve Data Access and optical port order");

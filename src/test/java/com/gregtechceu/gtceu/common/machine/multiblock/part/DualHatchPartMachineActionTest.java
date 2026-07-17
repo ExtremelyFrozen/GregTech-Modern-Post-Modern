@@ -478,7 +478,8 @@ public class DualHatchPartMachineActionTest {
 
     private static void assertContextualPage(GameTestHelper helper, ServerPlayer player,
                                              DualHatchPartMachine machine, String expectedGroupKey,
-                                             int expectedGroupWeight, int expectedConfigurators, String description) {
+                                             int expectedGroupPositionWeight, int expectedConfigurators,
+                                             String description) {
         LDLib2FancyPartUIProvider pageProvider = machine;
         MutableDualHatchHolder holder = new MutableDualHatchHolder(machine);
         LDLib2FancyUIProvider firstPage = pageProvider.createLDLib2FancyPage(player, holder);
@@ -490,8 +491,8 @@ public class DualHatchPartMachineActionTest {
                 description + " did not preserve the 100x100 contextual preview");
         PageGroupingData grouping = firstPage.getPageGroupingData();
         helper.assertTrue(grouping != null && expectedGroupKey.equals(grouping.groupKey()) &&
-                grouping.groupWeight() == expectedGroupWeight,
-                description + " lost its legacy IO grouping");
+                grouping.groupPositionWeight() == expectedGroupPositionWeight,
+                description + " lost its IO page grouping");
 
         LDLib2FancyMachineUIElement shell = new LDLib2FancyMachineUIElement(firstPage,
                 player.getInventory(), holder, firstPage.getLDLib2PageWidth(), firstPage.getLDLib2PageHeight());
