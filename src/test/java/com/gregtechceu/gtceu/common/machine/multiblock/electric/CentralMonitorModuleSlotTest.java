@@ -6,7 +6,6 @@ import com.gregtechceu.gtceu.api.capability.IMonitorComponent;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTItems;
@@ -137,30 +136,26 @@ public class CentralMonitorModuleSlotTest {
         AtomicInteger moduleChanges = new AtomicInteger();
         moduleHandler.setOnContentsChanged(moduleChanges::incrementAndGet);
         ItemStack module = GTItems.IMAGE_MODULE.get().getDefaultInstance();
-        Slot legacyModuleSlot = new SlotWidget().new WidgetSlotItemHandler(moduleHandler, 0, 0, 0);
-        Slot ldlib2ModuleSlot = new GTItemSlotElement(moduleHandler, 0).getSlot();
+        Slot gtModuleSlot = new GTItemSlotElement(moduleHandler, 0).getSlot();
 
         int expectedCapacity = moduleHandler.getMaxStackSizeForEmptySlot(0, module);
         helper.assertTrue(expectedCapacity > 0,
                 "module handler rejected a valid module during its non-mutating capacity query");
-        helper.assertTrue(legacyModuleSlot.getMaxStackSize(module) == expectedCapacity &&
-                ldlib2ModuleSlot.getMaxStackSize(module) == expectedCapacity,
-                "empty module slot capacity differed between legacy and LDLib2 slots");
+        helper.assertTrue(gtModuleSlot.getMaxStackSize(module) == expectedCapacity,
+                "empty module slot capacity differed between the handler and GT item slot");
         helper.assertTrue(moduleHandler.getStackInSlot(0).isEmpty() && moduleChanges.get() == 0,
                 "empty module slot capacity query mutated the handler");
 
         moduleHandler.setStackInSlot(0, module.copy());
         moduleChanges.set(0);
-        helper.assertTrue(legacyModuleSlot.getMaxStackSize(module) == expectedCapacity &&
-                ldlib2ModuleSlot.getMaxStackSize(module) == expectedCapacity,
-                "occupied module slot capacity differed between legacy and LDLib2 slots");
+        helper.assertTrue(gtModuleSlot.getMaxStackSize(module) == expectedCapacity,
+                "occupied module slot capacity differed between the handler and GT item slot");
         helper.assertTrue(ItemStack.isSameItemSameComponents(moduleHandler.getStackInSlot(0), module) &&
                 moduleChanges.get() == 0,
                 "occupied module slot capacity query replaced the current module");
         int emptyCandidateCapacity = ItemStack.EMPTY.getMaxStackSize();
         helper.assertTrue(moduleHandler.getMaxStackSizeForEmptySlot(0, ItemStack.EMPTY) == emptyCandidateCapacity &&
-                legacyModuleSlot.getMaxStackSize(ItemStack.EMPTY) == emptyCandidateCapacity &&
-                ldlib2ModuleSlot.getMaxStackSize(ItemStack.EMPTY) == emptyCandidateCapacity &&
+                gtModuleSlot.getMaxStackSize(ItemStack.EMPTY) == emptyCandidateCapacity &&
                 moduleChanges.get() == 0,
                 "empty candidate capacity query changed slot semantics or mutated the module handler");
 
@@ -171,38 +166,33 @@ public class CentralMonitorModuleSlotTest {
         AtomicInteger fallbackChanges = new AtomicInteger();
         occupantSensitiveHandler.setOnContentsChanged(fallbackChanges::incrementAndGet);
         ItemStack statefulCandidate = Items.COBBLESTONE.getDefaultInstance();
-        Slot legacyStatefulSlot = new SlotWidget().new WidgetSlotItemHandler(occupantSensitiveHandler, 0, 0, 0);
-        Slot ldlib2StatefulSlot = new GTItemSlotElement(occupantSensitiveHandler, 0).getSlot();
+        Slot gtStatefulSlot = new GTItemSlotElement(occupantSensitiveHandler, 0).getSlot();
 
         helper.assertTrue(!occupantSensitiveHandler.isNonMutatingEmptySlotCapacityQueryEnabled(),
                 "ordinary handler implicitly opted into non-mutating capacity queries");
-        helper.assertTrue(legacyStatefulSlot.getMaxStackSize(statefulCandidate) ==
-                statefulCandidate.getMaxStackSize() &&
-                ldlib2StatefulSlot.getMaxStackSize(statefulCandidate) == statefulCandidate.getMaxStackSize(),
+        helper.assertTrue(gtStatefulSlot.getMaxStackSize(statefulCandidate) == statefulCandidate.getMaxStackSize(),
                 "ordinary handler capacity query changed occupant-sensitive filter semantics");
         helper.assertTrue(ItemStack.isSameItemSameComponents(
                 occupantSensitiveHandler.getStackInSlot(0), statefulOccupant),
                 "ordinary handler capacity query did not restore its occupant");
-        helper.assertTrue(fallbackChanges.get() == 4,
-                "ordinary handler did not retain the legacy clear-and-restore probe");
+        helper.assertTrue(fallbackChanges.get() == 2,
+                "ordinary handler did not perform exactly one clear-and-restore probe");
 
         VirtualCapacityHandler virtualHandler = new VirtualCapacityHandler(4, 7);
         ItemStack occupant = Items.IRON_INGOT.getDefaultInstance();
         virtualHandler.setStackInSlot(3, occupant);
         virtualHandler.resetProbeCounters();
         ItemStack candidate = Items.COBBLESTONE.getDefaultInstance();
-        Slot legacyVirtualSlot = new SlotWidget().new WidgetSlotItemHandler(virtualHandler, 3, 0, 0);
-        Slot ldlib2VirtualSlot = new GTItemSlotElement(virtualHandler, 3).getSlot();
+        Slot gtVirtualSlot = new GTItemSlotElement(virtualHandler, 3).getSlot();
 
         helper.assertTrue(!virtualHandler.isNonMutatingEmptySlotCapacityQueryEnabled(),
                 "special handler implicitly opted into the default capacity query");
-        helper.assertTrue(legacyVirtualSlot.getMaxStackSize(candidate) == 7 &&
-                ldlib2VirtualSlot.getMaxStackSize(candidate) == 7,
+        helper.assertTrue(gtVirtualSlot.getMaxStackSize(candidate) == 7,
                 "slot capacity query bypassed the special handler's insertion semantics");
         helper.assertTrue(ItemStack.isSameItemSameComponents(virtualHandler.getStackInSlot(3), occupant),
                 "slot capacity query did not restore the special handler's occupant");
-        helper.assertTrue(virtualHandler.getSimulatedInsertions() == 2,
-                "slot capacity query did not delegate to both special-handler insertion probes");
+        helper.assertTrue(virtualHandler.getSimulatedInsertions() == 1,
+                "slot capacity query did not delegate to exactly one special-handler insertion probe");
         helper.succeed();
     }
 

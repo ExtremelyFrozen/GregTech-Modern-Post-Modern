@@ -2,7 +2,6 @@ package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.sync_system.codecs.MonitorGroupCodec;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
@@ -15,7 +14,6 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -131,12 +129,9 @@ public class MonitorGroupCodecTest {
 
         UUID beforeCapacityQueries = group.getModuleSlotIncarnation();
         int directCapacity = handler.getMaxStackSizeForEmptySlot(0, module);
-        SlotWidget legacyWidget = new SlotWidget();
-        Slot legacySlot = legacyWidget.new WidgetSlotItemHandler(handler, 0, 0, 0);
-        int legacyCapacity = legacySlot.getMaxStackSize(module);
-        int ldlib2Capacity = new GTItemSlotElement(handler, 0).getSlot().getMaxStackSize(module);
-        helper.assertTrue(directCapacity > 0 && directCapacity == legacyCapacity && directCapacity == ldlib2Capacity,
-                "slot capacity queries disagreed on the accepted empty-slot capacity");
+        int gtItemSlotCapacity = new GTItemSlotElement(handler, 0).getSlot().getMaxStackSize(module);
+        helper.assertTrue(directCapacity > 0 && directCapacity == gtItemSlotCapacity,
+                "handler and GT item slot capacity queries disagreed on the accepted empty-slot capacity");
         helper.assertTrue(group.getModuleSlotIncarnation().equals(beforeCapacityQueries),
                 "slot capacity query triggered a physical module replacement");
 

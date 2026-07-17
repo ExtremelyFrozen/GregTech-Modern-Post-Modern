@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
@@ -56,12 +55,6 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
     //////////////////////////////////
     // ***** PUBLIC API ******//
     //////////////////////////////////
-
-    public SlotWidget createFilterSlotUI(int xPos, int yPos) {
-        return new SlotWidget(getFilterSlot(), 0, xPos, yPos)
-                .setChangeListener(this::updateFilter)
-                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY));
-    }
 
     public UIElement createFilterSlotLDLib2UI(int xPos, int yPos) {
         GTItemSlotElement slot = new GTItemSlotElement(getFilterSlot(), 0)
