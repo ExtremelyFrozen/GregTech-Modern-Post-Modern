@@ -13,6 +13,7 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.tterrag.registrate.util.RegistrateDistExecutor;
 
 import java.util.function.IntSupplier;
 
@@ -77,12 +78,10 @@ public class ResourceTexture extends TransformTexture {
     }
 
     public static ResourceTexture fromSpirit(ResourceLocation texture) {
-        if (Minecraft.getInstance() == null) {
-            return new ResourceTexture(texture);
-        }
-        var sprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(texture);
-        return new ResourceTexture(TextureAtlas.LOCATION_BLOCKS, sprite.getU0(), sprite.getV0(),
-                sprite.getU1() - sprite.getU0(), sprite.getV1() - sprite.getV0());
+        ResourceTexture result = new ResourceTexture(texture);
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> ClientTextureLoader.loadSpirit(result, texture));
+        return result;
     }
 
     @Override
@@ -113,5 +112,18 @@ public class ResourceTexture extends TransformTexture {
         buffer.addVertex(matrix, x + width, y, 0).setUv(imageU + areaWidth, imageV).setColor(drawColor);
         buffer.addVertex(matrix, x, y, 0).setUv(imageU, imageV).setColor(drawColor);
         BufferUploader.drawWithShader(buffer.buildOrThrow());
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private static final class ClientTextureLoader {
+
+        private static void loadSpirit(ResourceTexture target, ResourceLocation texture) {
+            var sprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(texture);
+            target.imageLocation = TextureAtlas.LOCATION_BLOCKS;
+            target.offsetX = sprite.getU0();
+            target.offsetY = sprite.getV0();
+            target.imageWidth = sprite.getU1() - sprite.getU0();
+            target.imageHeight = sprite.getV1() - sprite.getV0();
+        }
     }
 }

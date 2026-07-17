@@ -313,44 +313,60 @@ public class GTComponentPanelElement extends UIElement {
         return getPositionX();
     }
 
-    @OnlyIn(Dist.CLIENT)
     private void onMouseDown(UIEvent event) {
-        Style style = getStyleUnderMouse(event.x, event.y);
-        if (style == null || style.getClickEvent() == null) {
+        if (!LDLib2.isClient()) {
             event.hasHandler = false;
             return;
         }
+        ClientEventHandlers.onMouseDown(this, event);
+    }
 
-        ClickEvent clickEvent = style.getClickEvent();
-        String componentText = clickEvent.getValue();
-        if (clickEvent.getAction() != ClickEvent.Action.OPEN_URL || !componentText.startsWith(BUTTON_PREFIX)) {
-            event.hasHandler = false;
-            return;
+    private void onHoverTooltips(UIEvent event) {
+        if (LDLib2.isClient()) {
+            ClientEventHandlers.onHoverTooltips(this, event);
         }
-
-        if (clickHandler != null) {
-            clickHandler.accept(componentText.substring(BUTTON_PREFIX.length()), new ClickData());
-        }
-        UISoundUtils.playButtonClickSound();
-        event.stopPropagation();
     }
 
     @OnlyIn(Dist.CLIENT)
-    private void onHoverTooltips(UIEvent event) {
-        ModularUI modularUI = getModularUI();
-        if (modularUI == null) {
-            return;
+    private static final class ClientEventHandlers {
+
+        private static void onMouseDown(GTComponentPanelElement panel, UIEvent event) {
+            Style style = panel.getStyleUnderMouse(event.x, event.y);
+            if (style == null || style.getClickEvent() == null) {
+                event.hasHandler = false;
+                return;
+            }
+
+            ClickEvent clickEvent = style.getClickEvent();
+            String componentText = clickEvent.getValue();
+            if (clickEvent.getAction() != ClickEvent.Action.OPEN_URL || !componentText.startsWith(BUTTON_PREFIX)) {
+                event.hasHandler = false;
+                return;
+            }
+
+            if (panel.clickHandler != null) {
+                panel.clickHandler.accept(componentText.substring(BUTTON_PREFIX.length()), new ClickData());
+            }
+            UISoundUtils.playButtonClickSound();
+            event.stopPropagation();
         }
 
-        Style style = getStyleUnderMouse(modularUI.getLastMouseX(), modularUI.getLastMouseY());
-        if (style == null || style.getHoverEvent() == null) {
-            return;
-        }
+        private static void onHoverTooltips(GTComponentPanelElement panel, UIEvent event) {
+            ModularUI modularUI = panel.getModularUI();
+            if (modularUI == null) {
+                return;
+            }
 
-        HoverEvent hoverEvent = style.getHoverEvent();
-        Component hoverTips = hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT);
-        if (hoverTips != null) {
-            event.hoverTooltips = new HoverTooltips(List.of(hoverTips), null, null, null);
+            Style style = panel.getStyleUnderMouse(modularUI.getLastMouseX(), modularUI.getLastMouseY());
+            if (style == null || style.getHoverEvent() == null) {
+                return;
+            }
+
+            HoverEvent hoverEvent = style.getHoverEvent();
+            Component hoverTips = hoverEvent.getValue(HoverEvent.Action.SHOW_TEXT);
+            if (hoverTips != null) {
+                event.hoverTooltips = new HoverTooltips(List.of(hoverTips), null, null, null);
+            }
         }
     }
 }

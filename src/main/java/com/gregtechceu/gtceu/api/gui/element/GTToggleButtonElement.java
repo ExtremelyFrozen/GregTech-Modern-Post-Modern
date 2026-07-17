@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -23,7 +22,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 @LDLRegister(name = "gtm-toggle-button", group = "gtm", registry = "ldlib2:ui_element")
-public class GTToggleButtonElement extends Button {
+public class GTToggleButtonElement extends GTButtonElement {
 
     private IGuiTexture texture = GuiTextures.VANILLA_BUTTON;
     private BooleanSupplier pressedSupplier = () -> false;

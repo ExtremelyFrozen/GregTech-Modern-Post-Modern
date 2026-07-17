@@ -33,9 +33,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.material.Fluid;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
+import com.tterrag.registrate.util.RegistrateDistExecutor;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.stack.FluidEmiStack;
 import dev.emi.emi.api.stack.ListEmiIngredient;
@@ -215,22 +218,24 @@ public class GTFluidSlotElement extends UIElement {
     }
 
     public GTFluidSlotElement xeiPhantom() {
-        if (GTCEu.Mods.isJEILoaded()) {
-            LDLibJEIPlugin.ghostIngredient(this, NeoForgeTypes.FLUID_STACK, ingredient -> true, this::setFluid);
-        }
-        if (GTCEu.Mods.isEMILoaded()) {
-            LDLibEMIPlugin.renderDragHandler(this, dragged -> dragged instanceof FluidEmiStack);
-            LDLibEMIPlugin.dropStackHandler(this,
-                    dragged -> dragged instanceof FluidEmiStack,
-                    dragged -> {
-                        if (dragged instanceof FluidEmiStack droppedFluid) {
-                            setFluid(new FluidStack(
-                                    ((Fluid) droppedFluid.getKey()).builtInRegistryHolder(),
-                                    Math.max(1000, (int) droppedFluid.getAmount()),
-                                    droppedFluid.getComponentChanges()));
-                        }
-                    });
-        }
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            if (GTCEu.Mods.isJEILoaded()) {
+                LDLibJEIPlugin.ghostIngredient(this, NeoForgeTypes.FLUID_STACK, ingredient -> true, this::setFluid);
+            }
+            if (GTCEu.Mods.isEMILoaded()) {
+                LDLibEMIPlugin.renderDragHandler(this, dragged -> dragged instanceof FluidEmiStack);
+                LDLibEMIPlugin.dropStackHandler(this,
+                        dragged -> dragged instanceof FluidEmiStack,
+                        dragged -> {
+                            if (dragged instanceof FluidEmiStack droppedFluid) {
+                                setFluid(new FluidStack(
+                                        ((Fluid) droppedFluid.getKey()).builtInRegistryHolder(),
+                                        Math.max(1000, (int) droppedFluid.getAmount()),
+                                        droppedFluid.getComponentChanges()));
+                            }
+                        });
+            }
+        });
         return this;
     }
 
@@ -353,6 +358,7 @@ public class GTFluidSlotElement extends UIElement {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public void drawBackgroundAdditional(GUIContext guiContext) {
         refreshFluidTank();
         super.drawBackgroundAdditional(guiContext);
@@ -373,6 +379,7 @@ public class GTFluidSlotElement extends UIElement {
         }
     }
 
+    @OnlyIn(Dist.CLIENT)
     private void drawFluid(GUIContext guiContext, float contentX, float contentY, float contentWidth,
                            float contentHeight) {
         double progress = fluid.getAmount() * 1.0 / Math.max(Math.max(fluid.getAmount(), capacity), 1);
@@ -408,8 +415,9 @@ public class GTFluidSlotElement extends UIElement {
                         FormattingUtil.formatNumbers(fluid.getAmount()),
                         FormattingUtil.formatNumbers(tooltipCapacity)));
             }
-            TooltipsHandler.appendFluidTooltips(fluid, tooltips::add,
-                    TooltipFlag.NORMAL, Item.TooltipContext.of(GTRegistries.builtinRegistry()));
+            RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> () -> TooltipsHandler.appendFluidTooltips(fluid, tooltips::add,
+                            TooltipFlag.NORMAL, Item.TooltipContext.of(GTRegistries.builtinRegistry())));
         } else {
             tooltips.add(Component.translatable("gtpm.fluid.empty"));
             if (showAmount) {
@@ -450,39 +458,43 @@ public class GTFluidSlotElement extends UIElement {
     }
 
     private void addXEIRecipeIngredient(IngredientIO io, Supplier<Stream<FluidStack>> allPossibleFluids) {
-        if (GTCEu.Mods.isJEILoaded()) {
-            LDLibJEIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
-                    .map(this::createJEIFluidIngredient)
-                    .flatMap(Optional::stream)
-                    .collect(Collectors.toList()));
-        }
-        if (GTCEu.Mods.isEMILoaded()) {
-            LDLibEMIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
-                    .map(fluid -> EmiStack.of(fluid.getFluid(), fluid.getComponentsPatch(), fluid.getAmount()))
-                    .collect(Collectors.toList()));
-        }
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            if (GTCEu.Mods.isJEILoaded()) {
+                LDLibJEIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
+                        .map(this::createJEIFluidIngredient)
+                        .flatMap(Optional::stream)
+                        .collect(Collectors.toList()));
+            }
+            if (GTCEu.Mods.isEMILoaded()) {
+                LDLibEMIPlugin.recipeIngredient(this, io, () -> allPossibleFluids.get()
+                        .map(fluid -> EmiStack.of(fluid.getFluid(), fluid.getComponentsPatch(), fluid.getAmount()))
+                        .collect(Collectors.toList()));
+            }
+        });
     }
 
     private void addXEIRecipeSlot(IngredientIO io, Supplier<Float> chance, IntSupplier amount,
                                   Supplier<Stream<FluidStack>> allPossibleFluids) {
-        if (GTCEu.Mods.isJEILoaded()) {
-            LDLibJEIPlugin.recipeSlot(this,
-                    () -> createJEIFluidIngredient(getFluid()).orElse(null),
-                    () -> allPossibleFluids.get()
-                            .map(this::createJEIFluidIngredient)
-                            .flatMap(Optional::stream)
-                            .collect(Collectors.toList()));
-        }
-        if (GTCEu.Mods.isEMILoaded()) {
-            LDLibEMIPlugin.recipeSlot(this, () -> new ListEmiIngredient(
-                    allPossibleFluids.get()
-                            .map(fluid -> EmiStack.of(fluid.getFluid(),
-                                    fluid.getComponentsPatch(), fluid.getAmount()))
-                            .map(stack -> stack.setChance(chance.get()))
-                            .collect(Collectors.toList()),
-                    amount.getAsInt())
-                    .setChance(chance.get()));
-        }
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            if (GTCEu.Mods.isJEILoaded()) {
+                LDLibJEIPlugin.recipeSlot(this,
+                        () -> createJEIFluidIngredient(getFluid()).orElse(null),
+                        () -> allPossibleFluids.get()
+                                .map(this::createJEIFluidIngredient)
+                                .flatMap(Optional::stream)
+                                .collect(Collectors.toList()));
+            }
+            if (GTCEu.Mods.isEMILoaded()) {
+                LDLibEMIPlugin.recipeSlot(this, () -> new ListEmiIngredient(
+                        allPossibleFluids.get()
+                                .map(fluid -> EmiStack.of(fluid.getFluid(),
+                                        fluid.getComponentsPatch(), fluid.getAmount()))
+                                .map(stack -> stack.setChance(chance.get()))
+                                .collect(Collectors.toList()),
+                        amount.getAsInt())
+                        .setChance(chance.get()));
+            }
+        });
     }
 
     private Optional<ITypedIngredient<?>> createJEIFluidIngredient(FluidStack fluidStack) {

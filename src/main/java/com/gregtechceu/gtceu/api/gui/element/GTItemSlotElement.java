@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler
 import com.lowdragmc.lowdraglib2.gui.slot.ItemHandlerSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ItemSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib2.utils.ColorUtils;
@@ -22,11 +23,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.FontContext;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.tterrag.registrate.util.RegistrateDistExecutor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.w3c.dom.Element;
@@ -199,13 +203,15 @@ public class GTItemSlotElement extends ItemSlot {
 
     @Override
     public GTItemSlotElement xeiPhantom() {
-        if (GTCEu.Mods.isJEILoaded()) {
-            JEISupport.ghostIngredient(this);
-        }
-        if (GTCEu.Mods.isEMILoaded()) {
-            EMISupport.renderDragHandler(this);
-            EMISupport.dropStackHandler(this);
-        }
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            if (GTCEu.Mods.isJEILoaded()) {
+                JEISupport.ghostIngredient(this);
+            }
+            if (GTCEu.Mods.isEMILoaded()) {
+                EMISupport.renderDragHandler(this);
+                EMISupport.dropStackHandler(this);
+            }
+        });
         return this;
     }
 
@@ -297,7 +303,12 @@ public class GTItemSlotElement extends ItemSlot {
 
     @Override
     public List<Component> getFullTooltipTexts() {
-        var tooltips = new ArrayList<>(super.getFullTooltipTexts());
+        var tooltips = new ArrayList<Component>();
+        if (getSlotStyle().showItemTooltips()) {
+            RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                    () -> () -> tooltips.addAll(DrawerHelper.getItemToolTip(getValue())));
+        }
+        tooltips.addAll(getStyle().tooltips().asList());
         if (onAddedTooltips != null) {
             onAddedTooltips.accept(this, tooltips);
         }
@@ -305,12 +316,14 @@ public class GTItemSlotElement extends ItemSlot {
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     public void drawBackgroundAdditional(GUIContext guiContext) {
         super.drawBackgroundAdditional(guiContext);
         contentOverlay.draw(guiContext, getContentX(), getContentY(), getContentWidth(), getContentHeight());
     }
 
     @Override
+    @OnlyIn(Dist.CLIENT)
     protected void drawItemStack(GUIContext guiContext, ItemStack itemStack) {
         int decorationXOffset = itemCountDecorationXOffset.applyAsInt(itemStack);
         if (decorationXOffset == 0) {
@@ -320,6 +333,7 @@ public class GTItemSlotElement extends ItemSlot {
         drawItemStack(guiContext, itemStack, decorationXOffset);
     }
 
+    @OnlyIn(Dist.CLIENT)
     private void drawItemStack(GUIContext guiContext, ItemStack itemStack, int decorationXOffset) {
         if (itemStack.isEmpty()) {
             return;
@@ -398,22 +412,26 @@ public class GTItemSlotElement extends ItemSlot {
     }
 
     private void addXEIRecipeIngredient(IngredientIO io, Supplier<Stream<ItemStack>> allPossibleItems) {
-        if (GTCEu.Mods.isJEILoaded()) {
-            JEISupport.recipeIngredient(this, io, allPossibleItems);
-        }
-        if (GTCEu.Mods.isEMILoaded()) {
-            EMISupport.recipeIngredient(this, io, allPossibleItems);
-        }
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            if (GTCEu.Mods.isJEILoaded()) {
+                JEISupport.recipeIngredient(this, io, allPossibleItems);
+            }
+            if (GTCEu.Mods.isEMILoaded()) {
+                EMISupport.recipeIngredient(this, io, allPossibleItems);
+            }
+        });
     }
 
     private void addXEIRecipeSlot(IngredientIO io, Supplier<Float> chance, IntSupplier amount,
                                   Supplier<Stream<ItemStack>> allPossibleItems) {
-        if (GTCEu.Mods.isJEILoaded()) {
-            JEISupport.recipeSlot(this, allPossibleItems);
-        }
-        if (GTCEu.Mods.isEMILoaded()) {
-            EMISupport.recipeSlot(this, chance, amount, allPossibleItems);
-        }
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            if (GTCEu.Mods.isJEILoaded()) {
+                JEISupport.recipeSlot(this, allPossibleItems);
+            }
+            if (GTCEu.Mods.isEMILoaded()) {
+                EMISupport.recipeSlot(this, chance, amount, allPossibleItems);
+            }
+        });
     }
 
     private Stream<ItemStack> getCurrentItemStream() {

@@ -34,8 +34,8 @@ public class TextTexture extends TransformTexture {
     public TextType type = TextType.NORMAL;
     public Supplier<String> supplier;
 
-    @OnlyIn(Dist.CLIENT)
     private List<String> texts = Collections.singletonList("");
+    private boolean linesDirty = true;
     private long lastTick;
 
     public TextTexture() {
@@ -79,9 +79,7 @@ public class TextTexture extends TransformTexture {
 
     public TextTexture updateText(String text) {
         this.text = LocalizationUtils.format(text);
-        if (Minecraft.getInstance() != null) {
-            rebuildLines();
-        }
+        linesDirty = true;
         return this;
     }
 
@@ -108,7 +106,7 @@ public class TextTexture extends TransformTexture {
 
     public TextTexture setWidth(int width) {
         this.width = width;
-        rebuildLines();
+        linesDirty = true;
         return this;
     }
 
@@ -133,11 +131,12 @@ public class TextTexture extends TransformTexture {
         }
     }
 
+    @OnlyIn(Dist.CLIENT)
     private void rebuildLines() {
-        if (Minecraft.getInstance() == null || Minecraft.getInstance().font == null) {
-            texts = Collections.singletonList(text);
+        if (!linesDirty) {
             return;
         }
+        linesDirty = false;
         if (width > 0) {
             texts = Minecraft.getInstance().font.getSplitter().splitLines(text, width, Style.EMPTY).stream()
                     .map(FormattedText::getString)
@@ -155,6 +154,7 @@ public class TextTexture extends TransformTexture {
     protected void drawInternal(GuiGraphics graphics, float mouseX, float mouseY, float x, float y, float width,
                                 float height, float partialTicks) {
         updateTick();
+        rebuildLines();
         if (backgroundColor != 0) {
             DrawerHelper.drawSolidRect(graphics, x, y, width, height, backgroundColor);
         }
@@ -251,6 +251,7 @@ public class TextTexture extends TransformTexture {
 
     @OnlyIn(Dist.CLIENT)
     public int getLines() {
+        rebuildLines();
         return texts.size();
     }
 

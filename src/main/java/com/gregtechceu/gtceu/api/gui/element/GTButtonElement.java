@@ -7,11 +7,17 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button.ButtonStyle;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextElement.TextStyle;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventListener;
 import com.lowdragmc.lowdraglib2.gui.ui.style.LayoutStyle;
+import com.lowdragmc.lowdraglib2.gui.util.UISoundUtils;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
+import net.neoforged.api.distmarker.Dist;
+
+import com.tterrag.registrate.util.RegistrateDistExecutor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -24,6 +30,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 @LDLRegister(name = "gtm-button", group = "gtm", registry = "ldlib2:ui_element")
 public class GTButtonElement extends Button {
+
+    @Nullable
+    private UIEventListener clickHandler;
 
     public GTButtonElement() {}
 
@@ -53,6 +62,25 @@ public class GTButtonElement extends Button {
                 .hoverTexture(hoverTexture)
                 .pressedTexture(pressedTexture));
         return this;
+    }
+
+    @Override
+    public GTButtonElement setOnClick(@Nullable UIEventListener clickHandler) {
+        this.clickHandler = clickHandler;
+        return this;
+    }
+
+    @Override
+    protected void onMouseDown(UIEvent event) {
+        if (event.button != 0 || !isActive()) {
+            return;
+        }
+        RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> UISoundUtils::playButtonClickSound);
+        if (clickHandler != null) {
+            clickHandler.handleEvent(event);
+        }
+        setButtonState(State.PRESSED);
     }
 
     @Override
