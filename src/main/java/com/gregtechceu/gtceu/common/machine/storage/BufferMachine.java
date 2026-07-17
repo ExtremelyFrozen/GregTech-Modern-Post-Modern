@@ -15,6 +15,7 @@ import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -132,7 +133,7 @@ public class BufferMachine extends TieredMachine implements LDLib2FancyUIMachine
             ItemStack carried = openingPlayer.containerMenu.getCarried();
             if (canSendFluidSlotAction(event.button, openingPlayer.level().isClientSide(), carried)) {
                 MachineUIHelper.sendAction(shell.getHolder(),
-                        BufferMachineActions.createClickFluidSlotAction(tankIndex, event.isShiftDown()));
+                        BufferMachineActions.createClickFluidSlotAction(tankIndex, GTUtil.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }

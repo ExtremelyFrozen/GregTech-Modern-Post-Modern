@@ -18,6 +18,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -631,7 +632,7 @@ public class PumpMachine extends TieredEnergyMachine implements LDLib2MachineUIP
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
                 MachineUIHelper.sendAction(holder,
-                        PumpMachineActions.createClickPumpFluidSlotAction(event.isShiftDown()));
+                        PumpMachineActions.createClickPumpFluidSlotAction(GTUtil.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }

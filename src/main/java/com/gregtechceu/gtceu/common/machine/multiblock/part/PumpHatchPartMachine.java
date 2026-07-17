@@ -16,6 +16,7 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIPro
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.PumpHatch;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -146,7 +147,7 @@ public class PumpHatchPartMachine extends FluidHatchPartMachine
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
                 MachineUIHelper.sendAction(holder,
-                        PumpHatchPartMachineActions.createClickPumpHatchFluidSlotAction(event.isShiftDown()));
+                        PumpHatchPartMachineActions.createClickPumpHatchFluidSlotAction(GTUtil.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }

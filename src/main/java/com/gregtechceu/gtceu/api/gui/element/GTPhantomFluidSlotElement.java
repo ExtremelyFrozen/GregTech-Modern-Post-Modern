@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.gui.element;
 
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -85,7 +86,7 @@ public class GTPhantomFluidSlotElement extends GTFluidSlotElement {
             return;
         }
 
-        int delta = getModifiedChangeAmount(event.deltaY > 0 ? 1 : -1, event);
+        int delta = getModifiedChangeAmount(event.deltaY > 0 ? 1 : -1);
         int amount = (int) Math.min(Math.max((long) current.getAmount() + delta, 0L), getMaxAmount());
         if (amount <= 0) {
             setFluid(FluidStack.EMPTY);
@@ -97,14 +98,14 @@ public class GTPhantomFluidSlotElement extends GTFluidSlotElement {
         event.stopPropagation();
     }
 
-    private int getModifiedChangeAmount(int amount, UIEvent event) {
-        if (event.isShiftDown()) {
+    private int getModifiedChangeAmount(int amount) {
+        if (GTUtil.isShiftDown()) {
             amount *= 10;
         }
-        if (event.isCtrlDown()) {
+        if (GTUtil.isCtrlDown()) {
             amount *= 100;
         }
-        if (!event.isAltDown()) {
+        if (!GTUtil.isAltDown()) {
             amount *= 1000;
         }
         return amount;

@@ -16,6 +16,7 @@ import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -155,7 +156,7 @@ public class MultiblockTankMachine extends MultiblockControllerMachine
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
                 MachineUIHelper.sendAction(holder,
-                        MultiblockTankMachineActions.createClickMultiblockTankFluidSlotAction(event.isShiftDown()));
+                        MultiblockTankMachineActions.createClickMultiblockTankFluidSlotAction(GTUtil.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }

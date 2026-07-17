@@ -35,6 +35,7 @@ import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -291,7 +292,7 @@ public class QuantumTankMachine extends TieredMachine implements IControllable,
             if (event.button == 0 && player.level().isClientSide() &&
                     FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
                 MachineUIHelper.sendAction(holder,
-                        QuantumTankMachineActions.createClickQuantumTankFluidSlotAction(event.isShiftDown()));
+                        QuantumTankMachineActions.createClickQuantumTankFluidSlotAction(GTUtil.isShiftDown()));
                 event.stopImmediatePropagation();
                 event.hasHandler = true;
             }

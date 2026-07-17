@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.utils.GTMath;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
@@ -122,10 +123,10 @@ public class GTLongInputElement extends UIElement {
     }
 
     private long currentStep() {
-        if (isCtrlDown()) {
-            return isShiftDown() ? STEP_CTRL_SHIFT : STEP_CTRL;
+        if (GTUtil.isCtrlDown()) {
+            return GTUtil.isShiftDown() ? STEP_CTRL_SHIFT : STEP_CTRL;
         }
-        return isShiftDown() ? STEP_SHIFT : STEP_REGULAR;
+        return GTUtil.isShiftDown() ? STEP_SHIFT : STEP_REGULAR;
     }
 
     private void onTextChanged(String text) {

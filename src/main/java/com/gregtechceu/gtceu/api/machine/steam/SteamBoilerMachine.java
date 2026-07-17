@@ -390,7 +390,7 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
                 if (event.button == 0 && player.level().isClientSide() &&
                         FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
                     MachineUIHelper.sendAction(holder, SteamBoilerMachineActions.createClickSteamBoilerFluidSlotAction(
-                            fluidSlot, event.isShiftDown()));
+                            fluidSlot, GTUtil.isShiftDown()));
                     event.stopImmediatePropagation();
                     event.hasHandler = true;
                 }
