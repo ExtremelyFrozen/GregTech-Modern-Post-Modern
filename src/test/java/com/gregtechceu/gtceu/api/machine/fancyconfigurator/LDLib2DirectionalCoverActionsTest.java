@@ -24,8 +24,17 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.PacketSendListener;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -36,6 +45,9 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import com.mojang.authlib.GameProfile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -448,7 +460,7 @@ public class LDLib2DirectionalCoverActionsTest {
         BufferMachine machine = createBuffer(helper);
         CoverBehavior cover = TestUtils.placeCover(helper, machine, GTItems.CONVEYOR_MODULE_LV.asStack(),
                 Direction.EAST);
-        ServerPlayer player = preparePlayer(helper);
+        ServerPlayer player = prepareMenuPlayer(helper);
 
         boolean result = dispatch(player, machine,
                 LDLib2DirectionalCoverActions.createOpenCoverAction(Direction.EAST));
@@ -489,7 +501,15 @@ public class LDLib2DirectionalCoverActionsTest {
     }
 
     private static ServerPlayer preparePlayer(GameTestHelper helper) {
-        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        return preparePlayer(FakePlayerFactory.getMinecraft(helper.getLevel()));
+    }
+
+    private static ServerPlayer prepareMenuPlayer(GameTestHelper helper) {
+        GameProfile profile = FakePlayerFactory.getMinecraft(helper.getLevel()).getGameProfile();
+        return preparePlayer(new MenuCapableTestPlayer(helper.getLevel(), profile));
+    }
+
+    private static ServerPlayer preparePlayer(ServerPlayer player) {
         player.closeContainer();
         player.setGameMode(GameType.SURVIVAL);
         player.getInventory().clearContent();
@@ -513,6 +533,28 @@ public class LDLib2DirectionalCoverActionsTest {
                         .put(SIDE_FIELD, side)
                         .build())
                 .build();
+    }
+
+    private static final class MenuCapableTestPlayer extends ServerPlayer {
+
+        private MenuCapableTestPlayer(ServerLevel level, GameProfile profile) {
+            super(level.getServer(), level, profile, ClientInformation.createDefault());
+            connection = new DiscardingServerGamePacketListener(level.getServer(), this);
+        }
+    }
+
+    private static final class DiscardingServerGamePacketListener extends ServerGamePacketListenerImpl {
+
+        private DiscardingServerGamePacketListener(MinecraftServer server, ServerPlayer player) {
+            super(server, new Connection(PacketFlow.SERVERBOUND), player,
+                    CommonListenerCookie.createInitial(player.getGameProfile(), false));
+        }
+
+        @Override
+        public void send(@NotNull Packet<?> packet) {}
+
+        @Override
+        public void send(@NotNull Packet<?> packet, @Nullable PacketSendListener sendListener) {}
     }
 
     private static final class SingleAttachmentCheckCover extends CoverBehavior {

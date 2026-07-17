@@ -5,7 +5,6 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
@@ -16,6 +15,7 @@ import com.gregtechceu.gtceu.common.data.GTCovers;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.machine.storage.BufferMachine;
+import com.gregtechceu.gtceu.gametest.util.TestUtils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 @GameTestHolder(GTCEu.MOD_ID)
 public class ConveyorCoverConfigActionTest {
 
+    private static final BlockPos MACHINE_POS = new BlockPos(1, 1, 1);
     private static final ResourceLocation ACTION_ID = GTCEu.id("set_conveyor_cover_config");
     private static final ResourceLocation TRANSFER_RATE_FIELD = SyncFieldData.key("transferRate");
     private static final ResourceLocation IO_FIELD = SyncFieldData.key("io");
@@ -71,7 +72,7 @@ public class ConveyorCoverConfigActionTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherAppliesEveryConfigurationDimensionAndTransferBoundary(GameTestHelper helper) {
-        TrackingConveyorCover cover = createTrackingConveyorCover();
+        TrackingConveyorCover cover = createTrackingConveyorCover(helper);
         int maximum = cover.maxItemTransferRate;
         int[] requestedRates = { 1, maximum, Integer.MAX_VALUE };
         IO[] directions = { IO.IN, IO.OUT };
@@ -101,7 +102,7 @@ public class ConveyorCoverConfigActionTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherPreservesConveyorSubclassScope(GameTestHelper helper) {
-        RobotArmCover robotArm = createRobotArmCover();
+        RobotArmCover robotArm = createRobotArmCover(helper);
         SyncActionData action = ConveyorCoverConfigActions.createSetConfigAction(
                 1, IO.IN, DistributionMode.ROUND_ROBIN_GLOBAL, ManualIOMode.UNFILTERED);
 
@@ -135,7 +136,7 @@ public class ConveyorCoverConfigActionTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherRejectsMissingAndWrongTypeFieldsBeforeMutation(GameTestHelper helper) {
-        TrackingConveyorCover cover = createTrackingConveyorCover();
+        TrackingConveyorCover cover = createTrackingConveyorCover(helper);
 
         assertRejected(helper, cover, action(payload(null, integer(1), integer(0), integer(0))),
                 "missing transfer rate");
@@ -166,7 +167,7 @@ public class ConveyorCoverConfigActionTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherRejectsNonIntegerAndOutOfRangeFieldsBeforeMutation(GameTestHelper helper) {
-        TrackingConveyorCover cover = createTrackingConveyorCover();
+        TrackingConveyorCover cover = createTrackingConveyorCover(helper);
 
         assertRejected(helper, cover,
                 action(payload(new JsonPrimitive(1.5D), integer(1), integer(0), integer(0))),
@@ -227,7 +228,7 @@ public class ConveyorCoverConfigActionTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherAcceptsUnknownPayloadFields(GameTestHelper helper) {
-        TrackingConveyorCover cover = createTrackingConveyorCover();
+        TrackingConveyorCover cover = createTrackingConveyorCover(helper);
 
         helper.assertTrue(dispatch(helper, cover, action(payloadWithUnknownField())),
                 "conveyor action rejected an unknown future field");
@@ -242,7 +243,7 @@ public class ConveyorCoverConfigActionTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherKeepsConcreteConveyorHolderScope(GameTestHelper helper) {
-        PumpCover pump = createPumpCover();
+        PumpCover pump = createPumpCover(helper);
         TestConveyorActionTarget fakeTarget = new TestConveyorActionTarget();
         SyncActionData action = ConveyorCoverConfigActions.createSetConfigAction(
                 32, IO.IN, DistributionMode.ROUND_ROBIN_PRIO, ManualIOMode.FILTERED);
@@ -261,7 +262,7 @@ public class ConveyorCoverConfigActionTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = "ConveyorCoverConfigAction")
     public static void dispatcherRejectsSpectatorWithoutMutation(GameTestHelper helper) {
-        TrackingConveyorCover cover = createTrackingConveyorCover();
+        TrackingConveyorCover cover = createTrackingConveyorCover(helper);
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         player.setGameMode(GameType.SPECTATOR);
         boolean result;
@@ -371,30 +372,25 @@ public class ConveyorCoverConfigActionTest {
                 description + " changed the conveyor to an unexpected state");
     }
 
-    private static TrackingConveyorCover createTrackingConveyorCover() {
-        BufferMachine machine = createBuffer();
+    private static TrackingConveyorCover createTrackingConveyorCover(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
         return new TrackingConveyorCover(GTCovers.CONVEYORS[GTValues.LV], machine.getCoverContainer(),
                 Direction.WEST, GTValues.LV);
     }
 
-    private static RobotArmCover createRobotArmCover() {
-        BufferMachine machine = createBuffer();
+    private static RobotArmCover createRobotArmCover(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
         return new RobotArmCover(GTCovers.ROBOT_ARMS[GTValues.LV], machine.getCoverContainer(), Direction.WEST,
                 GTValues.LV);
     }
 
-    private static PumpCover createPumpCover() {
-        BufferMachine machine = createBuffer();
+    private static PumpCover createPumpCover(GameTestHelper helper) {
+        BufferMachine machine = createBuffer(helper);
         return new PumpCover(GTCovers.PUMPS[GTValues.LV], machine.getCoverContainer(), Direction.WEST, GTValues.LV);
     }
 
-    private static BufferMachine createBuffer() {
-        var definition = GTMachines.BUFFER[GTValues.LV];
-        MetaMachine machine = definition.getBlockEntityType().create(BlockPos.ZERO, definition.defaultBlockState());
-        if (machine instanceof BufferMachine buffer) {
-            return buffer;
-        }
-        throw new IllegalStateException("LV buffer definition did not create a BufferMachine.");
+    private static BufferMachine createBuffer(GameTestHelper helper) {
+        return (BufferMachine) TestUtils.setMachine(helper, MACHINE_POS, GTMachines.BUFFER[GTValues.LV]);
     }
 
     private static final class TrackingConveyorCover extends ConveyorCover {
