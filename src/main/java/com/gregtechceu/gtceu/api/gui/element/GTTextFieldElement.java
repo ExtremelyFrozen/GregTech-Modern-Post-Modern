@@ -2,7 +2,9 @@ package com.gregtechceu.gtceu.api.gui.element;
 
 import com.gregtechceu.gtceu.api.gui.UITemplate;
 
+import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -41,5 +43,15 @@ public class GTTextFieldElement extends TextField {
     public GTTextFieldElement setTextResponder(Consumer<String> textResponder) {
         super.setTextResponder(textResponder);
         return this;
+    }
+
+    /**
+     * Keeps LDLib2's font-dependent caret placement on the logical client while preserving common event propagation.
+     */
+    @Override
+    protected void onMouseDown(UIEvent event) {
+        if (LDLib2.isRemote()) {
+            super.onMouseDown(event);
+        }
     }
 }

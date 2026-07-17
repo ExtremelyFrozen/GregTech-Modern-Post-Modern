@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.style.PropertyRegistry;
 
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -71,7 +72,9 @@ public class UITemplateLDLib2Test {
                 "slot id did not match inventory_" + expectedSlotIndex);
         helper.assertTrue(slotElement.getSlot().getSlotIndex() == expectedSlotIndex,
                 "slot index did not match " + expectedSlotIndex);
-        helper.assertTrue(slotElement.getSlotStyle().isPlayerSlot(), "slot was not marked as a player slot");
+        helper.assertTrue(Boolean.TRUE.equals(
+                slotElement.getStyleBag().computeCandidate(PropertyRegistry.IS_PLAYER_SLOT)),
+                "slot was not marked as a player slot");
     }
 
     private static void assertBounds(GameTestHelper helper, UIElement element, int x, int y, int width, int height,
