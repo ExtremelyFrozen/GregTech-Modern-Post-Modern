@@ -175,7 +175,13 @@ open class CPacketCoverActionToServer(
 		SyncActionDispatchers.server().dispatch(SyncActionContext.cover(player, cover, action, pos, side))
 	}
 
-	private fun canInteract(player: ServerPlayer, pos: BlockPos): Boolean = !player.isSpectator && player.canInteractWithBlock(pos, MAX_INTERACTION_DISTANCE)
+	private fun canInteract(player: ServerPlayer, pos: BlockPos): Boolean {
+		if (player.isSpectator) {
+			return false
+		}
+		val additionalDistance = MAX_INTERACTION_DISTANCE - player.blockInteractionRange()
+		return player.canInteractWithBlock(pos, additionalDistance)
+	}
 
 	override fun type(): Type<CPacketCoverActionToServer> = TYPE
 

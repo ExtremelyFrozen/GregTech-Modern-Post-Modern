@@ -26,9 +26,20 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
@@ -59,6 +70,7 @@ public class CPacketCoverActionToServerTest {
     private static final BlockPos MACHINE_POS = new BlockPos(1, 1, 1);
     private static final BlockPos REMOTE_ANCHOR = new BlockPos(12, 1, 1);
     private static final BlockPos FAR_FROM_REMOTE_ANCHOR = new BlockPos(1, 1, 1);
+    private static final double EXTENDED_BLOCK_INTERACTION_RANGE = 32.0;
     private static final Direction COVER_SIDE = Direction.EAST;
     private static final ResourceLocation ACTION_ID = GTCEu.id("test_cover_ui_session_action");
     private static final ResourceLocation WRONG_DEFINITION_ID = GTCEu.id("wrong_cover_ui_session_target");
@@ -145,7 +157,7 @@ public class CPacketCoverActionToServerTest {
         SessionTestCover cover = installCover(machine);
         ServerPlayer player = preparePlayer(helper, machine, "cover_default_anchor_distance");
         LDLib2CoverUIHolderContext holder = holder(openMenu(player, cover));
-        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
+        player.moveTo(Vec3.atCenterOf(helper.absolutePos(REMOTE_ANCHOR)));
 
         execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
 
@@ -161,17 +173,21 @@ public class CPacketCoverActionToServerTest {
     public static void validRemoteAnchorAuthorizesExactCoverSession(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         SessionTestCover cover = installCover(machine);
-        ServerPlayer player = preparePlayer(helper, machine, "cover_remote_anchor_accept");
-        LDLib2CoverUIHolderContext holder = holder(openAnchoredMenu(
-                player, cover, REMOTE_ANCHOR, () -> true));
-        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
+        ServerPlayer player = prepareMenuPlayer(helper, machine, "cover_remote_anchor_accept");
+        BlockPos remoteAnchor = helper.absolutePos(REMOTE_ANCHOR);
+        try {
+            LDLib2CoverUIHolderContext holder = holder(openAnchoredMenu(
+                    player, cover, remoteAnchor, () -> true));
+            player.moveTo(Vec3.atCenterOf(remoteAnchor));
 
-        execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
+            execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
 
-        helper.assertTrue(cover.actionCount == 1,
-                "valid remote interaction anchor did not authorize its exact cover session");
-        player.closeContainer();
-        helper.succeed();
+            helper.assertTrue(cover.actionCount == 1,
+                    "valid remote interaction anchor did not authorize its exact cover session");
+            helper.succeed();
+        } finally {
+            player.closeContainer();
+        }
     }
 
     @TestHolder
@@ -180,29 +196,38 @@ public class CPacketCoverActionToServerTest {
     public static void invalidAndDistantRemoteAnchorsRejectWithoutExecution(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         SessionTestCover cover = installCover(machine);
-        ServerPlayer player = preparePlayer(helper, machine, "cover_remote_anchor_reject");
+        ServerPlayer player = prepareMenuPlayer(helper, machine, "cover_remote_anchor_reject");
+        BlockPos remoteAnchor = helper.absolutePos(REMOTE_ANCHOR);
         AtomicBoolean anchorValid = new AtomicBoolean(true);
-        LDLib2CoverUIHolderContext invalidHolder = holder(openAnchoredMenu(
-                player, cover, REMOTE_ANCHOR, anchorValid::get));
-        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
-        anchorValid.set(false);
+        try {
+            LDLib2CoverUIHolderContext invalidHolder = holder(openAnchoredMenu(
+                    player, cover, remoteAnchor, anchorValid::get));
+            player.moveTo(Vec3.atCenterOf(remoteAnchor));
+            anchorValid.set(false);
 
-        execute(player, packet(invalidHolder, machine.getBlockPos(), COVER_SIDE,
-                cover.coverDefinition.getId()));
-        helper.assertTrue(cover.actionCount == 0,
-                "invalid remote interaction anchor dispatched a cover action");
+            execute(player, packet(invalidHolder, machine.getBlockPos(), COVER_SIDE,
+                    cover.coverDefinition.getId()));
+            helper.assertTrue(cover.actionCount == 0,
+                    "invalid remote interaction anchor dispatched a cover action");
 
-        player.closeContainer();
-        LDLib2CoverUIHolderContext distantHolder = holder(openAnchoredMenu(
-                player, cover, REMOTE_ANCHOR, () -> true));
-        player.moveTo(Vec3.atCenterOf(FAR_FROM_REMOTE_ANCHOR));
-        execute(player, packet(distantHolder, machine.getBlockPos(), COVER_SIDE,
-                cover.coverDefinition.getId()));
+            player.closeContainer();
+            LDLib2CoverUIHolderContext distantHolder = holder(openAnchoredMenu(
+                    player, cover, remoteAnchor, () -> true));
+            AttributeInstance blockInteractionRange = player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
+            if (blockInteractionRange == null) {
+                throw new GameTestAssertException("test player has no block interaction range attribute");
+            }
+            blockInteractionRange.setBaseValue(EXTENDED_BLOCK_INTERACTION_RANGE);
+            player.moveTo(Vec3.atCenterOf(helper.absolutePos(FAR_FROM_REMOTE_ANCHOR)));
+            execute(player, packet(distantHolder, machine.getBlockPos(), COVER_SIDE,
+                    cover.coverDefinition.getId()));
 
-        helper.assertTrue(cover.actionCount == 0,
-                "remote interaction anchor accepted a player outside its interaction distance");
-        player.closeContainer();
-        helper.succeed();
+            helper.assertTrue(cover.actionCount == 0,
+                    "remote interaction anchor accepted a player outside its interaction distance");
+            helper.succeed();
+        } finally {
+            player.closeContainer();
+        }
     }
 
     @TestHolder
@@ -211,19 +236,23 @@ public class CPacketCoverActionToServerTest {
     public static void anchorInvalidatedDuringProviderValidationIsRejected(GameTestHelper helper) {
         BufferMachine machine = createBuffer(helper);
         SessionTestCover cover = installCover(machine);
-        ServerPlayer player = preparePlayer(helper, machine, "cover_anchor_validation_revoke");
+        ServerPlayer player = prepareMenuPlayer(helper, machine, "cover_anchor_validation_revoke");
+        BlockPos remoteAnchor = helper.absolutePos(REMOTE_ANCHOR);
         AtomicBoolean anchorValid = new AtomicBoolean(true);
-        LDLib2CoverUIHolderContext holder = holder(openAnchoredMenu(
-                player, cover, REMOTE_ANCHOR, anchorValid::get));
-        player.moveTo(Vec3.atCenterOf(REMOTE_ANCHOR));
-        cover.validationAction = () -> anchorValid.set(false);
+        try {
+            LDLib2CoverUIHolderContext holder = holder(openAnchoredMenu(
+                    player, cover, remoteAnchor, anchorValid::get));
+            player.moveTo(Vec3.atCenterOf(remoteAnchor));
+            cover.validationAction = () -> anchorValid.set(false);
 
-        execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
+            execute(player, packet(holder, machine.getBlockPos(), COVER_SIDE, cover.coverDefinition.getId()));
 
-        helper.assertTrue(cover.actionCount == 0,
-                "anchor invalidated during provider validation dispatched a cover action");
-        player.closeContainer();
-        helper.succeed();
+            helper.assertTrue(cover.actionCount == 0,
+                    "anchor invalidated during provider validation dispatched a cover action");
+            helper.succeed();
+        } finally {
+            player.closeContainer();
+        }
     }
 
     @TestHolder
@@ -366,6 +395,15 @@ public class CPacketCoverActionToServerTest {
         return player;
     }
 
+    private static ServerPlayer prepareMenuPlayer(GameTestHelper helper, BufferMachine machine, String name) {
+        UUID profileId = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+        ServerPlayer player = new MenuCapableTestPlayer(helper.getLevel(), new GameProfile(profileId, name));
+        player.closeContainer();
+        player.setGameMode(GameType.SURVIVAL);
+        player.moveTo(Vec3.atCenterOf(machine.getBlockPos()));
+        return player;
+    }
+
     private static GTCoverUIContainerMenu openMenu(ServerPlayer player, SessionTestCover cover) {
         LDLib2CoverUIHolderContext holder = new LDLib2CoverUIHolderContext(player, cover);
         if (holder.createMenu(1, player.getInventory(), player) instanceof GTCoverUIContainerMenu menu) {
@@ -467,6 +505,28 @@ public class CPacketCoverActionToServerTest {
         public UI createLDLib2UI(Player player, UICoverHolder holder) {
             return UI.of(new UIElement());
         }
+    }
+
+    private static final class MenuCapableTestPlayer extends ServerPlayer {
+
+        private MenuCapableTestPlayer(ServerLevel level, GameProfile profile) {
+            super(level.getServer(), level, profile, ClientInformation.createDefault());
+            connection = new DiscardingServerGamePacketListener(level.getServer(), this);
+        }
+    }
+
+    private static final class DiscardingServerGamePacketListener extends ServerGamePacketListenerImpl {
+
+        private DiscardingServerGamePacketListener(MinecraftServer server, ServerPlayer player) {
+            super(server, new Connection(PacketFlow.SERVERBOUND), player,
+                    CommonListenerCookie.createInitial(player.getGameProfile(), false));
+        }
+
+        @Override
+        public void send(@NotNull Packet<?> packet) {}
+
+        @Override
+        public void send(@NotNull Packet<?> packet, @Nullable PacketSendListener sendListener) {}
     }
 
     private static final class TestCoverActionHandler implements SyncActionHandler {
