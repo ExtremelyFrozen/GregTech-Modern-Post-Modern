@@ -2,12 +2,13 @@ package com.gregtechceu.gtceu.api.machine;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
+import com.gregtechceu.gtceu.api.gui.editor.MachineUIXmlTemplates;
 import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2RecipeFancyUIMachine;
-import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI.LDLib2RecipeUISize;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.gametest.util.TestUtils;
 
@@ -30,13 +31,6 @@ import java.util.List;
 @GameTestHolder(GTCEu.MOD_ID)
 public class SimpleGeneratorMachineLDLib2UITest {
 
-    private static final int ENERGY_BAR_WIDTH = 18;
-    private static final int ENERGY_BAR_HEIGHT = 60;
-    private static final int RECIPE_ENERGY_GAP = 4;
-    private static final int PAGE_HORIZONTAL_PADDING = 8;
-    private static final int PAGE_VERTICAL_PADDING = 8;
-    private static final int MIN_PAGE_WIDTH = 172;
-
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "SimpleGeneratorMachineLDLib2UI")
@@ -46,32 +40,37 @@ public class SimpleGeneratorMachineLDLib2UITest {
         LDLib2RecipeFancyUIMachine uiMachine = machine;
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         MachineUIHolder holder = new MachineUIHolderContext(player, machine);
-        LDLib2RecipeUISize recipeSize = uiMachine.getLDLib2RecipeUISize(machine);
-        int expectedWidth = Math.max(
-                ENERGY_BAR_WIDTH + RECIPE_ENERGY_GAP + recipeSize.width() + PAGE_HORIZONTAL_PADDING,
-                MIN_PAGE_WIDTH);
-        int expectedHeight = Math.max(recipeSize.height() + PAGE_VERTICAL_PADDING,
-                ENERGY_BAR_HEIGHT + PAGE_VERTICAL_PADDING);
+        EditableMachineUI template = uiMachine.getLDLib2MachineUITemplate(machine);
+        helper.assertTrue(template.getGroupName().equals("generator"),
+                "generator machine XML metadata lost its editor template group");
+        helper.assertTrue(template.getUiPath().equals(GTCEu.id("combustion")),
+                "generator machine XML metadata selected the wrong target path");
+        helper.assertTrue(template.getXmlLocation().equals(GTCEu.id("ui/machine/combustion.xml")),
+                "generator machine XML metadata did not resolve assets/<namespace>/ui/machine/<path>.xml");
+        UI defaultPreview = template.createDefaultUI();
+        helper.assertTrue(defaultPreview.rootElement
+                .selectId(MachineUIXmlTemplates.ENERGY_BAR_ID, GTProgressBarElement.class).count() == 1,
+                "default generator machine XML did not parse its energy bar");
+        var machineSize = uiMachine.getLDLib2MachineUISize(machine);
 
         helper.assertTrue(uiMachine.canCreateLDLib2UI(player, holder),
                 "simple generator rejected its own opened holder");
         helper.assertTrue(uiMachine.getLDLib2RecipeMachine() == machine,
                 "simple generator did not expose itself as the recipe page owner");
-        helper.assertTrue(uiMachine.getLDLib2PageWidth() == expectedWidth &&
-                uiMachine.getLDLib2PageHeight() == expectedHeight,
-                "simple generator page did not preserve its fixed energy-and-recipe dimensions");
-        helper.assertTrue(uiMachine.getLDLib2RecipeTemplateX(machine, recipeSize) ==
-                (expectedWidth - ENERGY_BAR_WIDTH - RECIPE_ENERGY_GAP - recipeSize.width()) / 2 +
-                        ENERGY_BAR_WIDTH + RECIPE_ENERGY_GAP,
-                "simple generator recipe template did not leave room for the energy bar");
+        helper.assertTrue(uiMachine.getLDLib2PageWidth() == machineSize.width() &&
+                uiMachine.getLDLib2PageHeight() == machineSize.height(),
+                "simple generator page dimensions did not come from the active machine XML");
+        helper.assertTrue(machineSize.width() >= 172 && machineSize.height() >= 68,
+                "generator machine XML did not preserve the energy-and-recipe minimum dimensions");
 
         UIElement page = uiMachine.createLDLib2MainPage(null);
         List<UIElement> pageChildren = page.getChildren();
         helper.assertTrue(pageChildren.size() == 2,
                 "simple generator page should contain its recipe template and energy bar");
-        helper.assertTrue(pageChildren.getLast() instanceof GTProgressBarElement,
-                "simple generator page did not append a GTM LDLib2 energy bar");
-        GTProgressBarElement energyBar = (GTProgressBarElement) pageChildren.getLast();
+        GTProgressBarElement energyBar = page
+                .selectId(MachineUIXmlTemplates.ENERGY_BAR_ID, GTProgressBarElement.class)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("parsed generator machine XML has no energy bar"));
         machine.energyContainer.setEnergyStored(machine.energyContainer.getEnergyCapacity() / 2);
         energyBar.screenTick();
         helper.assertTrue(Math.abs(energyBar.getValue() - 0.5f) < 0.0001f,
