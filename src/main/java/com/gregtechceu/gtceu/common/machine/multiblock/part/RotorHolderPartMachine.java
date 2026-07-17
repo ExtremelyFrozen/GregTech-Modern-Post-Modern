@@ -15,7 +15,6 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
@@ -376,18 +375,8 @@ public class RotorHolderPartMachine extends TieredPartMachine
     // ******* FANCY GUI ********//
     //////////////////////////////////////
     @Override
-    public void attachFancyTooltipsToController(MultiblockControllerMachine controller, TooltipsPanel tooltipsPanel) {
-        attachTooltips(tooltipsPanel);
-    }
-
-    @Override
     public void attachLDLib2FancyTooltipsToController(MultiblockControllerMachine controller,
                                                       LDLib2FancyTooltipsPanelElement tooltipsPanel) {
-        tooltipsPanel.attachTooltips(createRotorObstructionTooltip());
-    }
-
-    @Override
-    public void attachTooltips(TooltipsPanel tooltipsPanel) {
         tooltipsPanel.attachTooltips(createRotorObstructionTooltip());
     }
 

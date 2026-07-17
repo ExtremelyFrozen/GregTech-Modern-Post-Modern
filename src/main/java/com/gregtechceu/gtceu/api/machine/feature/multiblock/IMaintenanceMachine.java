@@ -4,7 +4,6 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -155,21 +154,9 @@ public interface IMaintenanceMachine extends IMultiPart {
     //////////////////////////////////////
 
     @Override
-    default void attachFancyTooltipsToController(MultiblockControllerMachine controller, TooltipsPanel tooltipsPanel) {
-        attachTooltips(tooltipsPanel);
-    }
-
-    @Override
     default void attachLDLib2FancyTooltipsToController(MultiblockControllerMachine controller,
                                                        LDLib2FancyTooltipsPanelElement tooltipsPanel) {
         attachLDLib2MaintenanceTooltips(tooltipsPanel);
-    }
-
-    @Override
-    default void attachTooltips(TooltipsPanel tooltipsPanel) {
-        if (ConfigHolder.INSTANCE.machines.enableMaintenance) {
-            tooltipsPanel.attachTooltips(createMaintenanceFancyTooltip());
-        }
     }
 
     /**
@@ -184,7 +171,7 @@ public interface IMaintenanceMachine extends IMultiPart {
     }
 
     /**
-     * Creates the shared lazy maintenance warning used by both legacy and LDLib2 Fancy tooltip panels.
+     * Creates the lazy maintenance warning used by LDLib2 Fancy tooltip panels.
      */
     private IFancyTooltip.Basic createMaintenanceFancyTooltip() {
         return new IFancyTooltip.Basic(() -> GuiTextures.MAINTENANCE_ICON, () -> {

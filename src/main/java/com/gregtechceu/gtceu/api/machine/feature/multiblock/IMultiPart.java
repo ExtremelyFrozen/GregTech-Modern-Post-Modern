@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.machine.feature.multiblock;
 
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
 import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IMachineFeature;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -141,11 +140,6 @@ public interface IMultiPart extends IMachineFeature, IFancyUIMachine {
      * @param textList the text list to add to.
      */
     default void addMultiText(List<Component> textList) {}
-
-    /**
-     * Attach part's tooltips to the controller.
-     */
-    default void attachFancyTooltipsToController(MultiblockControllerMachine controller, TooltipsPanel tooltipsPanel) {}
 
     /**
      * Attaches warnings owned by this part to an LDLib2 controller page.
