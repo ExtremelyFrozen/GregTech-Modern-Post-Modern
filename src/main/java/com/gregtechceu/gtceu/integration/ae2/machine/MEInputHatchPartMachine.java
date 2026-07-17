@@ -29,16 +29,11 @@ import com.gregtechceu.gtceu.common.data.machines.GTAEMachines;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.integration.ae2.gui.element.AEFluidConfigElement;
 import com.gregtechceu.gtceu.integration.ae2.gui.fancy.LDLib2MEFluidAutoPullFancyConfigurator;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AEFluidConfigWidget;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidList;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidSlot;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAESlot;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
@@ -185,20 +180,6 @@ public class MEInputHatchPartMachine extends MEHatchPartMachine
     ///////////////////////////////
     // ********** GUI ***********//
     ///////////////////////////////
-
-    @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(new Position(0, 0));
-        // ME Network status
-        group.addWidget(new LabelWidget(3, 0, () -> this.isOnline ?
-                "gtpm.gui.me_network.online" :
-                "gtpm.gui.me_network.offline"));
-
-        // Config slots
-        group.addWidget(new AEFluidConfigWidget(3, 10, this.aeFluidHandler));
-
-        return group;
-    }
 
     /** Returns one authoritative slot for action execution and direct behavior verification. */
     public ExportOnlyAEFluidSlot getMEFluidConfigSlot(int index) {

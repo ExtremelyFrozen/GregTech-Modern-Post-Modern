@@ -26,13 +26,9 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.common.data.machines.GTAEMachines;
 import com.gregtechceu.gtceu.integration.ae2.gui.element.MEFluidOutputWaitingListElement;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.list.AEListGridWidget;
 import com.gregtechceu.gtceu.integration.ae2.utils.KeyStorage;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
@@ -134,20 +130,6 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine
     ///////////////////////////////
     // ********** GUI ***********//
     ///////////////////////////////
-
-    @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(0, 0, 170, 65);
-        // ME Network status
-        group.addWidget(new LabelWidget(5, 0, () -> this.isOnline ?
-                "gtpm.gui.me_network.online" :
-                "gtpm.gui.me_network.offline"));
-        group.addWidget(new LabelWidget(5, 10, "gtpm.gui.waiting_list"));
-        // display list
-        group.addWidget(new AEListGridWidget.Fluid(5, 20, 3, this.internalBuffer));
-
-        return group;
-    }
 
     @Override
     public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {

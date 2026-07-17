@@ -30,16 +30,11 @@ import com.gregtechceu.gtceu.common.data.machines.GTAEMachines;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.integration.ae2.gui.element.AEItemConfigElement;
 import com.gregtechceu.gtceu.integration.ae2.gui.fancy.LDLib2MEItemAutoPullFancyConfigurator;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AEItemConfigWidget;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEItemList;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEItemSlot;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAESlot;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
@@ -182,20 +177,6 @@ public class MEInputBusPartMachine extends MEBusPartMachine
     ///////////////////////////////
     // ********** GUI ***********//
     ///////////////////////////////
-
-    @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(new Position(0, 0));
-        // ME Network status
-        group.addWidget(new LabelWidget(3, 0, () -> this.isOnline ?
-                "gtpm.gui.me_network.online" :
-                "gtpm.gui.me_network.offline"));
-
-        // Config slots
-        group.addWidget(new AEItemConfigWidget(3, 10, this.aeItemHandler));
-
-        return group;
-    }
 
     /** Returns one authoritative slot for action execution and direct behavior verification. */
     public ExportOnlyAEItemSlot getMEItemConfigSlot(int index) {
