@@ -1,5 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.predicates;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
+
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;

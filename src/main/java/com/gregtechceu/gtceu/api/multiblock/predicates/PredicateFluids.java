@@ -1,5 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.predicates;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
+
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
