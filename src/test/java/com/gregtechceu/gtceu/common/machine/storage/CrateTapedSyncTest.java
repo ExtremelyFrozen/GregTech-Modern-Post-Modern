@@ -2,12 +2,12 @@ package com.gregtechceu.gtceu.common.machine.storage;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
-import com.gregtechceu.gtceu.api.data.chemical.material.materials.GTMaterials;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMachines;
+import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.gametest.util.TestUtils;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
@@ -152,7 +152,7 @@ public class CrateTapedSyncTest {
         if (contents != null) {
             contents.copyInto(savedItems);
         }
-        helper.assertTrue(components.get(GTDataComponents.TAPED) != null,
+        helper.assertTrue(components.get(GTDataComponents.TAPED.get()) != null,
                 "taped crate item components omitted the taped marker");
         helper.assertTrue(ItemStack.isSameItemSameComponents(savedItems.getFirst(), expected) &&
                 savedItems.getFirst().getCount() == expected.getCount(),
