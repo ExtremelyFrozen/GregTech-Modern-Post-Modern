@@ -15,9 +15,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.BlockHitResult;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -42,11 +40,6 @@ public class LaserHatchPartMachine extends TieredIOPartMachine
                     GTValues.V[tier], amperage));
             this.buffer.setSideInputCondition(s -> s == getFrontFacing());
         }
-    }
-
-    @Override
-    public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
-        return false;
     }
 
     @Override

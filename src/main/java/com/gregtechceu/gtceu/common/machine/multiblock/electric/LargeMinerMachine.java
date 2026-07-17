@@ -438,7 +438,8 @@ public class LargeMinerMachine extends WorkableElectricMultiblockMachine
             screen.addScrollViewChild(new GTComponentPanelElement(4, 17, LargeMinerMachine.this::addDisplayText)
                     .setMaxWidthLimit(200)
                     .clickHandler(
-                            (componentData, clickData) -> handleLDLib2DisplayClick(player, holder, componentData)));
+                            (componentData, clickData) -> handleLDLib2DisplayClick(
+                                    shell.getOpeningPlayer(), holder, componentData)));
             root.addChild(screen);
             return root;
         }

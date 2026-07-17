@@ -12,10 +12,8 @@ import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
 
 import lombok.Getter;
 
@@ -39,11 +37,6 @@ public abstract class HPCAComponentPartMachine extends MultiblockPartMachine imp
     public abstract boolean isAdvanced();
 
     public abstract IGuiTexture getComponentIcon();
-
-    @Override
-    public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
-        return false;
-    }
 
     /** Creates the holder-scoped default preview used by the HPCA controller. */
     @Override

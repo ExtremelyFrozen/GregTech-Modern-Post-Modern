@@ -5,10 +5,6 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.BlockHitResult;
-
 public class MonitorPartMachine extends MonitorComponentPartMachine {
 
     public MonitorPartMachine(BlockEntityCreationInfo info) {
@@ -23,10 +19,5 @@ public class MonitorPartMachine extends MonitorComponentPartMachine {
     @Override
     public IGuiTexture getComponentIcon() {
         return GuiTextures.spirit(GTCEu.id("item/computer_monitor_cover"));
-    }
-
-    @Override
-    public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
-        return false;
     }
 }

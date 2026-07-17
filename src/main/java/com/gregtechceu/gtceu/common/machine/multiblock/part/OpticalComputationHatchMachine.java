@@ -13,9 +13,7 @@ import com.gregtechceu.gtceu.api.machine.trait.NotifiableComputationContainer;
 import com.gregtechceu.gtceu.common.computation.ComputationNetworkManager;
 
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.BlockHitResult;
 
 import lombok.Getter;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
@@ -34,11 +32,6 @@ public class OpticalComputationHatchMachine extends MultiblockPartMachine implem
         this.transmitter = transmitter;
         this.computationContainer = attachTrait(new NotifiableComputationContainer(IO.IN, transmitter));
         this.computationPort = new MultiblockComputationPortTrait(this, transmitter, !transmitter);
-    }
-
-    @Override
-    public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
-        return false;
     }
 
     /** Creates the holder-scoped default preview used by a surrounding multiblock controller. */

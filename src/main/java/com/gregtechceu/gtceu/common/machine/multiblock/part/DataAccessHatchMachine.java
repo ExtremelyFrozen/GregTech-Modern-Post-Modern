@@ -42,10 +42,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.items.IItemHandler;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -248,11 +246,6 @@ public class DataAccessHatchMachine extends TieredPartMachine
         public List<Component> getTabTooltips() {
             return List.of(Component.translatable(getDefinition().getDescriptionId()));
         }
-    }
-
-    @Override
-    public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
-        return !this.isCreative;
     }
 
     protected int getInventorySize() {

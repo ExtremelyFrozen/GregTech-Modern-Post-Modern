@@ -34,11 +34,9 @@ import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.BlockHitResult;
 
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -147,13 +145,6 @@ public class MEPatternBufferProxyPartMachine extends TieredIOPartMachine
             linkRevision = Math.incrementExact(linkRevision);
             syncDataHolder.markClientSyncFieldDirty("linkRevision");
         }
-    }
-
-    @Override
-    public boolean shouldOpenUI(Player player, InteractionHand hand, BlockHitResult hit) {
-        MEPatternBufferPartMachine linked = getBuffer();
-        return linked != null && MachineOwner.canOpenOwnerMachine(player, this) &&
-                MachineOwner.canOpenOwnerMachine(player, linked);
     }
 
     @Override
