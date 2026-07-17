@@ -192,11 +192,12 @@ public class MEPatternBufferProxyLDLib2UITest {
                     decodedOpening.equals(opening(proxy, buffer)) &&
                     decodedSession.equals(holder.getMenuSessionId()),
                     "Proxy menu opening data lost its server-captured identity");
-            helper.assertTrue(decodedProjection.data().isEmpty() &&
+            helper.assertTrue(decodedProjection.data().isEmpty() && decodedProjection.sharedFluids().isEmpty() &&
                     !holder.getOpeningSnapshot().data().isEmpty() &&
+                    !holder.getOpeningSnapshot().sharedFluids().isEmpty() &&
                     decodedProjection.blockState().equals(holder.getOpeningSnapshot().blockState()) &&
                     wire.readableBytes() == 0,
-                    "Proxy menu opening data included the full field snapshot or lost its projection state");
+                    "Proxy menu opening data included full container state or lost its projection state");
         } finally {
             wire.release();
             holder.close(player);
@@ -257,8 +258,11 @@ public class MEPatternBufferProxyLDLib2UITest {
         FluidStack updatedSharedFluid = new FluidStack(Fluids.LAVA, 4_000);
         configureSnapshotSource(updatedSource, "Refreshed", updatedPattern, updatedSharedItem,
                 updatedCircuit, updatedSharedFluid, true);
+        view.getShareTank().setFluidInTank(2, new FluidStack(Fluids.WATER, 750));
+        MEPatternBufferProxyViewSnapshot updatedFull = MEPatternBufferProxyViewSnapshot.capture(
+                updatedSource, helper.getLevel().registryAccess());
         MEPatternBufferProxyViewSnapshot updated = roundTripSnapshot(helper,
-                MEPatternBufferProxyViewSnapshot.capture(updatedSource, helper.getLevel().registryAccess()));
+                MEPatternBufferProxyViewSnapshot.update(updatedSource, updatedFull.data()));
 
         updated.applyTo(view, helper.getLevel().registryAccess());
 
@@ -267,9 +271,39 @@ public class MEPatternBufferProxyLDLib2UITest {
                 "later Proxy snapshot did not replace the detached view's previous client state");
         assertCoreSnapshotState(helper, view, "Refreshed", updatedPattern, updatedSharedItem,
                 updatedCircuit, updatedSharedFluid, true);
+        helper.assertTrue(view.getShareTank().getFluidInTank(2).isEmpty(),
+                "later Proxy fluid snapshot did not clear a stale detached tank");
         helper.assertTrue(MetaMachine.getMachine(helper.getLevel(), initialSourcePos) == null,
                 "snapshot refresh registered its detached Pattern Buffer in the world");
         MEPatternBufferProxyViewSnapshot.discardDetachedView(view);
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void snapshotRejectsWorldOwnedTargetBeforeFluidMutation(GameTestHelper helper) {
+        MEPatternBufferPartMachine source = placeBuffer(helper, BUFFER_A_POS);
+        FluidStack sourceFluid = new FluidStack(Fluids.LAVA, 4_000);
+        source.getShareTank().setFluidInTank(5, sourceFluid.copy());
+        MEPatternBufferProxyViewSnapshot snapshot = MEPatternBufferProxyViewSnapshot.capture(
+                source, helper.getLevel().registryAccess());
+
+        MEPatternBufferPartMachine worldOwnedTarget = placeBuffer(helper, BUFFER_B_POS);
+        FluidStack originalFluid = new FluidStack(Fluids.WATER, 1_000);
+        worldOwnedTarget.getShareTank().setFluidInTank(5, originalFluid.copy());
+        boolean rejected = false;
+        try {
+            snapshot.applyTo(worldOwnedTarget, helper.getLevel().registryAccess());
+        } catch (IllegalArgumentException expected) {
+            rejected = true;
+        }
+
+        helper.assertTrue(rejected,
+                "Pattern Buffer Proxy snapshot overwrote a world-owned machine");
+        helper.assertTrue(FluidStack.matches(
+                originalFluid, worldOwnedTarget.getShareTank().getFluidInTank(5)),
+                "world-owned rejection mutated shared fluid before failing");
         helper.succeed();
     }
 
