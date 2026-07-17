@@ -1,24 +1,71 @@
 ---
-title: LDLib2 UI Editor Migration
+title: LDLib2 UI Editor
 ---
 
+# LDLib2 UI Editor
 
-# LDLib2 UI Editor Migration
+GTCEu Modern uses LDLib2 XML for editable machine and recipe type UIs. Run `/gtceu ui_editor` to open the editor. The
+command requires administrator permission.
 
-GTCEu Modern is migrating its customizable UI support from LDLib1 to LDLib2.
+## Editing a template
 
-The legacy `.rtui` files are LDLib1 runtime UI files. They are Minecraft NBT, not text files; depending on the writer
-and asset age they may be raw binary NBT or gzip-compressed NBT. Do not convert them by renaming the extension or by
-treating them as XML.
+Open the **Templates** menu and select either **Machine** or **Recipe**. Selecting an entry creates a GT XML project from
+the XML supplied by that template and assigns its runtime target. The selected target also determines the default save
+location.
 
-LDLib2 UI definitions use XML. Existing custom machine and recipe type UIs must be converted from the old NBT
-structure to LDLib2 XML as a one-time migration. New custom UI work should target the LDLib2 XML format instead of
-adding new LDLib1 `.rtui` assets or relying on the old LDLib runtime loader.
+The project view is an XML source editor with a rendered preview. The play/stop control switches the preview into and
+out of simulation mode. Edit the XML source directly; it is the authoritative project representation.
 
-Converted assets should use the `gtpm` namespace for GTCEu-provided metadata and textures where possible. Do not add new
-`ldlib` metadata sections as a compatibility layer; old LDLib metadata should be translated to GTM metadata or to the
-LDLib2 XML UI definition.
+!!! note
+    This workflow does not provide hierarchy or inspector-based visual editing, and it does not serialize an edited
+    `UIElement` tree back to XML.
 
-During the migration window, the old in-game UI editor may still be available through `/gtceu ui_editor` for existing
-projects, but it is a historical compatibility path. It will be removed once GTCEu's editor integration is fully moved
-to LDLib2.
+## Workspace and save paths
+
+The active editor workspace is:
+
+```text
+<gameDir>/ldlib2/assets/
+```
+
+For a target resource location `<namespace>:<path>`, templates use these default paths:
+
+- Machine: `<assetsRoot>/<namespace>/ui/machine/<path>.xml`
+- Recipe type: `<assetsRoot>/<namespace>/ui/recipe_type/<path>.xml`
+
+Saving a recognized Machine or Recipe target under the active assets root invalidates the corresponding runtime XML
+cache. The next time that UI is created, GTCEu reads the saved XML. An already open machine or recipe UI is not rebuilt
+in place, so reopen it to see the change.
+
+XML files outside the active assets root can still be opened, edited, and saved back to their original location. GTCEu
+logs a warning for such saves and does not reload a runtime target. To make it an active override, save the project from
+the editor to its canonical path under `<gameDir>/ldlib2/assets/`.
+
+## Runtime XML contracts
+
+Keep the following contracts when editing a generated template:
+
+- Save XML as strict UTF-8 without a byte order mark (BOM). The editor and runtime reject a BOM, and runtime loading
+  also rejects malformed UTF-8.
+- The XML must be well-formed LDLib2 UI XML. If a custom resource exists but cannot be decoded, parsed, or bound, GTCEu
+  logs the error and fails that UI creation instead of silently falling back to the default template.
+- The root element of both machine and recipe templates must declare fixed pixel `width` and `height` values. Percentage,
+  automatic, or otherwise non-fixed root dimensions cannot provide the size required by the machine shell and recipe
+  viewer.
+- Recipe progress binding requires at least one `gtm-progress-bar` or `gtm-dual-progress` with `id="progress"`.
+- Recipe capability elements that receive runtime storage or content must retain IDs in the form
+  `<capability>_<io>_<index>`, where `<io>` is `in` or `out` and `<index>` is zero-based. Examples include `item_in_0`
+  and `fluid_out_0`. The element type must still match the capability.
+- Machine templates also retain the recipe binding IDs above. A simple tiered machine additionally requires exactly one
+  `gtm-item-slot` with `id="battery_slot"`; a simple generator requires exactly one `gtm-progress-bar` with
+  `id="energy_container"`.
+
+The generated Machine and Recipe templates already satisfy these contracts. Preserve their binding IDs when changing
+layout, styles, or textures.
+
+## Legacy files
+
+LDLib1 `.mui` and `.rtui` files are historical formats and are no longer loaded by the runtime. They cannot be converted
+by renaming the extension or treating their contents as LDLib2 XML. Recreate the layout and binding contract in an
+LDLib2 XML template, then save it to the canonical Machine or Recipe path above. New custom UI work should not add
+LDLib1 `.mui` or `.rtui` assets.
