@@ -92,7 +92,11 @@ class SyncDataHolder(private val holder: ISyncManaged) {
 		val builder = SyncFieldData.builder()
 		for (field in syncData.getClientSyncFields()) {
 			builder.put(field.componentKey, FieldSyncHandler.serializeFieldData(registries, holder, field, true, fullSync = true))
-			cachedClientValues[field] = field.handle.get(holder)
+			val currentValue = field.handle.get(holder)
+			cachedClientValues[field] = currentValue
+			if (field.hasSyncBoth) {
+				cachedServerValues[field] = currentValue
+			}
 		}
 		resyncAll = false
 		dirtySyncFields.clear()

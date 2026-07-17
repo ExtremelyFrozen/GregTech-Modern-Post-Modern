@@ -11,6 +11,7 @@ import com.mojang.serialization.JsonOps
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 
+import java.lang.invoke.VarHandle
 import java.math.BigDecimal
 
 @ApiStatus.Internal
@@ -98,12 +99,7 @@ object FieldSyncHandler {
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	private fun decodeOrdinaryFieldValue(
-		registries: HolderLookup.Provider,
-		field: FieldSyncData,
-		codec: Codec<*>,
-		savedValue: JsonElement,
-	): Any? {
+	private fun decodeOrdinaryFieldValue(registries: HolderLookup.Provider, field: FieldSyncData, codec: Codec<*>, savedValue: JsonElement): Any? {
 		val result = (codec as Codec<Any>)
 			.parse(registries.createSerializationContext(JsonOps.INSTANCE), savedValue)
 		// Codecs may define their own explicit-null value; otherwise JsonNull is the sync token for a null reference.
@@ -204,10 +200,7 @@ object FieldSyncHandler {
 						parseExplicitNull,
 					),
 				)
-				if (copyIntoMutableCurrent(current, result)) return
-				if (result !== current) {
-					field.handle.set(holder, result)
-				}
+				applyDecodedValue(holder, field, current, result)
 			} catch (e: Exception) {
 				if (e is UnsupportedOperationException) {
 					GTCEu.LOGGER.error(
@@ -230,10 +223,7 @@ object FieldSyncHandler {
 			try {
 				val result = decodeOrdinaryFieldValue(registries, field, it, savedValue)
 				val current = field.handle.get(holder)
-				if (copyIntoMutableCurrent(current, result)) return
-				if (result !== current) {
-					field.handle.set(holder, result)
-				}
+				applyDecodedValue(holder, field, current, result)
 			} catch (e: Exception) {
 				if (e is UnsupportedOperationException) {
 					GTCEu.LOGGER.error(
@@ -254,14 +244,20 @@ object FieldSyncHandler {
 		throw IllegalArgumentException(message)
 	}
 
+	private fun applyDecodedValue(holder: Any, field: FieldSyncData, @Nullable current: Any?, @Nullable result: Any?) {
+		if (result === current) return
+		if (!field.handle.isAccessModeSupported(VarHandle.AccessMode.SET) && copyIntoFinalContainer(current, result)) return
+		field.handle.set(holder, result)
+	}
+
 	@Suppress("UNCHECKED_CAST")
-	private fun copyIntoMutableCurrent(@Nullable current: Any?, @Nullable result: Any?): Boolean {
-		if (current is MutableCollection<*> && result is Collection<*>) {
+	private fun copyIntoFinalContainer(@Nullable current: Any?, @Nullable result: Any?): Boolean {
+		if (current is Collection<*> && result is Collection<*>) {
 			(current as MutableCollection<Any?>).clear()
 			current.addAll(result)
 			return true
 		}
-		if (current is MutableMap<*, *> && result is Map<*, *>) {
+		if (current is Map<*, *> && result is Map<*, *>) {
 			(current as MutableMap<Any?, Any?>).clear()
 			current.putAll(result)
 			return true

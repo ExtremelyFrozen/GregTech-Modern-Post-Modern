@@ -34,7 +34,9 @@ import com.mojang.serialization.JsonOps;
 import io.netty.buffer.Unpooled;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @PrefixGameTestTemplate(false)
@@ -285,6 +287,64 @@ public class SyncFieldDataComponentTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void fullSyncReplacesImmutableCollectionsAndPreservesFinalMutableIdentity(GameTestHelper helper) {
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        CollectionSyncTarget server = new CollectionSyncTarget(
+                List.of("server-list"), Map.of("server-map", 2), "server-both");
+        CollectionSyncTarget client = new CollectionSyncTarget(
+                List.of("client-list"), Map.of("client-map", 1), "client-both");
+        List<String> immutableList = client.replaceableList;
+        Map<String, Integer> immutableMap = client.replaceableMap;
+        Object mutableList = client.mutableListIdentity();
+        Object mutableMap = client.mutableMapIdentity();
+        client.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+
+        DataComponentMap fullSync = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, fullSync);
+
+        helper.assertTrue(client.replaceableList != immutableList &&
+                client.replaceableList.equals(List.of("server-list")),
+                "full sync did not replace an immutable list field");
+        helper.assertTrue(client.replaceableMap != immutableMap &&
+                client.replaceableMap.equals(Map.of("server-map", 2)),
+                "full sync did not replace an immutable map field");
+        helper.assertTrue(client.mutableListIdentity() == mutableList &&
+                client.mutableList.equals(List.of("server-list")),
+                "full sync did not preserve final mutable list identity");
+        helper.assertTrue(client.mutableMapIdentity() == mutableMap &&
+                client.mutableMap.equals(Map.of("server-map", 2)),
+                "full sync did not preserve final mutable map identity");
+        helper.assertTrue("server-both".equals(client.bothValue),
+                "full sync did not apply the SyncBoth value");
+        helper.assertTrue(client.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "full sync produced a redundant changed-only client delta");
+        helper.assertTrue(client.getSyncDataHolder().collectServerNetworkChanges(registries).isEmpty(),
+                "full sync produced a redundant SyncBoth server echo");
+        helper.assertTrue(server.getSyncDataHolder().collectServerNetworkChanges(registries).isEmpty(),
+                "full sync did not establish the server-side SyncBoth baseline");
+
+        client.bothValue = "changed-both";
+        DataComponentMap request = client.getSyncDataHolder().collectServerNetworkChanges(registries);
+        SyncFieldData requestFields = request.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        helper.assertTrue(requestFields != null && requestFields.fields().size() == 1 &&
+                new JsonPrimitive("changed-both").equals(requestFields.get(SyncFieldData.key("bothValue"))),
+                "changed-only SyncBoth request included unrelated fields");
+
+        ServerFieldUpdateResult applied = server.getSyncDataHolder().tryApplyServerNetworkUpdate(registries, request);
+        helper.assertTrue(applied.getAccepted() && applied.getChanged(),
+                "changed-only SyncBoth request was not applied");
+        DataComponentMap acknowledgement = server.getSyncDataHolder().serializeToComponents(registries, true, false);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, acknowledgement);
+        helper.assertTrue("changed-both".equals(client.bothValue),
+                "authoritative SyncBoth acknowledgement did not apply to the client");
+        helper.assertTrue(client.getSyncDataHolder().collectServerNetworkChanges(registries).isEmpty(),
+                "authoritative SyncBoth acknowledgement echoed back to the server");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
     public static void syncDataHolderParsesNetworkExplicitNullFields(GameTestHelper helper) {
         ParsedNullSyncTarget target = new ParsedNullSyncTarget(
                 new NullParsedValue("client-original"),
@@ -415,6 +475,48 @@ public class SyncFieldDataComponentTest {
             this.savedValue = savedValue;
             this.clientValue = clientValue;
             this.bothValue = bothValue;
+        }
+
+        @Override
+        public SyncDataHolder getSyncDataHolder() {
+            return syncDataHolder;
+        }
+
+        @Override
+        public @Nullable ISyncManaged getParentSyncObject() {
+            return null;
+        }
+    }
+
+    private static final class CollectionSyncTarget implements ISyncManaged {
+
+        private final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
+        @SyncToClient
+        private List<String> replaceableList;
+        @SyncToClient
+        private Map<String, Integer> replaceableMap;
+        @SyncToClient
+        private final List<String> mutableList = new ArrayList<>();
+        @SyncToClient
+        private final Map<String, Integer> mutableMap = new LinkedHashMap<>();
+        @SyncBoth
+        private String bothValue;
+
+        private CollectionSyncTarget(List<String> replaceableList, Map<String, Integer> replaceableMap,
+                                     String bothValue) {
+            this.replaceableList = List.copyOf(replaceableList);
+            this.replaceableMap = Map.copyOf(replaceableMap);
+            this.mutableList.addAll(replaceableList);
+            this.mutableMap.putAll(replaceableMap);
+            this.bothValue = bothValue;
+        }
+
+        private Object mutableListIdentity() {
+            return mutableList;
+        }
+
+        private Object mutableMapIdentity() {
+            return mutableMap;
         }
 
         @Override

@@ -14,8 +14,6 @@ import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -199,7 +197,6 @@ public class WorkLogic extends MachineTrait implements IFancyTooltip {
         getSyncDataHolder().resyncAllFields();
     }
 
-    @OnlyIn(Dist.CLIENT)
     public void updateSound() {}
 
     @Override
