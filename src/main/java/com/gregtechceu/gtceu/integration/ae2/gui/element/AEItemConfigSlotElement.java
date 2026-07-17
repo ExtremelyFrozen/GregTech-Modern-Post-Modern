@@ -123,7 +123,7 @@ public final class AEItemConfigSlotElement extends UIElement {
                 .setTextAlignHorizontal(Horizontal.RIGHT)
                 .setTextAlignVertical(Vertical.BOTTOM)
                 .setFontSize(4.5f);
-        label.setVisibleSupplier(() -> !snapshotSupplier.get().stocking());
+        label.setVisible(!snapshotSupplier.get().stocking());
         label.setId("me_item_config_amount_" + index);
         label.setAllowHitTest(false);
         return label;

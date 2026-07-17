@@ -224,7 +224,6 @@ public class GTItemSlotElement extends ItemSlot {
         return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role));
     }
 
-    @Override
     public GTItemSlotElement xeiRecipeIngredient(IngredientIO io, Stream<ItemStack> allPossibleItems) {
         this.ingredientIO = io;
         setXEIPossibleItems(allPossibleItems);
@@ -266,7 +265,6 @@ public class GTItemSlotElement extends ItemSlot {
         return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), chance);
     }
 
-    @Override
     public GTItemSlotElement xeiRecipeSlot(IngredientIO io, float chance, int amount,
                                            Stream<ItemStack> allPossibleItems) {
         this.ingredientIO = io;
