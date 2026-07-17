@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceTexture;
 import com.gregtechceu.gtceu.api.recipe.*;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
@@ -68,7 +69,8 @@ public class GTRecipeTypes {
     //////////////////////////////////////
     public final static GTRecipeType STEAM_BOILER_RECIPES = register("steam_boiler", STEAM)
             .setMaxIOSize(1, 0, 1, 1)
-            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(true), DOWN_TO_UP))
+            .setProgressBar(GuiTextures.progressBar(
+                    (ResourceTexture) GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(true), DOWN_TO_UP))
             .setMaxTooltips(1)
             .onRecipeBuild((builder, provider) -> {
                 // all LBB recipes' duration is 1/4 the small boiler recipe's duration
@@ -464,7 +466,8 @@ public class GTRecipeTypes {
     //////////////////////////////////////
     public final static GTRecipeType LARGE_BOILER_RECIPES = register("large_boiler", MULTIBLOCK)
             .setMaxIOSize(1, 0, 1, 1)
-            .setProgressBar(GuiTextures.progressBar(GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(true), DOWN_TO_UP))
+            .setProgressBar(GuiTextures.progressBar(
+                    (ResourceTexture) GuiTextures.PROGRESS_BAR_BOILER_FUEL.get(true), DOWN_TO_UP))
             .setMaxTooltips(1)
             .setSound(GTSoundEntries.FURNACE);
 

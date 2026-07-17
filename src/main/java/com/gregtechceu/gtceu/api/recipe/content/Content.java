@@ -109,12 +109,13 @@ public class Content {
 
             @Override
             @OnlyIn(Dist.CLIENT)
-            public void draw(GuiGraphics graphics, int mouseX, int mouseY, float x, float y, int width, int height) {
-                drawChance(graphics, x, y, width, height, recipeTier, chanceTier, function);
-                drawRangeAmount(graphics, x, y, width, height);
-                drawFluidAmount(graphics, x, y, width, height);
+            public void draw(GuiGraphics graphics, float mouseX, float mouseY, float x, float y, float width,
+                             float height, float partialTicks) {
+                drawChance(graphics, x, y, (int) width, (int) height, recipeTier, chanceTier, function);
+                drawRangeAmount(graphics, x, y, (int) width, (int) height);
+                drawFluidAmount(graphics, x, y, (int) width, (int) height);
                 if (perTick) {
-                    drawTick(graphics, x, y, width, height);
+                    drawTick(graphics, x, y, (int) width, (int) height);
                 }
             }
         };
