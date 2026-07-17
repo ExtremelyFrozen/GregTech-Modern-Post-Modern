@@ -81,9 +81,7 @@ object FieldSyncHandler {
 
 		return try {
 			validateDefaultScalarIntegralCandidate(field, codec, savedValue)
-			(codec as Codec<Any>)
-				.parse(registries.createSerializationContext(JsonOps.INSTANCE), savedValue)
-				.getOrThrow()
+			decodeOrdinaryFieldValue(registries, field, codec, savedValue)
 		} catch (e: RuntimeException) {
 			GTCEu.LOGGER.warn(
 				"Sync: Failed to decode detached server candidate for field {} of type {} in {}",
@@ -97,6 +95,22 @@ object FieldSyncHandler {
 				e,
 			)
 		}
+	}
+
+	@Suppress("UNCHECKED_CAST")
+	private fun decodeOrdinaryFieldValue(
+		registries: HolderLookup.Provider,
+		field: FieldSyncData,
+		codec: Codec<*>,
+		savedValue: JsonElement,
+	): Any? {
+		val result = (codec as Codec<Any>)
+			.parse(registries.createSerializationContext(JsonOps.INSTANCE), savedValue)
+		// Codecs may define their own explicit-null value; otherwise JsonNull is the sync token for a null reference.
+		if (savedValue.isJsonNull && !field.handle.varType().isPrimitive && result.error().isPresent) {
+			return null
+		}
+		return result.getOrThrow()
 	}
 
 	private fun validateDefaultScalarIntegralCandidate(field: FieldSyncData, codec: Codec<*>, savedValue: JsonElement) {
@@ -214,9 +228,7 @@ object FieldSyncHandler {
 		}
 		field.codec?.let {
 			try {
-				val result = (it as Codec<Any>)
-					.parse(registries.createSerializationContext(JsonOps.INSTANCE), savedValue)
-					.getOrThrow()
+				val result = decodeOrdinaryFieldValue(registries, field, it, savedValue)
 				val current = field.handle.get(holder)
 				if (copyIntoMutableCurrent(current, result)) return
 				if (result !== current) {

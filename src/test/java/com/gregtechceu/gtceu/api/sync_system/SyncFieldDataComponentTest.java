@@ -8,6 +8,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToServer;
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -226,6 +227,58 @@ public class SyncFieldDataComponentTest {
         target.getSyncDataHolder().deserializeFieldData(helper.getLevel().registryAccess(), savedData, false);
 
         helper.assertTrue("saved".equals(target.savedValue), "saved field explicit null was parsed");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void ordinaryNetworkNullClearsReferencesAndAcknowledgesWithoutEcho(GameTestHelper helper) {
+        NullSyncTarget server = new NullSyncTarget("server-saved", "server-client", "server-both");
+        NullSyncTarget fullSyncServer = new NullSyncTarget("full-saved", null, null);
+        NullSyncTarget client = new NullSyncTarget("client-saved", "client-client", "client-both");
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        client.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+
+        DataComponentMap fullSync = fullSyncServer.getSyncDataHolder()
+                .serializeFullClientSyncComponents(registries);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, fullSync);
+
+        helper.assertTrue(client.clientValue == null,
+                "ordinary client field codec did not restore a full-sync null");
+        helper.assertTrue(client.bothValue == null,
+                "ordinary SyncBoth field codec did not restore a full-sync null");
+        helper.assertTrue(client.getSyncDataHolder().collectServerNetworkChanges(registries).isEmpty(),
+                "client echoed the authoritative full-sync null back to the server");
+
+        DataComponentMap serverClear = DataComponentMap.builder()
+                .set(GTDataComponents.SYNC_FIELD_DATA.get(), SyncFieldData.builder()
+                        .put(SyncFieldData.key("bothValue"), JsonNull.INSTANCE)
+                        .build())
+                .build();
+        ServerFieldUpdateResult result = server.getSyncDataHolder().tryApplyServerNetworkUpdate(
+                registries, serverClear);
+
+        helper.assertTrue(result.getAccepted() && result.getChanged(),
+                "ordinary server field codec rejected an explicit reference null");
+        helper.assertTrue(server.bothValue == null,
+                "accepted explicit reference null did not commit to the server field");
+        helper.assertTrue(server.getSyncDataHolder().scanAndMarkChanges(registries),
+                "accepted SyncBoth null did not request an authoritative acknowledgement");
+
+        DataComponentMap acknowledgement = server.getSyncDataHolder().collectClientNetworkChanges(registries, false);
+        SyncFieldData acknowledgementFields = acknowledgement.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        helper.assertTrue(acknowledgementFields != null && acknowledgementFields.fields().size() == 1,
+                "authoritative null acknowledgement included unrelated fields");
+        helper.assertTrue(acknowledgementFields.get(SyncFieldData.key("bothValue")).isJsonNull(),
+                "authoritative acknowledgement did not retain the explicit null");
+
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, acknowledgement);
+        helper.assertTrue(client.bothValue == null,
+                "client did not apply the authoritative null acknowledgement");
+        helper.assertTrue(client.getSyncDataHolder().collectServerNetworkChanges(registries).isEmpty(),
+                "client echoed the authoritative null acknowledgement back to the server");
         helper.succeed();
     }
 
