@@ -160,6 +160,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2MachineModeFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2VoidingModeFancyConfigurator.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2WorkingEnabledFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/multiblock/WorkableElectricMultiblockMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SimpleSteamMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SteamBoilerMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/client/gui/fancy/LDLib2PreviewSceneElement.java',
