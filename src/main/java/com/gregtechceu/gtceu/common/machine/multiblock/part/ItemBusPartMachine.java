@@ -11,7 +11,6 @@ import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
@@ -19,10 +18,8 @@ import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CircuitFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DistinctPartFancyConfigurator;
@@ -46,8 +43,6 @@ import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTTransferUtils;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
@@ -399,46 +394,6 @@ public class ItemBusPartMachine extends TieredIOPartMachine
                 .setBackgroundTexture(GuiTextures.SLOT)
                 .setIngredientIO(io.support(IO.IN) ? GTXEIHelper.input() : GTXEIHelper.output());
         return UITemplate.setLDLib2Bounds(slot, x, y, 18, 18);
-    }
-
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        if (this.io.support(IO.OUT)) {
-            IDistinctPart.super.superAttachConfigurators(configuratorPanel);
-        } else if (this.io.support(IO.IN)) {
-            IDistinctPart.super.attachConfigurators(configuratorPanel);
-            if (hasCircuitSlot && isCircuitSlotEnabled()) {
-                configuratorPanel.attachConfigurators(new CircuitFancyConfigurator(circuitInventory.storage));
-            }
-        }
-    }
-
-    @Override
-    public Widget createUIWidget() {
-        int rowSize = (int) Math.sqrt(getInventorySize());
-        int colSize = rowSize;
-        if (getInventorySize() == 8) {
-            rowSize = 4;
-            colSize = 2;
-        }
-        var group = new WidgetGroup(0, 0, 18 * rowSize + 16, 18 * colSize + 16);
-        var container = new WidgetGroup(4, 4, 18 * rowSize + 8, 18 * colSize + 8);
-        int index = 0;
-        if (this.io == IO.OUT) {
-            group.addWidget(filterHandler.createFilterSlotUI(71 + (18 * rowSize) / 2, 35 + 9 * rowSize)
-                    .setHoverTooltips(Component.translatable("cover.item_filter.title")));
-        }
-        for (int y = 0; y < colSize; y++) {
-            for (int x = 0; x < rowSize; x++) {
-                container.addWidget(
-                        new SlotWidget(getInventory().storage, index++, 4 + x * 18, 4 + y * 18, true, io.support(IO.IN))
-                                .setBackgroundTexture(GuiTextures.SLOT)
-                                .setIngredientIO(this.io.support(IO.IN) ? GTXEIHelper.input() : GTXEIHelper.output()));
-            }
-        }
-
-        container.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        group.addWidget(container);
-        return group;
     }
 
     /**
