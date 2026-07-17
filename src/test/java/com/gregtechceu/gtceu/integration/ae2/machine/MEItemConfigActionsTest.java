@@ -79,10 +79,13 @@ public class MEItemConfigActionsTest {
                 "valid item stock pickup action was rejected");
         ItemStack carried = player.containerMenu.getCarried();
         GenericStack remaining = input.aeItemHandler.getInventory()[3].getStock();
-        helper.assertTrue(ItemStack.isSameItemSameComponents(carried, configuredItem) &&
-                carried.getCount() == Integer.MAX_VALUE,
+        boolean saturatedCursor = ItemStack.isSameItemSameComponents(carried, configuredItem) &&
+                carried.getCount() == Integer.MAX_VALUE;
+        boolean exactRemainder = remaining != null && remaining.amount() == 37;
+        player.containerMenu.setCarried(ItemStack.EMPTY);
+        helper.assertTrue(saturatedCursor,
                 "item stock pickup did not preserve the legacy saturated cursor amount");
-        helper.assertTrue(remaining != null && remaining.amount() == 37,
+        helper.assertTrue(exactRemainder,
                 "item stock pickup did not subtract the exact cursor amount");
 
         helper.assertTrue(dispatch(player, input,
@@ -320,6 +323,7 @@ public class MEItemConfigActionsTest {
 
     private static ServerPlayer preparePlayer(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        player.containerMenu.setCarried(ItemStack.EMPTY);
         player.closeContainer();
         player.setGameMode(GameType.SURVIVAL);
         player.getInventory().clearContent();

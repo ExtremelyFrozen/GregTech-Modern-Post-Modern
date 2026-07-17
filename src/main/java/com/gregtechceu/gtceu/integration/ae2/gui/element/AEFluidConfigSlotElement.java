@@ -25,6 +25,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 
 import appeng.api.stacks.AEFluidKey;
@@ -156,12 +157,19 @@ public final class AEFluidConfigSlotElement extends UIElement {
     }
 
     private FluidStack normalizeGhostFluid(FluidStack fluid) {
-        if (((FluidStackAccessor) (Object) fluid).getRawFluid() != Fluids.EMPTY && fluid.getAmount() <= 0) {
-            FluidStack normalized = fluid.copy();
-            normalized.setAmount(1_000);
-            return normalized;
+        if (fluid == FluidStack.EMPTY) {
+            return FluidStack.EMPTY;
         }
-        return fluid.isEmpty() ? FluidStack.EMPTY : fluid.copy();
+        var rawFluid = ((FluidStackAccessor) (Object) fluid).getRawFluid();
+        if (rawFluid == Fluids.EMPTY) {
+            return FluidStack.EMPTY;
+        }
+        if (fluid.getAmount() > 0) {
+            return fluid.copy();
+        }
+        FluidStack normalized = new FluidStack(rawFluid, FluidType.BUCKET_VOLUME);
+        normalized.applyComponents(fluid.getComponents());
+        return normalized;
     }
 
     private void handleConfigClick(UIEvent event) {

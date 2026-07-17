@@ -64,7 +64,11 @@ public final class AEItemConfigAmountEditorElement extends UIElement {
 
     private void refreshVisibility() {
         boolean visible = amountProjection.projectedAmount(selectedSlotSupplier.getAsInt()).isPresent();
+        boolean canSend = canSendAction.getAsBoolean();
         setVisible(visible);
-        setActive(visible && canSendAction.getAsBoolean());
+        amountInput.setActive(visible && canSend);
+        if (!canSend) {
+            amountInput.setValue(selectedAmount());
+        }
     }
 }

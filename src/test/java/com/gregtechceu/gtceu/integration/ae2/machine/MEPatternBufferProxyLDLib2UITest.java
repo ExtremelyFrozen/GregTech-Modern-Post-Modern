@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.integration.ae2.machine;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -66,7 +67,7 @@ public class MEPatternBufferProxyLDLib2UITest {
     private static final BlockPos BUFFER_A_POS = new BlockPos(0, 1, 0);
     private static final BlockPos BUFFER_B_POS = new BlockPos(1, 1, 0);
     private static final BlockPos PROXY_POS = new BlockPos(2, 1, 0);
-    private static final BlockPos REMOTE_BUFFER_POS = new BlockPos(11, 1, 0);
+    private static final BlockPos REMOTE_BUFFER_POS = new BlockPos(20, 1, 0);
 
     @TestHolder
     @EmptyTemplate
@@ -107,8 +108,9 @@ public class MEPatternBufferProxyLDLib2UITest {
         helper.assertTrue(shell.getSideTabsElement().getChildren().size() == 2,
                 "Pattern Buffer Proxy contextual preview lost its directional page");
         UIElement preview = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(preview.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                preview.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
+        UITemplate.LDLib2Bounds previewBounds = UITemplate.getLDLib2Bounds(preview);
+        helper.assertTrue(previewBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                previewBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
                 preview.getChildren().isEmpty() &&
                 descendants(preview).stream().noneMatch(MEPatternBufferPageElement.class::isInstance),
                 "Pattern Buffer Proxy contextual page reused its linked-buffer standalone body");
@@ -337,7 +339,8 @@ public class MEPatternBufferProxyLDLib2UITest {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Proxy shell omitted the Pattern Buffer body"));
 
-        helper.assertTrue(page.getSizeWidth() == 178 && page.getSizeHeight() == 70 &&
+        UITemplate.LDLib2Bounds pageBounds = UITemplate.getLDLib2Bounds(page);
+        helper.assertTrue(pageBounds.width() == 178 && pageBounds.height() == 70 &&
                 page.getPatternSlots().size() == 27,
                 "Proxy did not preserve the complete 178x70 Pattern Buffer body");
         helper.assertTrue(shell.getConfiguratorPanel().getChildren().size() == 4,

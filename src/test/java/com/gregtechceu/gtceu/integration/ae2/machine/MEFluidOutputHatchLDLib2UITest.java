@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -100,13 +101,16 @@ public class MEFluidOutputHatchLDLib2UITest {
         UIElement root = pageRoot(shell);
         MEOutputWaitingListTarget target = output.getWaitingListTarget();
         MEFluidOutputWaitingListElement list = waitingList(root, target);
-        helper.assertTrue(root.getSizeWidth() == PAGE_WIDTH && root.getSizeHeight() == PAGE_HEIGHT &&
-                list.getPositionX() - root.getPositionX() == 5 &&
-                list.getPositionY() - root.getPositionY() == 20 &&
-                list.getSizeWidth() == 158 && list.getSizeHeight() == 3 * ROW_HEIGHT,
+        UITemplate.LDLib2Bounds rootBounds = UITemplate.getLDLib2Bounds(root);
+        UITemplate.LDLib2Bounds listBounds = UITemplate.getLDLib2Bounds(list);
+        helper.assertTrue(rootBounds.width() == PAGE_WIDTH && rootBounds.height() == PAGE_HEIGHT &&
+                listBounds.x() == 5 && listBounds.y() == 20 &&
+                listBounds.width() == 158 && listBounds.height() == 3 * ROW_HEIGHT,
                 "ME fluid output page lost its 170x74 body or 158x54 waiting-list viewport");
-        helper.assertTrue(label(root, "me_network_status").getPositionY() - root.getPositionY() == 0 &&
-                label(root, "me_output_waiting_list_label").getPositionY() - root.getPositionY() == 10,
+        UITemplate.LDLib2Bounds statusBounds = UITemplate.getLDLib2Bounds(label(root, "me_network_status"));
+        UITemplate.LDLib2Bounds titleBounds = UITemplate.getLDLib2Bounds(
+                label(root, "me_output_waiting_list_label"));
+        helper.assertTrue(statusBounds.y() == 0 && titleBounds.y() == 10,
                 "ME fluid output page lost its status or waiting-list label position");
         helper.assertTrue(MEOutputWaitingListReceiver.elementId(target.pos()).equals(list.getId()),
                 "ME fluid output page did not use the shared routed waiting-list element id");

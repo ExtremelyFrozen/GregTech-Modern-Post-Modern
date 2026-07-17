@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -112,8 +113,8 @@ public class MEItemInputBusLDLib2UITest {
         LDLib2FancyUIProvider stockingPage = stocking.createLDLib2Page(player, stockingHolder);
         LDLib2FancyMachineUIElement inputShell = createShell(player, input, inputHolder);
         LDLib2FancyMachineUIElement stockingShell = createShell(player, stocking, stockingHolder);
-        AEItemConfigElement configRoot = (AEItemConfigElement) pageRoot(inputShell);
-        AEItemConfigElement stockingConfigRoot = (AEItemConfigElement) pageRoot(stockingShell);
+        AEItemConfigElement configRoot = pageRoot(inputShell);
+        AEItemConfigElement stockingConfigRoot = pageRoot(stockingShell);
         configRoot.screenTick();
         stockingConfigRoot.screenTick();
 
@@ -127,11 +128,10 @@ public class MEItemInputBusLDLib2UITest {
                 "ordinary ME item page did not expose sixteen config/stock columns");
         for (int index = 0; index < configRoot.getSlots().size(); index++) {
             AEItemConfigSlotElement slot = configRoot.getSlots().get(index);
-            float relativeX = slot.getPositionX() - configRoot.getPositionX();
-            float relativeY = slot.getPositionY() - configRoot.getPositionY();
-            helper.assertTrue(slot.getIndex() == index && slot.getSizeWidth() == 18 && slot.getSizeHeight() == 36,
+            UITemplate.LDLib2Bounds bounds = UITemplate.getLDLib2Bounds(slot);
+            helper.assertTrue(slot.getIndex() == index && bounds.width() == 18 && bounds.height() == 36,
                     "ME item slot " + index + " did not preserve its index or 18x36 bounds");
-            helper.assertTrue(relativeX == 3 + index % 8 * 18 && relativeY == 10 + index / 8 * 38,
+            helper.assertTrue(bounds.x() == 3 + index % 8 * 18 && bounds.y() == 10 + index / 8 * 38,
                     "ME item slot " + index + " did not preserve its fixed grid coordinates");
         }
 
@@ -448,8 +448,12 @@ public class MEItemInputBusLDLib2UITest {
         return shell;
     }
 
-    private static UIElement pageRoot(LDLib2FancyMachineUIElement shell) {
-        return shell.getChildren().getFirst().getChildren().getFirst();
+    private static AEItemConfigElement pageRoot(LDLib2FancyMachineUIElement shell) {
+        return descendants(shell).stream()
+                .filter(AEItemConfigElement.class::isInstance)
+                .map(AEItemConfigElement.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("ME item input shell omitted its config element"));
     }
 
     private static AEItemConfigElement createConfigRoot(ServerPlayer player, MEInputBusPartMachine machine) {
@@ -537,7 +541,7 @@ public class MEItemInputBusLDLib2UITest {
         UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
         event.target = target;
         event.button = button;
-        UIEventDispatcher.dispatchEvent(event, false, false, false);
+        UIEventDispatcher.dispatchEvent(event, true, true, false);
     }
 
     private static void wheel(UIElement target, float deltaY, boolean ctrlDown) {

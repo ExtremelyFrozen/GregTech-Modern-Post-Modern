@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
@@ -110,8 +111,9 @@ public class MEPatternBufferLDLib2UITest {
         MEPatternBufferPageElement page = buffer.createLDLib2MainElement(player, holder,
                 (sentHolder, action) -> {}, () -> true);
 
+        UITemplate.LDLib2Bounds pageBounds = UITemplate.getLDLib2Bounds(page);
         helper.assertTrue(buffer.getLDLib2PageWidth() == 178 && buffer.getLDLib2PageHeight() == 70 &&
-                page.getSizeWidth() == 178 && page.getSizeHeight() == 70,
+                pageBounds.width() == 178 && pageBounds.height() == 70,
                 "ME Pattern Buffer did not preserve its 178x70 legacy body");
 
         List<AEPatternViewSlotElement> slots = page.getPatternSlots();
@@ -131,9 +133,10 @@ public class MEPatternBufferLDLib2UITest {
             helper.assertTrue(handlerSlot.getItemHandler() == buffer.getPatternInventory() &&
                     handlerSlot.getSlotIndex() == index,
                     "pattern slot " + index + " was bound to the wrong handler index");
-            helper.assertTrue(slot.getPositionX() == 8 + index % 9 * 18 &&
-                    slot.getPositionY() == 14 + index / 9 * 18 &&
-                    slot.getSizeWidth() == 18 && slot.getSizeHeight() == 18,
+            UITemplate.LDLib2Bounds slotBounds = UITemplate.getLDLib2Bounds(slot);
+            helper.assertTrue(slotBounds.x() == 8 + index % 9 * 18 &&
+                    slotBounds.y() == 14 + index / 9 * 18 &&
+                    slotBounds.width() == 18 && slotBounds.height() == 18,
                     "pattern slot " + index + " did not preserve its fixed grid coordinates");
             helper.assertTrue(handlerSlot.getCanPlace().test(encodedPattern) &&
                     !handlerSlot.getCanPlace().test(new ItemStack(Items.STONE)) &&
@@ -141,9 +144,11 @@ public class MEPatternBufferLDLib2UITest {
                     "pattern slot " + index + " did not preserve its insertion or extraction rules");
             helper.assertTrue(slot.getIngredientIO() == IngredientIO.NONE,
                     "pattern slot " + index + " unexpectedly exposed a recipe ingredient role");
-            helper.assertTrue(slot.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.SLOT &&
-                    slot.getSlotStyle().slotOverlay() == GuiTextures.PATTERN_OVERLAY &&
-                    slot.getSlotStyle().showSlotOverlayOnlyEmpty(),
+            helper.assertTrue(
+                    slot.getStyleBag().computeCandidate(PropertyRegistry.BACKGROUND) == GuiTextures.SLOT &&
+                            slot.getStyleBag().computeCandidate(PropertyRegistry.SLOT_OVERLAY) ==
+                                    GuiTextures.PATTERN_OVERLAY &&
+                            slot.getStyleBag().computeCandidate(PropertyRegistry.SHOW_SLOT_OVERLAY_ONLY_EMPTY),
                     "pattern slot " + index + " did not preserve occupied and empty slot textures");
         }
 
@@ -158,7 +163,8 @@ public class MEPatternBufferLDLib2UITest {
                 "pattern slot did not fall back to the encoded pattern when no output could be decoded");
 
         GTLabelElement networkStatus = page.getNetworkStatusLabel();
-        helper.assertTrue(networkStatus.getPositionX() == 8 && networkStatus.getPositionY() == 2,
+        UITemplate.LDLib2Bounds statusBounds = UITemplate.getLDLib2Bounds(networkStatus);
+        helper.assertTrue(statusBounds.x() == 8 && statusBounds.y() == 2,
                 "ME network status label moved from its legacy origin");
         buffer.setOnline(false);
         networkStatus.screenTick();
@@ -170,14 +176,16 @@ public class MEPatternBufferLDLib2UITest {
                 "ME network status label did not read the online machine state");
 
         MEPatternBufferNameEditorElement editor = page.getNameEditor();
-        helper.assertTrue(editor.getPositionX() == 100 && editor.getPositionY() == 2 &&
-                editor.getSizeWidth() == 70 && editor.getSizeHeight() == 10,
+        UITemplate.LDLib2Bounds editorBounds = UITemplate.getLDLib2Bounds(editor);
+        helper.assertTrue(editorBounds.x() == 100 && editorBounds.y() == 2 &&
+                editorBounds.width() == 70 && editorBounds.height() == 10,
                 "ME Pattern Buffer name editor did not preserve its 70x10 top-right bounds");
-        helper.assertTrue(editor.getTextField().getPositionX() == 0 &&
-                editor.getTextField().getPositionY() == 0 && editor.getTextField().getSizeWidth() == 58 &&
-                editor.getTextField().getSizeHeight() == 10 &&
-                editor.getToggleButton().getPositionX() == 60 && editor.getToggleButton().getPositionY() == 0 &&
-                editor.getToggleButton().getSizeWidth() == 10 && editor.getToggleButton().getSizeHeight() == 10,
+        UITemplate.LDLib2Bounds textBounds = UITemplate.getLDLib2Bounds(editor.getTextField());
+        UITemplate.LDLib2Bounds toggleBounds = UITemplate.getLDLib2Bounds(editor.getToggleButton());
+        helper.assertTrue(textBounds.x() == 0 && textBounds.y() == 0 &&
+                textBounds.width() == 58 && textBounds.height() == 10 &&
+                toggleBounds.x() == 60 && toggleBounds.y() == 0 &&
+                toggleBounds.width() == 10 && toggleBounds.height() == 10,
                 "ME Pattern Buffer name editor did not preserve its text and toggle geometry");
         helper.succeed();
     }

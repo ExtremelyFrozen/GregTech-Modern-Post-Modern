@@ -118,9 +118,23 @@ public abstract class MEOutputWaitingListElement extends UIElement
 
     @Override
     public void screenTick() {
+        if (!isOpeningVisible()) {
+            return;
+        }
         expireIncompletePublication();
         requestFullStateIfNeeded();
         super.screenTick();
+    }
+
+    private boolean isOpeningVisible() {
+        UIElement element = this;
+        while (element != null) {
+            if (!element.isActive() || !element.isVisible() || !element.isDisplayed()) {
+                return false;
+            }
+            element = element.getParent();
+        }
+        return true;
     }
 
     @Override

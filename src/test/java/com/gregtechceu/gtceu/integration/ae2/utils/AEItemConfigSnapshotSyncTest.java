@@ -204,13 +204,13 @@ public class AEItemConfigSnapshotSyncTest {
 
         JsonObject zeroAmount = snapshotJson.deepCopy();
         zeroAmount.getAsJsonArray("slots").get(0).getAsJsonObject()
-                .getAsJsonObject("config").addProperty("amount", 0);
+                .getAsJsonObject("config").addProperty(GenericStack.AMOUNT_FIELD, 0);
         assertMalformedSyncRejected(helper, client, registries, zeroAmount,
                 "item snapshot codec accepted zero config amount");
 
         JsonObject oversizedAmount = snapshotJson.deepCopy();
         oversizedAmount.getAsJsonArray("slots").get(0).getAsJsonObject()
-                .getAsJsonObject("config").addProperty("amount", (long) Integer.MAX_VALUE + 1);
+                .getAsJsonObject("config").addProperty(GenericStack.AMOUNT_FIELD, (long) Integer.MAX_VALUE + 1);
         assertMalformedSyncRejected(helper, client, registries, oversizedAmount,
                 "item snapshot codec accepted a config amount above the integer range");
         helper.succeed();

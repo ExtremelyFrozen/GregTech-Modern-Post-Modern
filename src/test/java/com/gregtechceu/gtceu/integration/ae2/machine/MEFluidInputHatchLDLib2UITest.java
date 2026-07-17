@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
@@ -139,12 +140,10 @@ public class MEFluidInputHatchLDLib2UITest {
         helper.assertTrue(slots.size() == 16, "ordinary ME fluid page did not expose sixteen config/stock columns");
         for (int index = 0; index < slots.size(); index++) {
             AEFluidConfigSlotElement slot = slots.get(index);
-            helper.assertTrue(slot.getIndex() == index && slot.getSizeWidth() == 18 && slot.getSizeHeight() == 36,
+            UITemplate.LDLib2Bounds bounds = UITemplate.getLDLib2Bounds(slot);
+            helper.assertTrue(slot.getIndex() == index && bounds.width() == 18 && bounds.height() == 36,
                     "ME fluid slot " + index + " did not preserve its index or 18x36 bounds");
-            AEFluidConfigElement configRoot = (AEFluidConfigElement) slot.getParent();
-            float relativeX = slot.getPositionX() - configRoot.getPositionX();
-            float relativeY = slot.getPositionY() - configRoot.getPositionY();
-            helper.assertTrue(relativeX == 3 + index % 8 * 18 && relativeY == 10 + index / 8 * 38,
+            helper.assertTrue(bounds.x() == 3 + index % 8 * 18 && bounds.y() == 10 + index / 8 * 38,
                     "ME fluid slot " + index + " did not preserve its fixed grid coordinates");
         }
         List<AEFluidConfigAmountEditorElement> inputEditors = descendants(pageRoot(inputShell)).stream()
@@ -502,8 +501,12 @@ public class MEFluidInputHatchLDLib2UITest {
         commandClick(firstEditor.getAmountInput().getChildren().getLast());
         canSend.set(false);
         firstConfig.screenTick();
-        helper.assertTrue(!firstEditor.isActive() && "1000".equals(amountText(firstEditor)),
-                "invalid holder transport retained an active pending editor");
+        helper.assertTrue(firstEditor.isActive(),
+                "invalid holder transport deactivated the editor container needed for outside-click capture");
+        helper.assertTrue(!firstEditor.getAmountInput().isActive(),
+                "invalid holder transport left the amount input active");
+        helper.assertTrue("1000".equals(amountText(firstEditor)),
+                "invalid holder transport retained the pending amount projection");
         helper.succeed();
     }
 
@@ -749,7 +752,7 @@ public class MEFluidInputHatchLDLib2UITest {
         event.target = target;
         event.button = button;
         event.customData = modified;
-        UIEventDispatcher.dispatchEvent(event, false, false, false);
+        UIEventDispatcher.dispatchEvent(event, true, true, false);
     }
 
     private static void wheel(UIElement target, float deltaY, boolean modified) {

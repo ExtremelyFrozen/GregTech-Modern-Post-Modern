@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.integration.ae2.machine;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -175,24 +176,24 @@ public class MEItemOutputBusLDLib2UITest {
         UIElement root = output.createLDLib2MainElement(player, holder, (sentHolder, action) -> {}, () -> false);
         root.screenTick();
 
-        helper.assertTrue(root.getSizeWidth() == PAGE_WIDTH && root.getSizeHeight() == PAGE_HEIGHT,
+        UITemplate.LDLib2Bounds rootBounds = UITemplate.getLDLib2Bounds(root);
+        helper.assertTrue(rootBounds.width() == PAGE_WIDTH && rootBounds.height() == PAGE_HEIGHT,
                 "ME item output retained the clipped 170x65 legacy body instead of 170x74");
         GTLabelElement online = label(root, "me_network_status");
         GTLabelElement title = label(root, "me_output_waiting_list_label");
-        helper.assertTrue(online.getPositionX() - root.getPositionX() == 5 &&
-                online.getPositionY() - root.getPositionY() == 0 &&
+        UITemplate.LDLib2Bounds onlineBounds = UITemplate.getLDLib2Bounds(online);
+        UITemplate.LDLib2Bounds titleBounds = UITemplate.getLDLib2Bounds(title);
+        helper.assertTrue(onlineBounds.x() == 5 && onlineBounds.y() == 0 &&
                 online.getValue().equals(Component.translatable("gtpm.gui.me_network.online")),
                 "ME item output online label lost its position or synchronized value");
-        helper.assertTrue(title.getPositionX() - root.getPositionX() == 5 &&
-                title.getPositionY() - root.getPositionY() == 10 &&
+        helper.assertTrue(titleBounds.x() == 5 && titleBounds.y() == 10 &&
                 title.getValue().equals(Component.translatable("gtpm.gui.waiting_list")),
                 "ME item output waiting-list label lost its position or translation");
 
         MEItemOutputWaitingListElement list = waitingList(root, output.getWaitingListTarget());
-        helper.assertTrue(list.getPositionX() - root.getPositionX() == 5 &&
-                list.getPositionY() - root.getPositionY() == 20 &&
-                list.getSizeWidth() == 158 &&
-                list.getSizeHeight() == VISIBLE_ROWS * ROW_HEIGHT,
+        UITemplate.LDLib2Bounds listBounds = UITemplate.getLDLib2Bounds(list);
+        helper.assertTrue(listBounds.x() == 5 && listBounds.y() == 20 &&
+                listBounds.width() == 158 && listBounds.height() == VISIBLE_ROWS * ROW_HEIGHT,
                 "ME item output list did not preserve its 158x54 three-row viewport");
         helper.succeed();
     }
