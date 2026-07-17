@@ -348,9 +348,6 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock, B
                 }
                 return ItemInteractionResult.sidedSuccess(level.isClientSide);
             }
-            if (machine instanceof IUIMachine uiMachine) {
-                return uiMachine.tryToOpenUI(player, hand, hit);
-            }
         }
         return shouldOpenUi ? ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION : ItemInteractionResult.CONSUME;
     }
@@ -365,8 +362,6 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock, B
                 if (player instanceof ServerPlayer serverPlayer) {
                     MachineUIHelper.open(machine, serverPlayer);
                 }
-            } else if (machine instanceof IUIMachine uiMachine) {
-                uiMachine.tryToOpenUI(player, InteractionHand.MAIN_HAND, hit).result();
             }
         }
         return machine.onUse(new ExtendedUseOnContext(player, InteractionHand.MAIN_HAND, hit));

@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Centralizes machine UI opening while GTM migrates block-backed screens to LDLib2.
+ * Centralizes LDLib2 machine UI opening for block-backed machines.
  */
 public final class MachineUIHelper {
 
@@ -17,16 +17,17 @@ public final class MachineUIHelper {
     /**
      * Opens the UI for a machine block.
      *
-     * @return {@code true} when the menu was opened by the current bridge implementation.
+     * @return {@code true} when the machine provider accepted and opened the menu.
      */
     public static boolean open(MetaMachine machine, ServerPlayer player) {
-        if (machine instanceof LDLib2MachineUIProvider uiProvider) {
-            MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
-            if (uiProvider.canCreateLDLib2UI(player, holder)) {
-                return uiProvider.openLDLib2UI(machine, player);
-            }
+        if (!(machine instanceof LDLib2MachineUIProvider uiProvider)) {
+            return false;
         }
-        return MachineUIFactory.INSTANCE.openUI(machine, player);
+        MachineUIHolderContext holder = new MachineUIHolderContext(player, machine);
+        if (!uiProvider.canCreateLDLib2UI(player, holder)) {
+            return false;
+        }
+        return uiProvider.openLDLib2UI(machine, player);
     }
 
     /**
