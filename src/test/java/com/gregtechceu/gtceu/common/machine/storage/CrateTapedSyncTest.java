@@ -23,6 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
@@ -132,6 +133,7 @@ public class CrateTapedSyncTest {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         player.setGameMode(GameType.SURVIVAL);
         player.setShiftKeyDown(true);
+        player.setPose(Pose.CROUCHING);
         player.moveTo(Vec3.atCenterOf(crate.getBlockPos()));
         player.setItemInHand(InteractionHand.MAIN_HAND, heldItem);
         return player;

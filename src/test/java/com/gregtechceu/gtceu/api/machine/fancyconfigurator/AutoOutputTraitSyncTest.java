@@ -43,6 +43,7 @@ import static com.gregtechceu.gtceu.api.GTValues.LV;
 public class AutoOutputTraitSyncTest {
 
     private static final String BATCH = "AutoOutputTraitSync";
+    private static final BlockPos MACHINE_POS = new BlockPos(1, 1, 1);
     private static final ResourceLocation AUTO_OUTPUT_ITEMS_FIELD = SyncFieldData.key("autoOutputItems");
     private static final ResourceLocation AUTO_OUTPUT_FLUIDS_FIELD = SyncFieldData.key("autoOutputFluids");
     private static final ResourceLocation ITEM_OUTPUT_DIRECTION_FIELD = SyncFieldData.key("itemOutputDirection");
@@ -178,7 +179,7 @@ public class AutoOutputTraitSyncTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void directionFieldsUseEnumStringsForFullAndDeltaSync(GameTestHelper helper) {
-        TestClientMachine machine = createClientMachine();
+        TestClientMachine machine = createClientMachine(helper);
         machine.setFrontFacing(Direction.NORTH);
         TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
         RegistryAccess registries = helper.getLevel().registryAccess();
@@ -209,7 +210,7 @@ public class AutoOutputTraitSyncTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void directionBatchCommitsNotifiesAndAcceptsNoOp(GameTestHelper helper) {
-        TestClientMachine machine = createClientMachine();
+        TestClientMachine machine = createClientMachine(helper);
         machine.setFrontFacing(Direction.NORTH);
         TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
         RegistryAccess registries = helper.getLevel().registryAccess();
@@ -268,7 +269,7 @@ public class AutoOutputTraitSyncTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void invalidDirectionRejectsWholeAutoOutputBatch(GameTestHelper helper) {
-        TestClientMachine machine = createClientMachine();
+        TestClientMachine machine = createClientMachine(helper);
         machine.setFrontFacing(Direction.NORTH);
         TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
         RegistryAccess registries = helper.getLevel().registryAccess();
@@ -326,7 +327,7 @@ public class AutoOutputTraitSyncTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void unsupportedDirectionCandidatesAreRejected(GameTestHelper helper) {
-        TestClientMachine machine = createClientMachine();
+        TestClientMachine machine = createClientMachine(helper);
         TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(false, false));
         RegistryAccess registries = helper.getLevel().registryAccess();
 
@@ -348,7 +349,7 @@ public class AutoOutputTraitSyncTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void ldlib2TogglesChangeFieldsAndFlushMachineSync(GameTestHelper helper) {
-        TestClientMachine machine = createClientMachine();
+        TestClientMachine machine = createClientMachine(helper);
         TrackingAutoOutputTrait trait = machine.attachTrait(new TrackingAutoOutputTrait(true, true));
         TestMachineUIHolder holder = new TestMachineUIHolder(machine);
         LDLib2ConfiguratorPanelElement panel = new LDLib2ConfiguratorPanelElement(holder, 0, 0);
@@ -378,10 +379,15 @@ public class AutoOutputTraitSyncTest {
         helper.succeed();
     }
 
-    private static TestClientMachine createClientMachine() {
-        var definition = GTMachines.BUFFER[LV];
-        return new TestClientMachine(new BlockEntityCreationInfo(
-                definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()));
+    private static TestClientMachine createClientMachine(GameTestHelper helper) {
+        var definition = GTMachines.HULL[LV];
+        helper.setBlock(MACHINE_POS, definition.getBlock());
+        BlockPos absolutePos = helper.absolutePos(MACHINE_POS);
+        helper.getLevel().removeBlockEntity(absolutePos);
+        TestClientMachine machine = new TestClientMachine(new BlockEntityCreationInfo(
+                definition.getBlockEntityType(), absolutePos, helper.getLevel().getBlockState(absolutePos)));
+        helper.getLevel().setBlockEntity(machine);
+        return machine;
     }
 
     private static DataComponentMap payload(ResourceLocation field, JsonElement value) {

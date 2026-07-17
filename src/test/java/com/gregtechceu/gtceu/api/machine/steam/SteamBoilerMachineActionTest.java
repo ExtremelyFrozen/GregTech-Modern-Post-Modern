@@ -228,8 +228,10 @@ public class SteamBoilerMachineActionTest {
         helper.assertTrue(boiler.steamTank.getFluidInTank(0).getAmount() == FluidType.BUCKET_VOLUME,
                 "shift click did not process every carried container");
         helper.assertTrue(player.containerMenu.getCarried().is(Items.WATER_BUCKET) &&
-                player.containerMenu.getCarried().getCount() == 3,
-                "shift click did not replace the cursor stack with all filled containers");
+                player.containerMenu.getCarried().getCount() == 1,
+                "shift click did not return one non-stackable filled container to the cursor");
+        helper.assertTrue(player.getInventory().countItem(Items.WATER_BUCKET) == 2,
+                "shift click did not store the remaining non-stackable filled containers");
         helper.assertTrue(player.getInventory().countItem(Items.BUCKET) == 0,
                 "shift click left an empty container in the inventory");
         helper.succeed();

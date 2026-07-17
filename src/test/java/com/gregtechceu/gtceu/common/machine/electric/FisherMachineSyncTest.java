@@ -101,6 +101,8 @@ public class FisherMachineSyncTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void ldlib2ToggleChangesClientFieldFlushesSyncAndConsumesEvent(GameTestHelper helper) {
         TestFisherMachine machine = createMachine(true);
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        machine.getSyncDataHolder().serializeFullClientSyncData(registries);
         GTToggleButtonElement toggle = machine.createLDLib2JunkButton(0, 0);
         UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
 
@@ -111,7 +113,7 @@ public class FisherMachineSyncTest {
         helper.assertTrue(!machine.isJunkEnabled(), "LDLib2 junk toggle did not update the client field");
         helper.assertTrue(machine.syncRequests == 1, "LDLib2 junk toggle did not flush machine field sync once");
         helper.assertTrue(event.hasHandler, "LDLib2 junk toggle event was not consumed after field sync");
-        assertField(helper, machine.getSyncDataHolder().collectServerNetworkChanges(helper.getLevel().registryAccess()),
+        assertField(helper, machine.getSyncDataHolder().collectServerNetworkChanges(registries),
                 false, "LDLib2 junk toggle request");
         helper.succeed();
     }

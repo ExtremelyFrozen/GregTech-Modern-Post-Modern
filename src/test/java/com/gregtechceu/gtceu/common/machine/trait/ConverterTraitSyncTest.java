@@ -31,6 +31,8 @@ import com.google.gson.JsonPrimitive;
 public class ConverterTraitSyncTest {
 
     private static final String BATCH = "ConverterTraitSync";
+    private static final BlockPos SERVER_POS = new BlockPos(1, 1, 1);
+    private static final BlockPos CLIENT_POS = new BlockPos(2, 1, 1);
     private static final ResourceLocation FE_TO_EU_FIELD = SyncFieldData.key("feToEu");
 
     @TestHolder
@@ -38,8 +40,8 @@ public class ConverterTraitSyncTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void directionSyncPersistsAndRetainsEverySetterSideEffect(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
-        TestConverterMachine server = createMachine();
-        TestConverterMachine client = createMachine();
+        TestConverterMachine server = createMachine(helper, SERVER_POS);
+        TestConverterMachine client = createMachine(helper, CLIENT_POS);
         ConverterTrait serverTrait = server.getConverterTrait();
         ConverterTrait clientTrait = client.getConverterTrait();
         server.resetSideEffects();
@@ -88,7 +90,7 @@ public class ConverterTraitSyncTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void converterDirectionRejectsClientWritesWithoutSideEffects(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
-        TestConverterMachine machine = createMachine();
+        TestConverterMachine machine = createMachine(helper, SERVER_POS);
         ConverterTrait trait = machine.getConverterTrait();
         trait.getSyncDataHolder().serializeFullClientSyncComponents(registries);
         machine.resetSideEffects();
@@ -108,10 +110,14 @@ public class ConverterTraitSyncTest {
         helper.succeed();
     }
 
-    private static TestConverterMachine createMachine() {
+    private static TestConverterMachine createMachine(GameTestHelper helper, BlockPos relativePos) {
         var definition = GTMachines.ENERGY_CONVERTER_1A[GTValues.LV];
+        helper.setBlock(relativePos, definition.getBlock());
+        BlockPos absolutePos = helper.absolutePos(relativePos);
+        helper.getLevel().removeBlockEntity(absolutePos);
         TestConverterMachine machine = new TestConverterMachine(new BlockEntityCreationInfo(
-                definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()));
+                definition.getBlockEntityType(), absolutePos, helper.getLevel().getBlockState(absolutePos)));
+        helper.getLevel().setBlockEntity(machine);
         machine.setFrontFacing(Direction.NORTH);
         machine.resetSideEffects();
         return machine;
