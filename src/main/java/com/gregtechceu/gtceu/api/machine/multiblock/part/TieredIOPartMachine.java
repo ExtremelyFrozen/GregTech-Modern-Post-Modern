@@ -9,7 +9,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListen
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 
 public class TieredIOPartMachine extends TieredPartMachine implements IControllable {
 
@@ -49,15 +48,4 @@ public class TieredIOPartMachine extends TieredPartMachine implements IControlla
     //////////////////////////////////////
     // ***** Initialization ******//
     //////////////////////////////////////
-
-    @Nullable
-    @Override
-    public PageGroupingData getPageGroupingData() {
-        return switch (this.io) {
-            case IN -> new PageGroupingData("gtpm.multiblock.page_switcher.io.import", 1);
-            case OUT -> new PageGroupingData("gtpm.multiblock.page_switcher.io.export", 2);
-            case BOTH -> new PageGroupingData("gtpm.multiblock.page_switcher.io.both", 3);
-            case NONE -> null;
-        };
-    }
 }
