@@ -42,6 +42,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -559,8 +560,17 @@ final class CentralMonitorElement extends UIElement implements LDLib2FancyUIProv
                 }
                 BlockPos position = component.getBlockPos();
                 GTButtonElement button = new GTButtonElement(column * COMPONENT_SIZE, row * COMPONENT_SIZE,
-                        COMPONENT_SIZE, COMPONENT_SIZE, component.getComponentIcon(),
-                        event -> handleComponentClick(position, event.button));
+                        COMPONENT_SIZE, COMPONENT_SIZE);
+                button.setButtonTexture(component.getComponentIcon());
+                button.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+                    if (event.button != GLFW.GLFW_MOUSE_BUTTON_LEFT &&
+                            event.button != GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                        return;
+                    }
+                    handleComponentClick(position, event.button);
+                    event.stopImmediatePropagation();
+                    event.hasHandler = true;
+                });
                 button.noText();
                 GTButtonElement previous = componentControls.put(position, button);
                 if (previous != null) {

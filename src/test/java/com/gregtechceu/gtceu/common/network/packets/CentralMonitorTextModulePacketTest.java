@@ -281,6 +281,11 @@ public class CentralMonitorTextModulePacketTest {
     private record TestMonitorComponent(BlockPos position) implements IMonitorComponent {
 
         @Override
+        public boolean isMonitor() {
+            return true;
+        }
+
+        @Override
         public IGuiTexture getComponentIcon() {
             return GuiTextures.BLANK_TRANSPARENT;
         }
