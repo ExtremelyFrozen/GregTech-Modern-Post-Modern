@@ -1,18 +1,18 @@
 package com.gregtechceu.gtceu.api.gui.editor;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.layout.LayoutProperties;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 
-import dev.vfyjxf.taffy.style.TaffyDimension;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 import java.io.InputStream;
@@ -121,8 +121,9 @@ public class EditableMachineUI {
      * @return active machine page dimensions.
      */
     public MachineUISize getSize(ResourceManager resourceManager) {
-        UIElement root = parseUI(getRuntimeXml(resourceManager), getXmlLocation().toString()).rootElement;
-        return new MachineUISize(fixedDimension(root, true), fixedDimension(root, false));
+        Document document = parseDocument(getRuntimeXml(resourceManager), getXmlLocation().toString());
+        var size = UITemplate.getLDLib2RootSize(document);
+        return new MachineUISize(size.width(), size.height());
     }
 
     /**
@@ -155,6 +156,10 @@ public class EditableMachineUI {
     }
 
     private static UI parseUI(String xml, String source) {
+        return UI.of(parseDocument(xml, source));
+    }
+
+    private static Document parseDocument(String xml, String source) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -167,7 +172,7 @@ public class EditableMachineUI {
             factory.setExpandEntityReferences(false);
             var builder = factory.newDocumentBuilder();
             try (StringReader reader = new StringReader(xml)) {
-                return UI.of(builder.parse(new InputSource(reader)));
+                return builder.parse(new InputSource(reader));
             }
         } catch (Exception e) {
             GTCEu.LOGGER.error("Failed to parse LDLib2 machine UI XML from {}", source, e);
@@ -184,19 +189,6 @@ public class EditableMachineUI {
             throw new IllegalArgumentException("Machine UI XML must be UTF-8 without BOM: " + location);
         }
         return xml;
-    }
-
-    private static int fixedDimension(UIElement root, boolean width) {
-        TaffyDimension dimension = width ? root.getLayout().getWidth() : root.getLayout().getHeight();
-        if (dimension == null || !dimension.isLength()) {
-            dimension = root.getStyleBag().computeCandidate(width ? LayoutProperties.WIDTH : LayoutProperties.HEIGHT);
-        }
-        if (dimension == null || !dimension.isLength()) {
-            String axis = width ? "width" : "height";
-            GTCEu.LOGGER.error("LDLib2 machine UI {} must use a fixed pixel size, got {}", axis, dimension);
-            throw new IllegalArgumentException("LDLib2 machine UI " + axis + " must use a fixed pixel size");
-        }
-        return Math.round(dimension.getValue());
     }
 
     /**

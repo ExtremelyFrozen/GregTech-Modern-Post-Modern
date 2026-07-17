@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.electric;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
@@ -74,7 +75,8 @@ public class HullMachineLDLib2UITest {
         LDLib2FancyMachineUIElement shell = createShell(player, holder, page);
         helper.assertTrue(shell.getHolder() == holder,
                 "Hull contextual shell lost its opening holder");
-        helper.assertTrue(shell.getSizeWidth() == 172 && shell.getSizeHeight() == 190,
+        var shellBounds = UITemplate.getLDLib2Bounds(shell);
+        helper.assertTrue(shellBounds.width() == 172 && shellBounds.height() == 190,
                 "Hull contextual shell lost its preview and player-inventory bounds");
         helper.assertTrue(shell.getConfiguratorPanel().getChildren().isEmpty(),
                 "Hull contextual preview exposed an unsupported working configurator");
@@ -92,8 +94,9 @@ public class HullMachineLDLib2UITest {
                 "Hull contextual preview did not attach its default machine and trait tooltips");
 
         UIElement previewRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(previewRoot.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                previewRoot.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+        var previewBounds = UITemplate.getLDLib2Bounds(previewRoot);
+        helper.assertTrue(previewBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                previewBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 "Hull contextual preview created a root with incorrect bounds");
         helper.assertTrue(previewRoot.getChildren().isEmpty(),
                 "Hull contextual preview constructed a client Scene on the GameTest server");
