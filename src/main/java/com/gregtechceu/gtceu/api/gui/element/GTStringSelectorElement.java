@@ -7,7 +7,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
-import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
@@ -19,11 +18,10 @@ import java.util.function.Supplier;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * LDLib2 string selector facade for GTM pixel-positioned list selection controls.
+ * Runtime-bound LDLib2 string selector facade for GTM pixel-positioned list selection controls.
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-@LDLRegister(name = "gtm-string-selector", group = "gtm", registry = "ldlib2:ui_element")
 public class GTStringSelectorElement extends Selector<String> {
 
     private final Supplier<String> selectedSupplier;

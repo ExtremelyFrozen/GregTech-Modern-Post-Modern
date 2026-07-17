@@ -8,7 +8,6 @@ import com.gregtechceu.gtceu.utils.GTMath;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
@@ -20,11 +19,10 @@ import java.util.function.LongSupplier;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * LDLib2 long input facade for GTM pixel-positioned numeric controls.
+ * Runtime-bound LDLib2 long input facade for GTM pixel-positioned numeric controls.
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-@LDLRegister(name = "gtm-long-input", group = "gtm", registry = "ldlib2:ui_element")
 public class GTLongInputElement extends UIElement {
 
     private static final long STEP_REGULAR = 1L;

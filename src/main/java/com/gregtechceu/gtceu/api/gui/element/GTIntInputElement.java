@@ -7,7 +7,6 @@ import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.network.chat.Component;
@@ -19,11 +18,10 @@ import java.util.function.IntSupplier;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * LDLib2 integer input facade for GTM pixel-positioned numeric controls.
+ * Runtime-bound LDLib2 integer input facade for GTM pixel-positioned numeric controls.
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-@LDLRegister(name = "gtm-int-input", group = "gtm", registry = "ldlib2:ui_element")
 public class GTIntInputElement extends UIElement {
 
     private static final int STEP_REGULAR = 1;
