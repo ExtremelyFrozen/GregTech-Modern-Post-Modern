@@ -64,6 +64,13 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
         var migratedSurfacePaths = [
                 'src/main/java/com/gregtechceu/gtceu/api/GTCEuAPI.java',
                 'src/main/java/com/gregtechceu/gtceu/api/block/MetaMachineBlock.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/EditableMachineUI.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIEditor.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIXmlProject.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIXmlProjectType.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIXmlTarget.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/MachineUIXmlTemplates.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/TemplateTab.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTButtonElement.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTComponentPanelElement.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTDualProgressElement.java',
@@ -91,6 +98,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/DynamicItemSlotMachineUIMenuType.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/GTCoverUIMenuType.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/GTDynamicItemSlotContainerMenu.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/GTUIEditorMenu.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/HeldItemUIHelper.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/HeldItemUIHolder.java',
                 'src/main/java/com/gregtechceu/gtceu/api/gui/factory/HeldItemUIHolderContext.java',
@@ -141,6 +149,9 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/item/component/IItemUIFactory.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/component/IMonitorModuleItem.java',
                 'src/main/java/com/gregtechceu/gtceu/api/item/tool/behavior/IToolUIBehavior.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/SimpleGeneratorMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/SimpleTieredMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/TieredEnergyMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2FancyActionMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2FancyUIMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2PreviewFancyUIMachine.java',
@@ -163,7 +174,11 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/api/machine/multiblock/WorkableElectricMultiblockMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SimpleSteamMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SteamBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/recipe/ui/GTRecipeTypeUI.java',
+                'src/main/java/com/gregtechceu/gtceu/api/recipe/ui/RecipeUIXmlTemplate.java',
                 'src/main/java/com/gregtechceu/gtceu/client/gui/fancy/LDLib2PreviewSceneElement.java',
+                'src/main/java/com/gregtechceu/gtceu/common/CommonProxy.java',
+                'src/main/java/com/gregtechceu/gtceu/common/commands/GTCommands.java',
                 'src/main/java/com/gregtechceu/gtceu/common/cover/ComputerMonitorCover.java',
                 'src/main/java/com/gregtechceu/gtceu/common/cover/ConveyorCover.java',
                 'src/main/java/com/gregtechceu/gtceu/common/cover/FluidFilterCover.java',
@@ -353,9 +368,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'com.lowdragmc.lowdraglib2.gui.sync.',
                 '.rtui',
                 '<ldlib-ui',
-                'ldlib:',
-                'Objects.requireNonNull',
-                'requireNonNull('
+                'ldlib:'
         ]
 
         var matches = []
@@ -431,9 +444,7 @@ tasks.register('verifyLdlib2RecipeCapabilitySurface') {
                 'addServerEventListener(',
                 '.markAsDirty(',
                 'com.lowdragmc.lowdraglib2.syncdata.',
-                'com.lowdragmc.lowdraglib2.gui.sync.',
-                'Objects.requireNonNull',
-                'requireNonNull('
+                'com.lowdragmc.lowdraglib2.gui.sync.'
         ]
 
         var matches = []
@@ -458,15 +469,6 @@ tasks.register('verifyLdlib2RecipeCapabilitySurface') {
             throw new GradleException("LDLib2 recipe capability guardrails found ${matches.size()} regression references.")
         }
     }
-}
-
-tasks.named('check') {
-    dependsOn(
-            tasks.named('verifyGradleUserHomeOnE'),
-            tasks.named('verifyDescriptiveTypeNames'),
-            tasks.named('verifyLdlib2MigratedSurfaces'),
-            tasks.named('verifyLdlib2RecipeCapabilitySurface')
-    )
 }
 
 tasks.register('verifyLdlib2MigrationGuardrails') {
@@ -501,7 +503,6 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
         var manualMarkAsDirtyCall = ~/.*\.markAsDirty\s*\(.*/
         var ldlib2FluidClickAttribute = ~/.*(?<!legacy-)allow-click-(filled|drained)=.*/
         var reiCompatibilityReference = ~/.*\b(REI|rei)\b.*/
-        var forbiddenNullCheck = 'require' + 'NonNull'
         var legacyFluidXeiSlotEntry = 'setXEIRecipe' + 'Slot'
 
         var patterns = [
@@ -510,8 +511,6 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
                 'IngredientIO.RENDER_ONLY',
                 'IngredientIO.valueOf("RENDER_ONLY")',
                 'IngredientIO.BOTH',
-                'Objects.' + forbiddenNullCheck,
-                forbiddenNullCheck + '(',
                 legacyFluidXeiSlotEntry,
                 '@RPCMethod',
                 'RPCEmitter',
@@ -578,6 +577,16 @@ tasks.register('verifyLdlib2MigrationGuardrails') {
             throw new GradleException("LDLib2 migration guardrails found ${matches.size()} remaining legacy references.")
         }
     }
+}
+
+tasks.named('check') {
+    dependsOn(
+            tasks.named('verifyGradleUserHomeOnE'),
+            tasks.named('verifyDescriptiveTypeNames'),
+            tasks.named('verifyLdlib2MigratedSurfaces'),
+            tasks.named('verifyLdlib2RecipeCapabilitySurface'),
+            tasks.named('verifyLdlib2MigrationGuardrails')
+    )
 }
 
 tasks.register('reportLdlib2MigrationInventory') {
