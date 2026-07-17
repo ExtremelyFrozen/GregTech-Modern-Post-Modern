@@ -29,6 +29,8 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.layout.LayoutProperties;
+import com.lowdragmc.lowdraglib2.gui.ui.style.StyleValue;
+import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponentMap;
@@ -49,6 +51,8 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -252,28 +256,49 @@ public class GTRecipeTypeUI {
     }
 
     public LDLib2RecipeUISize getLDLib2RecipeUISize(boolean isSteam, boolean isHighPressure) {
-        UI ui = !isSteam && hasCustomLDLib2UI() ? createCustomLDLib2UI() :
-                createDefaultLDLib2UI(isSteam, isHighPressure);
-        return getLDLib2RecipeUISize(ui.rootElement);
+        Document document = isSteam ? RecipeUIXmlTemplate.createDocument(recipeType, this) :
+                createLDLib2TemplateDocument();
+        return getLDLib2RecipeUISize(document);
     }
 
     /**
-     * Reads the fixed pixel dimensions required by a recipe XML root.
+     * Reads the fixed pixel dimensions declared by a recipe XML document.
      */
-    public static LDLib2RecipeUISize getLDLib2RecipeUISize(UIElement root) {
+    public static LDLib2RecipeUISize getLDLib2RecipeUISize(Document document) {
+        Element root = getLDLib2Root(document);
+        var properties = Stylesheet.parseStyleValues(root.getAttribute("style"));
         return new LDLib2RecipeUISize(
-                fixedLDLib2RecipeUISize(getLDLib2Dimension(root, true), "width"),
-                fixedLDLib2RecipeUISize(getLDLib2Dimension(root, false), "height"));
+                fixedLDLib2RecipeUISize(getLDLib2Dimension(properties.get(LayoutProperties.WIDTH)), "width"),
+                fixedLDLib2RecipeUISize(getLDLib2Dimension(properties.get(LayoutProperties.HEIGHT)), "height"));
     }
 
-    private static TaffyDimension getLDLib2Dimension(UIElement root, boolean width) {
-        TaffyDimension dimension = width ? root.getLayout().getWidth() : root.getLayout().getHeight();
-        if (dimension != null && dimension.isLength()) {
+    @Nullable
+    private static TaffyDimension getLDLib2Dimension(@Nullable StyleValue<?> styleValue) {
+        if (styleValue != null && styleValue.compute() instanceof TaffyDimension dimension) {
             return dimension;
         }
-        TaffyDimension styleDimension = root.getStyleBag()
-                .computeCandidate(width ? LayoutProperties.WIDTH : LayoutProperties.HEIGHT);
-        return styleDimension == null ? dimension : styleDimension;
+        return null;
+    }
+
+    private static Element getLDLib2Root(Document document) {
+        Element documentRoot = document.getDocumentElement();
+        if (documentRoot == null) {
+            throw new IllegalArgumentException("LDLib2 recipe UI XML does not contain a document root");
+        }
+        Element root = null;
+        for (Node child = documentRoot.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (child instanceof Element element && element.getTagName().equals("root")) {
+                if (root != null) {
+                    throw new IllegalArgumentException(
+                            "LDLib2 recipe UI XML contains more than one direct root element");
+                }
+                root = element;
+            }
+        }
+        if (root == null) {
+            throw new IllegalArgumentException("LDLib2 recipe UI XML does not contain a direct root element");
+        }
+        return root;
     }
 
     private static int fixedLDLib2RecipeUISize(TaffyDimension dimension, String axis) {

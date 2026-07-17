@@ -3,7 +3,6 @@ package com.gregtechceu.gtceu.api.gui.editor;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
 
-import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import org.w3c.dom.Attr;
@@ -200,8 +199,7 @@ public final class MachineUIXmlTemplates {
     }
 
     private static FixedSize getFixedSize(Document document) {
-        UIElement root = UI.of(document).rootElement;
-        var size = GTRecipeTypeUI.getLDLib2RecipeUISize(root);
+        var size = GTRecipeTypeUI.getLDLib2RecipeUISize(document);
         return new FixedSize(size.width(), size.height());
     }
 

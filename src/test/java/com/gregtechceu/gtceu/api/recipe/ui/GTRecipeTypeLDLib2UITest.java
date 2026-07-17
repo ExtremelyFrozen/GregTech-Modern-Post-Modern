@@ -10,8 +10,8 @@ import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
+import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.integration.xei.GTLDLib2RecipeUI;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -34,6 +34,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
+import org.w3c.dom.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,14 +52,15 @@ public class GTRecipeTypeLDLib2UITest {
     @GameTest(template = "empty", batch = BATCH)
     public static void generatedTemplateParsesAndBindsStableRecipeElements(GameTestHelper helper) {
         GTRecipeTypeUI recipeUI = GTRecipeTypes.CANNER_RECIPES.getRecipeUI();
-        UI documentUi = UI.of(recipeUI.createLDLib2TemplateDocument());
-        UI ui = UI.of(RecipeUIXmlTemplate.parse(recipeUI.createLDLib2TemplateXml()));
+        Document document = recipeUI.createLDLib2TemplateDocument();
+        Document serializedDocument = RecipeUIXmlTemplate.parse(recipeUI.createLDLib2TemplateXml());
+        UI ui = UI.of(serializedDocument);
         UIElement root = ui.getRootElement();
 
-        GTRecipeTypeUI.LDLib2RecipeUISize size = GTRecipeTypeUI.getLDLib2RecipeUISize(root);
+        GTRecipeTypeUI.LDLib2RecipeUISize size = GTRecipeTypeUI.getLDLib2RecipeUISize(serializedDocument);
         helper.assertTrue(size.width() == 128 && size.height() == 44,
                 "generated canner template did not preserve its fixed 128x44 layout");
-        helper.assertTrue(size.equals(GTRecipeTypeUI.getLDLib2RecipeUISize(documentUi.getRootElement())),
+        helper.assertTrue(size.equals(GTRecipeTypeUI.getLDLib2RecipeUISize(document)),
                 "document and serialized recipe template APIs produced different fixed dimensions");
         helper.assertTrue(root.selectRegex("^item_in_[0-9]+$", GTItemSlotElement.class).count() == 2,
                 "generated canner template did not create both item inputs");
@@ -130,7 +132,21 @@ public class GTRecipeTypeLDLib2UITest {
                 .chancedOutput(new ItemStack(Items.DIAMOND), 2_500, 0)
                 .buildDefinition();
 
-        UI ui = GTLDLib2RecipeUI.createUI(recipe, 0, 0);
+        GTRecipeTypeUI recipeUI = recipe.recipeType.getRecipeUI();
+        Table<IO, RecipeCapability<?>, Object> storages = HashBasedTable.create();
+        Table<IO, RecipeCapability<?>, List<Content>> contents = HashBasedTable.create();
+        List<Content> inputContents = recipe.getInputContents(ItemRecipeCapability.CAP);
+        List<Content> outputContents = recipe.getOutputContents(ItemRecipeCapability.CAP);
+        contents.put(IO.IN, ItemRecipeCapability.CAP, inputContents);
+        contents.put(IO.OUT, ItemRecipeCapability.CAP, outputContents);
+        storages.put(IO.IN, ItemRecipeCapability.CAP, ItemRecipeCapability.CAP.createXEIContainer(
+                ItemRecipeCapability.CAP.createXEIContainerContents(inputContents, recipe, IO.IN)));
+        storages.put(IO.OUT, ItemRecipeCapability.CAP, ItemRecipeCapability.CAP.createXEIContainer(
+                ItemRecipeCapability.CAP.createXEIContainerContents(outputContents, recipe, IO.OUT)));
+
+        UI ui = recipeUI.createLDLib2UITemplate(GTRecipeTypeUI.XEI_PROGRESS, storages,
+                DataComponentMap.EMPTY, recipe.conditions);
+        recipeUI.applyLDLib2RecipeContent(ui, contents, recipe, 0, 0);
         GTItemSlotElement tool = requireElement(ui.getRootElement(), "item_in_0", GTItemSlotElement.class);
         GTItemSlotElement circuit = requireElement(ui.getRootElement(), "item_in_1", GTItemSlotElement.class);
         GTItemSlotElement output = requireElement(ui.getRootElement(), "item_out_0", GTItemSlotElement.class);
@@ -186,8 +202,9 @@ public class GTRecipeTypeLDLib2UITest {
 
     private static void assertCustomTemplate(GameTestHelper helper, String fileName, int width, int height,
                                              String stableId, Class<? extends UIElement> elementType) {
-        UI ui = loadCustomTemplate(fileName);
-        GTRecipeTypeUI.LDLib2RecipeUISize size = GTRecipeTypeUI.getLDLib2RecipeUISize(ui.getRootElement());
+        Document document = loadCustomTemplateDocument(fileName);
+        GTRecipeTypeUI.LDLib2RecipeUISize size = GTRecipeTypeUI.getLDLib2RecipeUISize(document);
+        UI ui = UI.of(document);
         helper.assertTrue(size.width() == width && size.height() == height,
                 fileName + " did not preserve its fixed dimensions");
         helper.assertTrue(ui.selectId(stableId, elementType).findAny().isPresent(),
@@ -198,13 +215,17 @@ public class GTRecipeTypeLDLib2UITest {
     }
 
     private static UI loadCustomTemplate(String fileName) {
+        return UI.of(loadCustomTemplateDocument(fileName));
+    }
+
+    private static Document loadCustomTemplateDocument(String fileName) {
         String resource = "/assets/gtpm/ui/recipe_type/" + fileName;
         try (InputStream input = GTRecipeTypeLDLib2UITest.class.getResourceAsStream(resource)) {
             if (input == null) {
                 throw new GameTestAssertException("missing converted recipe UI resource " + resource);
             }
             String xml = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-            return UI.of(RecipeUIXmlTemplate.parse(xml));
+            return RecipeUIXmlTemplate.parse(xml);
         } catch (IOException e) {
             throw new GameTestAssertException("failed to read converted recipe UI resource " + resource + ": " +
                     e.getMessage());
