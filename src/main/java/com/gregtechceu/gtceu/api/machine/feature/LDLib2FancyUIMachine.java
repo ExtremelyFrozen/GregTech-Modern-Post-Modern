@@ -35,8 +35,7 @@ import java.util.List;
  * Bridges machine-owned Fancy pages into the LDLib2 machine UI opening path.
  *
  * <p>
- * This interface lets machines opt into the LDLib2 Fancy shell one call site at a time while the legacy
- * {@link IFancyUIMachine} contract remains available for machines that still depend on old LDLib widgets.
+ * This interface defines the machine-owned page contract used by the LDLib2 Fancy shell.
  */
 public interface LDLib2FancyUIMachine extends IMachineFeature, LDLib2FancyActionMachine, LDLib2MachineUIProvider,
                                       LDLib2FancyUIProvider {
