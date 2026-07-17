@@ -17,6 +17,7 @@ import com.gregtechceu.gtceu.integration.ae2.machine.feature.multiblock.AutoStoc
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
@@ -32,6 +33,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.lwjgl.glfw.GLFW;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -169,8 +171,15 @@ public class LDLib2AutoStockingFancyConfiguratorSyncTest {
         GTButtonElement minIncrement = (GTButtonElement) minStackSize.getChildren().get(2);
         GTButtonElement ticksIncrement = (GTButtonElement) ticksPerCycle.getChildren().get(2);
 
-        minIncrement.onClick(UIEvent.create(UIEvents.MOUSE_DOWN));
-        ticksIncrement.onClick(UIEvent.create(UIEvents.MOUSE_DOWN));
+        clickButton(minIncrement);
+        clickButton(ticksIncrement);
+    }
+
+    private static void clickButton(GTButtonElement button) {
+        UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
+        event.target = button;
+        event.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        UIEventDispatcher.dispatchEvent(event, false, false, false);
     }
 
     private static TestStockingBusMachine createBus(boolean clientSide) {

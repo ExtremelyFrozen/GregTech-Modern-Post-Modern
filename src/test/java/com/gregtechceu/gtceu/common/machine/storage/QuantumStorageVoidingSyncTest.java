@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
@@ -26,6 +27,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.lwjgl.glfw.GLFW;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -66,8 +68,12 @@ public class QuantumStorageVoidingSyncTest {
         UIEvent chestEvent = UIEvent.create(UIEvents.MOUSE_DOWN);
         UIEvent tankEvent = UIEvent.create(UIEvents.MOUSE_DOWN);
 
-        chestToggle.onClick(chestEvent);
-        tankToggle.onClick(tankEvent);
+        chestEvent.target = chestToggle;
+        chestEvent.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        UIEventDispatcher.dispatchEvent(chestEvent, false, false, false);
+        tankEvent.target = tankToggle;
+        tankEvent.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        UIEventDispatcher.dispatchEvent(tankEvent, false, false, false);
 
         assertCurrent(helper, chest, registries, true, "quantum chest toggle");
         assertCurrent(helper, tank, registries, true, "quantum tank toggle");

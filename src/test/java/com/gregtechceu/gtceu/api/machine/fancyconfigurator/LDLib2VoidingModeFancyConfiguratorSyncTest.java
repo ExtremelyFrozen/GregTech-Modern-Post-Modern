@@ -16,6 +16,7 @@ import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
@@ -32,6 +33,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
+import org.lwjgl.glfw.GLFW;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -111,13 +113,13 @@ public class LDLib2VoidingModeFancyConfiguratorSyncTest {
         GTButtonElement button = (GTButtonElement) tab.getChildren().getFirst();
         UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
 
-        button.onClick(event);
+        dispatchClick(button, event);
 
         helper.assertTrue(machine.getVoidingMode() == IVoidable.VoidingMode.VOID_ITEMS,
                 "LDLib2 selector did not update the client voiding-mode field");
         helper.assertTrue(machine.syncRequests == 1,
                 "LDLib2 selector did not flush machine field sync exactly once");
-        helper.assertTrue(event.hasHandler, "LDLib2 selector did not consume the click event");
+        helper.assertTrue(event.propagationStopped, "LDLib2 selector did not consume the click event");
         assertRequest(helper, machine.getSyncDataHolder().collectServerNetworkChanges(registries),
                 IVoidable.VoidingMode.VOID_ITEMS, "LDLib2 selector request");
         helper.succeed();
@@ -136,15 +138,21 @@ public class LDLib2VoidingModeFancyConfiguratorSyncTest {
         GTButtonElement button = (GTButtonElement) tab.getChildren().getFirst();
         UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
 
-        button.onClick(event);
+        dispatchClick(button, event);
 
         helper.assertTrue(machine.getVoidingMode() == IVoidable.VoidingMode.VOID_NONE,
                 "voiding selector changed a controller that did not match its opened holder");
         helper.assertTrue(machine.syncRequests == 0,
                 "voiding selector flushed a controller that did not match its opened holder");
-        helper.assertFalse(event.hasHandler,
+        helper.assertFalse(event.propagationStopped,
                 "voiding selector consumed a click for a mismatched opened holder");
         helper.succeed();
+    }
+
+    private static void dispatchClick(GTButtonElement button, UIEvent event) {
+        event.target = button;
+        event.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        UIEventDispatcher.dispatchEvent(event, false, false, false);
     }
 
     private static TestVoidingMachine createMachine(boolean clientSide) {

@@ -13,6 +13,7 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
@@ -35,6 +36,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.lwjgl.glfw.GLFW;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -86,7 +88,9 @@ public class PumpHatchWorkingEnabledSyncTest {
         GTToggleButtonElement toggle = machine.createLDLib2WorkingEnabledToggle();
         UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
 
-        toggle.onClick(event);
+        event.target = toggle;
+        event.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        UIEventDispatcher.dispatchEvent(event, false, false, false);
 
         helper.assertTrue(!machine.isWorkingEnabled(),
                 "LDLib2 pump hatch toggle did not update the client root field");

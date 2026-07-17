@@ -20,6 +20,7 @@ import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
@@ -37,6 +38,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.lwjgl.glfw.GLFW;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -97,7 +99,7 @@ public class LDLib2MachineModeFancyConfiguratorSyncTest {
                 "machine-mode selector did not update the matching client field");
         helper.assertTrue(machine.syncRequests == 1,
                 "machine-mode selector did not flush the matching client machine exactly once");
-        helper.assertTrue(event.hasHandler, "machine-mode selector did not consume the accepted click");
+        helper.assertTrue(event.propagationStopped, "machine-mode selector did not consume the accepted click");
         assertRequest(helper, machine.getSyncDataHolder().collectServerNetworkChanges(registries), 1,
                 "machine-mode selector request");
         helper.succeed();
@@ -118,7 +120,7 @@ public class LDLib2MachineModeFancyConfiguratorSyncTest {
                 "mismatched machine-mode holder changed machine state");
         helper.assertTrue(target.syncRequests == 0 && resolved.syncRequests == 0,
                 "mismatched machine-mode holder flushed field sync");
-        helper.assertTrue(!event.hasHandler, "mismatched machine-mode holder consumed the click");
+        helper.assertTrue(!event.propagationStopped, "mismatched machine-mode holder consumed the click");
         helper.succeed();
     }
 
@@ -243,7 +245,9 @@ public class LDLib2MachineModeFancyConfiguratorSyncTest {
                                   UIEvent event) {
         UIElement root = new LDLib2MachineModeFancyConfigurator(machine).createLDLib2MainPage(shell);
         GTButtonElement button = (GTButtonElement) root.getChildren().get(mode * 2);
-        button.onClick(event);
+        event.target = button;
+        event.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        UIEventDispatcher.dispatchEvent(event, false, false, false);
     }
 
     private static LDLib2FancyMachineUIElement createShell(GameTestHelper helper, MetaMachine resolvedMachine) {

@@ -12,6 +12,7 @@ import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer;
 import com.gregtechceu.gtceu.gametest.util.TestUtils;
 
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.BlockPos;
@@ -33,6 +34,7 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.mojang.authlib.GameProfile;
+import org.lwjgl.glfw.GLFW;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -98,7 +100,9 @@ public class PumpMachineAutoOutputSyncTest {
         GTToggleButtonElement toggle = pump.createLDLib2FluidAutoOutputToggle();
         UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
 
-        toggle.onClick(event);
+        event.target = toggle;
+        event.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        UIEventDispatcher.dispatchEvent(event, false, false, false);
 
         helper.assertTrue(pump.autoOutput.isAutoOutputFluids(),
                 "LDLib2 pump toggle did not update the client fluid auto-output field");
