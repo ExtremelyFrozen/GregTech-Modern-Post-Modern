@@ -12,14 +12,17 @@ public final class BloomRenderTicket {
     public static final BloomRenderTicket INVALID = new BloomRenderTicket();
 
     final @Nullable IRenderSetup renderSetup;
-    final IBloomEffect render;
+    private final @Nullable IBloomEffect render;
     final @Nullable Predicate<BloomRenderTicket> validityChecker;
     final @Nullable Supplier<@Nullable Level> worldContext;
 
     private boolean invalidated;
 
     private BloomRenderTicket() {
-        this(null, (p, b, c) -> {}, null, null);
+        this.renderSetup = null;
+        this.render = null;
+        this.validityChecker = null;
+        this.worldContext = null;
         this.invalidated = true;
     }
 
@@ -41,6 +44,13 @@ public final class BloomRenderTicket {
 
     public void invalidate() {
         this.invalidated = true;
+    }
+
+    IBloomEffect requireValidRender() {
+        if (!isValid() || render == null) {
+            throw new IllegalStateException("Only a valid bloom render ticket has a renderer.");
+        }
+        return render;
     }
 
     void checkValidity() {
