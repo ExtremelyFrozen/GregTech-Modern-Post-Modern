@@ -20,7 +20,7 @@ import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidDefiniti
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreDefinition;
 import com.gregtechceu.gtceu.api.data.worldgen.generator.IndicatorGenerators;
 import com.gregtechceu.gtceu.api.data.worldgen.generator.VeinGenerators;
-import com.gregtechceu.gtceu.api.gui.factory.LegacyUIFactoryHelper;
+import com.gregtechceu.gtceu.api.gui.factory.GTUIEditorMenu;
 import com.gregtechceu.gtceu.api.item.IComponentItem;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
@@ -176,7 +176,7 @@ public class CommonProxy {
         NeoForge.EVENT_BUS.addListener(CommonProxy::onServerStarted);
         modBus.addListener(AlloyBlastPropertyAddition::addAlloyBlastProperties);
 
-        LegacyUIFactoryHelper.register();
+        GTUIEditorMenu.register();
 
         if (GTCEu.Mods.isAE2Loaded()) {
             MEAutoBuildSources.init();
