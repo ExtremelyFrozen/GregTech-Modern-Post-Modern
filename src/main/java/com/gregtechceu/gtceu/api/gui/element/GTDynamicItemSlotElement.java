@@ -72,6 +72,7 @@ public final class GTDynamicItemSlotElement extends GTItemSlotElement {
     /** Returns whether this element's immutable UUID route matches one exact manifest range position. */
     boolean matchesBindingRoute(DynamicItemSlotBinding binding, int bindingOffset) {
         return handlerRoute.getTargetId().equals(binding.targetId()) &&
+                handlerRoute.getTargetIncarnation().equals(binding.targetIncarnation()) &&
                 handlerRoute.getSlots() == binding.slotCount() && routeSlotIndex == bindingOffset;
     }
 

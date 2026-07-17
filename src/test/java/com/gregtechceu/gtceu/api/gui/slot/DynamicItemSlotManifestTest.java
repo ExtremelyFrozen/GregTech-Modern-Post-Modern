@@ -30,7 +30,7 @@ public class DynamicItemSlotManifestTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void validManifestAndDefinitionRoundTrip(GameTestHelper helper) {
-        DynamicItemSlotDefinition definition = new DynamicItemSlotDefinition(id(10), 9);
+        DynamicItemSlotDefinition definition = definition(10, 9);
         DynamicItemSlotManifest manifest = new DynamicItemSlotManifest(
                 4,
                 5,
@@ -120,8 +120,8 @@ public class DynamicItemSlotManifestTest {
                 4,
                 12,
                 List.of(
-                        binding(2, 20, 12, 9, false),
-                        binding(3, 20, 21, 9, true)));
+                        binding(2, 20, 120, 12, 9, false),
+                        binding(3, 20, 121, 21, 9, true)));
 
         helper.assertTrue(manifest.bindings().getFirst().tombstone(), "old target lifecycle was not a tombstone");
         helper.assertTrue(manifest.bindings().get(1).present(), "new target lifecycle was not present");
@@ -149,7 +149,7 @@ public class DynamicItemSlotManifestTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void bindingAndTotalSlotLimitsAreEnforced(GameTestHelper helper) {
-        new DynamicItemSlotDefinition(id(1), DynamicItemSlotDefinition.MAX_SLOT_COUNT);
+        definition(1, DynamicItemSlotDefinition.MAX_SLOT_COUNT);
         new DynamicItemSlotManifest(
                 0,
                 1,
@@ -164,10 +164,10 @@ public class DynamicItemSlotManifestTest {
                         true)));
 
         assertIllegalArgument(helper,
-                () -> new DynamicItemSlotDefinition(id(1), 0),
+                () -> definition(1, 0),
                 "definition accepted zero slots");
         assertIllegalArgument(helper,
-                () -> new DynamicItemSlotDefinition(id(1), DynamicItemSlotDefinition.MAX_SLOT_COUNT + 1),
+                () -> definition(1, DynamicItemSlotDefinition.MAX_SLOT_COUNT + 1),
                 "definition accepted more than 256 slots");
         assertIllegalArgument(helper,
                 () -> binding(3, 1, -1, 1, true),
@@ -231,17 +231,20 @@ public class DynamicItemSlotManifestTest {
         UUID firstTarget = id(40);
         UUID secondTarget = id(41);
         UUID thirdTarget = id(42);
+        UUID firstIncarnation = id(140);
+        UUID secondIncarnation = id(141);
+        UUID thirdIncarnation = id(142);
         int baseSlotCount = 36;
 
         DynamicItemSlotManifest initial = DynamicItemSlotManifestSequence.advance(
                 Optional.empty(), 5, baseSlotCount,
-                List.of(new DynamicItemSlotDefinition(firstTarget, 2),
-                        new DynamicItemSlotDefinition(secondTarget, 1)));
+                List.of(new DynamicItemSlotDefinition(firstTarget, firstIncarnation, 2),
+                        new DynamicItemSlotDefinition(secondTarget, secondIncarnation, 1)));
         DynamicItemSlotManifest extended = DynamicItemSlotManifestSequence.advance(
                 Optional.of(initial), 6, baseSlotCount,
-                List.of(new DynamicItemSlotDefinition(secondTarget, 1),
-                        new DynamicItemSlotDefinition(firstTarget, 2),
-                        new DynamicItemSlotDefinition(thirdTarget, 3)));
+                List.of(new DynamicItemSlotDefinition(secondTarget, secondIncarnation, 1),
+                        new DynamicItemSlotDefinition(firstTarget, firstIncarnation, 2),
+                        new DynamicItemSlotDefinition(thirdTarget, thirdIncarnation, 3)));
 
         helper.assertTrue(extended.previousEpoch() == initial.epoch() && extended.epoch() == initial.epoch() + 1,
                 "manifest sequence did not advance exactly one epoch");
@@ -256,8 +259,8 @@ public class DynamicItemSlotManifestTest {
 
         DynamicItemSlotManifest reshaped = DynamicItemSlotManifestSequence.advance(
                 Optional.of(extended), 7, baseSlotCount,
-                List.of(new DynamicItemSlotDefinition(thirdTarget, 3),
-                        new DynamicItemSlotDefinition(firstTarget, 4)));
+                List.of(new DynamicItemSlotDefinition(thirdTarget, thirdIncarnation, 3),
+                        new DynamicItemSlotDefinition(firstTarget, firstIncarnation, 4)));
         DynamicItemSlotBinding oldFirstBinding = reshaped.bindings().get(0);
         DynamicItemSlotBinding removedSecondBinding = reshaped.bindings().get(1);
         DynamicItemSlotBinding retainedThirdBinding = reshaped.bindings().get(2);
@@ -273,9 +276,9 @@ public class DynamicItemSlotManifestTest {
 
         DynamicItemSlotManifest rebuilt = DynamicItemSlotManifestSequence.advance(
                 Optional.of(reshaped), 8, baseSlotCount,
-                List.of(new DynamicItemSlotDefinition(secondTarget, 1),
-                        new DynamicItemSlotDefinition(firstTarget, 4),
-                        new DynamicItemSlotDefinition(thirdTarget, 3)));
+                List.of(new DynamicItemSlotDefinition(secondTarget, secondIncarnation, 1),
+                        new DynamicItemSlotDefinition(firstTarget, firstIncarnation, 4),
+                        new DynamicItemSlotDefinition(thirdTarget, thirdIncarnation, 3)));
         DynamicItemSlotBinding rebuiltSecondBinding = rebuilt.bindings().get(4);
         helper.assertTrue(rebuilt.bindings().subList(0, 4).equals(reshaped.bindings()) &&
                 rebuiltSecondBinding.targetId().equals(secondTarget) && rebuiltSecondBinding.present() &&
@@ -288,26 +291,55 @@ public class DynamicItemSlotManifestTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
+    public static void manifestSequenceReplacesAChangedTargetIncarnation(GameTestHelper helper) {
+        UUID targetId = id(45);
+        UUID oldIncarnation = id(145);
+        UUID newIncarnation = id(146);
+        int baseSlotCount = 36;
+        DynamicItemSlotManifest initial = DynamicItemSlotManifestSequence.advance(
+                Optional.empty(), 5, baseSlotCount,
+                List.of(new DynamicItemSlotDefinition(targetId, oldIncarnation, 2)));
+
+        DynamicItemSlotManifest replaced = DynamicItemSlotManifestSequence.advance(
+                Optional.of(initial), 6, baseSlotCount,
+                List.of(new DynamicItemSlotDefinition(targetId, newIncarnation, 2)));
+
+        DynamicItemSlotBinding oldBinding = replaced.bindings().getFirst();
+        DynamicItemSlotBinding newBinding = replaced.bindings().get(1);
+        helper.assertTrue(oldBinding.tombstone() && oldBinding.targetId().equals(targetId) &&
+                oldBinding.targetIncarnation().equals(oldIncarnation) &&
+                oldBinding.firstSlotId() == baseSlotCount && oldBinding.slotCount() == 2,
+                "changed target incarnation did not tombstone its exact old range");
+        helper.assertTrue(newBinding.present() && newBinding.targetId().equals(targetId) &&
+                newBinding.targetIncarnation().equals(newIncarnation) &&
+                !newBinding.bindingId().equals(oldBinding.bindingId()) &&
+                newBinding.firstSlotId() == baseSlotCount + oldBinding.slotCount() && newBinding.slotCount() == 2,
+                "changed target incarnation did not append a fresh lifecycle range");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
     public static void manifestSequenceRejectsInvalidSourceSnapshots(GameTestHelper helper) {
         DynamicItemSlotManifest initial = DynamicItemSlotManifestSequence.advance(
                 Optional.empty(), 5, 36,
-                List.of(new DynamicItemSlotDefinition(id(50), 2)));
+                List.of(definition(50, 2)));
 
         assertIllegalArgument(helper,
                 () -> DynamicItemSlotManifestSequence.advance(
                         Optional.of(initial), 4, 36,
-                        List.of(new DynamicItemSlotDefinition(id(50), 2))),
+                        List.of(definition(50, 2))),
                 "manifest sequence accepted a source revision rollback");
         assertIllegalArgument(helper,
                 () -> DynamicItemSlotManifestSequence.advance(
                         Optional.of(initial), 6, 37,
-                        List.of(new DynamicItemSlotDefinition(id(50), 2))),
+                        List.of(definition(50, 2))),
                 "manifest sequence accepted a changed fixed-slot prefix");
         assertIllegalArgument(helper,
                 () -> DynamicItemSlotManifestSequence.advance(
                         Optional.of(initial), 6, 36,
-                        List.of(new DynamicItemSlotDefinition(id(50), 2),
-                                new DynamicItemSlotDefinition(id(50), 2))),
+                        List.of(definition(50, 2), definition(50, 2))),
                 "manifest sequence accepted duplicate logical targets");
         helper.succeed();
     }
@@ -329,7 +361,17 @@ public class DynamicItemSlotManifestTest {
 
     private static DynamicItemSlotBinding binding(long bindingId, long targetId, int firstSlotId, int slotCount,
                                                   boolean present) {
-        return new DynamicItemSlotBinding(id(bindingId), id(targetId), firstSlotId, slotCount, present);
+        return binding(bindingId, targetId, targetId + 100, firstSlotId, slotCount, present);
+    }
+
+    private static DynamicItemSlotBinding binding(long bindingId, long targetId, long targetIncarnation,
+                                                  int firstSlotId, int slotCount, boolean present) {
+        return new DynamicItemSlotBinding(
+                id(bindingId), id(targetId), id(targetIncarnation), firstSlotId, slotCount, present);
+    }
+
+    private static DynamicItemSlotDefinition definition(long targetId, int slotCount) {
+        return new DynamicItemSlotDefinition(id(targetId), id(targetId + 100), slotCount);
     }
 
     private static UUID id(long value) {

@@ -118,7 +118,8 @@ public class CentralMonitorModuleSlotTest {
         CustomItemStackHandler externalPlaceholderHandler = new CustomItemStackHandler(
                 CentralMonitorGroupItemHandler.PLACEHOLDER_SLOT_COUNT);
         MonitorGroup externalGroup = MonitorGroup.restore(
-                UUID.randomUUID(), UUID.randomUUID(), "external-handler-test", externalModuleHandler,
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "external-handler-test",
+                externalModuleHandler,
                 externalPlaceholderHandler);
         helper.assertTrue(!externalModuleHandler.isNonMutatingEmptySlotCapacityQueryEnabled() &&
                 !externalPlaceholderHandler.isNonMutatingEmptySlotCapacityQueryEnabled() &&

@@ -1856,6 +1856,7 @@ public class LangHandler {
         provider.add("gtpm.computer_monitor_cover.error.not_supported",
                 "This feature is not supported by this block/cover!");
         provider.add("gtpm.central_monitor.gui.create_group", "Create group");
+        provider.add("gtpm.central_monitor.gui.data_slot", "Data slot");
         provider.add("gtpm.central_monitor.gui.remove_from_group", "Remove from group");
         provider.add("gtpm.central_monitor.gui.set_target", "Set target");
         provider.add("gtpm.central_monitor.gui.currently_editing", "Currently editing: %s");

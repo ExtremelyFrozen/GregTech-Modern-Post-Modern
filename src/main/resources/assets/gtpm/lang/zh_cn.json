@@ -2226,6 +2226,7 @@
 	"gtpm.cable.voltage": "§a最大电压：§r§a%d§a（%s§a）",
 	"gtpm.central_monitor.gui.create_group": "创建组",
 	"gtpm.central_monitor.gui.currently_editing": "当前编辑：%s",
+	"gtpm.central_monitor.gui.data_slot": "数据槽位",
 	"gtpm.central_monitor.gui.remove_from_group": "从组中移除",
 	"gtpm.central_monitor.gui.set_target": "设置目标",
 	"gtpm.central_monitor.info_tooltip.0": "若需使用监控器，你须先将它们分组。每个组中只能包含一个模块。",

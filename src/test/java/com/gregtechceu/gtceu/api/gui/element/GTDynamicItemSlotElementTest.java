@@ -13,11 +13,13 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,6 +30,7 @@ public class GTDynamicItemSlotElementTest {
 
     private static final String BATCH = "GTDynamicItemSlotElement";
     private static final UUID TARGET_ID = new UUID(0, 1);
+    private static final UUID TARGET_INCARNATION = new UUID(0, 10);
 
     @TestHolder
     @EmptyTemplate
@@ -119,16 +122,25 @@ public class GTDynamicItemSlotElementTest {
         GTDynamicItemSlotElement element = new GTDynamicItemSlotElement(
                 route(new CustomItemStackHandler(1)), 0);
         DynamicItemSlotBinding matching = new DynamicItemSlotBinding(
-                new UUID(0, 2), TARGET_ID, 0, 1, true);
+                new UUID(0, 2), TARGET_ID, TARGET_INCARNATION, 0, 1, true);
         DynamicItemSlotBinding wrongTarget = new DynamicItemSlotBinding(
-                new UUID(0, 3), new UUID(0, 4), 0, 1, true);
+                new UUID(0, 3), new UUID(0, 4), TARGET_INCARNATION, 0, 1, true);
+        DynamicItemSlotBinding wrongIncarnation = new DynamicItemSlotBinding(
+                new UUID(0, 4), TARGET_ID, new UUID(0, 11), 0, 1, true);
+        DynamicItemSlotBinding reincarnatedCandidate = new DynamicItemSlotBinding(
+                matching.bindingId(), TARGET_ID, new UUID(0, 11), 0, 1, true);
         DynamicItemSlotBinding wrongShape = new DynamicItemSlotBinding(
-                new UUID(0, 5), TARGET_ID, 0, 2, true);
+                new UUID(0, 5), TARGET_ID, TARGET_INCARNATION, 0, 2, true);
+        GTDynamicItemSlotBundle bundle = new GTDynamicItemSlotBundle(matching, List.of(element));
 
         helper.assertTrue(element.matchesBindingRoute(matching, 0),
                 "dynamic element rejected its exact manifest route");
         helper.assertTrue(!element.matchesBindingRoute(wrongTarget, 0),
                 "dynamic element accepted a route for another target UUID");
+        helper.assertTrue(!element.matchesBindingRoute(wrongIncarnation, 0),
+                "dynamic element accepted a route for another target incarnation");
+        helper.assertTrue(!bundle.matchesIdentity(reincarnatedCandidate),
+                "dynamic slot bundle accepted a changed target incarnation for an existing binding");
         helper.assertTrue(!element.matchesBindingRoute(wrongShape, 0) &&
                 !element.matchesBindingRoute(matching, 1),
                 "dynamic element accepted a mismatched route shape or offset");
@@ -143,13 +155,15 @@ public class GTDynamicItemSlotElementTest {
                 phase + " exposed the wrong Vanilla active state");
         helper.assertTrue(slot.mayPlace(Items.DIAMOND.getDefaultInstance()) == expected,
                 phase + " exposed the wrong placement permission");
-        helper.assertTrue(slot.mayPickup(helper.makeMockPlayer()) == expected,
+        helper.assertTrue(slot.mayPickup(helper.makeMockPlayer(GameType.SURVIVAL)) == expected,
                 phase + " exposed the wrong pickup permission");
     }
 
     private static DynamicItemHandlerRoute route(CustomItemStackHandler handler) {
         handler.setNonMutatingEmptySlotCapacityQueryEnabled(true);
-        return new DynamicItemHandlerRoute(TARGET_ID, handler.getSlots(), ignored -> handler);
+        return new DynamicItemHandlerRoute(
+                TARGET_ID, TARGET_INCARNATION, handler.getSlots(),
+                (ignoredTarget, ignoredIncarnation) -> handler);
     }
 
     private static void assertIllegalArgument(GameTestHelper helper, Runnable action, String message) {

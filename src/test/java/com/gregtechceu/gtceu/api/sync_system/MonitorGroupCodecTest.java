@@ -151,6 +151,46 @@ public class MonitorGroupCodecTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = "MonitorGroupCodec")
+    public static void dynamicItemSlotIncarnationPersistsAcrossSaveAndSyncCodec(GameTestHelper helper) {
+        ContextualFieldCodec.Context<MonitorGroup> context = context(helper);
+        MonitorGroup group = new MonitorGroup("dynamic-item-slot");
+        MonitorGroup other = new MonitorGroup("other-dynamic-item-slot");
+        helper.assertTrue(!group.getDynamicItemSlotIncarnation().equals(other.getDynamicItemSlotIncarnation()),
+                "new monitor groups reused the same dynamic item-slot incarnation");
+
+        JsonObject encoded = MonitorGroupCodec.INSTANCE.serializeField(group, context).getAsJsonObject();
+        MonitorGroup decoded = decode(encoded, context);
+        helper.assertTrue(decoded.getDynamicItemSlotIncarnation().equals(group.getDynamicItemSlotIncarnation()),
+                "dynamic item-slot incarnation changed during codec round-trip");
+
+        JsonObject legacyJson = encoded.deepCopy();
+        legacyJson.remove("dynamicItemSlotIncarnation");
+        MonitorGroup legacyDecoded = decode(legacyJson, context);
+        helper.assertTrue(!legacyDecoded.getDynamicItemSlotIncarnation()
+                .equals(group.getDynamicItemSlotIncarnation()),
+                "legacy monitor group reused the removed dynamic item-slot incarnation");
+        JsonObject migratedJson = MonitorGroupCodec.INSTANCE.serializeField(legacyDecoded, context).getAsJsonObject();
+        helper.assertTrue(migratedJson.has("dynamicItemSlotIncarnation") &&
+                decode(migratedJson, context).getDynamicItemSlotIncarnation()
+                        .equals(legacyDecoded.getDynamicItemSlotIncarnation()),
+                "generated legacy dynamic item-slot incarnation did not persist");
+
+        JsonObject malformedJson = encoded.deepCopy();
+        malformedJson.add("dynamicItemSlotIncarnation", new JsonPrimitive("malformed"));
+        boolean malformedRejected = false;
+        try {
+            MonitorGroupCodec.INSTANCE.deserializeField(malformedJson, context);
+        } catch (RuntimeException expected) {
+            malformedRejected = true;
+        }
+        helper.assertTrue(malformedRejected,
+                "monitor group codec accepted a malformed dynamic item-slot incarnation");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "MonitorGroupCodec")
     public static void textConfigurationRevisionPersistsAndTracksConfigurationLifetime(GameTestHelper helper) {
         ContextualFieldCodec.Context<MonitorGroup> context = context(helper);
         MonitorGroup group = new MonitorGroup("text-revision");

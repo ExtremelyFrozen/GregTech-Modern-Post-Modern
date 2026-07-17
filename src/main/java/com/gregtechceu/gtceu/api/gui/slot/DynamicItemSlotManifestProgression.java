@@ -50,6 +50,7 @@ final class DynamicItemSlotManifestProgression {
 
     private static boolean hasStableIdentity(DynamicItemSlotBinding previous, DynamicItemSlotBinding next) {
         return previous.bindingId().equals(next.bindingId()) && previous.targetId().equals(next.targetId()) &&
+                previous.targetIncarnation().equals(next.targetIncarnation()) &&
                 previous.firstSlotId() == next.firstSlotId() && previous.slotCount() == next.slotCount();
     }
 }

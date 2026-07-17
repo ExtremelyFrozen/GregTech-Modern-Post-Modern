@@ -10,10 +10,11 @@ import java.util.UUID;
 /**
  * Describes the slot capacity requested by one logical target before a menu assigns stable slot ids.
  *
- * @param targetId  stable identity of the target that owns the slots
- * @param slotCount number of slots requested by the target
+ * @param targetId          stable business identity of the target that owns the slots
+ * @param targetIncarnation identity of the target's current logical lifecycle
+ * @param slotCount         number of slots requested by the target
  */
-public record DynamicItemSlotDefinition(UUID targetId, int slotCount) {
+public record DynamicItemSlotDefinition(UUID targetId, UUID targetIncarnation, int slotCount) {
 
     /**
      * Maximum number of slots that one target may request.
@@ -27,12 +28,13 @@ public record DynamicItemSlotDefinition(UUID targetId, int slotCount) {
 
         @Override
         public @NotNull DynamicItemSlotDefinition decode(RegistryFriendlyByteBuf buffer) {
-            return new DynamicItemSlotDefinition(buffer.readUUID(), buffer.readVarInt());
+            return new DynamicItemSlotDefinition(buffer.readUUID(), buffer.readUUID(), buffer.readVarInt());
         }
 
         @Override
         public void encode(RegistryFriendlyByteBuf buffer, DynamicItemSlotDefinition value) {
             buffer.writeUUID(value.targetId());
+            buffer.writeUUID(value.targetIncarnation());
             buffer.writeVarInt(value.slotCount());
         }
     };
@@ -40,6 +42,9 @@ public record DynamicItemSlotDefinition(UUID targetId, int slotCount) {
     public DynamicItemSlotDefinition {
         if (targetId == null) {
             throw new IllegalArgumentException("targetId must not be null");
+        }
+        if (targetIncarnation == null) {
+            throw new IllegalArgumentException("targetIncarnation must not be null");
         }
         validateSlotCount(slotCount);
     }

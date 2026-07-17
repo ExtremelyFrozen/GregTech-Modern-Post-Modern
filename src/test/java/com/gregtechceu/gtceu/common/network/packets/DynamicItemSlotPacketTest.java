@@ -122,7 +122,7 @@ public class DynamicItemSlotPacketTest {
                 id(2),
                 5,
                 36,
-                List.of(new DynamicItemSlotBinding(id(4), id(3), 36, 2, true)));
+                List.of(new DynamicItemSlotBinding(id(4), id(3), id(5), 36, 2, true)));
     }
 
     private static RegistryFriendlyByteBuf newBuffer(GameTestHelper helper) {

@@ -13,16 +13,10 @@ import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorImageModuleActions;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
-import com.gregtechceu.gtceu.common.network.packets.CPacketMachineActionToServer;
 
-import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -31,44 +25,22 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
 
     @Override
     public IMonitorRenderer getRenderer(ItemStack stack) {
-        return new MonitorImageRenderer(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, null));
+        return new MonitorImageRenderer(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, ""));
     }
 
     @Override
-    public Widget createUIWidget(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
-        WidgetGroup builder = new WidgetGroup();
-        TextFieldWidget textField = new TextFieldWidget(0, 0, 100, 10, null, null);
-        textField.setCurrentString(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, ""));
-        ImageEditSession editSession = ImageEditSession.open(machine, group, stack);
-
-        ButtonWidget saveButton = new ButtonWidget(-40, 22, 20, 20, click -> {
-            if (!click.isRemote) return;
-
-            sendUrlChange(editSession, textField.getCurrentString(), action -> sendMachineAction(machine, action));
-        });
-        saveButton.setButtonTexture(GuiTextures.BUTTON_CHECK);
-        builder.addWidget(textField);
-        builder.addWidget(saveButton);
-        return builder;
-    }
-
-    @Override
-    public UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group) {
-        return createConfigurationElement(stack, machine, group, action -> sendMachineAction(machine, action));
-    }
-
-    UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
-                                         Consumer<SyncActionData> actionSender) {
+    public UIElement createConfigurationElement(ItemStack stack, CentralMonitorMachine machine, MonitorGroup group,
+                                                Consumer<SyncActionData> actionSender) {
         UIElement builder = new UIElement();
-        UITemplate.setLDLib2Bounds(builder, 0, 0, 100, 42);
+        UITemplate.setLDLib2Bounds(builder, 0, 0, 248, 42);
 
-        GTTextFieldElement textField = new GTTextFieldElement(0, 0, 100, 10);
+        GTTextFieldElement textField = new GTTextFieldElement(0, 0, 220, 12);
         textField.setAnyString();
         textField.setTextValidator(CentralMonitorImageModuleActions::isValidUrl);
         textField.setText(stack.getOrDefault(GTDataComponents.IMAGE_MODULE_URL, ""), false);
         ImageEditSession editSession = ImageEditSession.open(machine, group, stack);
 
-        GTButtonElement saveButton = new GTButtonElement(-40, 22, 20, 20,
+        GTButtonElement saveButton = new GTButtonElement(228, 0, 20, 20,
                 GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_CHECK),
                 event -> {
                     if (!machine.isRemote()) return;
@@ -106,13 +78,7 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
                 requestedUrl,
                 editSession.sequence);
         actionSender.accept(action);
-        editSession.expectedModule.set(GTDataComponents.IMAGE_MODULE_URL, requestedUrl);
         editSession.sequence = nextSequence;
-    }
-
-    private static void sendMachineAction(CentralMonitorMachine machine, SyncActionData action) {
-        PacketDistributor.sendToServer(
-                new CPacketMachineActionToServer(machine.getBlockPos(), machine.getDefinition().getId(), action));
     }
 
     private static final class ImageEditSession {

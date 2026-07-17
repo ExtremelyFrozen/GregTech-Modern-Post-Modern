@@ -2165,6 +2165,7 @@
 	"gtpm.cable.loss_per_block": "§c線損/公尺/安：§r§c%d§7 伏",
 	"gtpm.cable.superconductor": "%s§d超導體",
 	"gtpm.cable.voltage": "§a最大電壓：§r§a%d§a（%s§a）",
+	"gtpm.central_monitor.gui.data_slot": "資料槽位",
 	"gtpm.chance_logic.and": "AND",
 	"gtpm.chance_logic.first": "第一",
 	"gtpm.chance_logic.none": "NONE",

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
 @PrefixGameTestTemplate(false)
@@ -28,6 +29,7 @@ public class DynamicItemHandlerRouteTest {
 
     private static final String BATCH = "DynamicItemHandlerRoute";
     private static final UUID TARGET_ID = new UUID(0, 1);
+    private static final UUID TARGET_INCARNATION = new UUID(0, 2);
 
     @TestHolder
     @EmptyTemplate
@@ -39,7 +41,7 @@ public class DynamicItemHandlerRouteTest {
         first.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 2));
         replacement.setStackInSlot(0, new ItemStack(Items.GOLD_INGOT, 3));
         handlers.put(TARGET_ID, first);
-        DynamicItemHandlerRoute route = new DynamicItemHandlerRoute(TARGET_ID, 2, handlers::get);
+        DynamicItemHandlerRoute route = route(2, handlers);
 
         helper.assertTrue(route.isResolved(), "route did not resolve its initial target handler");
         helper.assertTrue(route.getSlots() == 2, "route changed its fixed logical slot count");
@@ -77,7 +79,7 @@ public class DynamicItemHandlerRouteTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void missingAndUndersizedTargetsRejectOperations(GameTestHelper helper) {
         Map<UUID, IItemHandlerModifiable> handlers = new HashMap<>();
-        DynamicItemHandlerRoute route = new DynamicItemHandlerRoute(TARGET_ID, 2, handlers::get);
+        DynamicItemHandlerRoute route = route(2, handlers);
         ItemStack offered = new ItemStack(Items.DIAMOND, 3);
 
         helper.assertTrue(!route.isResolved(), "missing target was reported as resolved");
@@ -116,15 +118,53 @@ public class DynamicItemHandlerRouteTest {
     @TestHolder
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
+    public static void routeRejectsAReplacementTargetIncarnationImmediately(GameTestHelper helper) {
+        LimitedItemHandler oldHandler = new LimitedItemHandler(1, 4, Items.IRON_INGOT);
+        LimitedItemHandler newHandler = new LimitedItemHandler(1, 7, Items.GOLD_INGOT);
+        oldHandler.setStackInSlot(0, new ItemStack(Items.IRON_INGOT, 2));
+        newHandler.setStackInSlot(0, new ItemStack(Items.GOLD_INGOT, 3));
+        UUID newIncarnation = new UUID(0, 3);
+        AtomicReference<TargetLifecycle> current = new AtomicReference<>(
+                new TargetLifecycle(TARGET_INCARNATION, oldHandler));
+        DynamicItemHandlerRoute oldRoute = new DynamicItemHandlerRoute(
+                TARGET_ID, TARGET_INCARNATION, 1,
+                (targetId, targetIncarnation) -> resolveLifecycle(current.get(), targetId, targetIncarnation));
+
+        current.set(new TargetLifecycle(newIncarnation, newHandler));
+        ItemStack offered = new ItemStack(Items.GOLD_INGOT, 2);
+        helper.assertTrue(!oldRoute.isResolved() && oldRoute.getStackInSlot(0).isEmpty(),
+                "old route resolved a replacement target incarnation");
+        helper.assertTrue(oldRoute.insertItem(0, offered, false) == offered &&
+                oldRoute.extractItem(0, 1, false).isEmpty(),
+                "old route inserted into or extracted from a replacement target incarnation");
+        oldRoute.setStackInSlot(0, offered);
+        assertStack(helper, newHandler.getStackInSlot(0), Items.GOLD_INGOT, 3,
+                "old route wrote into a replacement target incarnation");
+
+        DynamicItemHandlerRoute newRoute = new DynamicItemHandlerRoute(
+                TARGET_ID, newIncarnation, 1,
+                (targetId, targetIncarnation) -> resolveLifecycle(current.get(), targetId, targetIncarnation));
+        helper.assertTrue(newRoute.isResolved(), "new route did not resolve its matching target incarnation");
+        newRoute.setStackInSlot(0, offered);
+        assertStack(helper, newHandler.getStackInSlot(0), Items.GOLD_INGOT, 2,
+                "new route did not write through its matching target incarnation");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
     public static void invalidLogicalSlotsFailFast(GameTestHelper helper) {
         DynamicItemHandlerRoute route = new DynamicItemHandlerRoute(
-                TARGET_ID, 2, ignored -> new CustomItemStackHandler(2));
+                TARGET_ID, TARGET_INCARNATION, 2,
+                (ignoredTarget, ignoredIncarnation) -> new CustomItemStackHandler(2));
 
         assertIllegalArgument(helper, () -> route.getStackInSlot(-1),
                 "route accepted a negative logical slot");
         assertIllegalArgument(helper, () -> route.insertItem(2, ItemStack.EMPTY, true),
                 "route accepted a logical slot at its upper bound");
-        assertIllegalArgument(helper, () -> new DynamicItemHandlerRoute(TARGET_ID, 0, ignored -> null),
+        assertIllegalArgument(helper, () -> new DynamicItemHandlerRoute(
+                TARGET_ID, TARGET_INCARNATION, 0, (ignoredTarget, ignoredIncarnation) -> null),
                 "route accepted zero logical slots");
         helper.succeed();
     }
@@ -142,7 +182,7 @@ public class DynamicItemHandlerRouteTest {
         handler.setOnContentsChanged(changes::incrementAndGet);
         Map<UUID, IItemHandlerModifiable> handlers = new HashMap<>();
         handlers.put(TARGET_ID, handler);
-        DynamicItemHandlerRoute route = new DynamicItemHandlerRoute(TARGET_ID, 1, handlers::get);
+        DynamicItemHandlerRoute route = route(1, handlers);
 
         int expectedCapacity = handler.getMaxStackSizeForEmptySlot(0, candidate);
         int directCapacity = route.getMaxStackSizeForEmptySlot(0, candidate);
@@ -169,7 +209,7 @@ public class DynamicItemHandlerRouteTest {
         handler.setOnContentsChanged(changes::incrementAndGet);
         Map<UUID, IItemHandlerModifiable> handlers = new HashMap<>();
         handlers.put(TARGET_ID, handler);
-        DynamicItemHandlerRoute route = new DynamicItemHandlerRoute(TARGET_ID, 1, handlers::get);
+        DynamicItemHandlerRoute route = route(1, handlers);
         GTDynamicItemSlotElement element = new GTDynamicItemSlotElement(route, 0);
 
         helper.assertTrue(!route.isResolved(), "route accepted a handler without safe empty-slot capacity queries");
@@ -187,6 +227,20 @@ public class DynamicItemHandlerRouteTest {
 
     private static void assertStack(GameTestHelper helper, ItemStack stack, Item item, int count, String message) {
         helper.assertTrue(stack.is(item) && stack.getCount() == count, message);
+    }
+
+    private static DynamicItemHandlerRoute route(int logicalSlotCount,
+                                                 Map<UUID, IItemHandlerModifiable> handlers) {
+        return new DynamicItemHandlerRoute(
+                TARGET_ID, TARGET_INCARNATION, logicalSlotCount,
+                (targetId, targetIncarnation) -> TARGET_INCARNATION.equals(targetIncarnation) ?
+                        handlers.get(targetId) : null);
+    }
+
+    private static IItemHandlerModifiable resolveLifecycle(TargetLifecycle lifecycle, UUID targetId,
+                                                           UUID targetIncarnation) {
+        return TARGET_ID.equals(targetId) && lifecycle.incarnation().equals(targetIncarnation) ?
+                lifecycle.handler() : null;
     }
 
     private static void assertIllegalArgument(GameTestHelper helper, Runnable action, String message) {
@@ -222,4 +276,6 @@ public class DynamicItemHandlerRouteTest {
             return stack.is(acceptedItem);
         }
     }
+
+    private record TargetLifecycle(UUID incarnation, IItemHandlerModifiable handler) {}
 }

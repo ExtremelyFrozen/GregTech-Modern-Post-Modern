@@ -28,6 +28,12 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 				.getOrThrow(),
 		)
 		json.add(
+			"dynamicItemSlotIncarnation",
+			UUIDUtil.CODEC
+				.encodeStart(JsonOps.INSTANCE, value.getDynamicItemSlotIncarnation())
+				.getOrThrow(),
+		)
+		json.add(
 			"moduleSlotIncarnation",
 			UUIDUtil.CODEC
 				.encodeStart(JsonOps.INSTANCE, value.getModuleSlotIncarnation())
@@ -75,6 +81,7 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 
 		val json = value.asJsonObject
 		val identity = deserializeUuidOrCreateLegacy(json, "identity")
+		val dynamicItemSlotIncarnation = deserializeUuidOrCreateLegacy(json, "dynamicItemSlotIncarnation")
 		val moduleSlotIncarnation = deserializeUuidOrCreateLegacy(json, "moduleSlotIncarnation")
 		val textConfigurationRevision = deserializeTextConfigurationRevision(json)
 		val handler = deserializeItems(json.get("items"), context, MonitorGroup.createModuleHandler())
@@ -85,6 +92,7 @@ class MonitorGroupCodec private constructor() : ContextualFieldCodec<MonitorGrou
 		)
 		val group = MonitorGroup.restore(
 			identity,
+			dynamicItemSlotIncarnation,
 			moduleSlotIncarnation,
 			textConfigurationRevision,
 			json.get("name").asString,

@@ -39,6 +39,7 @@ public record GTDynamicItemSlotBundle(DynamicItemSlotBinding binding,
     /** Verifies that a later manifest retained this bundle's immutable lifecycle identity and range. */
     public boolean matchesIdentity(DynamicItemSlotBinding candidate) {
         return binding.bindingId().equals(candidate.bindingId()) && binding.targetId().equals(candidate.targetId()) &&
+                binding.targetIncarnation().equals(candidate.targetIncarnation()) &&
                 binding.firstSlotId() == candidate.firstSlotId() && binding.slotCount() == candidate.slotCount();
     }
 }

@@ -231,7 +231,7 @@ public class DynamicItemSlotOpeningTest {
                 BASE_SLOT_COUNT,
                 List.of(
                         binding(FIRST_BINDING_ID, TARGET_ID, BASE_SLOT_COUNT, 9, false),
-                        binding(SECOND_BINDING_ID, TARGET_ID, BASE_SLOT_COUNT + 9, 9, true)));
+                        binding(SECOND_BINDING_ID, TARGET_ID, id(2_010), BASE_SLOT_COUNT + 9, 9, true)));
         DynamicItemSlotOpeningToken rebuiltToken = token(rebuilt);
 
         assertTransition(helper, server.beginManifest(rebuilt), DynamicItemSlotTransition.ACCEPTED,
@@ -307,6 +307,24 @@ public class DynamicItemSlotOpeningTest {
         assertTransition(helper, rewrittenClient.receiveManifest(token(rewritten), rewritten),
                 DynamicItemSlotTransition.CLOSE_OPENING,
                 "client accepted a rewritten binding target identity");
+
+        DynamicItemSlotClientOpening reincarnatedClient = clientOpening();
+        DynamicItemSlotServerOpening reincarnatedServer = serverOpening();
+        completeHandshake(helper, reincarnatedClient, reincarnatedServer, manifest);
+        DynamicItemSlotManifest reincarnated = new DynamicItemSlotManifest(
+                1,
+                2,
+                id(104),
+                2,
+                BASE_SLOT_COUNT,
+                List.of(binding(
+                        FIRST_BINDING_ID, TARGET_ID, id(2_011), BASE_SLOT_COUNT, 9, true)));
+        assertTransition(helper, reincarnatedServer.beginManifest(reincarnated),
+                DynamicItemSlotTransition.CLOSE_OPENING,
+                "server accepted a rewritten binding target incarnation");
+        assertTransition(helper, reincarnatedClient.receiveManifest(token(reincarnated), reincarnated),
+                DynamicItemSlotTransition.CLOSE_OPENING,
+                "client accepted a rewritten binding target incarnation");
         helper.succeed();
     }
 
@@ -588,7 +606,15 @@ public class DynamicItemSlotOpeningTest {
 
     private static DynamicItemSlotBinding binding(UUID bindingId, UUID targetId, int firstSlotId, int slotCount,
                                                   boolean present) {
-        return new DynamicItemSlotBinding(bindingId, targetId, firstSlotId, slotCount, present);
+        UUID targetIncarnation = new UUID(
+                targetId.getMostSignificantBits(), Math.addExact(targetId.getLeastSignificantBits(), 1_000));
+        return binding(bindingId, targetId, targetIncarnation, firstSlotId, slotCount, present);
+    }
+
+    private static DynamicItemSlotBinding binding(UUID bindingId, UUID targetId, UUID targetIncarnation,
+                                                  int firstSlotId, int slotCount, boolean present) {
+        return new DynamicItemSlotBinding(
+                bindingId, targetId, targetIncarnation, firstSlotId, slotCount, present);
     }
 
     private static UUID id(long value) {

@@ -14,13 +14,15 @@ import java.util.UUID;
  * A tombstone keeps its range reserved after removal so later bindings never reuse ids still known by a client.
  * </p>
  *
- * @param bindingId   globally unique identity of this target lifecycle
- * @param targetId    stable identity of the logical target
- * @param firstSlotId first menu slot id reserved for this lifecycle
- * @param slotCount   number of consecutive slots reserved for this lifecycle
- * @param present     whether the lifecycle is active; {@code false} denotes a tombstone
+ * @param bindingId         globally unique identity of this target lifecycle
+ * @param targetId          stable business identity of the logical target
+ * @param targetIncarnation identity of the target's logical lifecycle
+ * @param firstSlotId       first menu slot id reserved for this lifecycle
+ * @param slotCount         number of consecutive slots reserved for this lifecycle
+ * @param present           whether the lifecycle is active; {@code false} denotes a tombstone
  */
-public record DynamicItemSlotBinding(UUID bindingId, UUID targetId, int firstSlotId, int slotCount, boolean present) {
+public record DynamicItemSlotBinding(UUID bindingId, UUID targetId, UUID targetIncarnation,
+                                     int firstSlotId, int slotCount, boolean present) {
 
     /**
      * Network codec for a bounded lifecycle binding.
@@ -32,6 +34,7 @@ public record DynamicItemSlotBinding(UUID bindingId, UUID targetId, int firstSlo
             return new DynamicItemSlotBinding(
                     buffer.readUUID(),
                     buffer.readUUID(),
+                    buffer.readUUID(),
                     buffer.readVarInt(),
                     buffer.readVarInt(),
                     buffer.readBoolean());
@@ -41,6 +44,7 @@ public record DynamicItemSlotBinding(UUID bindingId, UUID targetId, int firstSlo
         public void encode(RegistryFriendlyByteBuf buffer, DynamicItemSlotBinding value) {
             buffer.writeUUID(value.bindingId());
             buffer.writeUUID(value.targetId());
+            buffer.writeUUID(value.targetIncarnation());
             buffer.writeVarInt(value.firstSlotId());
             buffer.writeVarInt(value.slotCount());
             buffer.writeBoolean(value.present());
@@ -53,6 +57,9 @@ public record DynamicItemSlotBinding(UUID bindingId, UUID targetId, int firstSlo
         }
         if (targetId == null) {
             throw new IllegalArgumentException("targetId must not be null");
+        }
+        if (targetIncarnation == null) {
+            throw new IllegalArgumentException("targetIncarnation must not be null");
         }
         if (firstSlotId < 0) {
             throw new IllegalArgumentException("firstSlotId must be non-negative: " + firstSlotId);

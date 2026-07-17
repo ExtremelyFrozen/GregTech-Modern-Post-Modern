@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -30,20 +30,23 @@ public final class DynamicItemHandlerRoute implements IItemHandlerModifiable, No
 
     @Getter
     private final UUID targetId;
+    @Getter
+    private final UUID targetIncarnation;
     private final int logicalSlotCount;
-    private final Function<UUID, IItemHandlerModifiable> handlerResolver;
+    private final BiFunction<UUID, UUID, IItemHandlerModifiable> handlerResolver;
     private boolean reportedInvalidShape;
     private boolean reportedUnsafeCapacity;
 
     /**
      * Creates a route whose logical shape remains stable while its target handler may be replaced.
      *
-     * @param targetId         identity resolved for every inventory operation
-     * @param logicalSlotCount fixed slot count exposed to the menu
-     * @param handlerResolver  resolver returning the target's current handler, or {@code null} when absent
+     * @param targetId          stable business identity resolved for every inventory operation
+     * @param targetIncarnation identity of the routed logical target lifecycle
+     * @param logicalSlotCount  fixed slot count exposed to the menu
+     * @param handlerResolver   resolver returning the matching lifecycle's current handler, or {@code null} when absent
      */
-    public DynamicItemHandlerRoute(UUID targetId, int logicalSlotCount,
-                                   Function<UUID, IItemHandlerModifiable> handlerResolver) {
+    public DynamicItemHandlerRoute(UUID targetId, UUID targetIncarnation, int logicalSlotCount,
+                                   BiFunction<UUID, UUID, IItemHandlerModifiable> handlerResolver) {
         validateLogicalSlotCount(logicalSlotCount);
         if (targetId == null) {
             GTCEu.LOGGER.error("Cannot create a dynamic item handler route without a target id");
@@ -53,7 +56,12 @@ public final class DynamicItemHandlerRoute implements IItemHandlerModifiable, No
             GTCEu.LOGGER.error("Cannot create dynamic item handler route {} without a resolver", targetId);
             throw new IllegalArgumentException("handlerResolver must not be null");
         }
+        if (targetIncarnation == null) {
+            GTCEu.LOGGER.error("Cannot create a dynamic item handler route {} without a target incarnation", targetId);
+            throw new IllegalArgumentException("targetIncarnation must not be null");
+        }
         this.targetId = targetId;
+        this.targetIncarnation = targetIncarnation;
         this.logicalSlotCount = logicalSlotCount;
         this.handlerResolver = handlerResolver;
     }
@@ -150,7 +158,7 @@ public final class DynamicItemHandlerRoute implements IItemHandlerModifiable, No
 
     @Nullable
     private IItemHandlerModifiable resolveCurrentHandler() {
-        IItemHandlerModifiable handler = handlerResolver.apply(targetId);
+        IItemHandlerModifiable handler = handlerResolver.apply(targetId, targetIncarnation);
         if (handler == null) {
             reportedInvalidShape = false;
             reportedUnsafeCapacity = false;

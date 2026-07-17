@@ -159,7 +159,7 @@ public class CentralMonitorTextModulePacketTest {
                 "Central Monitor S2C packet constructor accepted a group outside its machine");
 
         MonitorGroup duplicateIdentity = MonitorGroup.restore(
-                group.getIdentity(), UUID.randomUUID(), "duplicate",
+                group.getIdentity(), UUID.randomUUID(), UUID.randomUUID(), "duplicate",
                 MonitorGroup.createModuleHandler(), new CustomItemStackHandler(8));
         server.getMonitorGroups().add(duplicateIdentity);
         boolean duplicateIdentityRejected = false;

@@ -55,6 +55,7 @@ public class GTDynamicItemSlotContainerMenuTest {
 
     private static final String BATCH = "GTDynamicItemSlotContainerMenu";
     private static final UUID TARGET_ID = new UUID(0, 1);
+    private static final UUID TARGET_INCARNATION = new UUID(0, 3);
     private static final UUID BINDING_ID = new UUID(0, 2);
 
     @TestHolder
@@ -293,7 +294,7 @@ public class GTDynamicItemSlotContainerMenuTest {
 
         int firstDynamicSlotId = menu.slots.size();
         GTDynamicItemSlotBundle bundle = machine.sessionElement.appendBinding(new DynamicItemSlotBinding(
-                BINDING_ID, TARGET_ID, firstDynamicSlotId, 1, true));
+                BINDING_ID, TARGET_ID, TARGET_INCARNATION, firstDynamicSlotId, 1, true));
         GTDynamicItemSlotElement dynamicElement = bundle.elements().getFirst();
         helper.assertTrue(menu.slots.size() == firstDynamicSlotId + 1 &&
                 dynamicElement.getSlot().index == firstDynamicSlotId &&
@@ -309,7 +310,7 @@ public class GTDynamicItemSlotContainerMenuTest {
     private static OpeningFixture activateOpening(GameTestHelper helper, MenuFixture fixture) {
         int baseSlotCount = fixture.dynamicElement().getSlot().index;
         DynamicItemSlotBinding binding = new DynamicItemSlotBinding(
-                BINDING_ID, TARGET_ID, baseSlotCount, 1, true);
+                BINDING_ID, TARGET_ID, TARGET_INCARNATION, baseSlotCount, 1, true);
         DynamicItemSlotManifest manifest = new DynamicItemSlotManifest(
                 0, 1, new UUID(0, 3), 0, baseSlotCount, List.of(binding));
         DynamicItemSlotOpeningToken token = DynamicItemSlotOpeningToken.of(
@@ -416,7 +417,8 @@ public class GTDynamicItemSlotContainerMenuTest {
             playerElement = new GTItemSlotElement().bind(new Slot(player.getInventory(), 0, 0, 0));
             sessionElement = GTDynamicItemSlotSessionElement.builder()
                     .sourceRevision(() -> 0)
-                    .definitionSource(() -> List.of(new DynamicItemSlotDefinition(TARGET_ID, 1)))
+                    .definitionSource(() -> List.of(
+                            new DynamicItemSlotDefinition(TARGET_ID, TARGET_INCARNATION, 1)))
                     .bindingAppender(this::appendBinding)
                     .bindingResolved(binding -> true)
                     .bindingSelectable(binding -> true)
@@ -431,8 +433,9 @@ public class GTDynamicItemSlotContainerMenuTest {
 
         private List<GTDynamicItemSlotElement> appendBinding(DynamicItemSlotBinding binding) {
             DynamicItemHandlerRoute route = new DynamicItemHandlerRoute(
-                    binding.targetId(), binding.slotCount(),
-                    targetId -> TARGET_ID.equals(targetId) ? dynamicHandler : null);
+                    binding.targetId(), binding.targetIncarnation(), binding.slotCount(),
+                    (targetId, targetIncarnation) -> TARGET_ID.equals(targetId) &&
+                            TARGET_INCARNATION.equals(targetIncarnation) ? dynamicHandler : null);
             List<GTDynamicItemSlotElement> elements = new ArrayList<>(binding.slotCount());
             for (int slotIndex = 0; slotIndex < binding.slotCount(); slotIndex++) {
                 GTDynamicItemSlotElement element = new GTDynamicItemSlotElement(route, slotIndex);

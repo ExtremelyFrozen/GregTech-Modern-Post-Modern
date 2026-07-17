@@ -55,10 +55,11 @@ public final class DynamicItemSlotManifestSequence {
                 allocatedBindingIds.add(binding.bindingId());
                 DynamicItemSlotDefinition definition = remainingDefinitions.get(binding.targetId());
                 boolean remainsPresent = binding.present() && definition != null &&
+                        definition.targetIncarnation().equals(binding.targetIncarnation()) &&
                         definition.slotCount() == binding.slotCount();
                 bindings.add(new DynamicItemSlotBinding(
-                        binding.bindingId(), binding.targetId(), binding.firstSlotId(), binding.slotCount(),
-                        remainsPresent));
+                        binding.bindingId(), binding.targetId(), binding.targetIncarnation(), binding.firstSlotId(),
+                        binding.slotCount(), remainsPresent));
                 if (remainsPresent) {
                     remainingDefinitions.remove(binding.targetId());
                 }
@@ -70,7 +71,8 @@ public final class DynamicItemSlotManifestSequence {
         for (DynamicItemSlotDefinition definition : remainingDefinitions.values()) {
             UUID bindingId = uniqueId(allocatedBindingIds);
             bindings.add(new DynamicItemSlotBinding(
-                    bindingId, definition.targetId(), nextSlotId, definition.slotCount(), true));
+                    bindingId, definition.targetId(), definition.targetIncarnation(), nextSlotId,
+                    definition.slotCount(), true));
             nextSlotId += definition.slotCount();
         }
 
