@@ -210,6 +210,7 @@ tasks.register('verifyLdlib2MigratedSurfaces') {
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/research/HPCAMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/research/NetworkSwitchMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/research/ResearchStationMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/generator/LargeCombustionEngineMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/AutoMaintenanceHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/CleaningMaintenanceHatchPartMachine.java',
                 'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/DataAccessHatchMachine.java',
