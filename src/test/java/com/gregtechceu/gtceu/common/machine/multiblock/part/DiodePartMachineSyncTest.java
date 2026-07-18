@@ -36,6 +36,9 @@ public class DiodePartMachineSyncTest {
 
     private static final String BATCH = "DiodePartMachineSync";
     private static final int TIER = GTValues.LV;
+    private static final BlockPos PRIMARY_POS = new BlockPos(0, 1, 1);
+    private static final BlockPos SECONDARY_POS = new BlockPos(1, 1, 1);
+    private static final BlockPos TERTIARY_POS = new BlockPos(2, 1, 1);
     private static final ResourceLocation AMP_MODE_FIELD = SyncFieldData.key("amp_mode");
     private static final ResourceLocation RAW_AMPS_FIELD = SyncFieldData.key("amps");
 
@@ -44,21 +47,21 @@ public class DiodePartMachineSyncTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void amperageUsesAutomaticClientSyncAndLegacySaveKey(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
-        TestDiodePartMachine server = createMachine(false, DiodePartMachine.MAX_AMPS);
-        TestDiodePartMachine client = createMachine(true, DiodePartMachine.MAX_AMPS);
+        TestDiodePartMachine server = createMachine(helper, PRIMARY_POS, false, DiodePartMachine.MAX_AMPS);
+        TestDiodePartMachine client = createMachine(helper, SECONDARY_POS, true, DiodePartMachine.MAX_AMPS);
 
         server.setAmps(8);
         DataComponentMap full = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
         assertAmperageField(helper, full, 8, "diode full sync");
 
         client.resetSideEffects();
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, full);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, full, true);
         helper.assertTrue(client.getAmps() == 8,
                 "diode full sync did not initialize the client amperage");
         helper.assertTrue(client.getRenderState().getValue(DiodePartMachine.AMP_MODE_PROPERTY) ==
                 DiodePartMachine.AmpMode.MODE_8A,
                 "diode full sync did not initialize the client amp-mode render state");
-        assertClientSyncSideEffects(helper, client, 2, "diode full sync");
+        assertClientSyncSideEffects(helper, client, "diode full sync");
 
         server.resetSideEffects();
         client.resetSideEffects();
@@ -67,13 +70,13 @@ public class DiodePartMachineSyncTest {
 
         assertOnlyAmperageField(helper, delta, 4, "changed diode delta");
         assertServerSetterSideEffects(helper, server, 1, 1, "changed diode amperage");
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, delta);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, delta, false);
         helper.assertTrue(client.getAmps() == 4,
                 "changed diode delta did not update the client amperage");
         helper.assertTrue(client.getRenderState().getValue(DiodePartMachine.AMP_MODE_PROPERTY) ==
                 DiodePartMachine.AmpMode.MODE_4A,
                 "changed diode delta did not update the client amp-mode render state");
-        assertClientSyncSideEffects(helper, client, 2, "changed diode delta");
+        assertClientSyncSideEffects(helper, client, "changed diode delta");
 
         server.setAmps(4);
         helper.assertTrue(server.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
@@ -85,7 +88,7 @@ public class DiodePartMachineSyncTest {
         helper.assertTrue(saved.get(RAW_AMPS_FIELD) == null,
                 "saved diode amperage used the field name instead of the legacy amp_mode key");
 
-        TestDiodePartMachine loaded = createMachine(false, DiodePartMachine.MAX_AMPS);
+        TestDiodePartMachine loaded = createMachine(helper, TERTIARY_POS, false, DiodePartMachine.MAX_AMPS);
         loaded.getSyncDataHolder().deserializeFieldData(registries, SyncFieldData.builder()
                 .put(AMP_MODE_FIELD, new JsonPrimitive(16))
                 .build(), false);
@@ -108,11 +111,11 @@ public class DiodePartMachineSyncTest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void serverSoftMalletCyclesEveryModeAndRetainsEnergySideEffects(GameTestHelper helper) {
-        TestDiodePartMachine diode = createMachine(false, DiodePartMachine.MAX_AMPS);
+        TestDiodePartMachine diode = createMachine(helper, PRIMARY_POS, false, DiodePartMachine.MAX_AMPS);
         diode.setFrontFacing(Direction.NORTH);
         diode.resetSideEffects();
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-        ExtendedUseOnContext context = context(player);
+        ExtendedUseOnContext context = context(player, diode.getBlockPos());
         int[] expectedAmperages = { 2, 4, 8, 16, 1 };
 
         for (int i = 0; i < expectedAmperages.length; i++) {
@@ -139,11 +142,11 @@ public class DiodePartMachineSyncTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void clientClickTimingAndMaximumOverrideRemainUnchanged(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-        ExtendedUseOnContext context = context(player);
-        TestDiodePartMachine client = createMachine(true, DiodePartMachine.MAX_AMPS);
+        TestDiodePartMachine client = createMachine(helper, PRIMARY_POS, true, DiodePartMachine.MAX_AMPS);
+        ExtendedUseOnContext clientContext = context(player, client.getBlockPos());
         client.resetSideEffects();
 
-        InteractionResult clientResult = client.useSoftMallet(context);
+        InteractionResult clientResult = client.useSoftMallet(clientContext);
 
         helper.assertTrue(clientResult == InteractionResult.CONSUME,
                 "client diode soft-mallet click was not consumed");
@@ -152,14 +155,15 @@ public class DiodePartMachineSyncTest {
         helper.assertTrue(client.getRenderState().getValue(DiodePartMachine.AMP_MODE_PROPERTY) ==
                 DiodePartMachine.AmpMode.MODE_1A,
                 "client diode soft-mallet click updated render state before server synchronization");
-        assertClientSyncSideEffects(helper, client, 0, "client diode soft-mallet click");
+        assertClientNoSyncSideEffects(helper, client, "client diode soft-mallet click");
 
-        TestDiodePartMachine limited = createMachine(false, 8);
+        TestDiodePartMachine limited = createMachine(helper, SECONDARY_POS, false, 8);
         limited.setFrontFacing(Direction.NORTH);
         limited.resetSideEffects();
+        ExtendedUseOnContext limitedContext = context(player, limited.getBlockPos());
         int[] expectedAmperages = { 2, 4, 8, 1 };
         for (int expectedAmperage : expectedAmperages) {
-            limited.useSoftMallet(context);
+            limited.useSoftMallet(limitedContext);
             helper.assertTrue(limited.getAmps() == expectedAmperage,
                     "overridden diode maximum did not cycle to " + expectedAmperage + "A");
             assertEnergyConfiguration(helper, limited, expectedAmperage,
@@ -171,15 +175,21 @@ public class DiodePartMachineSyncTest {
         helper.succeed();
     }
 
-    private static TestDiodePartMachine createMachine(boolean clientSide, int maxAmperage) {
+    private static TestDiodePartMachine createMachine(GameTestHelper helper, BlockPos relativePos, boolean clientSide,
+                                                      int maxAmperage) {
         var definition = GTMachines.DIODE[TIER];
-        return new TestDiodePartMachine(new BlockEntityCreationInfo(
-                definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()),
+        helper.setBlock(relativePos, definition.getBlock());
+        BlockPos absolutePos = helper.absolutePos(relativePos);
+        helper.getLevel().removeBlockEntity(absolutePos);
+        TestDiodePartMachine machine = new TestDiodePartMachine(new BlockEntityCreationInfo(
+                definition.getBlockEntityType(), absolutePos, helper.getLevel().getBlockState(absolutePos)),
                 clientSide, maxAmperage);
+        helper.getLevel().setBlockEntity(machine);
+        return machine;
     }
 
-    private static ExtendedUseOnContext context(ServerPlayer player) {
-        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(BlockPos.ZERO), Direction.UP, BlockPos.ZERO, false);
+    private static ExtendedUseOnContext context(ServerPlayer player, BlockPos pos) {
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
         return new ExtendedUseOnContext(player, InteractionHand.MAIN_HAND, hit);
     }
 
@@ -230,11 +240,21 @@ public class DiodePartMachineSyncTest {
     }
 
     private static void assertClientSyncSideEffects(GameTestHelper helper, TestDiodePartMachine diode,
-                                                    int expectedRenderUpdates, String description) {
+                                                    String description) {
         helper.assertTrue(diode.energyReinitializations == 0 && diode.blockUpdates == 0,
                 description + " invoked server-only diode side effects on the client");
-        helper.assertTrue(diode.renderUpdates == expectedRenderUpdates,
-                description + " scheduled an unexpected number of render updates");
+        helper.assertTrue(diode.ampUpdateCallbacks == 1 && diode.renderUpdates >= 1,
+                description + " did not apply exactly one amperage render callback");
+        helper.assertTrue(diode.energyContainer.getInputAmperage() == 1 &&
+                diode.energyContainer.getOutputAmperage() == 1,
+                description + " reinitialized the client energy container before a load");
+    }
+
+    private static void assertClientNoSyncSideEffects(GameTestHelper helper, TestDiodePartMachine diode,
+                                                      String description) {
+        helper.assertTrue(diode.energyReinitializations == 0 && diode.blockUpdates == 0 &&
+                diode.renderUpdates == 0 && diode.ampUpdateCallbacks == 0,
+                description + " produced a client sync side effect");
         helper.assertTrue(diode.energyContainer.getInputAmperage() == 1 &&
                 diode.energyContainer.getOutputAmperage() == 1,
                 description + " reinitialized the client energy container before a load");
@@ -259,6 +279,7 @@ public class DiodePartMachineSyncTest {
         private int energyReinitializations;
         private int blockUpdates;
         private int renderUpdates;
+        private int ampUpdateCallbacks;
 
         private TestDiodePartMachine(BlockEntityCreationInfo info, boolean clientSide, int maxAmperage) {
             super(info, TIER);
@@ -295,6 +316,12 @@ public class DiodePartMachineSyncTest {
             renderUpdates++;
         }
 
+        @Override
+        public void onAmpUpdated() {
+            super.onAmpUpdated();
+            ampUpdateCallbacks++;
+        }
+
         private InteractionResult useSoftMallet(ExtendedUseOnContext context) {
             return super.onSoftMalletClick(context);
         }
@@ -303,6 +330,7 @@ public class DiodePartMachineSyncTest {
             energyReinitializations = 0;
             blockUpdates = 0;
             renderUpdates = 0;
+            ampUpdateCallbacks = 0;
         }
     }
 }

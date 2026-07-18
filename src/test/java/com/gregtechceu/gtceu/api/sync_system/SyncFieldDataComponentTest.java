@@ -1,6 +1,8 @@
 package com.gregtechceu.gtceu.api.sync_system;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ClientFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -245,7 +247,7 @@ public class SyncFieldDataComponentTest {
 
         DataComponentMap fullSync = fullSyncServer.getSyncDataHolder()
                 .serializeFullClientSyncComponents(registries);
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, fullSync);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, fullSync, true);
 
         helper.assertTrue(client.clientValue == null,
                 "ordinary client field codec did not restore a full-sync null");
@@ -300,7 +302,7 @@ public class SyncFieldDataComponentTest {
         client.getSyncDataHolder().serializeFullClientSyncComponents(registries);
 
         DataComponentMap fullSync = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, fullSync);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, fullSync, true);
 
         helper.assertTrue(client.replaceableList != immutableList &&
                 client.replaceableList.equals(List.of("server-list")),
@@ -339,6 +341,44 @@ public class SyncFieldDataComponentTest {
                 "authoritative SyncBoth acknowledgement did not apply to the client");
         helper.assertTrue(client.getSyncDataHolder().collectServerNetworkChanges(registries).isEmpty(),
                 "authoritative SyncBoth acknowledgement echoed back to the server");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "SyncFieldDataComponent")
+    public static void clientListenersAndRerendersOnlyRunForChangedValues(GameTestHelper helper) {
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        ClientChangeSyncTarget server = new ClientChangeSyncTarget(7);
+        ClientChangeSyncTarget client = new ClientChangeSyncTarget(7);
+
+        client.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        DataComponentMap unchangedFullSync = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, unchangedFullSync, true);
+        helper.assertTrue(client.listenerCalls == 1 && client.renderUpdates == 1,
+                "first authoritative full sync did not initialize the client listener or rerender");
+        helper.assertTrue(client.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "unchanged full sync produced a changed-only client delta");
+
+        server.value = 9;
+        DataComponentMap changedFullSync = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, changedFullSync, true);
+        helper.assertTrue(client.value == 9 && client.listenerCalls == 2 && client.renderUpdates == 2,
+                "changed full sync did not invoke its listener and rerender exactly once");
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, changedFullSync, true);
+        helper.assertTrue(client.listenerCalls == 2 && client.renderUpdates == 2,
+                "repeated full sync invoked a client listener or rerender for an unchanged value");
+
+        client.getSyncDataHolder().deserializeFieldData(registries,
+                SyncFieldData.builder().put(SyncFieldData.key("value"), new JsonPrimitive(9)).build(), true, true);
+        helper.assertTrue(client.listenerCalls == 2 && client.renderUpdates == 2,
+                "unchanged direct field deserialization invoked a client listener or rerender");
+        client.getSyncDataHolder().deserializeFieldData(registries,
+                SyncFieldData.builder().put(SyncFieldData.key("value"), new JsonPrimitive(11)).build(), true, true);
+        helper.assertTrue(client.value == 11 && client.listenerCalls == 3 && client.renderUpdates == 3,
+                "changed direct field deserialization did not invoke its listener and rerender exactly once");
+        helper.assertTrue(client.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
+                "direct changed-only field deserialization produced a redundant client delta");
         helper.succeed();
     }
 
@@ -527,6 +567,40 @@ public class SyncFieldDataComponentTest {
         @Override
         public @Nullable ISyncManaged getParentSyncObject() {
             return null;
+        }
+    }
+
+    private static final class ClientChangeSyncTarget implements ISyncManaged {
+
+        private final SyncDataHolder syncDataHolder = new SyncDataHolder(this);
+        @SyncToClient
+        @RerenderOnChanged
+        private int value;
+        private int listenerCalls;
+        private int renderUpdates;
+
+        private ClientChangeSyncTarget(int value) {
+            this.value = value;
+        }
+
+        @ClientFieldChangeListener(fieldName = "value")
+        private void onValueChanged() {
+            listenerCalls++;
+        }
+
+        @Override
+        public SyncDataHolder getSyncDataHolder() {
+            return syncDataHolder;
+        }
+
+        @Override
+        public @Nullable ISyncManaged getParentSyncObject() {
+            return null;
+        }
+
+        @Override
+        public void scheduleRenderUpdate() {
+            renderUpdates++;
         }
     }
 

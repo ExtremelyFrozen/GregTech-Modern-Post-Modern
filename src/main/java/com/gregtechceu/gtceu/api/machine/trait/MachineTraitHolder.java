@@ -192,6 +192,17 @@ public final class MachineTraitHolder {
 
     public void deserializeSyncFieldData(HolderLookup.Provider lookup, SyncFieldData data, boolean isClientSync,
                                          boolean parseExplicitNull) {
+        deserializeSyncFieldData(lookup, data, isClientSync, parseExplicitNull, false);
+    }
+
+    public void deserializeSyncFieldData(HolderLookup.Provider lookup, SyncFieldData data, boolean isClientSync,
+                                         boolean parseExplicitNull, boolean fullSync) {
+        deserializeSyncFieldData(lookup, data, isClientSync, parseExplicitNull, fullSync, true);
+    }
+
+    public void deserializeSyncFieldData(HolderLookup.Provider lookup, SyncFieldData data, boolean isClientSync,
+                                         boolean parseExplicitNull, boolean fullSync,
+                                         boolean notifyUnchangedOnFullSync) {
         if (isClientSync) {
             for (Map.Entry<ResourceLocation, JsonElement> entry : data.fields().entrySet()) {
                 String key = entry.getKey().getPath();
@@ -210,7 +221,7 @@ public final class MachineTraitHolder {
                 }
                 traits.get(index).getSyncDataHolder()
                         .deserializeFieldData(lookup, SyncFieldData.fromJson(entry.getValue()), true,
-                                parseExplicitNull);
+                                parseExplicitNull, fullSync, notifyUnchangedOnFullSync);
             }
             return;
         }
@@ -224,7 +235,7 @@ public final class MachineTraitHolder {
                 continue;
             }
             trait.getSyncDataHolder().deserializeFieldData(lookup, SyncFieldData.fromJson(entry.getValue()),
-                    isClientSync, parseExplicitNull);
+                    isClientSync, parseExplicitNull, fullSync, notifyUnchangedOnFullSync);
         }
     }
 
@@ -235,11 +246,23 @@ public final class MachineTraitHolder {
 
     public void deserializeSyncComponents(HolderLookup.Provider lookup, DataComponentMap components,
                                           boolean isClientSync, boolean parseExplicitNull) {
+        deserializeSyncComponents(lookup, components, isClientSync, parseExplicitNull, false);
+    }
+
+    public void deserializeSyncComponents(HolderLookup.Provider lookup, DataComponentMap components,
+                                          boolean isClientSync, boolean parseExplicitNull, boolean fullSync) {
+        deserializeSyncComponents(lookup, components, isClientSync, parseExplicitNull, fullSync, true);
+    }
+
+    public void deserializeSyncComponents(HolderLookup.Provider lookup, DataComponentMap components,
+                                          boolean isClientSync, boolean parseExplicitNull, boolean fullSync,
+                                          boolean notifyUnchangedOnFullSync) {
         SyncFieldData fieldData = components.get(GTDataComponents.SYNC_FIELD_DATA.get());
         if (fieldData == null) {
             return;
         }
-        deserializeSyncFieldData(lookup, fieldData, isClientSync, parseExplicitNull);
+        deserializeSyncFieldData(lookup, fieldData, isClientSync, parseExplicitNull, fullSync,
+                notifyUnchangedOnFullSync);
     }
 
     private static IllegalStateException disabledClientSyncNbt() {

@@ -15,17 +15,23 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.neoforged.neoforge.network.handling.IPayloadContext
 
-open class SPacketMachineSyncToClient(private val pos: BlockPos, private val data: DataComponentMap) : CustomPacketPayload {
+open class SPacketMachineSyncToClient(private val pos: BlockPos, private val data: DataComponentMap, private val fullSync: Boolean) : CustomPacketPayload {
+
+	constructor(pos: BlockPos, data: DataComponentMap) : this(pos, data, false)
 
 	constructor(buffer: RegistryFriendlyByteBuf) : this(
 		buffer.readBlockPos(),
 		SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.decode(buffer),
+		buffer.readBoolean(),
 	)
 
 	open fun encode(buffer: RegistryFriendlyByteBuf) {
 		buffer.writeBlockPos(pos)
 		SyncFieldData.DATA_COMPONENT_MAP_STREAM_CODEC.encode(buffer, data)
+		buffer.writeBoolean(fullSync)
 	}
+
+	fun isFullSync(): Boolean = fullSync
 
 	open fun execute(context: IPayloadContext) {
 		if (data.isEmpty) {
@@ -42,7 +48,7 @@ open class SPacketMachineSyncToClient(private val pos: BlockPos, private val dat
 			return
 		}
 
-		blockEntity.getSyncDataHolder().applyClientNetworkUpdate(level.registryAccess(), data)
+		blockEntity.getSyncDataHolder().applyClientNetworkUpdate(level.registryAccess(), data, fullSync)
 	}
 
 	override fun type(): Type<SPacketMachineSyncToClient> = TYPE

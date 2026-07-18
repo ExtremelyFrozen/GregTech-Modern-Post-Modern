@@ -402,6 +402,7 @@ object FieldCodecs {
 		parent.lookup,
 		parent.serializationTarget,
 		parent.parseExplicitNull,
+		parent.notifyUnchangedOnFullSync,
 	)
 
 	@Suppress("UNCHECKED_CAST")

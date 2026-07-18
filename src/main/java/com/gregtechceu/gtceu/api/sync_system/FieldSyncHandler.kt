@@ -175,6 +175,8 @@ object FieldSyncHandler {
 		readingClientFields: Boolean,
 		parseExplicitNull: Boolean = false,
 		serializationTarget: SyncSerializationTarget = SyncSerializationTarget.DATA_COMPONENTS,
+		fullSync: Boolean = false,
+		notifyUnchangedOnFullSync: Boolean = true,
 	) {
 		if (savedValue.isJsonNull && !parseExplicitNull) {
 			return
@@ -194,10 +196,11 @@ object FieldSyncHandler {
 						current,
 						field.fieldName,
 						readingClientFields,
-						false,
+						fullSync,
 						registries,
 						serializationTarget,
 						parseExplicitNull,
+						notifyUnchangedOnFullSync,
 					),
 				)
 				applyDecodedValue(holder, field, current, result)

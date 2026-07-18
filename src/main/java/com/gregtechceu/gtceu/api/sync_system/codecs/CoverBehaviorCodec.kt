@@ -85,7 +85,14 @@ class CoverBehaviorCodec private constructor() : ContextualFieldCodec<CoverBehav
 		val components = DataComponentMap.CODEC
 			.parse(context.lookup.createSerializationContext(JsonOps.INSTANCE), json.get("data"))
 			.getOrThrow()
-		cover.getSyncDataHolder().deserializeComponents(context.lookup, components, context.isClientSync)
+		cover.getSyncDataHolder().deserializeComponents(
+			context.lookup,
+			components,
+			context.isClientSync,
+			context.parseExplicitNull,
+			context.isClientFullSyncUpdate,
+			context.notifyUnchangedOnFullSync,
+		)
 		return cover
 	}
 

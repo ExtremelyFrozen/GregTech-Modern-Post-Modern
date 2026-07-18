@@ -136,6 +136,8 @@ public class LDLib2BatchModeFancyConfiguratorSyncTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void ldlib2ToggleChangesClientFieldFlushesSyncAndConsumesEvent(GameTestHelper helper) {
         TestBatchModeMachine machine = createMachine(true, true);
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        machine.getSyncDataHolder().serializeFullClientSyncData(registries);
         LDLib2ConfiguratorPanelElement panel = new LDLib2ConfiguratorPanelElement(new TestMachineUIHolder(machine), 0,
                 0);
         LDLib2FancyConfiguratorButton.Toggle toggle = LDLib2BatchModeFancyConfigurator
@@ -147,7 +149,7 @@ public class LDLib2BatchModeFancyConfiguratorSyncTest {
         helper.assertTrue(machine.isBatchEnabled(), "LDLib2 batch-mode toggle did not update the client field");
         helper.assertTrue(machine.syncRequests == 1, "LDLib2 batch-mode toggle did not flush machine field sync once");
         helper.assertTrue(event.hasHandler, "LDLib2 batch-mode toggle event was not consumed after field sync");
-        assertField(helper, machine.getSyncDataHolder().collectServerNetworkChanges(helper.getLevel().registryAccess()),
+        assertField(helper, machine.getSyncDataHolder().collectServerNetworkChanges(registries),
                 true, "LDLib2 batch-mode toggle request");
         helper.succeed();
     }

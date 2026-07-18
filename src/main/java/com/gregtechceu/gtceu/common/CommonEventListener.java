@@ -394,7 +394,7 @@ public class CommonEventListener {
                 continue;
             }
             PacketDistributor.sendToPlayer(player,
-                    new SPacketMachineSyncToClient(syncBlockEntity.getBlockPos(), data));
+                    new SPacketMachineSyncToClient(syncBlockEntity.getBlockPos(), data, true));
         }
     }
 

@@ -1,7 +1,10 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.steam;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.sync_system.ServerFieldUpdateResult;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionContext;
@@ -9,8 +12,10 @@ import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.SyncActionDispatchers;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
+import com.gregtechceu.gtceu.common.machine.multiblock.part.StandardFluidHatchPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.steam.LargeBoilerMachine.LargeBoilerRecipeLogic;
 
 import net.minecraft.core.BlockPos;
@@ -29,6 +34,8 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+
+import java.util.List;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -85,10 +92,10 @@ public class LargeBoilerSyncTest {
         server.setSteamGenerated(1_250);
         server.setThrottle(70);
 
-        SyncFieldData machineDelta = requireFields(
-                server.getSyncDataHolder().serializeToComponents(registries, true, false));
         SyncFieldData logicDelta = requireFields(
                 serverLogic.getSyncDataHolder().serializeToComponents(registries, true, false));
+        SyncFieldData machineDelta = requireFields(
+                server.getSyncDataHolder().serializeToComponents(registries, true, false));
         helper.assertTrue(machineDelta.fields().size() == 3,
                 "large boiler delta included fields outside the changed machine state");
         assertIntField(helper, machineDelta, CURRENT_TEMPERATURE_FIELD, 451, "large boiler delta");
@@ -199,13 +206,14 @@ public class LargeBoilerSyncTest {
     @GameTest(template = "empty", batch = BATCH)
     public static void throttleActionClampsExecutesOnceAndRetimesActiveFuel(GameTestHelper helper) {
         RegistryAccess registries = helper.getLevel().registryAccess();
-        LargeBoilerMachine machine = createMachine();
+        LargeBoilerMachine machine = createFuelTestMachine();
         LargeBoilerRecipeLogic logic = machine.getRecipeLogic();
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         GTRecipe recipe = GTRecipeTypes.LARGE_BOILER_RECIPES
                 .recipeBuilder(GTCEu.id("large_boiler_sync_fuel"))
                 .duration(200)
                 .build();
+        machine.formStructure(LargeBoilerMachine.DEFAULT_STRUCTURE);
         logic.setupRecipe(recipe);
         logic.setProgress(40);
         helper.assertTrue(logic.getLastRecipe() != null && logic.getMaxProgress() == 200,
@@ -220,12 +228,14 @@ public class LargeBoilerSyncTest {
                 "large boiler throttle action did not execute exactly one five-percent decrement");
         helper.assertTrue(logic.getMaxProgress() == 211 && logic.getProgress() == 42,
                 "large boiler throttle action did not preserve fuel burn-time retiming");
-        assertOnlyIntField(helper,
-                requireFields(machine.getSyncDataHolder().serializeToComponents(registries, true, false)),
-                THROTTLE_FIELD, 95, "large boiler throttle action delta");
-        assertIntField(helper,
-                requireFields(logic.getSyncDataHolder().serializeToComponents(registries, true, false)),
-                CURRENT_THROTTLE_FIELD, 95, "large boiler logic throttle action delta");
+        SyncFieldData logicDelta = requireFields(
+                logic.getSyncDataHolder().serializeToComponents(registries, true, false));
+        SyncFieldData machineDelta = requireFields(
+                machine.getSyncDataHolder().serializeToComponents(registries, true, false));
+        assertOnlyIntField(helper, machineDelta, THROTTLE_FIELD, 95,
+                "large boiler throttle action delta");
+        assertIntField(helper, logicDelta, CURRENT_THROTTLE_FIELD, 95,
+                "large boiler logic throttle action delta");
 
         machine.setThrottle(25);
         machine.getSyncDataHolder().serializeFullClientSyncComponents(registries);
@@ -298,6 +308,36 @@ public class LargeBoilerSyncTest {
         var definition = GTMultiMachines.LARGE_BOILER_BRONZE;
         return new LargeBoilerMachine(new BlockEntityCreationInfo(
                 definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()), 500, 1);
+    }
+
+    private static LargeBoilerMachine createFuelTestMachine() {
+        var definition = GTMultiMachines.LARGE_BOILER_BRONZE;
+        return new FuelTestLargeBoilerMachine(new BlockEntityCreationInfo(
+                definition.getBlockEntityType(), BlockPos.ZERO, definition.defaultBlockState()));
+    }
+
+    private static final class FuelTestLargeBoilerMachine extends LargeBoilerMachine {
+
+        private final List<IMultiPart> testParts;
+
+        private FuelTestLargeBoilerMachine(BlockEntityCreationInfo info) {
+            super(info, 500, 1);
+            this.testParts = List.of(createFuelHatch());
+        }
+
+        @Override
+        public List<IMultiPart> getParts() {
+            return testParts;
+        }
+    }
+
+    private static StandardFluidHatchPartMachine createFuelHatch() {
+        var definition = GTMachines.FLUID_IMPORT_HATCH[GTValues.LV];
+        MetaMachine machine = definition.getBlockEntityType().create(BlockPos.ZERO, definition.defaultBlockState());
+        if (!(machine instanceof StandardFluidHatchPartMachine hatch)) {
+            throw new IllegalStateException("Large boiler fuel fixture did not create a standard fluid hatch");
+        }
+        return hatch;
     }
 
     private static boolean dispatchThrottle(ServerPlayer player, LargeBoilerMachine machine, int direction) {

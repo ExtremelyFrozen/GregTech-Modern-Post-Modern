@@ -31,5 +31,6 @@ interface ContextualFieldCodec<T> {
 		val lookup: HolderLookup.Provider,
 		val serializationTarget: SyncSerializationTarget = SyncSerializationTarget.DATA_COMPONENTS,
 		val parseExplicitNull: Boolean = false,
+		val notifyUnchangedOnFullSync: Boolean = true,
 	)
 }

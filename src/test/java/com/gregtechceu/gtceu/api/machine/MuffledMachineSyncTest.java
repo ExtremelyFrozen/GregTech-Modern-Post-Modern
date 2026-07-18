@@ -64,7 +64,7 @@ public class MuffledMachineSyncTest {
 
         DataComponentMap full = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
         assertMuffledField(helper, full, true, description + " full sync");
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, full);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, full, true);
         helper.assertTrue(client.isMuffled(), description + " full sync did not update the client field");
         helper.assertTrue(client.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
                 description + " full network deserialization produced a redundant changed-only delta");
@@ -84,7 +84,7 @@ public class MuffledMachineSyncTest {
         server.setMuffled(false);
         DataComponentMap delta = server.getSyncDataHolder().serializeToComponents(registries, true, false);
         assertOnlyMuffledField(helper, delta, false, description + " changed delta");
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, delta);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, delta, false);
         helper.assertTrue(!client.isMuffled(), description + " changed delta did not update the client field");
         helper.assertTrue(client.getSyncDataHolder().serializeToComponents(registries, true, false).isEmpty(),
                 description + " delta network deserialization produced a redundant changed-only delta");

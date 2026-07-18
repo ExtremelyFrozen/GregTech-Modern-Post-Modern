@@ -40,7 +40,7 @@ public class TransformerTransformUpSyncTest {
 
         DataComponentMap initial = server.getSyncDataHolder().serializeFullClientSyncComponents(registries);
         client.resetSideEffectCounts();
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, initial);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, initial, true);
 
         helper.assertTrue(!client.isTransformUp(),
                 "initial transformer sync changed the default transform direction");
@@ -66,7 +66,7 @@ public class TransformerTransformUpSyncTest {
         server.setTransformUp(true);
         DataComponentMap changed = server.getSyncDataHolder().serializeToComponents(registries, true, false);
         assertTransformUpField(helper, changed, true, "changed transformer delta");
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, changed);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, changed, false);
 
         helper.assertTrue(client.isTransformUp(),
                 "changed transformer delta did not update the client direction");
@@ -82,7 +82,7 @@ public class TransformerTransformUpSyncTest {
         DataComponentMap unchanged = server.getSyncDataHolder().serializeToComponents(registries, true, false);
         helper.assertTrue(unchanged.isEmpty(),
                 "unchanged transformer direction produced a redundant client delta");
-        client.getSyncDataHolder().applyClientNetworkUpdate(registries, unchanged);
+        client.getSyncDataHolder().applyClientNetworkUpdate(registries, unchanged, false);
         helper.assertTrue(client.energyContainerUpdates == 1 && client.renderUpdates == 1,
                 "unchanged transformer direction repeated a client-side listener");
         helper.succeed();

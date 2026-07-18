@@ -123,13 +123,14 @@ abstract class ManagedSyncBlockEntity :
 	open fun serverTick() {
 		setChanged()
 		val serverLevel = level as? ServerLevel
+		val fullSync = syncDataHolder.isFullSyncPending()
 		if (serverLevel != null && syncDataHolder.scanAndMarkChanges(serverLevel.registryAccess())) {
 			val changes = syncDataHolder.collectClientNetworkChanges(serverLevel.registryAccess(), false)
 			if (!changes.isEmpty) {
 				PacketDistributor.sendToPlayersTrackingChunk(
 					serverLevel,
 					ChunkPos(blockPos),
-					SPacketMachineSyncToClient(blockPos, changes),
+					SPacketMachineSyncToClient(blockPos, changes, fullSync),
 				)
 				try {
 					onClientNetworkChanges(changes)
