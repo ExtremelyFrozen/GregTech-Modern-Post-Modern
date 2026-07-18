@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTPhantomFluidSlotElement;
@@ -68,22 +69,24 @@ public class SteamHatchPartMachineLDLib2UITest {
         UIElement root = standalone.getRootElement();
         boolean steelSteamMultiblocks = ConfigHolder.INSTANCE.machines.steelSteamMultiblocks;
         helper.assertTrue(!(root instanceof LDLib2FancyMachineUIElement) &&
-                root.getSizeWidth() == 176 && root.getSizeHeight() == 166,
+                UITemplate.getLDLib2Bounds(root).width() == 176 && UITemplate.getLDLib2Bounds(root).height() == 166,
                 "Steam Hatch standalone screen lost its dedicated 176x166 layout");
         helper.assertTrue(root.getStyle().getInline(PropertyRegistry.BACKGROUND) ==
                 GuiTextures.BACKGROUND_STEAM.get(steelSteamMultiblocks),
                 "Steam Hatch standalone screen lost its configured Steam background");
 
         List<GTFluidSlotElement> fluidSlots = normalFluidSlots(root);
-        helper.assertTrue(fluidSlots.size() == 1 &&
-                fluidSlots.getFirst().getLayoutX() == 90 && fluidSlots.getFirst().getLayoutY() == 35 &&
-                fluidSlots.getFirst().getCapacity() == steamHatch.tank.getTankCapacity(0),
-                "Steam Hatch standalone screen did not retain its real tank at 90,35");
+        helper.assertTrue(fluidSlots.size() == 1,
+                "Steam Hatch standalone screen did not retain one real fluid slot");
+        UITemplate.LDLib2Bounds fluidSlotBounds = UITemplate.getLDLib2Bounds(fluidSlots.getFirst());
+        helper.assertTrue(fluidSlotBounds.x() == 90 && fluidSlotBounds.y() == 35,
+                "Steam Hatch standalone fluid slot moved from 90,35");
+        helper.assertTrue(fluidSlots.getFirst().getCapacity() == steamHatch.tank.getTankCapacity(0),
+                "Steam Hatch standalone fluid slot lost its real tank capacity");
         helper.assertTrue(fluidSlots.getFirst().isAllowClickFilled() &&
                 fluidSlots.getFirst().isAllowClickDrained(),
                 "Steam Hatch standalone slot lost one of its bucket interaction directions");
-        helper.assertTrue(fluidSlots.getFirst().getStyle().getInline(PropertyRegistry.BACKGROUND) ==
-                GuiTextures.FLUID_SLOT,
+        helper.assertTrue(fluidSlots.getFirst().getBackgroundTexture() == GuiTextures.FLUID_SLOT,
                 "Steam Hatch standalone fluid slot lost its dedicated slot background");
 
         List<UIElement> playerInventories = root.getChildren().stream()
@@ -91,8 +94,8 @@ public class SteamHatchPartMachineLDLib2UITest {
                 .filter(child -> child.getChildren().stream().allMatch(GTItemSlotElement.class::isInstance))
                 .toList();
         helper.assertTrue(playerInventories.size() == 1 &&
-                playerInventories.getFirst().getLayoutX() == 7 &&
-                playerInventories.getFirst().getLayoutY() == 84,
+                UITemplate.getLDLib2Bounds(playerInventories.getFirst()).x() == 7 &&
+                UITemplate.getLDLib2Bounds(playerInventories.getFirst()).y() == 84,
                 "Steam Hatch standalone screen lost its 36-slot player inventory at 7,84");
         helper.assertTrue(playerInventories.getFirst().getChildren().stream()
                 .allMatch(child -> child.getStyle().getInline(PropertyRegistry.BACKGROUND) ==
@@ -129,12 +132,15 @@ public class SteamHatchPartMachineLDLib2UITest {
                 "Steam Hatch contextual page did not expose one directional side page");
 
         UIElement root = pageRoot(shell);
-        helper.assertTrue(root.getSizeWidth() == 89 && root.getSizeHeight() == 63 &&
-                root.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
+        helper.assertTrue(
+                UITemplate.getLDLib2Bounds(root).width() == 89 && UITemplate.getLDLib2Bounds(root).height() == 63,
+                "Steam Hatch contextual page lost its single-tank bounds");
+        helper.assertTrue(root.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
                 "Steam Hatch contextual page lost its single-tank inverse background");
         List<GTFluidSlotElement> fluidSlots = normalFluidSlots(root);
         helper.assertTrue(fluidSlots.size() == 1 &&
-                fluidSlots.getFirst().getLayoutX() == 67 && fluidSlots.getFirst().getLayoutY() == 22 &&
+                UITemplate.getLDLib2Bounds(fluidSlots.getFirst()).x() == 67 &&
+                UITemplate.getLDLib2Bounds(fluidSlots.getFirst()).y() == 22 &&
                 fluidSlots.getFirst().getCapacity() == steamHatch.tank.getTankCapacity(0),
                 "Steam Hatch contextual page did not bind its real tank at 67,22");
         helper.assertTrue(fluidSlots.getFirst().isAllowClickFilled() &&

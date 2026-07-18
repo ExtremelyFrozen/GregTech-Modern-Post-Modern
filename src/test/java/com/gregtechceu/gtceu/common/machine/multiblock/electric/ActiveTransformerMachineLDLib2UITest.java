@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -86,13 +87,15 @@ public class ActiveTransformerMachineLDLib2UITest {
                 "Active Transformer did not expose its controller cover-direction page");
 
         UIElement mainPage = pageContainer.getChildren().getFirst();
-        helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+        UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+        helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
                 "Active Transformer main page did not preserve its 190x125 body");
         helper.assertTrue(mainPage.getChildren().size() == 1 &&
                 mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                 "Active Transformer main page did not create one display scroller");
         UIElement scroller = mainPage.getChildren().getFirst();
-        helper.assertTrue(scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+        UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+        helper.assertTrue(scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                 "Active Transformer display scroller did not preserve its 182x117 bounds");
         List<GTComponentPanelElement> panels = descendants(mainPage).stream()
                 .filter(GTComponentPanelElement.class::isInstance)

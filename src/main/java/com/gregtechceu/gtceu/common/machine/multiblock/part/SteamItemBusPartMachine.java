@@ -50,7 +50,8 @@ public class SteamItemBusPartMachine extends ItemBusPartMachine
 
         UIElement root = new UIElement();
         UITemplate.setLDLib2Bounds(root, 0, 0, rootWidth, rootHeight);
-        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_STEAM.get(steelSteamMultiblocks)));
+        UITemplate.setLDLib2BackgroundTexture(root,
+                GuiTextures.BACKGROUND_STEAM.get(steelSteamMultiblocks));
         root.addChild(createLDLib2TitleLabel(rootWidth));
         root.addChild(createLDLib2WorkingEnabledToggle(7 + xOffset, 18 + 18 * rowSize));
         root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(),

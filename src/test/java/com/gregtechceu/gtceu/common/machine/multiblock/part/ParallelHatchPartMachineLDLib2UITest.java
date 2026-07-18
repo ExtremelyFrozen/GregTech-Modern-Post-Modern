@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
@@ -49,9 +50,13 @@ public class ParallelHatchPartMachineLDLib2UITest {
         UI standalone = machine.createLDLib2UI(player, holder);
         UIElement standaloneRoot = standalone.getRootElement();
         GTIntInputElement standaloneInput = requireOnlyInput(standaloneRoot);
-        helper.assertTrue(standaloneRoot.getSizeWidth() == 100 && standaloneRoot.getSizeHeight() == 20 &&
-                standaloneInput.getLayoutX() == 0 && standaloneInput.getLayoutY() == 0 &&
-                standaloneInput.getSizeWidth() == 100 && standaloneInput.getSizeHeight() == 20,
+        helper.assertTrue(
+                UITemplate.getLDLib2Bounds(standaloneRoot).width() == 100 &&
+                        UITemplate.getLDLib2Bounds(standaloneRoot).height() == 20 &&
+                        UITemplate.getLDLib2Bounds(standaloneInput).x() == 0 &&
+                        UITemplate.getLDLib2Bounds(standaloneInput).y() == 0 &&
+                        UITemplate.getLDLib2Bounds(standaloneInput).width() == 100 &&
+                        UITemplate.getLDLib2Bounds(standaloneInput).height() == 20,
                 "standalone Parallel Hatch input lost its 100x20 bounds");
 
         standaloneInput.setValue(3);
@@ -69,8 +74,10 @@ public class ParallelHatchPartMachineLDLib2UITest {
         UIElement contextualRoot = shell.getChildren().getFirst().getChildren().getFirst();
         GTIntInputElement contextualInput = requireOnlyInput(contextualRoot);
         helper.assertTrue(page.getLDLib2PageWidth() == 100 && page.getLDLib2PageHeight() == 20 &&
-                contextualRoot.getSizeWidth() == 100 && contextualRoot.getSizeHeight() == 20 &&
-                contextualInput.getSizeWidth() == 100 && contextualInput.getSizeHeight() == 20,
+                UITemplate.getLDLib2Bounds(contextualRoot).width() == 100 &&
+                UITemplate.getLDLib2Bounds(contextualRoot).height() == 20 &&
+                UITemplate.getLDLib2Bounds(contextualInput).width() == 100 &&
+                UITemplate.getLDLib2Bounds(contextualInput).height() == 20,
                 "contextual Parallel Hatch input lost its stable 100x20 body");
 
         contextualInput.setValue(2);

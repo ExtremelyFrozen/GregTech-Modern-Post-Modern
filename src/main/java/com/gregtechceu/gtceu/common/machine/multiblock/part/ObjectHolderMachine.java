@@ -107,7 +107,7 @@ public class ObjectHolderMachine extends MultiblockPartMachine
         requireMatchingLDLib2Holder(holder);
         UIElement root = new UIElement();
         UITemplate.setLDLib2Bounds(root, 0, 0, UI_WIDTH, STANDALONE_UI_HEIGHT);
-        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+        UITemplate.setLDLib2BackgroundTexture(root, GuiTextures.BACKGROUND);
         root.addChild(createLDLib2TitleLabel());
         addLDLib2ObjectHolderBody(root);
         root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 84, true));

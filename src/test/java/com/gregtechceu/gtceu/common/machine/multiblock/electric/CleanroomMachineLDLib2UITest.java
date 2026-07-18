@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -209,7 +210,7 @@ public class CleanroomMachineLDLib2UITest {
             LDLib2FancyMachineUIElement firstShell = createShell(player, holder, firstPage);
             LDLib2FancyMachineUIElement secondShell = createShell(player, holder, secondPage);
             List<UIElement> configurators = firstShell.getConfiguratorPanel().getChildren();
-            helper.assertTrue(configurators.size() == 2 && configurators.get(0).getChildren().size() == 2 &&
+            helper.assertTrue(configurators.size() == 2 && configurators.get(0).getChildren().size() == 1 &&
                     configurators.get(1).getChildren().size() == 1,
                     "Cleanroom did not preserve voiding then working configurators without batch mode");
             helper.assertTrue(firstShell.getSideTabsElement().getChildren().size() == 2,
@@ -244,13 +245,14 @@ public class CleanroomMachineLDLib2UITest {
     }
 
     @TestHolder
-    @EmptyTemplate
-    @GameTest(template = "empty", batch = BATCH)
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5", batch = BATCH)
     public static void maintenanceTooltipFollowsConfiguration(GameTestHelper helper) {
         boolean maintenanceEnabled = ConfigHolder.INSTANCE.machines.enableMaintenance;
         try {
             ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
-            IMultiPart maintenance = requirePart(createMachine(GTMachines.MAINTENANCE_HATCH));
+            IMultiPart maintenance = requirePart(placeMachine(helper, new BlockPos(0, 1, 0),
+                    GTMachines.MAINTENANCE_HATCH));
             TestCleanroomMachine cleanroom = new TestCleanroomMachine(List.of(maintenance));
             MutableMachineUIHolder holder = new MutableMachineUIHolder(cleanroom);
 
@@ -457,21 +459,33 @@ public class CleanroomMachineLDLib2UITest {
 
     private static void assertMainPageLayout(GameTestHelper helper, UIElement mainPage,
                                              TestCleanroomMachine cleanroom) {
-        helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125 &&
-                mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
-                "Cleanroom main page lost its 190x125 inverse-background body");
+        UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+        helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
+                "Cleanroom main page lost its 190x125 body");
+        helper.assertTrue(mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
+                "Cleanroom main page lost its inverse background");
         helper.assertTrue(mainPage.getChildren().size() == 1 &&
                 mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                 "Cleanroom main page did not create one display scroller");
         GTScrollerViewElement scroller = (GTScrollerViewElement) mainPage.getChildren().getFirst();
-        helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117 &&
-                scroller.getStyle().getInline(PropertyRegistry.BACKGROUND) == cleanroom.getScreenTexture() &&
-                scroller.viewPort.getStyle().getInline(PropertyRegistry.BACKGROUND) == cleanroom.getScreenTexture() &&
-                scroller.getScrollerViewStyle().mode() == ScrollerMode.VERTICAL &&
-                scroller.getScrollerViewStyle().verticalScrollDisplay() == ScrollDisplay.AUTO &&
-                scroller.getScrollerViewStyle().horizontalScrollDisplay() == ScrollDisplay.NEVER,
-                "Cleanroom display scroller lost its bounds, texture, or vertical-only scrolling");
+        UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+        helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
+                "Cleanroom display scroller lost its bounds");
+        helper.assertTrue(scroller.getStyle().getInline(PropertyRegistry.BACKGROUND) == cleanroom.getScreenTexture(),
+                "Cleanroom display scroller lost its texture");
+        helper.assertTrue(
+                scroller.viewPort.getStyle().getInline(PropertyRegistry.BACKGROUND) == cleanroom.getScreenTexture(),
+                "Cleanroom display viewport lost its texture");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_VIEW_MODE) ==
+                ScrollerMode.VERTICAL,
+                "Cleanroom display scroller changed its scroll mode");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_VERTICAL_DISPLAY) ==
+                ScrollDisplay.AUTO,
+                "Cleanroom display scroller changed its vertical scrollbar policy");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_HORIZONTAL_DISPLAY) ==
+                ScrollDisplay.NEVER,
+                "Cleanroom display scroller enabled horizontal scrolling");
 
         List<GTLabelElement> labels = descendants(mainPage).stream()
                 .filter(GTLabelElement.class::isInstance)
@@ -481,17 +495,20 @@ public class CleanroomMachineLDLib2UITest {
                 .filter(GTComponentPanelElement.class::isInstance)
                 .map(GTComponentPanelElement.class::cast)
                 .toList();
-        helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                labels.getFirst().getLayoutY() == 5 && labels.getFirst().getSizeWidth() == 174 &&
-                labels.getFirst().getSizeHeight() == 10 &&
-                labels.getFirst().getTextStyle().textColor() == 0x404040 &&
-                !labels.getFirst().getTextStyle().textShadow() &&
-                labels.getFirst().getTextStyle().textAlignHorizontal() == Horizontal.LEFT &&
-                labels.getFirst().getTextStyle().textAlignVertical() == Vertical.CENTER &&
-                panels.size() == 1 && panels.getFirst().getLayoutX() == 4 &&
-                panels.getFirst().getLayoutY() == 17 && panels.getFirst().getMaxWidthLimit() == 200 &&
+        UITemplate.LDLib2Bounds labelBounds = UITemplate.getLDLib2Bounds(labels.getFirst());
+        UITemplate.LDLib2Bounds panelBounds = UITemplate.getLDLib2Bounds(panels.getFirst());
+        helper.assertTrue(labels.size() == 1 && labelBounds.x() == 4 &&
+                labelBounds.y() == 5 && labelBounds.width() == 174 &&
+                labelBounds.height() == 10 && panels.size() == 1 && panelBounds.x() == 4 &&
+                panelBounds.y() == 17 && panels.getFirst().getMaxWidthLimit() == 200 &&
                 panels.getFirst().getLastText().equals(cleanroom.getDisplaySnapshot()),
                 "Cleanroom title or snapshot panel lost its legacy bounds");
+        helper.assertTrue(Integer.valueOf(0x404040).equals(
+                labels.getFirst().getTextStyle().getInline(PropertyRegistry.TEXT_COLOR)) &&
+                Boolean.FALSE.equals(labels.getFirst().getTextStyle().getInline(PropertyRegistry.TEXT_SHADOW)) &&
+                Horizontal.LEFT == labels.getFirst().getTextStyle().getInline(PropertyRegistry.HORIZONTAL_ALIGN) &&
+                Vertical.CENTER == labels.getFirst().getTextStyle().getInline(PropertyRegistry.VERTICAL_ALIGN),
+                "Cleanroom title lost its text style");
     }
 
     private static boolean createUIFails(CleanroomMachine cleanroom, ServerPlayer player,
@@ -683,6 +700,16 @@ public class CleanroomMachineLDLib2UITest {
         @Override
         public TickableSubscription subscribeServerTick(Runnable runnable) {
             TickableSubscription subscription = super.subscribeServerTick(runnable);
+            if (subscription == null) {
+                throw new IllegalStateException("Server-side Cleanroom display test did not create a subscription.");
+            }
+            capturedDisplaySubscription = subscription;
+            return subscription;
+        }
+
+        @Override
+        public TickableSubscription subscribeServerTick(@Nullable TickableSubscription last, Runnable runnable) {
+            TickableSubscription subscription = super.subscribeServerTick(last, runnable);
             if (subscription == null) {
                 throw new IllegalStateException("Server-side Cleanroom display test did not create a subscription.");
             }

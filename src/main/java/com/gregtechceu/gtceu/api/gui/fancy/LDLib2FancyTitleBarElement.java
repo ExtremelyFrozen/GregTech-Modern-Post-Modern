@@ -48,7 +48,7 @@ public class LDLib2FancyTitleBarElement extends UIElement {
         this.width = parentWidth - 2 * HORIZONTAL_MARGIN;
 
         this.buttonGroup = UITemplate.setLDLib2Bounds(new UIElement(), 0, BORDER_SIZE, width, innerHeight);
-        buttonGroup.style(style -> style.backgroundTexture(GuiTextures.TITLE_BAR_BACKGROUND));
+        UITemplate.setLDLib2BackgroundTexture(buttonGroup, GuiTextures.TITLE_BAR_BACKGROUND);
         addChild(buttonGroup);
 
         this.backButton = createTextButton(0, onBackClicked, Component.literal("<"),
@@ -58,7 +58,7 @@ public class LDLib2FancyTitleBarElement extends UIElement {
         buttonGroup.addChildren(backButton, menuButton);
 
         this.mainSection = UITemplate.setLDLib2Bounds(new UIElement(), BUTTON_WIDTH, 0, width, HEIGHT);
-        mainSection.style(style -> style.backgroundTexture(GuiTextures.TITLE_BAR_BACKGROUND));
+        UITemplate.setLDLib2BackgroundTexture(mainSection, GuiTextures.TITLE_BAR_BACKGROUND);
         addChild(mainSection);
 
         this.tabIcon = new GTImageElement(BORDER_SIZE + 1, BORDER_SIZE + 1,

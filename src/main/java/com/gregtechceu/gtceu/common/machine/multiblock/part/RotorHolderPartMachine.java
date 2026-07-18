@@ -270,7 +270,7 @@ public class RotorHolderPartMachine extends TieredPartMachine
 
         UIElement container = new UIElement();
         UITemplate.setLDLib2Bounds(container, 4, 4, 26, 26);
-        container.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+        UITemplate.setLDLib2BackgroundTexture(container, GuiTextures.BACKGROUND_INVERSE);
         root.addChild(container);
         root.addChild(createLDLib2RotorSlot());
         root.addChild(createLDLib2RotorLockedOverlay());

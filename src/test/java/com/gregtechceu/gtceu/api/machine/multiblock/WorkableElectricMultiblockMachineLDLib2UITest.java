@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.machine.multiblock;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -189,15 +190,19 @@ public class WorkableElectricMultiblockMachineLDLib2UITest {
                     secondPageContainer.getChildren().size() == parts.size() + 2 &&
                     firstPageContainer.getChildren().getLast() != secondPageContainer.getChildren().getLast(),
                     "default workable shell reused or omitted its directional page across openings");
+            clickButton(firstShell.getSideTabsElement().getChildren().getFirst());
+            clickButton(secondShell.getSideTabsElement().getChildren().getFirst());
 
             UIElement mainPage = firstPageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125 &&
+            UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+            helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125 &&
                     mainPage.getChildren().size() == 1 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "default workable main page did not preserve its 190x125 display body");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+            helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                    scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                     "default workable display scroller did not preserve its bounds");
             List<UIElement> descendants = descendants(mainPage);
             helper.assertTrue(descendants.stream().filter(GTLabelElement.class::isInstance).count() == 1,
@@ -356,6 +361,13 @@ public class WorkableElectricMultiblockMachineLDLib2UITest {
         }
     }
 
+    private static LDLib2FancyMachineUIElement requireFancyShell(UIElement root) {
+        if (!(root instanceof LDLib2FancyMachineUIElement shell)) {
+            throw new IllegalStateException("default workable controller did not create an LDLib2 Fancy shell");
+        }
+        return shell;
+    }
+
     private static boolean hasTranslation(List<Component> lines, String translationKey) {
         return lines.stream().anyMatch(line -> line.getContents() instanceof TranslatableContents contents &&
                 contents.getKey().equals(translationKey));
@@ -369,13 +381,6 @@ public class WorkableElectricMultiblockMachineLDLib2UITest {
             throw new IllegalStateException("default workable tooltip icon did not expose hover text");
         }
         return event.hoverTooltips.tooltipTexts();
-    }
-
-    private static LDLib2FancyMachineUIElement requireFancyShell(UIElement root) {
-        if (!(root instanceof LDLib2FancyMachineUIElement shell)) {
-            throw new IllegalStateException("default workable controller did not create an LDLib2 Fancy shell");
-        }
-        return shell;
     }
 
     private static MetaMachine placeMachine(GameTestHelper helper, BlockPos pos, MachineDefinition definition) {
@@ -505,8 +510,9 @@ public class WorkableElectricMultiblockMachineLDLib2UITest {
         }
 
         @Override
-        public @Nullable TickableSubscription subscribeServerTick(@NotNull Runnable runnable) {
-            capturedSubscription = super.subscribeServerTick(runnable);
+        public @Nullable TickableSubscription subscribeServerTick(@Nullable TickableSubscription last,
+                                                                  @NotNull Runnable runnable) {
+            capturedSubscription = super.subscribeServerTick(last, runnable);
             return capturedSubscription;
         }
 

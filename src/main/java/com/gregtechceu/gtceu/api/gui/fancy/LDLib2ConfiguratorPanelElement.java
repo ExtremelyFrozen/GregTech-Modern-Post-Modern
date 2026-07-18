@@ -146,9 +146,8 @@ public class LDLib2ConfiguratorPanelElement extends UIElement {
         private Tab(LDLib2FancyConfigurator configurator, int index) {
             this.configurator = configurator;
             UITemplate.setLDLib2Bounds(this, 0, index * (TAB_SIZE + TAB_GAP), TAB_SIZE, TAB_SIZE);
-            style(style -> style
-                    .backgroundTexture(texture)
-                    .overflowVisible(true));
+            UITemplate.setLDLib2BackgroundTexture(this, texture);
+            style(style -> style.overflowVisible(true));
 
             this.button = new GTButtonElement(0, 0, TAB_SIZE, TAB_SIZE, IGuiTexture.EMPTY,
                     this::onClick);
@@ -183,9 +182,8 @@ public class LDLib2ConfiguratorPanelElement extends UIElement {
             int width = configurator.getLDLib2ConfiguratorWidth() + border * 2;
             int height = configurator.getLDLib2ConfiguratorHeight() + TAB_SIZE + border;
             UIElement createdView = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, width, height);
-            createdView.style(style -> style
-                    .backgroundTexture(texture)
-                    .overflowVisible(true));
+            UITemplate.setLDLib2BackgroundTexture(createdView, texture);
+            createdView.style(style -> style.overflowVisible(true));
 
             UIElement configuratorBody = configurator.createLDLib2Configurator();
             UITemplate.setLDLib2Bounds(configuratorBody, border, TAB_SIZE,

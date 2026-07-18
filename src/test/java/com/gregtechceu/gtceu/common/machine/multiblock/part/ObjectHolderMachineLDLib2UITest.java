@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
@@ -51,7 +52,9 @@ public class ObjectHolderMachineLDLib2UITest {
 
         UI standalone = machine.createLDLib2UI(player, holder);
         UIElement standaloneRoot = standalone.getRootElement();
-        helper.assertTrue(standaloneRoot.getSizeWidth() == 176 && standaloneRoot.getSizeHeight() == 166,
+        helper.assertTrue(
+                UITemplate.getLDLib2Bounds(standaloneRoot).width() == 176 &&
+                        UITemplate.getLDLib2Bounds(standaloneRoot).height() == 166,
                 "standalone Object Holder UI lost its 176x166 bounds");
         helper.assertTrue(standaloneRoot.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND,
                 "standalone Object Holder UI lost its background");
@@ -60,8 +63,8 @@ public class ObjectHolderMachineLDLib2UITest {
                 .filter(GTLabelElement.class::isInstance)
                 .map(GTLabelElement.class::cast)
                 .toList();
-        helper.assertTrue(titleLabels.size() == 1 && titleLabels.getFirst().getLayoutX() == 10 &&
-                titleLabels.getFirst().getLayoutY() == 5,
+        helper.assertTrue(titleLabels.size() == 1 && UITemplate.getLDLib2Bounds(titleLabels.getFirst()).x() == 10 &&
+                UITemplate.getLDLib2Bounds(titleLabels.getFirst()).y() == 5,
                 "standalone Object Holder UI lost its definition title");
 
         List<UIElement> inventoryRoots = standaloneRoot.getChildren().stream()
@@ -69,7 +72,8 @@ public class ObjectHolderMachineLDLib2UITest {
                 .filter(child -> child.getChildren().stream().allMatch(GTItemSlotElement.class::isInstance))
                 .toList();
         helper.assertTrue(inventoryRoots.size() == 1 &&
-                inventoryRoots.getFirst().getLayoutX() == 7 && inventoryRoots.getFirst().getLayoutY() == 84,
+                UITemplate.getLDLib2Bounds(inventoryRoots.getFirst()).x() == 7 &&
+                UITemplate.getLDLib2Bounds(inventoryRoots.getFirst()).y() == 84,
                 "standalone Object Holder UI lost its 36-slot player inventory at y=84");
         assertObjectHolderBody(helper, player, machine, standaloneRoot);
 
@@ -79,7 +83,8 @@ public class ObjectHolderMachineLDLib2UITest {
         UIElement contextualRoot = shell.getChildren().getFirst().getChildren().getFirst();
         helper.assertTrue(contextualPage.getLDLib2PageWidth() == 176 &&
                 contextualPage.getLDLib2PageHeight() == 84 &&
-                contextualRoot.getSizeWidth() == 176 && contextualRoot.getSizeHeight() == 84,
+                UITemplate.getLDLib2Bounds(contextualRoot).width() == 176 &&
+                UITemplate.getLDLib2Bounds(contextualRoot).height() == 84,
                 "contextual Object Holder page lost its stable 176x84 body");
         helper.assertTrue(contextualRoot.getChildren().stream().noneMatch(GTLabelElement.class::isInstance),
                 "contextual Object Holder body repeated the standalone title");
@@ -204,15 +209,22 @@ public class ObjectHolderMachineLDLib2UITest {
                 .toList();
         helper.assertTrue(
                 images.size() == 3 && images.stream()
-                        .anyMatch(image -> image.getLayoutX() == 46 && image.getLayoutY() == 15 &&
-                                image.getSizeWidth() == 84 && image.getSizeHeight() == 60),
+                        .anyMatch(image -> UITemplate.getLDLib2Bounds(image).x() == 46 &&
+                                UITemplate.getLDLib2Bounds(image).y() == 15 &&
+                                UITemplate.getLDLib2Bounds(image).width() == 84 &&
+                                UITemplate.getLDLib2Bounds(image).height() == 60),
                 "Object Holder body lost its research-station image");
         List<GTImageElement> overlays = images.stream()
-                .filter(image -> image.getSizeWidth() == 16 && image.getSizeHeight() == 16)
+                .filter(image -> UITemplate.getLDLib2Bounds(image).width() == 16 &&
+                        UITemplate.getLDLib2Bounds(image).height() == 16)
                 .toList();
         helper.assertTrue(overlays.size() == 2 &&
-                overlays.stream().anyMatch(image -> image.getLayoutX() == 16 && image.getLayoutY() == 37) &&
-                overlays.stream().anyMatch(image -> image.getLayoutX() == 80 && image.getLayoutY() == 37) &&
+                overlays.stream()
+                        .anyMatch(image -> UITemplate.getLDLib2Bounds(image).x() == 16 &&
+                                UITemplate.getLDLib2Bounds(image).y() == 37) &&
+                overlays.stream()
+                        .anyMatch(image -> UITemplate.getLDLib2Bounds(image).x() == 80 &&
+                                UITemplate.getLDLib2Bounds(image).y() == 37) &&
                 overlays.stream().noneMatch(UIElement::isVisible),
                 "unlocked Object Holder did not hide both locked overlays at their original coordinates");
 
@@ -235,7 +247,7 @@ public class ObjectHolderMachineLDLib2UITest {
 
     private static GTItemSlotElement slotAt(List<GTItemSlotElement> slots, int x, int y) {
         return slots.stream()
-                .filter(slot -> slot.getLayoutX() == x && slot.getLayoutY() == y)
+                .filter(slot -> UITemplate.getLDLib2Bounds(slot).x() == x && UITemplate.getLDLib2Bounds(slot).y() == y)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Object Holder business slot moved."));
     }

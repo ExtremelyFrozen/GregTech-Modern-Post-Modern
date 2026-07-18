@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -185,29 +186,35 @@ public class ResearchStationMachineLDLib2UITest {
             }
 
             UIElement mainPage = firstPageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125 &&
-                    mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
-                    "Research Station main page lost its 190x125 inverse-background body");
+            UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+            helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
+                    "Research Station main page lost its 190x125 body");
+            helper.assertTrue(mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) ==
+                    GuiTextures.BACKGROUND_INVERSE,
+                    "Research Station main page lost its inverse background");
             helper.assertTrue(mainPage.getChildren().size() == 1 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "Research Station main page did not create one display scroller");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+            helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                    scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                     "Research Station display scroller lost its (4,4) 182x117 bounds");
             List<GTLabelElement> labels = descendants(mainPage).stream()
                     .filter(GTLabelElement.class::isInstance)
                     .map(GTLabelElement.class::cast)
                     .toList();
-            helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                    labels.getFirst().getLayoutY() == 5,
+            UITemplate.LDLib2Bounds labelBounds = UITemplate.getLDLib2Bounds(labels.getFirst());
+            helper.assertTrue(labels.size() == 1 && labelBounds.x() == 4 &&
+                    labelBounds.y() == 5,
                     "Research Station title lost its (4,5) position");
             List<GTComponentPanelElement> panels = descendants(mainPage).stream()
                     .filter(GTComponentPanelElement.class::isInstance)
                     .map(GTComponentPanelElement.class::cast)
                     .toList();
-            helper.assertTrue(panels.size() == 1 && panels.getFirst().getLayoutX() == 4 &&
-                    panels.getFirst().getLayoutY() == 17 && panels.getFirst().getMaxWidthLimit() == 200 &&
+            UITemplate.LDLib2Bounds panelBounds = UITemplate.getLDLib2Bounds(panels.getFirst());
+            helper.assertTrue(panels.size() == 1 && panelBounds.x() == 4 &&
+                    panelBounds.y() == 17 && panels.getFirst().getMaxWidthLimit() == 200 &&
                     panels.getFirst().getLastText().equals(station.getDisplaySnapshot()),
                     "Research Station display panel lost its position, width, or synchronized snapshot");
 
@@ -429,11 +436,13 @@ public class ResearchStationMachineLDLib2UITest {
         int refreshesAfterLoad = station.getDisplayRefreshCount();
 
         helper.runAfterDelay(3, () -> {
+            station.serverTick();
             int refreshesWhileDisabled = station.getDisplayRefreshCount();
             helper.assertTrue(refreshesWhileDisabled > refreshesAfterLoad,
                     "Research Station display subscription stopped while work was disabled");
             station.onUnload();
             helper.runAfterDelay(3, () -> {
+                station.serverTick();
                 helper.assertTrue(station.getDisplayRefreshCount() == refreshesWhileDisabled &&
                         station.getDisplaySnapshot().isEmpty(),
                         "Research Station display subscription or snapshot survived unload");
@@ -615,8 +624,8 @@ public class ResearchStationMachineLDLib2UITest {
         }
 
         @Override
-        public TickableSubscription subscribeServerTick(Runnable runnable) {
-            capturedSubscription = super.subscribeServerTick(runnable);
+        public TickableSubscription subscribeServerTick(@Nullable TickableSubscription last, Runnable runnable) {
+            capturedSubscription = super.subscribeServerTick(last, runnable);
             if (capturedSubscription == null) {
                 throw new IllegalStateException("Server-side display test did not create a tick subscription.");
             }

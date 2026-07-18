@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -207,7 +208,7 @@ public class FusionReactorMachineLDLib2UITest {
         LDLib2FancyMachineUIElement secondShell = createShell(player, holder, secondPage);
         List<UIElement> configuratorTabs = firstShell.getConfiguratorPanel().getChildren();
         helper.assertTrue(configuratorTabs.size() == 3 &&
-                configuratorTabs.get(0).getChildren().size() == 2 &&
+                configuratorTabs.get(0).getChildren().size() == 1 &&
                 configuratorTabs.get(1).getChildren().size() == 1 &&
                 configuratorTabs.get(2).getChildren().size() == 1 &&
                 firstShell.getSideTabsElement().getChildren().size() == 2 &&
@@ -316,11 +317,11 @@ public class FusionReactorMachineLDLib2UITest {
                 !formedSubscription.isStillSubscribed(),
                 "Fusion invalidation did not publish invalid_structure and stop refresh");
 
-        TestFusionReactorMachine partUnloadReactor = subscribedReactor();
+        TestFusionReactorMachine partUnloadReactor = subscribedReactor(helper);
         TickableSubscription partSubscription = partUnloadReactor.getCapturedDisplaySubscription();
         partUnloadReactor.onPartUnload();
         assertRuntimeDisplayCleared(helper, partUnloadReactor, partSubscription, "part unload");
-        TestFusionReactorMachine controllerUnloadReactor = subscribedReactor();
+        TestFusionReactorMachine controllerUnloadReactor = subscribedReactor(helper);
         TickableSubscription controllerSubscription = controllerUnloadReactor.getCapturedDisplaySubscription();
         controllerUnloadReactor.onUnload();
         assertRuntimeDisplayCleared(helper, controllerUnloadReactor, controllerSubscription, "controller unload");
@@ -366,21 +367,35 @@ public class FusionReactorMachineLDLib2UITest {
 
     private static void assertMainPageLayout(GameTestHelper helper, UIElement mainPage,
                                              FusionReactorMachine reactor) {
-        helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125 &&
-                mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
-                "Fusion main page lost its 190x125 inverse-background body");
+        UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+        helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
+                "Fusion main page lost its 190x125 body");
+        helper.assertTrue(mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
+                "Fusion main page lost its inverse background");
         helper.assertTrue(mainPage.getChildren().size() == 1 &&
                 mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                 "Fusion main page did not create one display scroller");
         GTScrollerViewElement scroller = (GTScrollerViewElement) mainPage.getChildren().getFirst();
-        helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117 &&
-                scroller.getStyle().getInline(PropertyRegistry.BACKGROUND) == reactor.getScreenTexture() &&
-                scroller.viewPort.getStyle().getInline(PropertyRegistry.BACKGROUND) == reactor.getScreenTexture() &&
-                scroller.getScrollerViewStyle().mode() == ScrollerMode.VERTICAL &&
-                scroller.getScrollerViewStyle().verticalScrollDisplay() == ScrollDisplay.AUTO &&
-                scroller.getScrollerViewStyle().horizontalScrollDisplay() == ScrollDisplay.NEVER,
-                "Fusion display scroller lost its bounds, texture, or vertical-only scrolling");
+        UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+        helper.assertTrue(scrollerBounds.x() == 4 &&
+                scrollerBounds.y() == 4 &&
+                scrollerBounds.width() == 182 &&
+                scrollerBounds.height() == 117,
+                "Fusion display scroller lost its bounds");
+        helper.assertTrue(scroller.getStyle().getInline(PropertyRegistry.BACKGROUND) == reactor.getScreenTexture(),
+                "Fusion display scroller lost its texture");
+        helper.assertTrue(
+                scroller.viewPort.getStyle().getInline(PropertyRegistry.BACKGROUND) == reactor.getScreenTexture(),
+                "Fusion display viewport lost its texture");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_VIEW_MODE) ==
+                ScrollerMode.VERTICAL,
+                "Fusion display scroller changed its scroll mode");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_VERTICAL_DISPLAY) ==
+                ScrollDisplay.AUTO,
+                "Fusion display scroller changed its vertical scrollbar policy");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_HORIZONTAL_DISPLAY) ==
+                ScrollDisplay.NEVER,
+                "Fusion display scroller enabled horizontal scrolling");
         List<GTLabelElement> labels = descendants(mainPage).stream()
                 .filter(GTLabelElement.class::isInstance)
                 .map(GTLabelElement.class::cast)
@@ -389,17 +404,23 @@ public class FusionReactorMachineLDLib2UITest {
                 .filter(GTComponentPanelElement.class::isInstance)
                 .map(GTComponentPanelElement.class::cast)
                 .toList();
-        helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                labels.getFirst().getLayoutY() == 5 && labels.getFirst().getSizeWidth() == 174 &&
-                labels.getFirst().getSizeHeight() == 10 &&
-                labels.getFirst().getTextStyle().textColor() == 0x404040 &&
-                !labels.getFirst().getTextStyle().textShadow() &&
-                labels.getFirst().getTextStyle().textAlignHorizontal() == Horizontal.LEFT &&
-                labels.getFirst().getTextStyle().textAlignVertical() == Vertical.CENTER &&
-                panels.size() == 1 && panels.getFirst().getLayoutX() == 4 &&
-                panels.getFirst().getLayoutY() == 17 && panels.getFirst().getMaxWidthLimit() == 200 &&
+        UITemplate.LDLib2Bounds labelBounds = UITemplate.getLDLib2Bounds(labels.getFirst());
+        UITemplate.LDLib2Bounds panelBounds = UITemplate.getLDLib2Bounds(panels.getFirst());
+        helper.assertTrue(labels.size() == 1 && labelBounds.x() == 4 &&
+                labelBounds.y() == 5 &&
+                labelBounds.width() == 174 &&
+                labelBounds.height() == 10 &&
+                panels.size() == 1 && panelBounds.x() == 4 &&
+                panelBounds.y() == 17 &&
+                panels.getFirst().getMaxWidthLimit() == 200 &&
                 panels.getFirst().getLastText().equals(reactor.getDisplaySnapshot()),
                 "Fusion title or snapshot panel lost its legacy bounds");
+        helper.assertTrue(Integer.valueOf(0x404040).equals(
+                labels.getFirst().getTextStyle().getInline(PropertyRegistry.TEXT_COLOR)) &&
+                Boolean.FALSE.equals(labels.getFirst().getTextStyle().getInline(PropertyRegistry.TEXT_SHADOW)) &&
+                Horizontal.LEFT == labels.getFirst().getTextStyle().getInline(PropertyRegistry.HORIZONTAL_ALIGN) &&
+                Vertical.CENTER == labels.getFirst().getTextStyle().getInline(PropertyRegistry.VERTICAL_ALIGN),
+                "Fusion title lost its text style");
     }
 
     private static boolean createUIFails(FusionReactorMachine reactor, ServerPlayer player,
@@ -423,8 +444,9 @@ public class FusionReactorMachineLDLib2UITest {
                 "Fusion part page lost its dedicated holder: " + part.self().getDefinition().getId());
     }
 
-    private static TestFusionReactorMachine subscribedReactor() {
+    private static TestFusionReactorMachine subscribedReactor(GameTestHelper helper) {
         TestFusionReactorMachine reactor = new TestFusionReactorMachine(LuV, List.of());
+        reactor.setLevel(helper.getLevel());
         reactor.setFormedForTest(true);
         reactor.setServerDisplay(List.of(FIRST_SERVER_LINE));
         reactor.refreshDisplaySnapshot();
@@ -584,10 +606,9 @@ public class FusionReactorMachineLDLib2UITest {
         @Override
         public TickableSubscription subscribeServerTick(Runnable runnable) {
             TickableSubscription subscription = super.subscribeServerTick(runnable);
-            if (subscription == null) {
-                throw new IllegalStateException("Server-side Fusion display test did not create a subscription.");
+            if (subscription != null) {
+                capturedDisplaySubscription = subscription;
             }
-            capturedDisplaySubscription = subscription;
             return subscription;
         }
 

@@ -77,9 +77,8 @@ public class LDLib2FancyMachineUIElement extends UIElement {
         this.holder = holder;
         this.contextualSubTabs = List.copyOf(contextualSubTabs);
         UITemplate.setLDLib2Bounds(this, 0, 0, width, height);
-        style(style -> style
-                .backgroundTexture(GuiTextures.BACKGROUND)
-                .overflowVisible(true));
+        UITemplate.setLDLib2BackgroundTexture(this, GuiTextures.BACKGROUND);
+        style(style -> style.overflowVisible(true));
 
         this.pageContainer = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, width, height);
         addChild(pageContainer);
@@ -214,7 +213,7 @@ public class LDLib2FancyMachineUIElement extends UIElement {
 
         UITemplate.setLDLib2Bounds(this, 0, 0, contentWidth, rootHeight);
         UITemplate.setLDLib2Bounds(pageContainer, 0, 0, contentWidth, contentHeight);
-        pageContainer.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+        UITemplate.setLDLib2BackgroundTexture(pageContainer, GuiTextures.BACKGROUND);
         UITemplate.setLDLib2Bounds(sideTabsElement, -20, 0, 24, contentHeight);
         tooltipsPanel.moveTo(contentWidth + 2, 2);
         titleBar.resize(contentWidth);

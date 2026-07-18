@@ -67,7 +67,7 @@ public class SteamHatchPartMachine extends FluidHatchPartMachine
     public UI createLDLib2UI(Player player, MachineUIHolder holder) {
         UIElement root = new UIElement();
         UITemplate.setLDLib2Bounds(root, 0, 0, 176, 166);
-        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_STEAM.get(IS_STEEL)));
+        UITemplate.setLDLib2BackgroundTexture(root, GuiTextures.BACKGROUND_STEAM.get(IS_STEEL));
         root.addChild(new GTImageElement(7, 16, 81, 55, GuiTextures.DISPLAY_STEAM.get(IS_STEEL)));
         root.addChild(createLDLib2FluidAmountLabel());
         root.addChild(createLDLib2FluidAmountValueLabel());

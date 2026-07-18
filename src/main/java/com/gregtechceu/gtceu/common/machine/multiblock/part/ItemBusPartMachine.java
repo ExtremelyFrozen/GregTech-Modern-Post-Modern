@@ -368,7 +368,7 @@ public class ItemBusPartMachine extends TieredIOPartMachine
                 getLDLib2PageWidth(), getLDLib2PageHeight());
         UIElement container = UITemplate.setLDLib2Bounds(new UIElement(), 4, 4,
                 18 * rowSize + 8, 18 * columnSize + 8);
-        container.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+        UITemplate.setLDLib2BackgroundTexture(container, GuiTextures.BACKGROUND_INVERSE);
 
         int index = 0;
         for (int y = 0; y < columnSize; y++) {

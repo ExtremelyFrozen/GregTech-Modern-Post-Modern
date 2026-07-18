@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.layout.LayoutProperties;
+import com.lowdragmc.lowdraglib2.gui.ui.style.Property;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StyleValue;
 import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
 
@@ -61,6 +62,43 @@ public class UITemplate {
         layout.width(width);
         layout.height(height);
         return element;
+    }
+
+    /**
+     * Applies a GTM background texture while retaining the style intent on dedicated servers.
+     *
+     * <p>
+     * LDLib2's consumer-based {@link UIElement#style} intentionally skips all
+     * style mutation on a server. Backgrounds are part of GTM's fixed UI contract, so this narrowly scoped setter
+     * writes the background property directly and remains equivalent to the client-side style call.
+     * </p>
+     *
+     * @param element element receiving the background texture
+     * @param texture background texture declared by the GTM page
+     * @param <T>     concrete element type
+     * @return the same element for fluent construction
+     */
+    public static <T extends UIElement> T setLDLib2BackgroundTexture(T element, IGuiTexture texture) {
+        element.getStyle().backgroundTexture(texture);
+        return element;
+    }
+
+    /**
+     * Reads a declared LDLib2 style candidate without requiring the client style engine to compute it.
+     *
+     * @param element  element whose inline declaration is required
+     * @param property property to read
+     * @param <T>      declared property type
+     * @return the highest-priority declared candidate
+     */
+    public static <T> T getLDLib2StyleCandidate(UIElement element, Property<T> property) {
+        T value = element.getStyleBag().computeCandidate(property);
+        if (value == null) {
+            GTCEu.LOGGER.error("LDLib2 element '{}' did not declare style property '{}'", element.getId(),
+                    property.name);
+            throw new IllegalStateException("LDLib2 element did not declare style property: " + property.name);
+        }
+        return value;
     }
 
     /**

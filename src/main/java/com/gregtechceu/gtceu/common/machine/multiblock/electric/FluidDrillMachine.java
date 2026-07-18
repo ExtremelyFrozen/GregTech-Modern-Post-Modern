@@ -269,13 +269,12 @@ public class FluidDrillMachine extends WorkableElectricMultiblockMachine
             }
 
             UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
-            root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+            UITemplate.setLDLib2BackgroundTexture(root, GuiTextures.BACKGROUND_INVERSE);
 
             GTScrollerViewElement screen = new GTScrollerViewElement(4, 4, 182, 117);
-            screen.style(style -> style.backgroundTexture(getScreenTexture()));
-            screen.viewPort(viewPort -> viewPort
-                    .layout(layout -> layout.paddingAll(0))
-                    .style(style -> style.backgroundTexture(getScreenTexture())));
+            UITemplate.setLDLib2BackgroundTexture(screen, getScreenTexture());
+            screen.viewPort.layout(layout -> layout.paddingAll(0));
+            UITemplate.setLDLib2BackgroundTexture(screen.viewPort, getScreenTexture());
             screen.scrollerStyle(style -> style
                     .mode(ScrollerMode.VERTICAL)
                     .verticalScrollDisplay(ScrollDisplay.AUTO)

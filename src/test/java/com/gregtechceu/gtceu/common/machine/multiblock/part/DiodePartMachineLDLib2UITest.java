@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
@@ -29,6 +30,8 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
+
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -88,8 +91,9 @@ public class DiodePartMachineLDLib2UITest {
                 "Diode contextual preview did not attach its default machine and trait tooltips");
 
         UIElement previewRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(previewRoot.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                previewRoot.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+        UITemplate.LDLib2Bounds previewBounds = UITemplate.getLDLib2Bounds(previewRoot);
+        helper.assertTrue(previewBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                previewBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 "Diode contextual preview created a root with incorrect bounds");
         helper.assertTrue(previewRoot.getChildren().isEmpty(),
                 "Diode contextual preview constructed a client Scene on the GameTest server");
@@ -98,9 +102,10 @@ public class DiodePartMachineLDLib2UITest {
                 .getChildren().getFirst();
         helper.assertTrue(configuratorButton instanceof GTButtonElement,
                 "Diode working configurator did not expose its public button entry");
+        boolean workingEnabled = machine.isWorkingEnabled();
         UIEvent freshClick = dispatchClick(configuratorButton);
-        helper.assertFalse(freshClick.hasHandler,
-                "Diode server-side working configurator click was marked as a sent client action");
+        helper.assertTrue(!freshClick.propagationStopped && machine.isWorkingEnabled() == workingEnabled,
+                "Diode server-side working configurator changed state or sent a client action");
 
         DiodePartMachine wrongMachine = requireDiode(createDefinitionInstance(
                 GTMachines.DIODE[GTValues.EV], helper.absolutePos(new BlockPos(3, 3, 2))));
@@ -141,8 +146,9 @@ public class DiodePartMachineLDLib2UITest {
     }
 
     private static UIEvent dispatchClick(UIElement target) {
-        UIEvent event = UIEvent.create(UIEvents.CLICK);
+        UIEvent event = UIEvent.create(UIEvents.MOUSE_DOWN);
         event.target = target;
+        event.button = GLFW.GLFW_MOUSE_BUTTON_LEFT;
         UIEventDispatcher.dispatchEvent(event, false, false, false);
         return event;
     }

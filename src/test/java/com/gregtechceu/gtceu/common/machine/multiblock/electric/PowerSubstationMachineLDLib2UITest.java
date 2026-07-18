@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
@@ -23,7 +24,6 @@ import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.AutoMaintenanceHatchPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.CleaningMaintenanceHatchPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.EnergyHatchPartMachine;
-import com.gregtechceu.gtceu.common.machine.multiblock.part.ItemBusPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.LaserHatchPartMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.MaintenanceHatchPartMachine;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -108,36 +108,42 @@ public class PowerSubstationMachineLDLib2UITest {
                     "Power Substation did not expose exactly the conditional maintenance warning");
             helper.assertTrue(
                     shell.getChildren().stream()
-                            .anyMatch(child -> child.getSizeWidth() == 162 && child.getSizeHeight() == 76),
+                            .anyMatch(child -> UITemplate.getLDLib2Bounds(child).width() == 162 &&
+                                    UITemplate.getLDLib2Bounds(child).height() == 76),
                     "Power Substation Fancy shell did not retain the player inventory");
 
             UIElement pageContainer = shell.getChildren().getFirst();
             helper.assertTrue(pageContainer.getChildren().size() == parts.size() + 1,
                     "Power Substation did not cache one distinct home page per actual part");
             UIElement mainPage = pageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+            helper.assertTrue(
+                    UITemplate.getLDLib2Bounds(mainPage).width() == 190 &&
+                            UITemplate.getLDLib2Bounds(mainPage).height() == 125,
                     "Power Substation main page did not preserve its 190x125 body");
             helper.assertTrue(mainPage.getChildren().size() == 1 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "Power Substation main page did not create one display scroller");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            helper.assertTrue(
+                    UITemplate.getLDLib2Bounds(scroller).x() == 4 && UITemplate.getLDLib2Bounds(scroller).y() == 4 &&
+                            UITemplate.getLDLib2Bounds(scroller).width() == 182 &&
+                            UITemplate.getLDLib2Bounds(scroller).height() == 117,
                     "Power Substation display scroller did not preserve its (4,4) 182x117 bounds");
 
             List<GTLabelElement> labels = descendants(mainPage).stream()
                     .filter(GTLabelElement.class::isInstance)
                     .map(GTLabelElement.class::cast)
                     .toList();
-            helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                    labels.getFirst().getLayoutY() == 5,
+            helper.assertTrue(labels.size() == 1 && UITemplate.getLDLib2Bounds(labels.getFirst()).x() == 4 &&
+                    UITemplate.getLDLib2Bounds(labels.getFirst()).y() == 5,
                     "Power Substation title did not preserve its (4,5) position");
             List<GTComponentPanelElement> panels = descendants(mainPage).stream()
                     .filter(GTComponentPanelElement.class::isInstance)
                     .map(GTComponentPanelElement.class::cast)
                     .toList();
-            helper.assertTrue(panels.size() == 1 && panels.getFirst().getLayoutX() == 4 &&
-                    panels.getFirst().getLayoutY() == 17 && panels.getFirst().getMaxWidthLimit() == 150,
+            helper.assertTrue(panels.size() == 1 && UITemplate.getLDLib2Bounds(panels.getFirst()).x() == 4 &&
+                    UITemplate.getLDLib2Bounds(panels.getFirst()).y() == 17 &&
+                    panels.getFirst().getMaxWidthLimit() == 150,
                     "Power Substation display panel did not preserve its position and maximum text width");
 
             LDLib2FancyMachineUIElement secondShell = requireFancyShell(
@@ -149,7 +155,10 @@ public class PowerSubstationMachineLDLib2UITest {
                         "Power Substation reused a cached page across menu openings");
             }
 
-            ItemBusPartMachine unsupportedPart = requireItemBus(createMachine(GTMachines.ITEM_IMPORT_BUS[LV]));
+            MetaMachine unsupportedMachine = createMachine(GTMachines.COKE_OVEN_HATCH);
+            if (!(unsupportedMachine instanceof IMultiPart unsupportedPart)) {
+                throw new IllegalStateException("Coke Oven Hatch did not implement IMultiPart.");
+            }
             TestPowerSubstationMachine invalidSubstation = new TestPowerSubstationMachine(List.of(unsupportedPart));
             boolean unsupportedPartRejected = false;
             try {
@@ -217,8 +226,10 @@ public class PowerSubstationMachineLDLib2UITest {
                 helper.assertTrue(partShell.getSideTabsElement().getChildren().size() == 2,
                         "Power Substation contextual part did not expose its cover-direction page");
                 UIElement preview = partShell.getChildren().getFirst().getChildren().getFirst();
-                helper.assertTrue(preview.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                        preview.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+                helper.assertTrue(
+                        UITemplate.getLDLib2Bounds(preview).width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                                UITemplate.getLDLib2Bounds(preview).height() ==
+                                        LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                         "Power Substation contextual part preview has incorrect bounds");
                 helper.assertTrue(preview.getChildren().isEmpty(),
                         "Power Substation contextual part constructed a client Scene on the GameTest server");
@@ -262,14 +273,16 @@ public class PowerSubstationMachineLDLib2UITest {
                 "Maintenance Hatch rejected its matching standalone holder");
         UIElement maintenanceRoot = maintenance.createLDLib2UI(player, maintenanceHolder).getRootElement();
         helper.assertTrue(!(maintenanceRoot instanceof LDLib2FancyMachineUIElement) &&
-                maintenanceRoot.getSizeWidth() == 26 && maintenanceRoot.getSizeHeight() == 46,
+                UITemplate.getLDLib2Bounds(maintenanceRoot).width() == 26 &&
+                UITemplate.getLDLib2Bounds(maintenanceRoot).height() == 46,
                 "ordinary Maintenance Hatch did not retain its 26x46 raw standalone body");
         assertRawMaintenanceControls(helper, maintenanceRoot, false);
 
         MutableMachineUIHolder configurableHolder = new MutableMachineUIHolder(configurable);
         UIElement configurableRoot = configurable.createLDLib2UI(player, configurableHolder).getRootElement();
         helper.assertTrue(!(configurableRoot instanceof LDLib2FancyMachineUIElement) &&
-                configurableRoot.getSizeWidth() == 150 && configurableRoot.getSizeHeight() == 70,
+                UITemplate.getLDLib2Bounds(configurableRoot).width() == 150 &&
+                UITemplate.getLDLib2Bounds(configurableRoot).height() == 70,
                 "Configurable Maintenance Hatch did not retain its 150x70 raw standalone body");
         assertRawMaintenanceControls(helper, configurableRoot, true);
 
@@ -305,7 +318,8 @@ public class PowerSubstationMachineLDLib2UITest {
             TooltipCapturePanel ldlib2Panel = new TooltipCapturePanel();
             maintenance.attachLDLib2MaintenanceTooltips(ldlib2Panel);
             helper.assertTrue(ldlib2Panel.getChildren().size() == 1 &&
-                    ldlib2Panel.getSizeWidth() == 20 && ldlib2Panel.getSizeHeight() == 20,
+                    UITemplate.getLDLib2Bounds(ldlib2Panel).width() == 20 &&
+                    UITemplate.getLDLib2Bounds(ldlib2Panel).height() == 20,
                     "LDLib2 Maintenance warning did not render exactly one conditional icon");
             helper.assertTrue(ldlib2Panel.getCapturedTooltips().size() == 1,
                     "Maintenance warning did not register one LDLib2 Fancy tooltip");
@@ -505,8 +519,8 @@ public class PowerSubstationMachineLDLib2UITest {
         helper.assertTrue(shell.getHolder() == holder,
                 description + " standalone Fancy shell did not retain its machine holder");
         UIElement preview = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(preview.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                preview.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
+        helper.assertTrue(UITemplate.getLDLib2Bounds(preview).width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                UITemplate.getLDLib2Bounds(preview).height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
                 preview.getChildren().isEmpty(),
                 description + " standalone UI did not use the server-safe 100x100 LDLib2 preview");
 
@@ -580,13 +594,6 @@ public class PowerSubstationMachineLDLib2UITest {
             throw new IllegalStateException("Expected a Cleaning Maintenance Hatch machine");
         }
         return maintenanceHatch;
-    }
-
-    private static ItemBusPartMachine requireItemBus(MetaMachine machine) {
-        if (!(machine instanceof ItemBusPartMachine itemBus)) {
-            throw new IllegalStateException("Expected an Item Bus machine");
-        }
-        return itemBus;
     }
 
     private static List<UIElement> descendants(UIElement root) {

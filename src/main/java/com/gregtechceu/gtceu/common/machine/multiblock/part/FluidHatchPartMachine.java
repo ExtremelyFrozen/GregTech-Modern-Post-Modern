@@ -399,7 +399,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine
                                                     BooleanSupplier canSendAction, Predicate<UIEvent> shiftDown,
                                                     Supplier<Optional<FluidStack>> selectedLockedFluid) {
         UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, 89, 63);
-        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+        UITemplate.setLDLib2BackgroundTexture(root, GuiTextures.BACKGROUND_INVERSE);
         root.addChild(new GTImageElement(4, 4, 81, 55, GuiTextures.DISPLAY));
 
         GTFluidSlotElement fluidSlot = createLDLib2FluidSlot(player, holder, 0, 67, 22,
@@ -532,7 +532,7 @@ public class FluidHatchPartMachine extends TieredIOPartMachine
                 18 * rowSize + 16, 18 * columnSize + 16);
         UIElement container = UITemplate.setLDLib2Bounds(new UIElement(), 4, 4,
                 18 * rowSize + 8, 18 * columnSize + 8);
-        container.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+        UITemplate.setLDLib2BackgroundTexture(container, GuiTextures.BACKGROUND_INVERSE);
 
         int index = 0;
         for (int y = 0; y < columnSize; y++) {

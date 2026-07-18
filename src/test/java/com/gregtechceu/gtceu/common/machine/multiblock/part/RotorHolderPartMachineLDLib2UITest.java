@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -218,14 +219,17 @@ public class RotorHolderPartMachineLDLib2UITest {
 
     private static void assertRotorPage(GameTestHelper helper, ServerPlayer player,
                                         RotorHolderPartMachine machine, UIElement root, String surface) {
-        helper.assertTrue(root.getSizeWidth() == 34 && root.getSizeHeight() == 34,
+        helper.assertTrue(
+                UITemplate.getLDLib2Bounds(root).width() == 34 && UITemplate.getLDLib2Bounds(root).height() == 34,
                 surface + " Rotor Holder page lost its 34x34 bounds");
         helper.assertTrue(root.getChildren().size() == 3,
                 surface + " Rotor Holder page changed its three-element body");
 
         UIElement container = root.getChildren().stream()
-                .filter(child -> child.getLayoutX() == 4 && child.getLayoutY() == 4)
-                .filter(child -> child.getSizeWidth() == 26 && child.getSizeHeight() == 26)
+                .filter(child -> UITemplate.getLDLib2Bounds(child).x() == 4 &&
+                        UITemplate.getLDLib2Bounds(child).y() == 4)
+                .filter(child -> UITemplate.getLDLib2Bounds(child).width() == 26 &&
+                        UITemplate.getLDLib2Bounds(child).height() == 26)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Rotor Holder inverse background moved."));
         helper.assertTrue(container.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
@@ -239,8 +243,8 @@ public class RotorHolderPartMachineLDLib2UITest {
                 surface + " Rotor Holder page did not expose exactly one rotor slot");
         GTItemSlotElement slot = slots.getFirst();
         ItemHandlerSlot handlerSlot = requireHandlerSlot(slot);
-        helper.assertTrue(slot.getLayoutX() == 8 && slot.getLayoutY() == 8 &&
-                slot.getSizeWidth() == 18 && slot.getSizeHeight() == 18,
+        helper.assertTrue(UITemplate.getLDLib2Bounds(slot).x() == 8 && UITemplate.getLDLib2Bounds(slot).y() == 8 &&
+                UITemplate.getLDLib2Bounds(slot).width() == 18 && UITemplate.getLDLib2Bounds(slot).height() == 18,
                 surface + " Rotor Holder slot moved from its original bounds");
         helper.assertTrue(handlerSlot.getItemHandler() == machine.inventory.storage &&
                 handlerSlot.getSlotIndex() == 0,
@@ -254,9 +258,10 @@ public class RotorHolderPartMachineLDLib2UITest {
                 .filter(GTImageElement.class::isInstance)
                 .map(GTImageElement.class::cast)
                 .toList();
-        helper.assertTrue(overlays.size() == 1 && overlays.getFirst().getLayoutX() == 9 &&
-                overlays.getFirst().getLayoutY() == 9 && overlays.getFirst().getSizeWidth() == 16 &&
-                overlays.getFirst().getSizeHeight() == 16 && !overlays.getFirst().isVisible(),
+        helper.assertTrue(overlays.size() == 1 && UITemplate.getLDLib2Bounds(overlays.getFirst()).x() == 9 &&
+                UITemplate.getLDLib2Bounds(overlays.getFirst()).y() == 9 &&
+                UITemplate.getLDLib2Bounds(overlays.getFirst()).width() == 16 &&
+                UITemplate.getLDLib2Bounds(overlays.getFirst()).height() == 16 && !overlays.getFirst().isVisible(),
                 surface + " Rotor Holder lock overlay changed its unlocked layout or visibility");
 
         ItemStack probe = new ItemStack(Items.STONE);
@@ -281,12 +286,6 @@ public class RotorHolderPartMachineLDLib2UITest {
         throw new IllegalStateException("Rotor Holder slot was not bound through an item handler.");
     }
 
-    private static LDLib2FancyMachineUIElement createShell(ServerPlayer player, MachineUIHolder holder,
-                                                           LDLib2FancyUIProvider page) {
-        return new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
-                page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
-    }
-
     private static List<Component> tooltips(UIElement target) {
         UIEvent event = UIEvent.create(UIEvents.HOVER_TOOLTIPS);
         event.target = target;
@@ -295,6 +294,12 @@ public class RotorHolderPartMachineLDLib2UITest {
             throw new IllegalStateException("Rotor Holder warning icon omitted its hover tooltip.");
         }
         return event.hoverTooltips.tooltipTexts();
+    }
+
+    private static LDLib2FancyMachineUIElement createShell(ServerPlayer player, MachineUIHolder holder,
+                                                           LDLib2FancyUIProvider page) {
+        return new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
     }
 
     private static void clearRotorPlane(ServerLevel level, BlockPos machinePos) {

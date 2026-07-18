@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTPhantomFluidSlotElement;
@@ -64,7 +65,9 @@ public class PumpHatchPartMachineLDLib2UITest {
 
         UI standalone = pump.createLDLib2UI(player, holder);
         UIElement standaloneRoot = standalone.getRootElement();
-        helper.assertTrue(standaloneRoot.getSizeWidth() == 176 && standaloneRoot.getSizeHeight() == 166,
+        helper.assertTrue(
+                UITemplate.getLDLib2Bounds(standaloneRoot).width() == 176 &&
+                        UITemplate.getLDLib2Bounds(standaloneRoot).height() == 166,
                 "Pump Hatch standalone UI lost its 176x166 bounds");
         helper.assertTrue(standaloneRoot.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND,
                 "Pump Hatch standalone UI lost its GT background");
@@ -72,7 +75,8 @@ public class PumpHatchPartMachineLDLib2UITest {
         List<GTFluidSlotElement> standaloneSlots = normalFluidSlots(standaloneRoot);
         List<GTToggleButtonElement> standaloneToggles = toggleButtons(standaloneRoot);
         helper.assertTrue(standaloneSlots.size() == 1 &&
-                standaloneSlots.getFirst().getLayoutX() == 90 && standaloneSlots.getFirst().getLayoutY() == 35,
+                UITemplate.getLDLib2Bounds(standaloneSlots.getFirst()).x() == 90 &&
+                UITemplate.getLDLib2Bounds(standaloneSlots.getFirst()).y() == 35,
                 "Pump Hatch standalone fluid slot moved from 90,35");
         helper.assertTrue(standaloneSlots.getFirst().isAllowClickFilled() &&
                 !standaloneSlots.getFirst().isAllowClickDrained(),
@@ -80,19 +84,22 @@ public class PumpHatchPartMachineLDLib2UITest {
         helper.assertTrue(phantomFluidSlots(standaloneRoot).isEmpty(),
                 "Pump Hatch standalone UI unexpectedly gained a phantom lock slot");
         helper.assertTrue(standaloneToggles.size() == 1 &&
-                standaloneToggles.getFirst().getLayoutX() == 7 && standaloneToggles.getFirst().getLayoutY() == 53,
+                UITemplate.getLDLib2Bounds(standaloneToggles.getFirst()).x() == 7 &&
+                UITemplate.getLDLib2Bounds(standaloneToggles.getFirst()).y() == 53,
                 "Pump Hatch standalone working toggle moved from 7,53");
         helper.assertTrue(standaloneRoot.getChildren().stream()
                 .filter(child -> child.getChildren().size() == 36)
                 .filter(child -> child.getChildren().stream().allMatch(GTItemSlotElement.class::isInstance))
-                .anyMatch(child -> child.getLayoutX() == 7 && child.getLayoutY() == 84),
+                .anyMatch(child -> UITemplate.getLDLib2Bounds(child).x() == 7 &&
+                        UITemplate.getLDLib2Bounds(child).y() == 84),
                 "Pump Hatch standalone UI lost its player inventory at 7,84");
 
         LDLib2FancyUIProvider page = pump.createLDLib2FancyPage(player, holder);
         LDLib2FancyMachineUIElement shell = createShell(player, holder, page);
         UIElement contextualRoot = pageRoot(shell);
         helper.assertTrue(page.getLDLib2PageWidth() == 89 && page.getLDLib2PageHeight() == 63 &&
-                contextualRoot.getSizeWidth() == 89 && contextualRoot.getSizeHeight() == 63,
+                UITemplate.getLDLib2Bounds(contextualRoot).width() == 89 &&
+                UITemplate.getLDLib2Bounds(contextualRoot).height() == 63,
                 "Pump Hatch contextual page lost its 89x63 single-slot body");
         helper.assertTrue(contextualRoot.getStyle().getInline(PropertyRegistry.BACKGROUND) ==
                 GuiTextures.BACKGROUND_INVERSE,
@@ -102,17 +109,20 @@ public class PumpHatchPartMachineLDLib2UITest {
         List<GTPhantomFluidSlotElement> phantomSlots = phantomFluidSlots(contextualRoot);
         List<GTToggleButtonElement> lockToggles = toggleButtons(contextualRoot);
         helper.assertTrue(contextualSlots.size() == 1 &&
-                contextualSlots.getFirst().getLayoutX() == 67 && contextualSlots.getFirst().getLayoutY() == 22 &&
+                UITemplate.getLDLib2Bounds(contextualSlots.getFirst()).x() == 67 &&
+                UITemplate.getLDLib2Bounds(contextualSlots.getFirst()).y() == 22 &&
                 contextualSlots.getFirst().getCapacity() == pump.tank.getTankCapacity(0),
                 "Pump Hatch contextual page did not bind its real tank at 67,22");
         helper.assertTrue(contextualSlots.getFirst().isAllowClickFilled() &&
                 !contextualSlots.getFirst().isAllowClickDrained(),
                 "Pump Hatch contextual slot changed its output-only container permissions");
         helper.assertTrue(phantomSlots.size() == 1 &&
-                phantomSlots.getFirst().getLayoutX() == 67 && phantomSlots.getFirst().getLayoutY() == 40,
+                UITemplate.getLDLib2Bounds(phantomSlots.getFirst()).x() == 67 &&
+                UITemplate.getLDLib2Bounds(phantomSlots.getFirst()).y() == 40,
                 "Pump Hatch contextual page did not preserve its phantom lock slot at 67,40");
         helper.assertTrue(lockToggles.size() == 1 &&
-                lockToggles.getFirst().getLayoutX() == 7 && lockToggles.getFirst().getLayoutY() == 40,
+                UITemplate.getLDLib2Bounds(lockToggles.getFirst()).x() == 7 &&
+                UITemplate.getLDLib2Bounds(lockToggles.getFirst()).y() == 40,
                 "Pump Hatch contextual page did not preserve its lock toggle at 7,40");
         helper.assertTrue(shell.getConfiguratorPanel().getChildren().size() == 1,
                 "Pump Hatch contextual page should expose only its working configurator");

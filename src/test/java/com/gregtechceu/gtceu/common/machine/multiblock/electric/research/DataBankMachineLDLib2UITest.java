@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -142,7 +143,8 @@ public class DataBankMachineLDLib2UITest {
             helper.assertTrue(pageContainer.getChildren().size() == dataParts.size() + 1,
                     "Data Bank did not create exactly its three contextual data pages");
             UIElement mainPage = pageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+            UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+            helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
                     "Data Bank main page did not preserve its 190x125 body");
             helper.assertTrue(mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) ==
                     GuiTextures.BACKGROUND_INVERSE,
@@ -151,23 +153,26 @@ public class DataBankMachineLDLib2UITest {
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "Data Bank main page did not create one display scroller");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+            helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                    scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                     "Data Bank display scroller did not preserve its (4,4) 182x117 bounds");
 
             List<GTLabelElement> labels = descendants(mainPage).stream()
                     .filter(GTLabelElement.class::isInstance)
                     .map(GTLabelElement.class::cast)
                     .toList();
-            helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                    labels.getFirst().getLayoutY() == 5,
+            UITemplate.LDLib2Bounds labelBounds = UITemplate.getLDLib2Bounds(labels.getFirst());
+            helper.assertTrue(labels.size() == 1 && labelBounds.x() == 4 &&
+                    labelBounds.y() == 5,
                     "Data Bank title did not preserve its (4,5) position");
             List<GTComponentPanelElement> panels = descendants(mainPage).stream()
                     .filter(GTComponentPanelElement.class::isInstance)
                     .map(GTComponentPanelElement.class::cast)
                     .toList();
-            helper.assertTrue(panels.size() == 1 && panels.getFirst().getLayoutX() == 4 &&
-                    panels.getFirst().getLayoutY() == 17 && panels.getFirst().getMaxWidthLimit() == 150,
+            UITemplate.LDLib2Bounds panelBounds = UITemplate.getLDLib2Bounds(panels.getFirst());
+            helper.assertTrue(panels.size() == 1 && panelBounds.x() == 4 &&
+                    panelBounds.y() == 17 && panels.getFirst().getMaxWidthLimit() == 150,
                     "Data Bank display panel did not preserve its position and legacy text width");
             helper.assertTrue(panels.getFirst().getLastText().equals(dataBank.getDisplaySnapshot()),
                     "Data Bank display panel did not consume the synchronized snapshot");
@@ -334,11 +339,13 @@ public class DataBankMachineLDLib2UITest {
         int refreshesAfterLoad = dataBank.getDisplayRefreshCount();
 
         helper.runAfterDelay(3, () -> {
+            dataBank.serverTick();
             int refreshesWhileDisabled = dataBank.getDisplayRefreshCount();
             helper.assertTrue(refreshesWhileDisabled > refreshesAfterLoad,
                     "Data Bank display subscription stopped with its disabled business tick");
             dataBank.onUnload();
             helper.runAfterDelay(3, () -> {
+                dataBank.serverTick();
                 helper.assertTrue(dataBank.getDisplayRefreshCount() == refreshesWhileDisabled,
                         "Data Bank display subscription kept running after unload");
                 helper.succeed();

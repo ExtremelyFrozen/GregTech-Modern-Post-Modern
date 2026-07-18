@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.generator;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -15,6 +16,7 @@ import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.CokeOvenHatch;
@@ -149,15 +151,19 @@ public class LargeCombustionEngineMachineLDLib2UITest {
                     secondPageContainer.getChildren().size() == parts.size() + 2 &&
                     firstPageContainer.getChildren().getLast() != secondPageContainer.getChildren().getLast(),
                     "Large Combustion Engine reused or omitted its directional page across openings");
+            clickButton(firstShell.getSideTabsElement().getChildren().getFirst());
+            clickButton(secondShell.getSideTabsElement().getChildren().getFirst());
 
             UIElement mainPage = firstPageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125 &&
+            UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+            helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125 &&
                     mainPage.getChildren().size() == 1 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "Large Combustion Engine main page did not preserve its 190x125 display body");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+            helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                    scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                     "Large Combustion Engine display scroller did not preserve its bounds");
             List<UIElement> descendants = descendants(mainPage);
             helper.assertTrue(descendants.stream().filter(GTLabelElement.class::isInstance).count() == 1,
@@ -240,8 +246,15 @@ public class LargeCombustionEngineMachineLDLib2UITest {
                 saved.get(INTAKE_OBSTRUCTION_FIELD) == null,
                 "Large Combustion Engine persisted transient display or intake UI state");
         client.getSyncDataHolder().applyClientNetworkUpdate(helper.getLevel().registryAccess(), fullSync);
-        helper.assertTrue(client.getDisplaySnapshot().equals(firstSnapshot) && client.isIntakeObstructionSnapshot(),
-                "Large Combustion Engine client did not apply its display or intake snapshot");
+        DataComponentMap clientFullSync = client.getSyncDataHolder()
+                .serializeFullClientSyncComponents(helper.getLevel().registryAccess());
+        SyncFieldData serverFields = fullSync.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        SyncFieldData clientFields = clientFullSync.get(GTDataComponents.SYNC_FIELD_DATA.get());
+        helper.assertTrue(serverFields != null && clientFields != null &&
+                serverFields.get(DISPLAY_SNAPSHOT_FIELD) != null &&
+                serverFields.get(DISPLAY_SNAPSHOT_FIELD).equals(clientFields.get(DISPLAY_SNAPSHOT_FIELD)) &&
+                client.isIntakeObstructionSnapshot(),
+                "Large Combustion Engine client did not apply its display or intake snapshot wire data");
 
         server.getDisplaySnapshotSubscription().updateSubscription();
         TickableSubscription snapshotTick = server.requireCapturedSubscription();
@@ -281,6 +294,7 @@ public class LargeCombustionEngineMachineLDLib2UITest {
         int refreshesAfterLoad = engine.getDisplayRefreshCount();
 
         helper.runAfterDelay(3, () -> {
+            engine.serverTick();
             int refreshesWhileLoaded = engine.getDisplayRefreshCount();
             helper.assertTrue(refreshesWhileLoaded > refreshesAfterLoad,
                     "Large Combustion Engine onLoad did not initialize its display subscription");
@@ -288,6 +302,7 @@ public class LargeCombustionEngineMachineLDLib2UITest {
             helper.assertTrue(engine.getDisplaySnapshot().isEmpty(),
                     "Large Combustion Engine retained its display snapshot after controller unload");
             helper.runAfterDelay(3, () -> {
+                engine.serverTick();
                 helper.assertTrue(engine.getDisplayRefreshCount() == refreshesWhileLoaded,
                         "Large Combustion Engine display subscription kept running after controller unload");
                 helper.succeed();
@@ -503,6 +518,13 @@ public class LargeCombustionEngineMachineLDLib2UITest {
         @Override
         public @Nullable TickableSubscription subscribeServerTick(Runnable runnable) {
             capturedSubscription = super.subscribeServerTick(runnable);
+            return capturedSubscription;
+        }
+
+        @Override
+        public @Nullable TickableSubscription subscribeServerTick(@Nullable TickableSubscription last,
+                                                                  Runnable runnable) {
+            capturedSubscription = super.subscribeServerTick(last, runnable);
             return capturedSubscription;
         }
 

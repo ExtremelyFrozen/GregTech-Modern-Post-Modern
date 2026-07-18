@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
@@ -43,8 +44,11 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import com.mojang.authlib.GameProfile;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.gregtechceu.gtceu.api.GTValues.LV;
 import static com.gregtechceu.gtceu.api.GTValues.LuV;
@@ -60,7 +64,8 @@ public class HPCAMachineLDLib2UITest {
         boolean maintenanceEnabled = ConfigHolder.INSTANCE.machines.enableMaintenance;
         ConfigHolder.INSTANCE.machines.enableMaintenance = true;
         try {
-            ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+            ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                    new GameProfile(UUID.randomUUID(), "hpca-controller"));
             IMultiPart energyInput = requirePart(placeMachine(helper, new BlockPos(0, 1, 0),
                     GTMachines.ENERGY_INPUT_HATCH[LuV]));
             IMultiPart fluidInput = requirePart(placeMachine(helper, new BlockPos(1, 1, 0),
@@ -110,36 +115,42 @@ public class HPCAMachineLDLib2UITest {
             helper.assertTrue(shell.getTooltipsPanel().getChildren().size() == 1,
                     "HPCA did not expose exactly the conditional maintenance warning");
             helper.assertTrue(shell.getChildren().stream()
-                    .anyMatch(child -> child.getSizeWidth() == 162 && child.getSizeHeight() == 76),
+                    .anyMatch(child -> UITemplate.getLDLib2Bounds(child).width() == 162 &&
+                            UITemplate.getLDLib2Bounds(child).height() == 76),
                     "HPCA Fancy shell did not retain the player inventory");
 
             UIElement pageContainer = shell.getChildren().getFirst();
             helper.assertTrue(pageContainer.getChildren().size() == parts.size() + 1,
                     "HPCA did not cache one distinct home page per actual part");
             UIElement mainPage = pageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+            helper.assertTrue(
+                    UITemplate.getLDLib2Bounds(mainPage).width() == 190 &&
+                            UITemplate.getLDLib2Bounds(mainPage).height() == 125,
                     "HPCA main page did not preserve its 190x125 body");
             helper.assertTrue(mainPage.getChildren().size() == 2 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "HPCA main page did not preserve its display scroller and status-grid overlay");
 
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            helper.assertTrue(
+                    UITemplate.getLDLib2Bounds(scroller).x() == 4 && UITemplate.getLDLib2Bounds(scroller).y() == 4 &&
+                            UITemplate.getLDLib2Bounds(scroller).width() == 182 &&
+                            UITemplate.getLDLib2Bounds(scroller).height() == 117,
                     "HPCA display scroller did not preserve its (4,4) 182x117 bounds");
             List<GTLabelElement> labels = descendants(mainPage).stream()
                     .filter(GTLabelElement.class::isInstance)
                     .map(GTLabelElement.class::cast)
                     .toList();
-            helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                    labels.getFirst().getLayoutY() == 5,
+            helper.assertTrue(labels.size() == 1 && UITemplate.getLDLib2Bounds(labels.getFirst()).x() == 4 &&
+                    UITemplate.getLDLib2Bounds(labels.getFirst()).y() == 5,
                     "HPCA title did not preserve its (4,5) position");
             List<GTComponentPanelElement> panels = descendants(mainPage).stream()
                     .filter(GTComponentPanelElement.class::isInstance)
                     .map(GTComponentPanelElement.class::cast)
                     .toList();
-            helper.assertTrue(panels.size() == 1 && panels.getFirst().getLayoutX() == 4 &&
-                    panels.getFirst().getLayoutY() == 17 && panels.getFirst().getMaxWidthLimit() == 150,
+            helper.assertTrue(panels.size() == 1 && UITemplate.getLDLib2Bounds(panels.getFirst()).x() == 4 &&
+                    UITemplate.getLDLib2Bounds(panels.getFirst()).y() == 17 &&
+                    panels.getFirst().getMaxWidthLimit() == 150,
                     "HPCA display panel did not preserve its position and text width");
             GTComponentPanelElement displayPanel = panels.getFirst();
             List<Component> firstDisplaySnapshot = controller.getHpcaDisplaySnapshot();
@@ -149,16 +160,21 @@ public class HPCAMachineLDLib2UITest {
             assertImmutable(helper, firstDisplaySnapshot, "HPCA display snapshot was mutable");
 
             UIElement statusGrid = elementById(mainPage, "hpca_status_grid");
-            helper.assertTrue(statusGrid.getLayoutX() == 74 && statusGrid.getLayoutY() == 57 &&
-                    statusGrid.getSizeWidth() == 47 && statusGrid.getSizeHeight() == 47,
+            helper.assertTrue(
+                    UITemplate.getLDLib2Bounds(statusGrid).x() == 74 &&
+                            UITemplate.getLDLib2Bounds(statusGrid).y() == 57 &&
+                            UITemplate.getLDLib2Bounds(statusGrid).width() == 47 &&
+                            UITemplate.getLDLib2Bounds(statusGrid).height() == 47,
                     "HPCA status grid did not preserve its (74,57) 47x47 bounds");
             List<GTProgressBarElement> progressBars = statusGrid.getChildren().stream()
                     .filter(GTProgressBarElement.class::isInstance)
                     .map(GTProgressBarElement.class::cast)
                     .toList();
-            helper.assertTrue(progressBars.size() == 1 && progressBars.getFirst().getLayoutX() == 0 &&
-                    progressBars.getFirst().getLayoutY() == 0 && progressBars.getFirst().getSizeWidth() == 47 &&
-                    progressBars.getFirst().getSizeHeight() == 47,
+            helper.assertTrue(
+                    progressBars.size() == 1 && UITemplate.getLDLib2Bounds(progressBars.getFirst()).x() == 0 &&
+                            UITemplate.getLDLib2Bounds(progressBars.getFirst()).y() == 0 &&
+                            UITemplate.getLDLib2Bounds(progressBars.getFirst()).width() == 47 &&
+                            UITemplate.getLDLib2Bounds(progressBars.getFirst()).height() == 47,
                     "HPCA status grid did not retain its full-size progress outline");
             List<GTImageElement> componentImages = statusGrid.getChildren().stream()
                     .filter(GTImageElement.class::isInstance)
@@ -169,9 +185,10 @@ public class HPCAMachineLDLib2UITest {
             for (int row = 0; row < 3; row++) {
                 for (int column = 0; column < 3; column++) {
                     GTImageElement image = componentImages.get(row * 3 + column);
-                    helper.assertTrue(image.getLayoutX() == 2 + column * 15 &&
-                            image.getLayoutY() == 2 + row * 15 &&
-                            image.getSizeWidth() == 13 && image.getSizeHeight() == 13,
+                    helper.assertTrue(UITemplate.getLDLib2Bounds(image).x() == 2 + column * 15 &&
+                            UITemplate.getLDLib2Bounds(image).y() == 2 + row * 15 &&
+                            UITemplate.getLDLib2Bounds(image).width() == 13 &&
+                            UITemplate.getLDLib2Bounds(image).height() == 13,
                             "HPCA component icon lost its 3x3 grid position");
                 }
             }
@@ -245,7 +262,7 @@ public class HPCAMachineLDLib2UITest {
                         "HPCA reused a cached page across menu openings");
             }
 
-            IMultiPart unsupportedPart = requirePart(createMachine(GTMachines.ITEM_IMPORT_BUS[LV]));
+            IMultiPart unsupportedPart = requirePart(createMachine(GTMachines.COKE_OVEN_HATCH));
             TestHPCAMachine invalidController = new TestHPCAMachine(List.of(unsupportedPart));
             boolean unsupportedPartRejected = false;
             try {
@@ -341,7 +358,7 @@ public class HPCAMachineLDLib2UITest {
 
         HPCAMachine.HPCAGridHandler handler = new HPCAMachine.HPCAGridHandler(null);
         BlockPos controllerPos = helper.absolutePos(new BlockPos(3, 0, 1));
-        handler.tryGatherClientComponents(helper.getLevel(), controllerPos, Direction.EAST, Direction.UP, false);
+        handler.tryGatherClientComponents(helper.getLevel(), controllerPos, Direction.EAST, Direction.NORTH, false);
         for (int index = 0; index < expectedTextures.size(); index++) {
             helper.assertTrue(handler.getComponentTexture(index) == expectedTextures.get(index),
                     "HPCA component grid changed its legacy spatial order at index " + index);
@@ -358,7 +375,7 @@ public class HPCAMachineLDLib2UITest {
     private static List<Component> tooltips(UIElement target) {
         UIEvent event = UIEvent.create(UIEvents.HOVER_TOOLTIPS);
         event.target = target;
-        UIEventDispatcher.dispatchEvent(event, false, false, false);
+        UIEventDispatcher.dispatchEvent(event, true, true, false);
         if (event.hoverTooltips == null) {
             throw new IllegalStateException("HPCA status grid omitted its hover tooltip");
         }

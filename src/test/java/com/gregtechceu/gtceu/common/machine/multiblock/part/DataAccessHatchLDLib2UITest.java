@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
@@ -161,7 +162,8 @@ public class DataAccessHatchLDLib2UITest {
                 "Data Access Hatch did not attach its default machine and trait tooltips");
 
         UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(pageRoot.getSizeWidth() == expectedSize && pageRoot.getSizeHeight() == expectedSize,
+        UITemplate.LDLib2Bounds pageBounds = UITemplate.getLDLib2Bounds(pageRoot);
+        helper.assertTrue(pageBounds.width() == expectedSize && pageBounds.height() == expectedSize,
                 "Data Access Hatch contextual page root has incorrect bounds");
         List<GTItemSlotElement> slots = pageRoot.getChildren().stream()
                 .map(GTItemSlotElement.class::cast)

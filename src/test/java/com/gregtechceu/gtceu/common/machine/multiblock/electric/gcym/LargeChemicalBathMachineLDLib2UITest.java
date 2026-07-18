@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric.gcym;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
@@ -172,20 +173,23 @@ public class LargeChemicalBathMachineLDLib2UITest {
             UIElement secondModePage = secondPageContainer.getChildren().getLast();
             helper.assertTrue(firstModePage != secondModePage,
                     "Large Chemical Bath reused its machine-mode page across UI openings");
-            helper.assertTrue(firstModePage.getSizeWidth() == 140 && firstModePage.getSizeHeight() == 44 &&
+            UITemplate.LDLib2Bounds firstModeBounds = UITemplate.getLDLib2Bounds(firstModePage);
+            helper.assertTrue(firstModeBounds.width() == 140 && firstModeBounds.height() == 44 &&
                     firstModePage.getChildren().size() == 4 &&
                     firstModePage.getChildren().stream().filter(GTButtonElement.class::isInstance).count() == 2,
                     "Large Chemical Bath machine-mode page did not expose both registered recipe types");
 
             UIElement mainPage = firstPageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+            UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+            helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
                     "Large Chemical Bath main page did not preserve its 190x125 body");
             helper.assertTrue(mainPage.getChildren().size() == 1 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "Large Chemical Bath main page did not create one display scroller");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+            helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                    scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                     "Large Chemical Bath display scroller did not preserve its 4,4 182x117 bounds");
             List<UIElement> descendants = descendants(mainPage);
             helper.assertTrue(descendants.stream().filter(GTLabelElement.class::isInstance).count() == 1,
@@ -275,6 +279,7 @@ public class LargeChemicalBathMachineLDLib2UITest {
         int refreshesAfterLoad = formedBath.getDisplayRefreshCount();
 
         helper.runAfterDelay(3, () -> {
+            formedBath.serverTick();
             int refreshesWhileLoaded = formedBath.getDisplayRefreshCount();
             helper.assertTrue(refreshesWhileLoaded > refreshesAfterLoad,
                     "Large Chemical Bath onLoad did not initialize its display subscription");
@@ -282,6 +287,7 @@ public class LargeChemicalBathMachineLDLib2UITest {
             helper.assertTrue(formedBath.getDisplaySnapshot().isEmpty(),
                     "Large Chemical Bath retained its display snapshot after controller unload");
             helper.runAfterDelay(3, () -> {
+                formedBath.serverTick();
                 helper.assertTrue(formedBath.getDisplayRefreshCount() == refreshesWhileLoaded,
                         "Large Chemical Bath display subscription kept running after controller unload");
                 helper.succeed();
@@ -547,6 +553,15 @@ public class LargeChemicalBathMachineLDLib2UITest {
         @Override
         public TickableSubscription subscribeServerTick(Runnable runnable) {
             capturedSubscription = super.subscribeServerTick(runnable);
+            if (capturedSubscription == null) {
+                throw new IllegalStateException("Server-side display test did not create a tick subscription.");
+            }
+            return capturedSubscription;
+        }
+
+        @Override
+        public TickableSubscription subscribeServerTick(@Nullable TickableSubscription last, Runnable runnable) {
+            capturedSubscription = super.subscribeServerTick(last, runnable);
             if (capturedSubscription == null) {
                 throw new IllegalStateException("Server-side display test did not create a tick subscription.");
             }

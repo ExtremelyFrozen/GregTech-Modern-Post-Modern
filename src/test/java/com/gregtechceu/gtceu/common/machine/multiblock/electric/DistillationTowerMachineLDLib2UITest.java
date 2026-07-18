@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
@@ -142,10 +143,10 @@ public class DistillationTowerMachineLDLib2UITest {
             helper.assertTrue(firstPages.getChildren().size() == parts.size() + 1 &&
                     secondPages.getChildren().size() == parts.size() + 1,
                     "Large Distillery silently dropped a real multiblock part page");
-            helper.assertTrue(firstPages.getChildren().get(1).getSizeWidth() == 100 &&
-                    firstPages.getChildren().get(1).getSizeHeight() == 20 &&
-                    firstPages.getChildren().get(2).getSizeWidth() == 89 &&
-                    firstPages.getChildren().get(2).getSizeHeight() == 63,
+            UITemplate.LDLib2Bounds firstItemBusBounds = UITemplate.getLDLib2Bounds(firstPages.getChildren().get(1));
+            UITemplate.LDLib2Bounds firstFluidHatchBounds = UITemplate.getLDLib2Bounds(firstPages.getChildren().get(2));
+            helper.assertTrue(firstItemBusBounds.width() == 100 && firstItemBusBounds.height() == 20 &&
+                    firstFluidHatchBounds.width() == 89 && firstFluidHatchBounds.height() == 63,
                     "Large Distillery did not preserve getParts() order for contextual pages");
             for (int index = 0; index < firstPages.getChildren().size(); index++) {
                 helper.assertTrue(firstPages.getChildren().get(index) != secondPages.getChildren().get(index),
@@ -156,8 +157,9 @@ public class DistillationTowerMachineLDLib2UITest {
             clickButton(secondLargeShell.getSideTabsElement().getChildren().get(1));
             UIElement firstModePage = firstPages.getChildren().getLast();
             UIElement secondModePage = secondPages.getChildren().getLast();
+            UITemplate.LDLib2Bounds firstModeBounds = UITemplate.getLDLib2Bounds(firstModePage);
             helper.assertTrue(firstModePage != secondModePage &&
-                    firstModePage.getSizeWidth() == 140 && firstModePage.getSizeHeight() == 44 &&
+                    firstModeBounds.width() == 140 && firstModeBounds.height() == 44 &&
                     firstModePage.getChildren().size() == 4 &&
                     firstModePage.getChildren().stream().filter(GTButtonElement.class::isInstance).count() == 2,
                     "Large Distillery machine-mode page was not opening-scoped with two registered modes");
@@ -179,18 +181,16 @@ public class DistillationTowerMachineLDLib2UITest {
     }
 
     @TestHolder
-    @EmptyTemplate
-    @GameTest(template = "empty", batch = "DistillationTowerMachineLDLib2UI")
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5", batch = "DistillationTowerMachineLDLib2UI")
     public static void fluidMappingRecipeDistributionAndUiKeepExistingLogicState(GameTestHelper helper) {
         ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
         StandardFluidHatchPartMachine lower = requireFluidHatch(
-                createMachineAt(GTMachines.FLUID_EXPORT_HATCH[HV], new BlockPos(0, 1, 0)));
+                placeMachine(helper, new BlockPos(0, 1, 0), GTMachines.FLUID_EXPORT_HATCH[HV]));
         StandardFluidHatchPartMachine upper = requireFluidHatch(
-                createMachineAt(GTMachines.FLUID_EXPORT_HATCH[HV], new BlockPos(0, 3, 0)));
-        lower.setLevel(helper.getLevel());
-        upper.setLevel(helper.getLevel());
+                placeMachine(helper, new BlockPos(0, 3, 0), GTMachines.FLUID_EXPORT_HATCH[HV]));
         TestDistillationTowerMachine tower = new TestDistillationTowerMachine(
-                GTMultiMachines.DISTILLATION_TOWER, List.of(lower, upper));
+                GTMultiMachines.DISTILLATION_TOWER, helper.absolutePos(BlockPos.ZERO), List.of(lower, upper));
         tower.setLevel(helper.getLevel());
         tower.setServerDisplay(List.of(FIRST_DISPLAY_LINE));
         tower.formStructure(DistillationTowerMachine.DEFAULT_STRUCTURE);
@@ -326,6 +326,7 @@ public class DistillationTowerMachineLDLib2UITest {
         int refreshesAfterLoad = formedTower.getDisplayRefreshCount();
 
         helper.runAfterDelay(3, () -> {
+            formedTower.serverTick();
             int refreshesWhileLoaded = formedTower.getDisplayRefreshCount();
             helper.assertTrue(refreshesWhileLoaded > refreshesAfterLoad &&
                     formedTower.getRecipeLogic() == formedLogic,
@@ -334,6 +335,7 @@ public class DistillationTowerMachineLDLib2UITest {
             helper.assertTrue(formedTower.getDisplaySnapshot().isEmpty(),
                     "Large Distillery retained its display snapshot after controller unload");
             helper.runAfterDelay(3, () -> {
+                formedTower.serverTick();
                 helper.assertTrue(formedTower.getDisplayRefreshCount() == refreshesWhileLoaded,
                         "Large Distillery display subscription kept running after controller unload");
                 helper.succeed();
@@ -375,14 +377,16 @@ public class DistillationTowerMachineLDLib2UITest {
     }
 
     private static void assertMainPageLayout(GameTestHelper helper, UIElement mainPage) {
-        helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+        UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+        helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
                 "Distillation controller main page did not preserve its 190x125 body");
         helper.assertTrue(mainPage.getChildren().size() == 1 &&
                 mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                 "Distillation controller main page did not create one display scroller");
         UIElement scroller = mainPage.getChildren().getFirst();
-        helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+        UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+        helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                 "Distillation controller scroller did not preserve its 4,4 182x117 bounds");
         List<UIElement> descendants = descendants(mainPage);
         helper.assertTrue(descendants.stream().filter(GTLabelElement.class::isInstance).count() == 1,
@@ -601,7 +605,11 @@ public class DistillationTowerMachineLDLib2UITest {
         private int displayRefreshCount;
 
         private TestDistillationTowerMachine(MachineDefinition definition, List<IMultiPart> parts) {
-            super(info(definition));
+            this(definition, BlockPos.ZERO, parts);
+        }
+
+        private TestDistillationTowerMachine(MachineDefinition definition, BlockPos pos, List<IMultiPart> parts) {
+            super(info(definition, pos));
             this.parts = List.copyOf(parts);
         }
 
@@ -627,7 +635,17 @@ public class DistillationTowerMachineLDLib2UITest {
 
         @Override
         public TickableSubscription subscribeServerTick(Runnable runnable) {
-            capturedSubscription = super.subscribeServerTick(runnable);
+            TickableSubscription subscription = super.subscribeServerTick(runnable);
+            if (subscription == null) {
+                throw new IllegalStateException("Server-side display test did not create a subscription.");
+            }
+            capturedSubscription = subscription;
+            return subscription;
+        }
+
+        @Override
+        public TickableSubscription subscribeServerTick(@Nullable TickableSubscription last, Runnable runnable) {
+            capturedSubscription = super.subscribeServerTick(last, runnable);
             if (capturedSubscription == null) {
                 throw new IllegalStateException("Server-side display test did not create a tick subscription.");
             }
@@ -656,7 +674,11 @@ public class DistillationTowerMachineLDLib2UITest {
     }
 
     private static BlockEntityCreationInfo info(MachineDefinition definition) {
-        return new BlockEntityCreationInfo(definition.getBlockEntityType(), BlockPos.ZERO,
+        return info(definition, BlockPos.ZERO);
+    }
+
+    private static BlockEntityCreationInfo info(MachineDefinition definition, BlockPos pos) {
+        return new BlockEntityCreationInfo(definition.getBlockEntityType(), pos,
                 definition.defaultBlockState());
     }
 }

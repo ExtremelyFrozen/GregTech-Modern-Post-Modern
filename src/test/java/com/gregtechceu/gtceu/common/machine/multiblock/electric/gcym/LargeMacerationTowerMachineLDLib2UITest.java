@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric.gcym;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -139,14 +140,16 @@ public class LargeMacerationTowerMachineLDLib2UITest {
             }
 
             UIElement mainPage = firstPageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+            UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+            helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
                     "Large Maceration Tower main page did not preserve its 190x125 body");
             helper.assertTrue(mainPage.getChildren().size() == 1 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "Large Maceration Tower main page did not create one display scroller");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+            helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                    scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                     "Large Maceration Tower display scroller did not preserve its 4,4 182x117 bounds");
             List<UIElement> descendants = descendants(mainPage);
             helper.assertTrue(descendants.stream().filter(GTLabelElement.class::isInstance).count() == 1,
@@ -229,6 +232,7 @@ public class LargeMacerationTowerMachineLDLib2UITest {
         int refreshesAfterLoad = formedTower.getDisplayRefreshCount();
 
         helper.runAfterDelay(3, () -> {
+            formedTower.serverTick();
             int refreshesWhileLoaded = formedTower.getDisplayRefreshCount();
             helper.assertTrue(refreshesWhileLoaded > refreshesAfterLoad,
                     "Large Maceration Tower onLoad did not initialize its display subscription");
@@ -236,6 +240,7 @@ public class LargeMacerationTowerMachineLDLib2UITest {
             helper.assertTrue(formedTower.getDisplaySnapshot().isEmpty(),
                     "Large Maceration Tower retained its display snapshot after controller unload");
             helper.runAfterDelay(3, () -> {
+                formedTower.serverTick();
                 helper.assertTrue(formedTower.getDisplayRefreshCount() == refreshesWhileLoaded,
                         "Large Maceration Tower display subscription kept running after controller unload");
                 helper.succeed();
@@ -441,6 +446,15 @@ public class LargeMacerationTowerMachineLDLib2UITest {
         @Override
         public TickableSubscription subscribeServerTick(Runnable runnable) {
             capturedSubscription = super.subscribeServerTick(runnable);
+            if (capturedSubscription == null) {
+                throw new IllegalStateException("Server-side display test did not create a tick subscription.");
+            }
+            return capturedSubscription;
+        }
+
+        @Override
+        public TickableSubscription subscribeServerTick(@Nullable TickableSubscription last, Runnable runnable) {
+            capturedSubscription = super.subscribeServerTick(last, runnable);
             if (capturedSubscription == null) {
                 throw new IllegalStateException("Server-side display test did not create a tick subscription.");
             }

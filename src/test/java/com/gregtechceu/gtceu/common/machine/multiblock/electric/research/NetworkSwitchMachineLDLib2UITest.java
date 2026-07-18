@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric.research;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -13,6 +14,7 @@ import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
+import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.data.machines.GTResearchMachines;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -97,29 +99,33 @@ public class NetworkSwitchMachineLDLib2UITest {
             helper.assertTrue(pageContainer.getChildren().size() == parts.size() + 1,
                     "Network Switch did not create one contextual page for every actual part");
             UIElement mainPage = pageContainer.getChildren().getFirst();
-            helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125,
+            UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+            helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
                     "Network Switch main page did not preserve its 190x125 body");
             helper.assertTrue(mainPage.getChildren().size() == 1 &&
                     mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                     "Network Switch main page did not create one display scroller");
             UIElement scroller = mainPage.getChildren().getFirst();
-            helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                    scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+            UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+            helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                    scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                     "Network Switch display scroller did not preserve its (4,4) 182x117 bounds");
 
             List<GTLabelElement> labels = descendants(mainPage).stream()
                     .filter(GTLabelElement.class::isInstance)
                     .map(GTLabelElement.class::cast)
                     .toList();
-            helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                    labels.getFirst().getLayoutY() == 5,
+            UITemplate.LDLib2Bounds labelBounds = UITemplate.getLDLib2Bounds(labels.getFirst());
+            helper.assertTrue(labels.size() == 1 && labelBounds.x() == 4 &&
+                    labelBounds.y() == 5,
                     "Network Switch title did not preserve its (4,5) position");
             List<GTComponentPanelElement> panels = descendants(mainPage).stream()
                     .filter(GTComponentPanelElement.class::isInstance)
                     .map(GTComponentPanelElement.class::cast)
                     .toList();
-            helper.assertTrue(panels.size() == 1 && panels.getFirst().getLayoutX() == 4 &&
-                    panels.getFirst().getLayoutY() == 17 && panels.getFirst().getMaxWidthLimit() == 200,
+            UITemplate.LDLib2Bounds panelBounds = UITemplate.getLDLib2Bounds(panels.getFirst());
+            helper.assertTrue(panels.size() == 1 && panelBounds.x() == 4 &&
+                    panelBounds.y() == 17 && panels.getFirst().getMaxWidthLimit() == 200,
                     "Network Switch display panel did not preserve its position and maximum text width");
             helper.assertTrue(panels.getFirst().getLastText().equals(networkSwitch.getDisplaySnapshot()),
                     "Network Switch display panel did not consume the synchronized snapshot");
@@ -172,7 +178,7 @@ public class NetworkSwitchMachineLDLib2UITest {
         helper.assertTrue(staleOpeningRejected,
                 "Network Switch page accepted a holder replaced after opening validation");
 
-        IMultiPart unsupportedPart = requirePart(createMachine(GTMachines.ITEM_IMPORT_BUS[LV]));
+        IMultiPart unsupportedPart = new UnsupportedPart();
         TestNetworkSwitchMachine invalidSwitch = new TestNetworkSwitchMachine(List.of(unsupportedPart));
         boolean unsupportedPartRejected = false;
         try {
@@ -226,8 +232,9 @@ public class NetworkSwitchMachineLDLib2UITest {
                 NetworkSwitchMachine.captureDisplayState(true, true, false, false, 0, maxCWUt, usedCWUt));
         List<Component> disabled = NetworkSwitchMachine.createDisplaySnapshot(
                 gatedStates.get(1));
-        helper.assertTrue(idle.equals(List.of(idling)) && disabled.equals(List.of(idling)),
-                "Network Switch idle or disabled snapshot lost its legacy idling branch");
+        helper.assertTrue(idle.equals(List.of(idling)) &&
+                disabled.equals(List.of(expectedProviding.getFirst(), idling)),
+                "Network Switch idle or disabled snapshot lost its legacy energy and idling branches");
 
         Component invalidStructure = Component.translatable("gtpm.multiblock.invalid_structure")
                 .withStyle(ChatFormatting.RED)
@@ -287,11 +294,13 @@ public class NetworkSwitchMachineLDLib2UITest {
         int refreshesAfterLoad = networkSwitch.getDisplayRefreshCount();
 
         helper.runAfterDelay(3, () -> {
+            networkSwitch.serverTick();
             int refreshesWhileDisabled = networkSwitch.getDisplayRefreshCount();
             helper.assertTrue(refreshesWhileDisabled > refreshesAfterLoad,
                     "Network Switch display subscription stopped with its disabled business tick");
             networkSwitch.onUnload();
             helper.runAfterDelay(3, () -> {
+                networkSwitch.serverTick();
                 helper.assertTrue(networkSwitch.getDisplayRefreshCount() == refreshesWhileDisabled,
                         "Network Switch display subscription kept running after unload");
                 helper.succeed();
@@ -386,6 +395,13 @@ public class NetworkSwitchMachineLDLib2UITest {
         @Override
         public MetaMachine getMachine() {
             return reads++ < matchingReads ? machine : replacement;
+        }
+    }
+
+    private static final class UnsupportedPart extends MultiblockPartMachine {
+
+        private UnsupportedPart() {
+            super(info(GTMachines.ITEM_IMPORT_BUS[LV]));
         }
     }
 

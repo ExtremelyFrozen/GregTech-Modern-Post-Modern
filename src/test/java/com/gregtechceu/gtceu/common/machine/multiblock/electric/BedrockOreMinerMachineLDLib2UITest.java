@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.WeightedMaterial;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -240,15 +241,18 @@ public class BedrockOreMinerMachineLDLib2UITest {
         }
 
         UIElement mainPage = firstContainer.getChildren().getFirst();
-        helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125 &&
-                mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
-                "Bedrock Ore Miner main page lost its 190x125 inverse-background body");
+        UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+        helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
+                "Bedrock Ore Miner main page lost its 190x125 body");
+        helper.assertTrue(mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
+                "Bedrock Ore Miner main page lost its inverse background");
         helper.assertTrue(mainPage.getChildren().size() == 1 &&
                 mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                 "Bedrock Ore Miner main page did not create one display scroller");
         UIElement scroller = mainPage.getChildren().getFirst();
-        helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117,
+        UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+        helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
                 "Bedrock Ore Miner display scroller lost its (4,4) 182x117 bounds");
         List<GTLabelElement> labels = descendants(mainPage).stream()
                 .filter(GTLabelElement.class::isInstance)
@@ -258,9 +262,11 @@ public class BedrockOreMinerMachineLDLib2UITest {
                 .filter(GTComponentPanelElement.class::isInstance)
                 .map(GTComponentPanelElement.class::cast)
                 .toList();
-        helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                labels.getFirst().getLayoutY() == 5 && panels.size() == 1 &&
-                panels.getFirst().getLayoutX() == 4 && panels.getFirst().getLayoutY() == 17 &&
+        UITemplate.LDLib2Bounds labelBounds = UITemplate.getLDLib2Bounds(labels.getFirst());
+        UITemplate.LDLib2Bounds panelBounds = UITemplate.getLDLib2Bounds(panels.getFirst());
+        helper.assertTrue(labels.size() == 1 && labelBounds.x() == 4 &&
+                labelBounds.y() == 5 && panels.size() == 1 &&
+                panelBounds.x() == 4 && panelBounds.y() == 17 &&
                 panels.getFirst().getMaxWidthLimit() == 200 &&
                 panels.getFirst().getLastText().equals(miner.getDisplaySnapshot()),
                 "Bedrock Ore Miner title or snapshot panel lost its legacy bounds");
@@ -730,7 +736,17 @@ public class BedrockOreMinerMachineLDLib2UITest {
 
         @Override
         public TickableSubscription subscribeServerTick(Runnable runnable) {
-            capturedSubscription = super.subscribeServerTick(runnable);
+            TickableSubscription subscription = super.subscribeServerTick(runnable);
+            if (subscription == null) {
+                throw new IllegalStateException("Server-side display test did not create a tick subscription.");
+            }
+            capturedSubscription = subscription;
+            return subscription;
+        }
+
+        @Override
+        public TickableSubscription subscribeServerTick(@Nullable TickableSubscription last, Runnable runnable) {
+            capturedSubscription = super.subscribeServerTick(last, runnable);
             if (capturedSubscription == null) {
                 throw new IllegalStateException("Server-side display test did not create a tick subscription.");
             }

@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
@@ -95,8 +96,9 @@ public class OpticalDataHatchLDLib2UITest {
                 "Optical Data Hatch " + description + " did not expose one directional side page");
 
         UIElement pageRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(pageRoot.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                pageRoot.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+        UITemplate.LDLib2Bounds pageBounds = UITemplate.getLDLib2Bounds(pageRoot);
+        helper.assertTrue(pageBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                pageBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 "Optical Data Hatch " + description + " preview root has incorrect bounds");
         helper.assertTrue(pageRoot.getChildren().isEmpty(),
                 "Optical Data Hatch " + description + " created a client Scene on the GameTest server");

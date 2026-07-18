@@ -316,6 +316,15 @@ public class GTFluidSlotElement extends UIElement {
         return this;
     }
 
+    /**
+     * Returns the background drawn by this slot's client renderer.
+     *
+     * @return the configured slot background
+     */
+    public IGuiTexture getBackgroundTexture() {
+        return background;
+    }
+
     public GTFluidSlotElement setContentOverlay(IGuiTexture overlay) {
         this.contentOverlay = overlay;
         return this;

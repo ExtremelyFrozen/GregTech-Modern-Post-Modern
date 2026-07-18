@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -121,9 +122,10 @@ public class SteamItemBusPartMachineLDLib2UITest {
                                              SteamItemBusPartMachine machine, MachineUIHolder holder,
                                              boolean canPut, String owner) {
         UIElement root = machine.createLDLib2UI(player, holder).getRootElement();
+        UITemplate.LDLib2Bounds rootBounds = UITemplate.getLDLib2Bounds(root);
         boolean steelSteamMultiblocks = ConfigHolder.INSTANCE.machines.steelSteamMultiblocks;
         helper.assertTrue(!(root instanceof LDLib2FancyMachineUIElement) &&
-                root.getSizeWidth() == 176 && root.getSizeHeight() == 159,
+                rootBounds.width() == 176 && rootBounds.height() == 159,
                 owner + " standalone screen lost its dedicated 176x159 layout");
         helper.assertTrue(root.getStyle().getInline(PropertyRegistry.BACKGROUND) ==
                 GuiTextures.BACKGROUND_STEAM.get(steelSteamMultiblocks),

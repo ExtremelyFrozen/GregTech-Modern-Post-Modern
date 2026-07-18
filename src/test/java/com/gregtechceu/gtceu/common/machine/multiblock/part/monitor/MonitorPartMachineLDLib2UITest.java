@@ -1,11 +1,13 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.part.monitor;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
@@ -27,6 +29,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @PrefixGameTestTemplate(false)
@@ -71,19 +74,26 @@ public class MonitorPartMachineLDLib2UITest {
         helper.assertTrue(shell.getSideTabsElement().getChildren().size() == 2,
                 "Monitor contextual preview did not expose exactly one directional tab");
 
-        int expectedTooltips = monitor.showFancyTooltip() ? 1 : 0;
-        expectedTooltips += (int) monitor.getTraitHolder().getAllTraits().stream()
+        List<IFancyTooltip> expectedRegisteredTooltips = new ArrayList<>();
+        expectedRegisteredTooltips.add(monitor);
+        monitor.getTraitHolder().getAllTraits().stream()
                 .filter(IFancyTooltip.class::isInstance)
                 .map(IFancyTooltip.class::cast)
+                .forEach(expectedRegisteredTooltips::add);
+        TooltipCapturePanel capturePanel = new TooltipCapturePanel();
+        page.attachTooltips(capturePanel);
+        helper.assertTrue(capturePanel.getCapturedTooltips().equals(expectedRegisteredTooltips),
+                "Monitor contextual preview did not register its machine and trait tooltips");
+        long expectedVisibleTooltips = expectedRegisteredTooltips.stream()
                 .filter(IFancyTooltip::showFancyTooltip)
                 .count();
-        helper.assertTrue(expectedTooltips > 0 &&
-                shell.getTooltipsPanel().getChildren().size() == expectedTooltips,
-                "Monitor contextual preview did not attach its default machine and trait tooltips");
+        helper.assertTrue(shell.getTooltipsPanel().getChildren().size() == expectedVisibleTooltips,
+                "Monitor contextual preview exposed the wrong number of visible tooltips");
 
         UIElement previewRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(previewRoot.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                previewRoot.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+        UITemplate.LDLib2Bounds previewBounds = UITemplate.getLDLib2Bounds(previewRoot);
+        helper.assertTrue(previewBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                previewBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 "Monitor contextual preview created a root with incorrect bounds");
         helper.assertTrue(previewRoot.getChildren().isEmpty(),
                 "Monitor contextual preview constructed a client Scene on the GameTest server");
@@ -154,6 +164,25 @@ public class MonitorPartMachineLDLib2UITest {
             return monitor;
         }
         throw new IllegalStateException("Advanced monitor definition did not create its expected concrete machine.");
+    }
+
+    private static final class TooltipCapturePanel extends LDLib2FancyTooltipsPanelElement {
+
+        private final List<IFancyTooltip> capturedTooltips = new ArrayList<>();
+
+        private TooltipCapturePanel() {
+            super(0, 0);
+        }
+
+        @Override
+        public void attachTooltips(IFancyTooltip... tooltips) {
+            capturedTooltips.addAll(List.of(tooltips));
+            super.attachTooltips(tooltips);
+        }
+
+        private List<IFancyTooltip> getCapturedTooltips() {
+            return List.copyOf(capturedTooltips);
+        }
     }
 
     private static final class MutableMachineUIHolder implements MachineUIHolder {

@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
@@ -92,8 +93,9 @@ public class TankValvePartMachineLDLib2UITest {
                 "Tank Valve contextual preview did not attach its default machine and trait tooltips");
 
         UIElement previewRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(previewRoot.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                previewRoot.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+        UITemplate.LDLib2Bounds previewBounds = UITemplate.getLDLib2Bounds(previewRoot);
+        helper.assertTrue(previewBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                previewBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 "Tank Valve contextual preview created a root with incorrect bounds");
         helper.assertTrue(previewRoot.getChildren().isEmpty(),
                 "Tank Valve contextual preview constructed a client Scene on the GameTest server");

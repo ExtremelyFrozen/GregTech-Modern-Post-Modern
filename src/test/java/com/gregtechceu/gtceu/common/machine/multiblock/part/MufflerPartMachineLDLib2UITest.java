@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
@@ -49,7 +50,8 @@ public class MufflerPartMachineLDLib2UITest {
         helper.assertFalse(machine.canCreateLDLib2UI(player, replacementHolder),
                 "Muffler Hatch accepted another machine's standalone holder");
         UIElement standaloneRoot = machine.createLDLib2UI(player, holder).getRootElement();
-        helper.assertTrue(standaloneRoot.getSizeWidth() == 176 && standaloneRoot.getSizeHeight() == 148,
+        UITemplate.LDLib2Bounds standaloneBounds = UITemplate.getLDLib2Bounds(standaloneRoot);
+        helper.assertTrue(standaloneBounds.width() == 176 && standaloneBounds.height() == 148,
                 "LV Muffler Hatch standalone inventory lost its bounds");
         helper.assertTrue(descendants(standaloneRoot).stream()
                 .filter(GTItemSlotElement.class::isInstance)
@@ -85,8 +87,9 @@ public class MufflerPartMachineLDLib2UITest {
                 shell.getTooltipsPanel().getChildren().size() == expectedTooltips,
                 "Muffler Hatch did not attach its default machine and trait tooltips");
         UIElement previewRoot = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(previewRoot.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                previewRoot.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
+        UITemplate.LDLib2Bounds previewBounds = UITemplate.getLDLib2Bounds(previewRoot);
+        helper.assertTrue(previewBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                previewBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT,
                 "Muffler Hatch preview root has incorrect bounds");
         helper.assertTrue(previewRoot.getChildren().isEmpty(),
                 "Muffler Hatch created a client Scene on the GameTest server");
