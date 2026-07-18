@@ -1,13 +1,13 @@
 package com.gregtechceu.gtceu.client.gui.fancy;
 
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTSceneElement;
 import com.gregtechceu.gtceu.api.gui.fancy.LDLib2DirectionalFaceClickTracker;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.DirectionalAutoOutputMachine;
 
 import com.lowdragmc.lowdraglib2.client.scene.ISceneBlockRenderHook;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Scene;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.utils.data.BlockPosFace;
@@ -82,12 +82,13 @@ public final class LDLib2DirectionalSceneElement {
         return List.of(pos.above(), pos.below(), pos.north(), pos.south(), pos.east(), pos.west());
     }
 
-    private static void renderOutputs(Scene scene, BlockPos machinePos, DirectionalAutoOutputMachine output) {
+    private static void renderOutputs(GTSceneElement scene, BlockPos machinePos, DirectionalAutoOutputMachine output) {
         renderItemOutput(scene, machinePos, output);
         renderFluidOutput(scene, machinePos, output);
     }
 
-    private static void renderItemOutput(Scene scene, BlockPos machinePos, DirectionalAutoOutputMachine output) {
+    private static void renderItemOutput(GTSceneElement scene, BlockPos machinePos,
+                                         DirectionalAutoOutputMachine output) {
         Direction outputDirection = output.getItemOutputDirection();
         if (outputDirection == null) {
             return;
@@ -96,7 +97,8 @@ public final class LDLib2DirectionalSceneElement {
         scene.drawFacingBorder(new PoseStack(), new BlockPosFace(machinePos, outputDirection), color, 1);
     }
 
-    private static void renderFluidOutput(Scene scene, BlockPos machinePos, DirectionalAutoOutputMachine output) {
+    private static void renderFluidOutput(GTSceneElement scene, BlockPos machinePos,
+                                          DirectionalAutoOutputMachine output) {
         Direction outputDirection = output.getFluidOutputDirection();
         if (outputDirection == null) {
             return;
@@ -114,7 +116,7 @@ public final class LDLib2DirectionalSceneElement {
         }
     }
 
-    private static final class DirectionalScene extends Scene {
+    private static final class DirectionalScene extends GTSceneElement {
 
         private final BlockPos machinePos;
         private final BiPredicate<Direction, Integer> faceClickHandler;

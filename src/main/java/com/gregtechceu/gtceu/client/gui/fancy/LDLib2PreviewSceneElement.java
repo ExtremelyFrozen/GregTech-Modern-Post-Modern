@@ -1,10 +1,10 @@
 package com.gregtechceu.gtceu.client.gui.fancy;
 
 import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTSceneElement;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Scene;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.utils.virtuallevel.TrackedDummyWorld;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * Client-only LDLib2 scene that preserves the rotating single-machine preview used by legacy Fancy pages.
  */
 @OnlyIn(Dist.CLIENT)
-public final class LDLib2PreviewSceneElement extends Scene {
+public final class LDLib2PreviewSceneElement extends GTSceneElement {
 
     private static final float PREVIEW_FOV = 30;
     private static final float ROTATION_DEGREES_PER_TICK = 2;
@@ -28,7 +28,7 @@ public final class LDLib2PreviewSceneElement extends Scene {
     /**
      * Creates a fixed, non-interactive preview scene for the supplied machine block state.
      */
-    public static Scene createScene(MetaMachine machine, int width, int height) {
+    public static GTSceneElement createScene(MetaMachine machine, int width, int height) {
         TrackedDummyWorld level = new TrackedDummyWorld();
         level.addBlock(BlockPos.ZERO, MultiblockBlockInfo.fromBlockState(machine.getBlockState()));
 
