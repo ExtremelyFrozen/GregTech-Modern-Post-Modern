@@ -486,6 +486,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                     }
                 });
                 if (isXEI) {
+                    slot.xeiRecipeIngredient();
                     slot.xeiRecipeSlot();
                 }
             }
@@ -517,6 +518,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
         slot.setCanTakeItems(false);
         slot.setCanPutItems(false);
         slot.setXEIAmount(1);
+        slot.xeiRecipeIngredient();
         slot.xeiRecipeSlot();
     }
 

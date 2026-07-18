@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.capability.recipe.CWURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.data.DimensionMarker;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
@@ -77,6 +78,51 @@ public final class GTLDLib2RecipeUI {
 
     public static ModularUI createModularUI(GTRecipeDefinition recipe, int recipeTier, int chanceTier) {
         return ModularUI.of(createUI(recipe, recipeTier, chanceTier));
+    }
+
+    /**
+     * Creates only the bound recipe elements needed by recipe-viewer ingredient indexing.
+     * The complete XML UI is reserved for rendering a recipe display.
+     */
+    public static List<UIElement> createXEIIngredientElements(GTRecipeDefinition recipe, int recipeTier,
+                                                              int chanceTier) {
+        var storages = Tables.newCustomTable(new EnumMap<>(IO.class),
+                LinkedHashMap<RecipeCapability<?>, Object>::new);
+        var contents = Tables.newCustomTable(new EnumMap<>(IO.class),
+                LinkedHashMap<RecipeCapability<?>, List<Content>>::new);
+        collectStorage(storages, contents, recipe);
+        var recipeHolder = new GTRecipeTypeUI.RecipeHolder(GTRecipeTypeUI.XEI_PROGRESS, storages,
+                DataComponentMap.EMPTY, recipe.conditions, false, false);
+        List<UIElement> elements = new ArrayList<>();
+        for (var capabilityEntry : contents.rowMap().entrySet()) {
+            IO io = capabilityEntry.getKey();
+            for (var contentsEntry : capabilityEntry.getValue().entrySet()) {
+                RecipeCapability<?> capability = contentsEntry.getKey();
+                Object storage = storages.get(io, capability);
+                List<Content> capabilityContents = contentsEntry.getValue();
+                for (int index = 0; index < capabilityContents.size(); index++) {
+                    UIElement element = capability.createLDLib2Element();
+                    if (element == null) {
+                        continue;
+                    }
+                    element.setId("%s_%d".formatted(capability.slotName(io), index));
+                    capability.applyLDLib2ElementInfo(element, index, true, io, recipeHolder, recipe.recipeType,
+                            recipe, capabilityContents.get(index), storage, recipeTier, chanceTier);
+                    elements.add(element);
+                }
+            }
+        }
+
+        if (recipe.recipeType.isHasResearchSlot()) {
+            GTItemSlotElement element = ItemRecipeCapability.CAP.createLDLib2Element();
+            int index = recipe.recipeType.getMaxInputs(ItemRecipeCapability.CAP);
+            element.setId("%s_%d".formatted(ItemRecipeCapability.CAP.slotName(IO.IN), index));
+            ItemRecipeCapability.CAP.applyLDLib2ElementInfo(element, index, true, IO.IN, recipeHolder,
+                    recipe.recipeType, null, null, storages.get(IO.IN, ItemRecipeCapability.CAP), recipeTier,
+                    chanceTier);
+            elements.add(element);
+        }
+        return List.copyOf(elements);
     }
 
     private static final class RecipeView {

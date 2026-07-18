@@ -10,8 +10,11 @@ import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
+import com.gregtechceu.gtceu.api.recipe.ResearchData;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
+import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
+import com.gregtechceu.gtceu.integration.xei.GTLDLib2RecipeUI;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
@@ -158,6 +161,73 @@ public class GTRecipeTypeLDLib2UITest {
                 "chanced item output did not retain its output role");
         helper.assertTrue(Math.abs(output.getXEIChance() - 0.25f) < 0.0001f,
                 "chanced item output did not retain its 25 percent chance");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void lightweightXEIIngredientsPreserveBoundRecipeSemantics(GameTestHelper helper) {
+        GTRecipeDefinition recipe = GTRecipeTypes.MIXER_RECIPES
+                .recipeBuilder(GTCEu.id("ldlib2_lightweight_xei_ingredients"))
+                .inputItems(new ItemStack(Items.IRON_INGOT, 2))
+                .notConsumable(Items.CRAFTING_TABLE)
+                .circuitMeta(1)
+                .inputFluids(new FluidStack(Fluids.WATER, 1_000))
+                .chancedOutput(new ItemStack(Items.DIAMOND, 2), 2_500, 0)
+                .outputFluids(new FluidStack(Fluids.LAVA, 500))
+                .buildDefinition();
+
+        List<UIElement> elements = GTLDLib2RecipeUI.createXEIIngredientElements(recipe, 0, 0);
+        UIElement root = new UIElement();
+        elements.forEach(root::addChild);
+
+        List<GTItemSlotElement> itemElements = elements.stream()
+                .filter(GTItemSlotElement.class::isInstance)
+                .map(GTItemSlotElement.class::cast)
+                .toList();
+        helper.assertTrue(itemElements.stream()
+                .filter(element -> element.getIngredientIO() == IngredientIO.INPUT).count() == 1,
+                "lightweight XEI binding did not retain the consumable item input");
+        helper.assertTrue(itemElements.stream()
+                .filter(element -> element.getIngredientIO() == IngredientIO.CATALYST).count() == 2,
+                "lightweight XEI binding did not retain the tool and circuit catalysts");
+        GTItemSlotElement output = itemElements.stream()
+                .filter(element -> element.getIngredientIO() == IngredientIO.OUTPUT)
+                .findFirst()
+                .orElseThrow(() -> new GameTestAssertException("lightweight XEI binding omitted the item output"));
+        helper.assertTrue(output.getSlot().getItem().is(Items.DIAMOND) && output.getSlot().getItem().getCount() == 2,
+                "lightweight XEI binding did not retain the output item amount");
+        helper.assertTrue(Math.abs(output.getXEIChance() - 0.25f) < 0.0001f,
+                "lightweight XEI binding did not retain the chanced output probability");
+
+        GTFluidSlotElement fluidInput = requireElement(root, "fluid_in_0", GTFluidSlotElement.class);
+        GTFluidSlotElement fluidOutput = requireElement(root, "fluid_out_0", GTFluidSlotElement.class);
+        helper.assertTrue(FluidStack.isSameFluidSameComponents(fluidInput.getFluid(),
+                new FluidStack(Fluids.WATER, 1_000)) && fluidInput.getFluid().getAmount() == 1_000,
+                "lightweight XEI binding did not retain the fluid input amount");
+        helper.assertTrue(FluidStack.isSameFluidSameComponents(fluidOutput.getFluid(),
+                new FluidStack(Fluids.LAVA, 500)) && fluidOutput.getFluid().getAmount() == 500,
+                "lightweight XEI binding did not retain the fluid output amount");
+
+        long traversedElements = root.selfAndAllChildren().count();
+        helper.assertTrue(traversedElements >= elements.size() + 1 && traversedElements <= elements.size() * 3L,
+                "lightweight XEI element traversal was not bounded by the constructed slot tree");
+
+        ResearchData researchData = new ResearchData(List.of(
+                new ResearchData.ResearchEntry("lightweight_xei_research", new ItemStack(Items.PAPER))));
+        GTRecipeDefinition researchRecipe = GTRecipeTypes.ASSEMBLY_LINE_RECIPES
+                .recipeBuilder(GTCEu.id("ldlib2_lightweight_xei_research"))
+                .inputItems(Items.IRON_INGOT)
+                .outputItems(Items.DIAMOND)
+                .addCondition(new ResearchCondition(false, researchData))
+                .buildDefinition();
+        UIElement researchRoot = new UIElement();
+        GTLDLib2RecipeUI.createXEIIngredientElements(researchRecipe, 0, 0).forEach(researchRoot::addChild);
+        GTItemSlotElement research = requireElement(researchRoot, "item_in_16", GTItemSlotElement.class);
+        helper.assertTrue(research.getIngredientIO() == IngredientIO.CATALYST &&
+                research.getSlot().getItem().is(Items.PAPER),
+                "lightweight XEI binding did not retain the assembly-line research catalyst");
         helper.succeed();
     }
 

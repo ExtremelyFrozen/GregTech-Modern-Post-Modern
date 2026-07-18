@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
+import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI.LDLib2RecipeUISize;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.integration.emi.GTEMIPlugin;
@@ -20,7 +21,9 @@ import dev.emi.emi.api.render.EmiRenderable;
 import dev.emi.emi.api.stack.EmiStack;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class GTRecipeEMICategory extends EmiRecipeCategory {
@@ -36,6 +39,7 @@ public class GTRecipeEMICategory extends EmiRecipeCategory {
 
     public static void registerDisplays(EmiRegistry registry) {
         List<GTRecipeCategory> subCategories = new ArrayList<>();
+        Map<GTRecipeType, LDLib2RecipeUISize> sizes = new IdentityHashMap<>();
         // run main categories first
         for (GTRecipeCategory category : GTRegistries.RECIPE_CATEGORIES) {
             if (!category.shouldRegisterDisplays()) continue;
@@ -47,8 +51,10 @@ public class GTRecipeEMICategory extends EmiRecipeCategory {
                 continue;
             }
             EmiRecipeCategory emiCategory = CATEGORIES.apply(category);
+            LDLib2RecipeUISize size = sizes.computeIfAbsent(type,
+                    recipeType -> recipeType.getRecipeUI().getLDLib2XEIRecipeUISize());
             type.getRecipesInCategory(category).stream()
-                    .map(recipe -> new GTLDLib2EmiRecipe(recipe, emiCategory))
+                    .map(recipe -> new GTLDLib2EmiRecipe(recipe, emiCategory, size))
                     .forEach(registry::addRecipe);
         }
         // run subcategories
@@ -56,8 +62,10 @@ public class GTRecipeEMICategory extends EmiRecipeCategory {
             if (!subCategory.shouldRegisterDisplays()) continue;
             var type = subCategory.getRecipeType();
             EmiRecipeCategory emiCategory = CATEGORIES.apply(subCategory);
+            LDLib2RecipeUISize size = sizes.computeIfAbsent(type,
+                    recipeType -> recipeType.getRecipeUI().getLDLib2XEIRecipeUISize());
             type.getRecipesInCategory(subCategory).stream()
-                    .map(recipe -> new GTLDLib2EmiRecipe(recipe, emiCategory))
+                    .map(recipe -> new GTLDLib2EmiRecipe(recipe, emiCategory, size))
                     .forEach(registry::addRecipe);
         }
     }
