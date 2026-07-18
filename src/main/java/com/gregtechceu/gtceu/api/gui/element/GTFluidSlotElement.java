@@ -12,16 +12,12 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.FluidSlot;
 import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
-import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
-import com.lowdragmc.lowdraglib2.gui.util.TextFormattingUtil;
 import com.lowdragmc.lowdraglib2.integration.xei.IngredientIO;
 import com.lowdragmc.lowdraglib2.integration.xei.emi.LDLibEMIPlugin;
 import com.lowdragmc.lowdraglib2.integration.xei.jei.LDLibJEIPlugin;
@@ -44,6 +40,7 @@ import dev.emi.emi.api.stack.FluidEmiStack;
 import dev.emi.emi.api.stack.ListEmiIngredient;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.neoforge.NeoForgeTypes;
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
@@ -63,20 +60,14 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 @LDLRegister(name = "gtm-fluid-slot", group = "gtm", registry = "ldlib2:ui_element")
-public class GTFluidSlotElement extends UIElement {
+public class GTFluidSlotElement extends FluidSlot {
 
-    private final GTLabelElement amountLabel = new GTLabelElement();
     private IGuiTexture background = IGuiTexture.EMPTY;
     private IGuiTexture overlay = IGuiTexture.EMPTY;
     private IGuiTexture contentOverlay = IGuiTexture.EMPTY;
     private IGuiTexture hoverOverlay = new ColorRectTexture(0x80FFFFFF);
-    private FluidStack fluid = FluidStack.EMPTY;
-    private FillDirection fillDirection = FillDirection.DOWN_TO_UP;
-    private int capacity;
     private boolean showAmount;
     private boolean showFluidTooltips = true;
-    private boolean allowClickFilled = true;
-    private boolean allowClickDrained = true;
     private IngredientIO ingredientIO = IngredientIO.NONE;
     private float xeiChance = 1.0f;
     private int xeiAmount = 1;
@@ -87,21 +78,26 @@ public class GTFluidSlotElement extends UIElement {
     private BiConsumer<GTFluidSlotElement, List<Component>> onAddedTooltips;
 
     public GTFluidSlotElement() {
-        getLayout().width(18);
-        getLayout().height(18);
-        getLayout().paddingAll(1);
-        addEventListener(UIEvents.HOVER_TOOLTIPS, this::onHoverTooltips);
-        addEventListener(UIEvents.MOUSE_DOWN, this::onMouseDown);
-
+        getStyle().backgroundTexture(IGuiTexture.EMPTY);
+        getSlotStyle().fillDirection(FillDirection.DOWN_TO_UP);
         amountLabel.addClass("__gtm-fluid-slot_amount-label__");
-        amountLabel.layout(layout -> layout.widthPercent(100).heightPercent(100));
-        amountLabel.textStyle(textStyle -> textStyle
-                .textAlignVertical(Vertical.BOTTOM)
-                .textAlignHorizontal(Horizontal.RIGHT)
-                .fontSize(4.5f));
         amountLabel.setVisible(false);
-        addChild(amountLabel);
-        internalSetup();
+    }
+
+    /**
+     * Routes LDLib2's standard binding entry through GTM's read-only display binding. The superclass binding is
+     * intentionally not called, so its built-in container-click RPC never receives a handler.
+     */
+    @Override
+    public GTFluidSlotElement bind(@Nullable IFluidHandler fluidHandler, int tankIndex) {
+        if (fluidHandler == null) {
+            this.fluidHandler = null;
+            this.tankIndex = 0;
+            setCapacity(0);
+            setFluid(FluidStack.EMPTY);
+            return this;
+        }
+        return setFluidTank(fluidHandler, tankIndex);
     }
 
     public GTFluidSlotElement setFluidTank(IFluidHandler fluidHandler, int tankIndex) {
@@ -132,24 +128,28 @@ public class GTFluidSlotElement extends UIElement {
         return this;
     }
 
+    @Override
+    public GTFluidSlotElement setValue(@Nullable FluidStack fluid, boolean notify) {
+        super.setValue(fluid, notify);
+        updateAmountLabel();
+        return this;
+    }
+
+    @Override
     public GTFluidSlotElement setFluid(FluidStack fluid) {
-        this.fluid = fluid;
-        updateAmountLabel();
-        return this;
+        return setValue(fluid, true);
     }
 
-    public FluidStack getFluid() {
-        return fluid;
+    @Override
+    public GTFluidSlotElement setFluid(FluidStack fluid, boolean notify) {
+        return setValue(fluid, notify);
     }
 
+    @Override
     public GTFluidSlotElement setCapacity(int capacity) {
-        this.capacity = capacity;
+        super.setCapacity(capacity);
         updateAmountLabel();
         return this;
-    }
-
-    public int getCapacity() {
-        return capacity;
     }
 
     public GTFluidSlotElement setShowAmount(boolean showAmount) {
@@ -159,22 +159,16 @@ public class GTFluidSlotElement extends UIElement {
         return this;
     }
 
+    @Override
     public GTFluidSlotElement setAllowClickFilled(boolean allowClickFilled) {
-        this.allowClickFilled = allowClickFilled;
+        super.setAllowClickFilled(allowClickFilled);
         return this;
     }
 
+    @Override
     public GTFluidSlotElement setAllowClickDrained(boolean allowClickDrained) {
-        this.allowClickDrained = allowClickDrained;
+        super.setAllowClickDrained(allowClickDrained);
         return this;
-    }
-
-    public boolean isAllowClickFilled() {
-        return allowClickFilled;
-    }
-
-    public boolean isAllowClickDrained() {
-        return allowClickDrained;
     }
 
     public GTFluidSlotElement setChangeListener(Runnable changeListener) {
@@ -217,6 +211,7 @@ public class GTFluidSlotElement extends UIElement {
         return this;
     }
 
+    @Override
     public GTFluidSlotElement xeiPhantom() {
         RegistrateDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             if (GTCEu.Mods.isJEILoaded()) {
@@ -243,6 +238,7 @@ public class GTFluidSlotElement extends UIElement {
         return xeiRecipeIngredient(ingredientIO);
     }
 
+    @Override
     public GTFluidSlotElement xeiRecipeIngredient(IngredientIO ingredientIO) {
         this.ingredientIO = ingredientIO;
         addXEIRecipeIngredient(ingredientIO, xeiFluids);
@@ -253,6 +249,7 @@ public class GTFluidSlotElement extends UIElement {
         return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role));
     }
 
+    @Override
     public GTFluidSlotElement xeiRecipeIngredient(IngredientIO ingredientIO,
                                                   Supplier<Stream<FluidStack>> allPossibleFluids) {
         this.ingredientIO = ingredientIO;
@@ -266,10 +263,12 @@ public class GTFluidSlotElement extends UIElement {
         return xeiRecipeIngredient(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), allPossibleFluids);
     }
 
+    @Override
     public GTFluidSlotElement xeiRecipeSlot() {
         return xeiRecipeSlot(ingredientIO, xeiChance);
     }
 
+    @Override
     public GTFluidSlotElement xeiRecipeSlot(IngredientIO ingredientIO, float xeiChance) {
         this.ingredientIO = ingredientIO;
         this.xeiChance = xeiChance;
@@ -296,6 +295,7 @@ public class GTFluidSlotElement extends UIElement {
         return xeiRecipeSlot(GTXEIIngredientRoleLDLib2Adapter.toLDLib2(role), xeiChance, xeiAmount, allPossibleFluids);
     }
 
+    @Override
     public GTFluidSlotElement xeiRecipeSlot(IngredientIO ingredientIO, float xeiChance, int xeiAmount,
                                             Supplier<Stream<FluidStack>> allPossibleFluids) {
         this.ingredientIO = ingredientIO;
@@ -333,7 +333,7 @@ public class GTFluidSlotElement extends UIElement {
     @Override
     public void loadXml(Element element) {
         if (element.hasAttribute("legacy-background")) {
-            background = GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-background"));
+            setBackgroundTexture(GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-background")));
         }
         if (element.hasAttribute("legacy-overlay")) {
             overlay = GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-overlay"));
@@ -348,13 +348,13 @@ public class GTFluidSlotElement extends UIElement {
             setShowAmount(XmlUtils.getAsBoolean(element, "show-amount", false));
         }
         if (element.hasAttribute("legacy-allow-click-filled")) {
-            allowClickFilled = XmlUtils.getAsBoolean(element, "legacy-allow-click-filled", true);
+            setAllowClickFilled(XmlUtils.getAsBoolean(element, "legacy-allow-click-filled", true));
         }
         if (element.hasAttribute("legacy-allow-click-drained")) {
-            allowClickDrained = XmlUtils.getAsBoolean(element, "legacy-allow-click-drained", true);
+            setAllowClickDrained(XmlUtils.getAsBoolean(element, "legacy-allow-click-drained", true));
         }
         if (element.hasAttribute("fill-direction")) {
-            fillDirection = parseFillDirection(element.getAttribute("fill-direction"));
+            getSlotStyle().fillDirection(parseFillDirection(element.getAttribute("fill-direction")));
         }
         super.loadXml(element);
         updateAmountLabel();
@@ -370,7 +370,6 @@ public class GTFluidSlotElement extends UIElement {
     @OnlyIn(Dist.CLIENT)
     public void drawBackgroundAdditional(GUIContext guiContext) {
         refreshFluidTank();
-        super.drawBackgroundAdditional(guiContext);
         background.draw(guiContext, getPositionX(), getPositionY(), getSizeWidth(), getSizeHeight());
 
         var contentX = getContentX();
@@ -378,7 +377,7 @@ public class GTFluidSlotElement extends UIElement {
         var contentWidth = getContentWidth();
         var contentHeight = getContentHeight();
 
-        if (!fluid.isEmpty()) {
+        if (!getFluid().isEmpty()) {
             drawFluid(guiContext, contentX, contentY, contentWidth, contentHeight);
         }
         overlay.draw(guiContext, contentX, contentY, contentWidth, contentHeight);
@@ -391,7 +390,9 @@ public class GTFluidSlotElement extends UIElement {
     @OnlyIn(Dist.CLIENT)
     private void drawFluid(GUIContext guiContext, float contentX, float contentY, float contentWidth,
                            float contentHeight) {
-        double progress = fluid.getAmount() * 1.0 / Math.max(Math.max(fluid.getAmount(), capacity), 1);
+        var fluid = getFluid();
+        var fillDirection = getSlotStyle().fillDirection();
+        double progress = fluid.getAmount() * 1.0 / Math.max(Math.max(fluid.getAmount(), getCapacity()), 1);
         float drawnU = (float) fillDirection.getDrawnU(progress);
         float drawnV = (float) fillDirection.getDrawnV(progress);
         float drawnWidth = (float) fillDirection.getDrawnWidth(progress);
@@ -403,20 +404,24 @@ public class GTFluidSlotElement extends UIElement {
                 contentHeight * drawnHeight, -1);
     }
 
-    private void onHoverTooltips(UIEvent event) {
+    @Override
+    protected void onHoverTooltips(UIEvent event) {
         if (showFluidTooltips) {
             event.hoverTooltips = new HoverTooltips(getFullTooltipTexts(), null, null, null);
         }
     }
 
-    private void onMouseDown(UIEvent event) {
+    @Override
+    protected void onMouseDown(UIEvent event) {
         event.stopPropagation();
         event.hasHandler = false;
     }
 
-    private List<Component> getFullTooltipTexts() {
+    @Override
+    public List<Component> getFullTooltipTexts() {
         var tooltips = new ArrayList<Component>();
-        var tooltipCapacity = Math.max(capacity, fluid.getAmount());
+        var fluid = getFluid();
+        var tooltipCapacity = Math.max(getCapacity(), fluid.getAmount());
         if (!fluid.isEmpty()) {
             tooltips.add(fluid.getHoverName());
             if (showAmount) {
@@ -441,13 +446,13 @@ public class GTFluidSlotElement extends UIElement {
         return tooltips;
     }
 
+    @Override
+    public Component getFluidAmountText() {
+        return showAmount ? super.getFluidAmountText() : Component.empty();
+    }
+
     private void updateAmountLabel() {
-        if (!showAmount || fluid.isEmpty()) {
-            amountLabel.setValue(Component.empty());
-            return;
-        }
-        amountLabel.setValue(Component.literal(
-                TextFormattingUtil.formatLongToCompactStringBuckets(fluid.getAmount(), 3) + "B"));
+        amountLabel.setValue(getFluidAmountText());
     }
 
     private void refreshFluidTank() {
@@ -456,7 +461,8 @@ public class GTFluidSlotElement extends UIElement {
         }
         var refreshedFluid = fluidHandler.getFluidInTank(tankIndex);
         var refreshedCapacity = fluidHandler.getTankCapacity(tankIndex);
-        var changed = capacity != refreshedCapacity ||
+        var fluid = getFluid();
+        var changed = getCapacity() != refreshedCapacity ||
                 !FluidStack.isSameFluidSameComponents(refreshedFluid, fluid) ||
                 refreshedFluid.getAmount() != fluid.getAmount();
         setCapacity(refreshedCapacity);

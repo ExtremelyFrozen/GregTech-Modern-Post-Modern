@@ -2,6 +2,11 @@ package com.gregtechceu.gtceu.api.gui.element;
 
 import com.gregtechceu.gtceu.GTCEu;
 
+import com.lowdragmc.lowdraglib2.gui.ui.elements.FluidSlot;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEventDispatcher;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Item;
@@ -10,6 +15,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.testframework.annotation.ForEachTest;
@@ -24,6 +31,77 @@ import java.util.concurrent.atomic.AtomicReference;
 @GameTestHolder(GTCEu.MOD_ID)
 @ForEachTest(groups = "ldlib2PhantomSlotElement")
 public class GTPhantomSlotElementTest {
+
+    @TestHolder()
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5", batch = "ldlib2PhantomSlotElement")
+    public static void fluidFacadeSharesParentStateWithoutParentHandlerBinding(GameTestHelper helper) {
+        FluidTank tank = new FluidTank(4_000);
+        tank.fill(new FluidStack(Fluids.WATER, 1_000), IFluidHandler.FluidAction.EXECUTE);
+        GTFluidSlotElement element = new GTFluidSlotElement();
+        FluidSlot parentView = bindAsFluidSlot(element, tank);
+
+        element.setShowAmount(true)
+                .setAllowClickFilled(false)
+                .setAllowClickDrained(true);
+
+        helper.assertTrue(parentView.getValue().is(Fluids.WATER) &&
+                parentView.getValue().getAmount() == 1_000,
+                "GTM facade and LDLib2 parent did not share the bound fluid state");
+        helper.assertTrue(parentView.getCapacity() == 4_000,
+                "GTM display binding did not expose capacity through the LDLib2 parent state");
+        helper.assertTrue(!parentView.isAllowClickFilled() && parentView.isAllowClickDrained(),
+                "GTM click policy was not retained by the LDLib2 parent state");
+        helper.assertTrue(parentView.amountLabel.isVisible(),
+                "GTM amount visibility did not control the inherited amount label");
+
+        AtomicInteger changes = new AtomicInteger();
+        element.setChangeListener(changes::incrementAndGet);
+        tank.drain(250, IFluidHandler.FluidAction.EXECUTE);
+        element.screenTick();
+
+        assertFluid(helper, parentView.getValue(), Fluids.WATER, 750,
+                "GTM display binding did not refresh the inherited fluid state");
+        helper.assertTrue(changes.get() == 1, "bound fluid refresh did not notify exactly once");
+
+        parentView.bind(null, 0);
+        helper.assertTrue(parentView.getValue().isEmpty() && parentView.getCapacity() == 0,
+                "unbinding the facade did not clear its display state");
+        helper.succeed();
+    }
+
+    @TestHolder()
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5", batch = "ldlib2PhantomSlotElement")
+    public static void fluidFacadeLeavesMouseDownForGtmActionListener(GameTestHelper helper) {
+        GTFluidSlotElement element = new GTFluidSlotElement();
+        AtomicInteger gtActions = new AtomicInteger();
+        element.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+            gtActions.incrementAndGet();
+            event.stopImmediatePropagation();
+            event.hasHandler = true;
+        });
+
+        UIEvent actionEvent = UIEvent.create(UIEvents.MOUSE_DOWN);
+        actionEvent.target = element;
+        actionEvent.button = 0;
+        UIEventDispatcher.dispatchEvent(actionEvent, false, false, false);
+
+        helper.assertTrue(gtActions.get() == 1,
+                "GTM action listener was blocked by the facade's parent-RPC suppression");
+        helper.assertTrue(actionEvent.hasHandler,
+                "GTM action listener could not claim the fluid-slot mouse event");
+
+        GTFluidSlotElement displayOnlyElement = new GTFluidSlotElement();
+        UIEvent displayOnlyEvent = UIEvent.create(UIEvents.MOUSE_DOWN);
+        displayOnlyEvent.target = displayOnlyElement;
+        displayOnlyEvent.button = 0;
+        UIEventDispatcher.dispatchEvent(displayOnlyEvent, false, false, false);
+
+        helper.assertTrue(displayOnlyEvent.propagationStopped && !displayOnlyEvent.hasHandler,
+                "display-only fluid slot exposed the LDLib2 RPC click handler");
+        helper.succeed();
+    }
 
     @TestHolder()
     @EmptyTemplate("5")
@@ -206,5 +284,9 @@ public class GTPhantomSlotElementTest {
     private static void assertFluid(GameTestHelper helper, FluidStack stack, Fluid fluid, int amount, String message) {
         helper.assertTrue(stack.getFluid() == fluid, message + ": unexpected fluid");
         helper.assertTrue(stack.getAmount() == amount, message + ": unexpected amount");
+    }
+
+    private static FluidSlot bindAsFluidSlot(FluidSlot element, IFluidHandler fluidHandler) {
+        return element.bind(fluidHandler, 0);
     }
 }
