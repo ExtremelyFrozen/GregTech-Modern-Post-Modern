@@ -211,7 +211,8 @@ public class LDLib2FancyMachineUIElement extends UIElement {
         int contentHeight = Math.max(MIN_PAGE_HEIGHT, pageHeight + border * 2);
         int rootHeight = contentHeight + (showInventory && playerInventory != null ? PLAYER_INVENTORY_FRAME_HEIGHT : 0);
 
-        UITemplate.setLDLib2Bounds(this, 0, 0, contentWidth, rootHeight);
+        // The machine screen owns root positioning; page rebuilds only update the shell dimensions.
+        getLayout().width(contentWidth).height(rootHeight);
         UITemplate.setLDLib2Bounds(pageContainer, 0, 0, contentWidth, contentHeight);
         UITemplate.setLDLib2BackgroundTexture(pageContainer, GuiTextures.BACKGROUND);
         UITemplate.setLDLib2Bounds(sideTabsElement, -20, 0, 24, contentHeight);
