@@ -199,15 +199,7 @@ public final class GTLDLib2RecipeUI {
         }
 
         private void addStaticXEIInfo() {
-            addRecipeParameterTexts();
-
-            int yOffset = 5 + templateSize.height();
-            if (RecipeHelper.getRealEUt(recipe) != 0) {
-                yOffset += 21;
-            }
-            if (RecipeData.getBoolean(recipe.data, "duration_is_total_cwu")) {
-                yOffset -= LINE_HEIGHT;
-            }
+            int yOffset = addRecipeParameterTexts();
 
             int[] cwuYOffset = { yOffset };
             addCWUInfo(root, rootSize, recipe, recipe.inputs.get(CWURecipeCapability.CAP), false, cwuYOffset);
@@ -219,7 +211,7 @@ public final class GTLDLib2RecipeUI {
             recipeUI.appendLDLib2XEIUI(recipe, root, rootSize);
         }
 
-        private void addRecipeParameterTexts() {
+        private int addRecipeParameterTexts() {
             int textsY = templateSize.height() + 5 - LINE_HEIGHT;
             long eu = RecipeHelper.getRealEUtWithIO(recipe);
             for (Component text : GTRecipeXEIHelper.getRecipeParaText(recipe, recipe.duration, eu)) {
@@ -229,31 +221,30 @@ public final class GTLDLib2RecipeUI {
                 recipeParaTexts.add(label);
             }
 
-            if (eu == 0) {
-                return;
+            if (eu != 0) {
+                textsY += LINE_HEIGHT;
+                int minVoltageTier = RecipeHelper.getRecipeEUtTier(recipe);
+                float minAmperage = (float) Math.abs(eu) / GTValues.V[minVoltageTier];
+                Component text = Component.translatable(eu > 0 ? "gtpm.recipe.eu" : "gtpm.recipe.eu_inverted",
+                        FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[minVoltageTier])
+                        .withStyle(ChatFormatting.UNDERLINE);
+                recipeVoltageText = createLabel(text, TEXT_X, textsY, rootSize.width() - 2 * TEXT_X, true);
+                recipeVoltageTooltipEUt = Math.abs(eu);
+                recipeVoltageText.addEventListener(UIEvents.HOVER_TOOLTIPS,
+                        event -> event.hoverTooltips = new HoverTooltips(List.of(createRecipeVoltageTooltip()), null,
+                                null, null));
+                root.addChild(recipeVoltageText);
+
+                if (eu > 0) {
+                    addVoltageTierText(recipe.recipeType.isOffsetVoltageText() ? getOffsetVoltageY() : textsY);
+                }
             }
 
-            textsY += LINE_HEIGHT;
-            int minVoltageTier = RecipeHelper.getRecipeEUtTier(recipe);
-            float minAmperage = (float) Math.abs(eu) / GTValues.V[minVoltageTier];
-            Component text = Component.translatable(eu > 0 ? "gtpm.recipe.eu" : "gtpm.recipe.eu_inverted",
-                    FormattingUtil.formatNumber2Places(minAmperage), GTValues.VN[minVoltageTier])
-                    .withStyle(ChatFormatting.UNDERLINE);
-            recipeVoltageText = createLabel(text, TEXT_X, textsY, rootSize.width() - 2 * TEXT_X, true);
-            recipeVoltageTooltipEUt = Math.abs(eu);
-            recipeVoltageText.addEventListener(UIEvents.HOVER_TOOLTIPS,
-                    event -> event.hoverTooltips = new HoverTooltips(List.of(createRecipeVoltageTooltip()), null, null,
-                            null));
-            root.addChild(recipeVoltageText);
-
-            if (eu > 0) {
-                addVoltageTierText();
-            }
+            return textsY;
         }
 
-        private void addVoltageTierText() {
+        private void addVoltageTierText(int y) {
             int x = getVoltageXOffset(tier, rootSize.width());
-            int y = getVoltageY();
             voltageTextWidget = createLabel(Component.literal(GTValues.VNF[tier]), x, y, rootSize.width() - x,
                     false);
             voltageTextWidget.textStyle(textStyle -> textStyle.textColor(-1).textShadow(false));
@@ -273,11 +264,8 @@ public final class GTLDLib2RecipeUI {
             root.addChild(voltageClickArea);
         }
 
-        private int getVoltageY() {
-            if (recipe.recipeType.isOffsetVoltageText()) {
-                return rootSize.height() - recipe.recipeType.getVoltageTextOffset();
-            }
-            return rootSize.height() - LINE_HEIGHT;
+        private int getOffsetVoltageY() {
+            return rootSize.height() - recipe.recipeType.getVoltageTextOffset();
         }
 
         private void setRecipeOC(UIEvent event) {

@@ -332,6 +332,7 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
     }
 
     public void addToCategoryMap(GTRecipeCategory category, GTRecipeDefinition recipe) {
+        setMinRecipeConditions(recipe.conditions.size());
         categoryMap.computeIfAbsent(category, k -> new ObjectLinkedOpenHashSet<>()).add(recipe);
     }
 

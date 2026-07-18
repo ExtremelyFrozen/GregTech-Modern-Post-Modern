@@ -1,19 +1,27 @@
 package com.gregtechceu.gtceu.api.recipe.ui;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTDualProgressElement;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
+import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.ResearchData;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
+import com.gregtechceu.gtceu.api.recipe.content.ContentListMap;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
+import com.gregtechceu.gtceu.common.recipe.condition.CleanroomCondition;
 import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
+import com.gregtechceu.gtceu.gametest.util.TestUtils;
 import com.gregtechceu.gtceu.integration.xei.GTLDLib2RecipeUI;
 
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
@@ -24,6 +32,7 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
@@ -43,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @PrefixGameTestTemplate(false)
 @GameTestHolder(GTCEu.MOD_ID)
@@ -121,6 +131,93 @@ public class GTRecipeTypeLDLib2UITest {
         assertCustomTemplate(helper, "forge_hammer.xml", 92, 26, "item_in_0", GTItemSlotElement.class);
         assertCustomTemplate(helper, "lathe.xml", 110, 26, "item_out_1", GTItemSlotElement.class);
         assertCustomTemplate(helper, "research_station.xml", 136, 72, "item_out_0", GTItemSlotElement.class);
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void recipeStaticInfoRowsStayInsideFixedRoot(GameTestHelper helper) {
+        GTRecipeDefinition recipe = GTRecipeTypes.RESEARCH_STATION_RECIPES
+                .recipeBuilder(GTCEu.id("ldlib2_recipe_static_info_bounds"))
+                .inputItems(Items.PAPER)
+                .outputItems(Items.DIAMOND)
+                .EUt(GTValues.VA[GTValues.EV])
+                .CWUt(16)
+                .totalCWU(48)
+                .buildDefinition();
+        UI ui = GTLDLib2RecipeUI.createUI(recipe, GTValues.EV, GTValues.EV);
+        UIElement root = ui.getRootElement();
+        GTRecipeType recipeType = recipe.recipeType;
+        int templateHeight = recipeType.getRecipeUI().getLDLib2RecipeUISize(false, false).height();
+        int rootHeight = recipeType.getRecipeUI().getLDLib2XEIRecipeUISize().height();
+        List<GTLabelElement> labels = root.getChildren().stream()
+                .filter(GTLabelElement.class::isInstance)
+                .map(GTLabelElement.class::cast)
+                .toList();
+        UITemplate.LDLib2Bounds eu = requireTranslatedLabelBounds(labels, "gtpm.recipe.eu");
+        UITemplate.LDLib2Bounds voltage = requireLiteralLabelBounds(labels, GTValues.VNF[GTValues.EV]);
+        UITemplate.LDLib2Bounds computationPerTick = requireTranslatedLabelBounds(labels,
+                "gtpm.recipe.computation_per_tick");
+        UITemplate.LDLib2Bounds totalComputation = requireTranslatedLabelBounds(labels,
+                "gtpm.recipe.total_computation");
+
+        helper.assertTrue(labels.stream().map(UITemplate::getLDLib2Bounds)
+                .allMatch(bounds -> bounds.y() >= templateHeight + 5 &&
+                        bounds.y() + bounds.height() <= rootHeight),
+                "research recipe static info row escaped its fixed root bounds");
+        helper.assertTrue(eu.y() == voltage.y(),
+                "research recipe did not keep EU/t and voltage tier on the same information row");
+        helper.assertTrue(computationPerTick.y() == eu.y() + 10 &&
+                totalComputation.y() == computationPerTick.y() + 10,
+                "research recipe did not reserve separate computation information rows");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void computationRowsStartAtFirstAvailableRowWithoutEnergyText(GameTestHelper helper) {
+        GTRecipeDefinition recipe = GTRecipeTypes.RESEARCH_STATION_RECIPES
+                .recipeBuilder(GTCEu.id("ldlib2_recipe_static_info_without_energy"))
+                .inputItems(Items.PAPER)
+                .outputItems(Items.DIAMOND)
+                .CWUt(16)
+                .totalCWU(48)
+                .buildDefinition();
+        UIElement root = GTLDLib2RecipeUI.createUI(recipe, GTValues.EV, GTValues.EV).getRootElement();
+        int templateHeight = recipe.recipeType.getRecipeUI().getLDLib2RecipeUISize(false, false).height();
+        List<GTLabelElement> labels = root.getChildren().stream()
+                .filter(GTLabelElement.class::isInstance)
+                .map(GTLabelElement.class::cast)
+                .toList();
+        UITemplate.LDLib2Bounds computationPerTick = requireTranslatedLabelBounds(labels,
+                "gtpm.recipe.computation_per_tick");
+        UITemplate.LDLib2Bounds totalComputation = requireTranslatedLabelBounds(labels,
+                "gtpm.recipe.total_computation");
+
+        helper.assertTrue(computationPerTick.y() == templateHeight + 5 &&
+                totalComputation.y() == computationPerTick.y() + 10,
+                "computation-only recipe rows did not start at the first available information row");
+        helper.succeed();
+    }
+
+    @TestHolder
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = BATCH)
+    public static void categoryTracksConditionsFromDecodedDefinition(GameTestHelper helper) {
+        GTRecipeType type = TestUtils.createRecipeType("ldlib2_condition_budget", GTRecipeTypes.CANNER_RECIPES);
+        GTRecipeDefinition decodedRecipe = new GTRecipeDefinition(
+                GTCEu.id("ldlib2_condition_budget_recipe"), type,
+                new ContentListMap(), new ContentListMap(), new ContentListMap(), new ContentListMap(),
+                Map.of(), Map.of(), Map.of(), Map.of(),
+                List.of(new CleanroomCondition(false, CleanroomType.CLEANROOM)), List.of(),
+                DataComponentMap.EMPTY, 0, 1, type.getCategory(), -1);
+
+        type.addToCategoryMap(type.getCategory(), decodedRecipe);
+
+        helper.assertTrue(type.getMinRecipeConditions() >= decodedRecipe.conditions.size(),
+                "category condition budget did not include a decoded recipe condition");
         helper.succeed();
     }
 
@@ -306,5 +403,24 @@ public class GTRecipeTypeLDLib2UITest {
         return root.selectId(id, elementType).findFirst()
                 .orElseThrow(() -> new GameTestAssertException(
                         "missing " + elementType.getSimpleName() + " with id " + id));
+    }
+
+    private static UITemplate.LDLib2Bounds requireTranslatedLabelBounds(List<GTLabelElement> labels,
+                                                                        String translationKey) {
+        return labels.stream()
+                .filter(label -> label.getValue().getContents() instanceof TranslatableContents contents &&
+                        contents.getKey().equals(translationKey))
+                .findFirst()
+                .map(UITemplate::getLDLib2Bounds)
+                .orElseThrow(() -> new GameTestAssertException(
+                        "missing translated recipe label " + translationKey));
+    }
+
+    private static UITemplate.LDLib2Bounds requireLiteralLabelBounds(List<GTLabelElement> labels, String text) {
+        return labels.stream()
+                .filter(label -> label.getValue().getString().equals(text))
+                .findFirst()
+                .map(UITemplate::getLDLib2Bounds)
+                .orElseThrow(() -> new GameTestAssertException("missing literal recipe label " + text));
     }
 }
