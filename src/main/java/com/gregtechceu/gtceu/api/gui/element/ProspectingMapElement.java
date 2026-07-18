@@ -21,7 +21,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
 import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.SearchComponent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
@@ -84,7 +83,7 @@ public class ProspectingMapElement extends UIElement implements SearchComponent.
     private String selectedUniqueId = ProspectingTexture.SELECTED_ALL;
     private final Queue<PacketProspecting> packetQueue = new LinkedBlockingQueue<>();
     private final Set<Object> items = new CopyOnWriteArraySet<>();
-    private final Map<String, Button> selectedMap = new ConcurrentHashMap<>();
+    private final Map<String, GTButtonElement> selectedMap = new ConcurrentHashMap<>();
     private final Map<String, Object> itemByUniqueId = new ConcurrentHashMap<>();
 
     public ProspectingMapElement(int x, int y, int width, int height, int chunkRadius, @NotNull ProspectorMode mode,
@@ -256,7 +255,7 @@ public class ProspectingMapElement extends UIElement implements SearchComponent.
             return;
         }
         int index = selectedMap.size();
-        Button button = new Button();
+        GTButtonElement button = new GTButtonElement();
         button.noText();
         button.buttonStyle(style -> {
             style.baseTexture(rowBaseTexture(uniqueID));
