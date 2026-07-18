@@ -6,9 +6,12 @@ import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ProgressBar;
+import com.lowdragmc.lowdraglib2.gui.ui.rendering.GUIContext;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import org.w3c.dom.Element;
 
@@ -25,11 +28,17 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @LDLRegister(name = "gtm-progress-bar", group = "gtm", registry = "ldlib2:ui_element")
 public class GTProgressBarElement extends ProgressBar {
 
+    private IGuiTexture emptyBarTexture = IGuiTexture.EMPTY;
+    private IGuiTexture filledBarTexture = IGuiTexture.EMPTY;
     private DoubleSupplier progressSupplier;
+    private float drawnProgress;
 
     public GTProgressBarElement() {
         barContainer.layout(layout -> layout.paddingAll(0));
         barContainer.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+        barBackground.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+        bar.style(style -> style.backgroundTexture(IGuiTexture.EMPTY));
+        label.setText("");
     }
 
     public GTProgressBarElement(DoubleSupplier progressSupplier) {
@@ -48,8 +57,8 @@ public class GTProgressBarElement extends ProgressBar {
     }
 
     public GTProgressBarElement setProgressTexture(IGuiTexture emptyBar, IGuiTexture filledBar) {
-        barBackground.style(style -> style.backgroundTexture(emptyBar));
-        bar.style(style -> style.backgroundTexture(filledBar));
+        emptyBarTexture = emptyBar;
+        filledBarTexture = filledBar;
         return this;
     }
 
@@ -65,13 +74,32 @@ public class GTProgressBarElement extends ProgressBar {
             setFillDirectionFromXml(element.getAttribute("fill-direction"));
         }
         if (element.hasAttribute("legacy-empty-bar")) {
-            barBackground.style(style -> style.backgroundTexture(
-                    GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-empty-bar"))));
+            emptyBarTexture = GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-empty-bar"));
         }
         if (element.hasAttribute("legacy-filled-bar")) {
-            bar.style(style -> style.backgroundTexture(
-                    GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-filled-bar"))));
+            filledBarTexture = GuiTextureMetadata.parseImageTexture(element.getAttribute("legacy-filled-bar"));
         }
+    }
+
+    @Override
+    protected void updateProgressBarStyle(float normalizedValue) {
+        drawnProgress = normalizedValue;
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void drawBackgroundAdditional(GUIContext guiContext) {
+        super.drawBackgroundAdditional(guiContext);
+        float x = getPositionX();
+        float y = getPositionY();
+        float width = getSizeWidth();
+        float height = getSizeHeight();
+        emptyBarTexture.draw(guiContext, x, y, width, height);
+
+        ProgressDrawArea drawArea = getProgressDrawArea(x, y, width, height);
+        filledBarTexture.drawSubArea(guiContext.graphics, drawArea.x(), drawArea.y(), drawArea.width(),
+                drawArea.height(), drawArea.drawnU(), drawArea.drawnV(), drawArea.drawnWidth(),
+                drawArea.drawnHeight());
     }
 
     @Override
@@ -98,4 +126,17 @@ public class GTProgressBarElement extends ProgressBar {
         }
         return (float) Math.max(0, Math.min(1, progress));
     }
+
+    ProgressDrawArea getProgressDrawArea(float x, float y, float width, float height) {
+        FillDirection fillDirection = getProgressBarStyle().fillDirection();
+        float drawnU = (float) fillDirection.getDrawnU(drawnProgress);
+        float drawnV = (float) fillDirection.getDrawnV(drawnProgress);
+        float drawnWidth = (float) fillDirection.getDrawnWidth(drawnProgress);
+        float drawnHeight = (float) fillDirection.getDrawnHeight(drawnProgress);
+        return new ProgressDrawArea(x + drawnU * width, y + drawnV * height, width * drawnWidth,
+                height * drawnHeight, drawnU, drawnV, drawnWidth, drawnHeight);
+    }
+
+    record ProgressDrawArea(float x, float y, float width, float height, float drawnU, float drawnV,
+                            float drawnWidth, float drawnHeight) {}
 }
