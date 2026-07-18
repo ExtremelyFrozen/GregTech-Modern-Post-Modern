@@ -232,7 +232,8 @@ public class ConveyorCoverConfigActionTest {
 
         helper.assertTrue(dispatch(helper, cover, action(payloadWithUnknownField())),
                 "conveyor action rejected an unknown future field");
-        assertState(helper, cover, 32, IO.IN, DistributionMode.ROUND_ROBIN_PRIO, ManualIOMode.FILTERED,
+        assertState(helper, cover, Math.min(32, cover.maxItemTransferRate), IO.IN,
+                DistributionMode.ROUND_ROBIN_PRIO, ManualIOMode.FILTERED,
                 "action with unknown field");
         helper.assertTrue(cover.getSetterOrder().equals("rate>io>distribution>manual"),
                 "action with unknown field changed setter order");
