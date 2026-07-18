@@ -70,6 +70,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 
 import appeng.api.AECapabilities;
 import appeng.api.networking.IInWorldGridNodeHost;
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +132,12 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock, B
         if (ui == null) {
             throw new IllegalStateException("Machine LDLib2 UI provider returned null.");
         }
+        centerMachineUIRoot(ui);
         return ModularUI.of(ui, holder.player);
+    }
+
+    static void centerMachineUIRoot(UI ui) {
+        ui.getRootElement().getLayout().positionType(TaffyPosition.RELATIVE);
     }
 
     @Override
