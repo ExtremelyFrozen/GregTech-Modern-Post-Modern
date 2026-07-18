@@ -501,12 +501,9 @@ public class MEFluidInputHatchLDLib2UITest {
         commandClick(firstEditor.getAmountInput().getChildren().getLast());
         canSend.set(false);
         firstConfig.screenTick();
-        helper.assertTrue(firstEditor.isActive(),
-                "invalid holder transport deactivated the editor container needed for outside-click capture");
-        helper.assertTrue(!firstEditor.getAmountInput().isActive(),
-                "invalid holder transport left the amount input active");
-        helper.assertTrue("1000".equals(amountText(firstEditor)),
-                "invalid holder transport retained the pending amount projection");
+        helper.assertTrue(firstEditor.isActive() && !firstEditor.getAmountInput().isActive() &&
+                "1000".equals(amountText(firstEditor)),
+                "invalid holder transport did not disable amount entry or clear its pending projection");
         helper.succeed();
     }
 

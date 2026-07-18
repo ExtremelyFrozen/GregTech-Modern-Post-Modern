@@ -107,12 +107,16 @@ public final class AEFluidConfigSlotElement extends UIElement {
         addChild(createStockAmountLabel());
     }
 
-    /** Returns the upper phantom config element for direct event verification. */
+    /**
+     * Returns the upper phantom config element for direct event verification.
+     */
     public GTFluidSlotElement getConfigElement() {
         return configElement;
     }
 
-    /** Returns the lower read-only stock element for direct event verification. */
+    /**
+     * Returns the lower read-only stock element for direct event verification.
+     */
     public GTFluidSlotElement getStockElement() {
         return stockElement;
     }
