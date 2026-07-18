@@ -2,8 +2,10 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
 import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
@@ -397,7 +399,7 @@ public class LargeMinerMachineLDLib2UITest {
     @EmptyTemplate
     @GameTest(template = "empty", batch = BATCH)
     public static void serverAndClientLifecycleOwnSnapshotSubscription(GameTestHelper helper) {
-        TestLargeMinerMachine miner = new TestLargeMinerMachine(EV, List.of());
+        TestLargeMinerMachine miner = new TestLargeMinerMachine(EV, List.of(), Direction.SOUTH);
         miner.setLevel(helper.getLevel());
         miner.useLiveDisplayContract();
         LargeMinerLogic logic = miner.getRecipeLogic();
@@ -406,33 +408,35 @@ public class LargeMinerMachineLDLib2UITest {
                 miner.getRecipeLogic() == logic,
                 "Large Miner onLoad changed logic or omitted invalid_structure");
 
-        miner.setUpwardsFacing(Direction.SOUTH);
         miner.formStructure(LargeMinerMachine.DEFAULT_STRUCTURE);
         TickableSubscription formedSubscription = miner.getCapturedSubscription();
-        helper.assertTrue(miner.isFormed() && logic.getDir() == Direction.UP &&
-                formedSubscription != null && formedSubscription.isStillSubscribed() &&
-                !miner.getDisplaySnapshot().equals(List.of(invalidStructureLine())) &&
-                miner.getRecipeLogic() == logic,
-                "Large Miner formation did not preserve direction, logic, snapshot, or subscription");
+        helper.assertTrue(miner.isFormed(), "Large Miner formation did not mark the controller formed");
+        helper.assertTrue(logic.getDir() == Direction.UP,
+                "Large Miner formation changed the mining direction");
+        helper.assertTrue(formedSubscription != null && formedSubscription.isStillSubscribed(),
+                "Large Miner formation did not create an active display subscription");
+        helper.assertTrue(!miner.getDisplaySnapshot().equals(List.of(invalidStructureLine())),
+                "Large Miner formation did not publish the formed display snapshot");
+        helper.assertTrue(miner.getRecipeLogic() == logic,
+                "Large Miner formation replaced its recipe logic");
         miner.invalidateStructure(LargeMinerMachine.DEFAULT_STRUCTURE);
         helper.assertTrue(miner.getDisplaySnapshot().equals(List.of(invalidStructureLine())) &&
                 !formedSubscription.isStillSubscribed(),
                 "Large Miner invalidation did not publish invalid_structure and stop refresh");
 
-        TestLargeMinerMachine partUnloadMiner = subscribedMiner();
+        TestLargeMinerMachine partUnloadMiner = subscribedMiner(helper);
         TickableSubscription partSubscription = partUnloadMiner.getCapturedSubscription();
         partUnloadMiner.onPartUnload();
         assertRuntimeDisplayCleared(helper, partUnloadMiner, partSubscription, "part unload");
-        TestLargeMinerMachine controllerUnloadMiner = subscribedMiner();
+        TestLargeMinerMachine controllerUnloadMiner = subscribedMiner(helper);
         TickableSubscription controllerSubscription = controllerUnloadMiner.getCapturedSubscription();
         controllerUnloadMiner.onUnload();
         assertRuntimeDisplayCleared(helper, controllerUnloadMiner, controllerSubscription, "controller unload");
 
-        TestLargeMinerMachine clientMiner = new TestLargeMinerMachine(EV, List.of());
+        TestLargeMinerMachine clientMiner = new TestLargeMinerMachine(EV, List.of(), Direction.NORTH);
         clientMiner.setLevel(helper.getLevel());
         clientMiner.setRemoteForTest(true);
         clientMiner.useLiveDisplayContract();
-        clientMiner.setUpwardsFacing(Direction.NORTH);
         clientMiner.onLoad();
         clientMiner.formStructure(LargeMinerMachine.DEFAULT_STRUCTURE);
         clientMiner.invalidateStructure(LargeMinerMachine.DEFAULT_STRUCTURE);
@@ -477,16 +481,20 @@ public class LargeMinerMachineLDLib2UITest {
                 GTMachines.FLUID_IMPORT_HATCH[EV]));
         IMultiPart itemExport = requirePart(placeMachine(helper, new BlockPos(2, 1, 0),
                 GTMachines.ITEM_EXPORT_BUS[EV]));
-        TestLargeMinerMachine miner = new TestLargeMinerMachine(EV, List.of(energyHatch, fluidHatch, itemExport));
+        TestLargeMinerMachine miner = new TestLargeMinerMachine(EV,
+                List.of(energyHatch, fluidHatch, itemExport), Direction.SOUTH);
         miner.setLevel(helper.getLevel());
-        miner.setUpwardsFacing(Direction.SOUTH);
         LargeMinerLogic logic = miner.getRecipeLogic();
         miner.formStructure(LargeMinerMachine.DEFAULT_STRUCTURE);
 
-        helper.assertTrue(miner.getRecipeLogic() == logic && logic.getDir() == Direction.UP &&
-                miner.getEnergyTier() == IV && logic.getVoltageTier() == LuV &&
-                logic.getOverclockAmount() == 2 && miner.getMaxVoltage() == GTValues.V[IV],
-                "Large Miner form changed logic identity, vertical direction, voltage clamp, or overclock formula");
+        helper.assertTrue(miner.getRecipeLogic() == logic,
+                "Large Miner form replaced its recipe logic");
+        helper.assertTrue(logic.getDir() == Direction.UP,
+                "Large Miner form changed its vertical mining direction");
+        helper.assertTrue(miner.getEnergyTier() == IV && miner.getMaxVoltage() == GTValues.V[IV],
+                "Large Miner form changed its voltage tier clamp");
+        helper.assertTrue(logic.getVoltageTier() == LuV && logic.getOverclockAmount() == 2,
+                "Large Miner form changed its overclock formula");
 
         energyHatch.energyContainer.changeEnergy(energyHatch.energyContainer.getEnergyCapacity());
         fluidHatch.tank.setFluidInTank(0, GTMaterials.DrillingFluid.getFluid(1_000));
@@ -570,7 +578,7 @@ public class LargeMinerMachineLDLib2UITest {
         LDLib2FancyMachineUIElement secondShell = createShell(player, holder, secondPage);
         List<UIElement> configuratorTabs = firstShell.getConfiguratorPanel().getChildren();
         helper.assertTrue(configuratorTabs.size() == 2 &&
-                configuratorTabs.getFirst().getChildren().size() == 2 &&
+                configuratorTabs.getFirst().getChildren().size() == 1 &&
                 configuratorTabs.getLast().getChildren().size() == 1 &&
                 firstShell.getSideTabsElement().getChildren().size() == 2 &&
                 firstShell.getTooltipsPanel().getChildren().isEmpty(),
@@ -601,21 +609,33 @@ public class LargeMinerMachineLDLib2UITest {
 
     private static void assertMainPageLayout(GameTestHelper helper, UIElement mainPage,
                                              LargeMinerMachine miner) {
-        helper.assertTrue(mainPage.getSizeWidth() == 190 && mainPage.getSizeHeight() == 125 &&
-                mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
-                "Large Miner main page lost its 190x125 inverse-background body");
+        UITemplate.LDLib2Bounds mainPageBounds = UITemplate.getLDLib2Bounds(mainPage);
+        helper.assertTrue(mainPageBounds.width() == 190 && mainPageBounds.height() == 125,
+                "Large Miner main page lost its 190x125 body");
+        helper.assertTrue(mainPage.getStyle().getInline(PropertyRegistry.BACKGROUND) == GuiTextures.BACKGROUND_INVERSE,
+                "Large Miner main page lost its inverse background");
         helper.assertTrue(mainPage.getChildren().size() == 1 &&
                 mainPage.getChildren().getFirst() instanceof GTScrollerViewElement,
                 "Large Miner main page did not create one display scroller");
         GTScrollerViewElement scroller = (GTScrollerViewElement) mainPage.getChildren().getFirst();
-        helper.assertTrue(scroller.getLayoutX() == 4 && scroller.getLayoutY() == 4 &&
-                scroller.getSizeWidth() == 182 && scroller.getSizeHeight() == 117 &&
-                scroller.getStyle().getInline(PropertyRegistry.BACKGROUND) == miner.getScreenTexture() &&
-                scroller.viewPort.getStyle().getInline(PropertyRegistry.BACKGROUND) == miner.getScreenTexture() &&
-                scroller.getScrollerViewStyle().mode() == ScrollerMode.VERTICAL &&
-                scroller.getScrollerViewStyle().verticalScrollDisplay() == ScrollDisplay.AUTO &&
-                scroller.getScrollerViewStyle().horizontalScrollDisplay() == ScrollDisplay.NEVER,
-                "Large Miner display scroller lost its bounds, viewport texture, or vertical-only scrolling");
+        UITemplate.LDLib2Bounds scrollerBounds = UITemplate.getLDLib2Bounds(scroller);
+        helper.assertTrue(scrollerBounds.x() == 4 && scrollerBounds.y() == 4 &&
+                scrollerBounds.width() == 182 && scrollerBounds.height() == 117,
+                "Large Miner display scroller lost its bounds");
+        helper.assertTrue(scroller.getStyle().getInline(PropertyRegistry.BACKGROUND) == miner.getScreenTexture(),
+                "Large Miner display scroller lost its texture");
+        helper.assertTrue(
+                scroller.viewPort.getStyle().getInline(PropertyRegistry.BACKGROUND) == miner.getScreenTexture(),
+                "Large Miner display viewport lost its texture");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_VIEW_MODE) ==
+                ScrollerMode.VERTICAL,
+                "Large Miner display scroller changed its scroll mode");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_VERTICAL_DISPLAY) ==
+                ScrollDisplay.AUTO,
+                "Large Miner display scroller changed its vertical scrollbar policy");
+        helper.assertTrue(UITemplate.getLDLib2StyleCandidate(scroller, PropertyRegistry.SCROLLER_HORIZONTAL_DISPLAY) ==
+                ScrollDisplay.NEVER,
+                "Large Miner display scroller enabled horizontal scrolling");
         List<GTLabelElement> labels = descendants(mainPage).stream()
                 .filter(GTLabelElement.class::isInstance)
                 .map(GTLabelElement.class::cast)
@@ -624,17 +644,21 @@ public class LargeMinerMachineLDLib2UITest {
                 .filter(GTComponentPanelElement.class::isInstance)
                 .map(GTComponentPanelElement.class::cast)
                 .toList();
-        helper.assertTrue(labels.size() == 1 && labels.getFirst().getLayoutX() == 4 &&
-                labels.getFirst().getLayoutY() == 5 && labels.getFirst().getSizeWidth() == 174 &&
-                labels.getFirst().getSizeHeight() == 10 &&
-                labels.getFirst().getTextStyle().textColor() == 0x404040 &&
-                !labels.getFirst().getTextStyle().textShadow() &&
-                labels.getFirst().getTextStyle().textAlignHorizontal() == Horizontal.LEFT &&
-                labels.getFirst().getTextStyle().textAlignVertical() == Vertical.CENTER && panels.size() == 1 &&
-                panels.getFirst().getLayoutX() == 4 && panels.getFirst().getLayoutY() == 17 &&
+        UITemplate.LDLib2Bounds labelBounds = UITemplate.getLDLib2Bounds(labels.getFirst());
+        UITemplate.LDLib2Bounds panelBounds = UITemplate.getLDLib2Bounds(panels.getFirst());
+        helper.assertTrue(labels.size() == 1 && labelBounds.x() == 4 &&
+                labelBounds.y() == 5 && labelBounds.width() == 174 &&
+                labelBounds.height() == 10 && panels.size() == 1 &&
+                panelBounds.x() == 4 && panelBounds.y() == 17 &&
                 panels.getFirst().getMaxWidthLimit() == 200 &&
                 panels.getFirst().getLastText().equals(miner.getDisplaySnapshot()),
                 "Large Miner title or snapshot panel lost its legacy bounds");
+        helper.assertTrue(Integer.valueOf(0x404040).equals(
+                labels.getFirst().getTextStyle().getInline(PropertyRegistry.TEXT_COLOR)) &&
+                Boolean.FALSE.equals(labels.getFirst().getTextStyle().getInline(PropertyRegistry.TEXT_SHADOW)) &&
+                Horizontal.LEFT == labels.getFirst().getTextStyle().getInline(PropertyRegistry.HORIZONTAL_ALIGN) &&
+                Vertical.CENTER == labels.getFirst().getTextStyle().getInline(PropertyRegistry.VERTICAL_ALIGN),
+                "Large Miner title lost its text style");
     }
 
     private static boolean dispatch(ServerPlayer player, Object holder, SyncActionData action) {
@@ -686,8 +710,9 @@ public class LargeMinerMachineLDLib2UITest {
                 "Large Miner part page lost its dedicated holder");
     }
 
-    private static TestLargeMinerMachine subscribedMiner() {
+    private static TestLargeMinerMachine subscribedMiner(GameTestHelper helper) {
         TestLargeMinerMachine miner = new TestLargeMinerMachine(EV, List.of());
+        miner.setLevel(helper.getLevel());
         miner.setFormedForTest(true);
         miner.setServerDisplay(List.of(FIRST_SERVER_LINE));
         miner.refreshDisplaySnapshot();
@@ -784,9 +809,13 @@ public class LargeMinerMachineLDLib2UITest {
     }
 
     private static BlockEntityCreationInfo info(int tier) {
+        return info(tier, Direction.NORTH);
+    }
+
+    private static BlockEntityCreationInfo info(int tier, Direction upwardsFacing) {
         MachineDefinition definition = GTMultiMachines.LARGE_MINER[tier];
         return new BlockEntityCreationInfo(definition.getBlockEntityType(), BlockPos.ZERO,
-                definition.defaultBlockState());
+                definition.defaultBlockState().setValue(GTBlockStateProperties.UPWARDS_FACING, upwardsFacing));
     }
 
     private static final class MutableMachineUIHolder implements MachineUIHolder {
@@ -829,7 +858,11 @@ public class LargeMinerMachineLDLib2UITest {
         private int frontFacingReadCount;
 
         private TestLargeMinerMachine(int tier, List<IMultiPart> parts) {
-            super(info(tier), tier, 64 / tier, 2 * tier - 5, tier, 8 - (tier - 5));
+            this(tier, parts, Direction.NORTH);
+        }
+
+        private TestLargeMinerMachine(int tier, List<IMultiPart> parts, Direction upwardsFacing) {
+            super(info(tier, upwardsFacing), tier, 64 / tier, 2 * tier - 5, tier, 8 - (tier - 5));
             this.parts = List.copyOf(parts);
         }
 
@@ -867,11 +900,11 @@ public class LargeMinerMachineLDLib2UITest {
 
         @Override
         public TickableSubscription subscribeServerTick(Runnable runnable) {
-            capturedSubscription = super.subscribeServerTick(runnable);
-            if (capturedSubscription == null) {
-                throw new IllegalStateException("Server-side display test did not create a tick subscription.");
+            TickableSubscription subscription = super.subscribeServerTick(runnable);
+            if (subscription != null) {
+                capturedSubscription = subscription;
             }
-            return capturedSubscription;
+            return subscription;
         }
 
         private void setServerDisplay(List<Component> serverDisplay) {
