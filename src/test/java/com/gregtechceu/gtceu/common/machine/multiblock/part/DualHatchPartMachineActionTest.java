@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.part;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
 import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
@@ -49,12 +50,14 @@ import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import com.mojang.authlib.GameProfile;
 import org.lwjgl.glfw.GLFW;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.gregtechceu.gtceu.api.GTValues.LuV;
 
@@ -286,7 +289,11 @@ public class DualHatchPartMachineActionTest {
     public static void fullInventoryDropsEveryOverflowWaterBucket(GameTestHelper helper) {
         DualHatchPartMachine machine = createDualHatch(GTMachines.DUAL_EXPORT_HATCH[LuV]);
         machine.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 2 * FluidType.BUCKET_VOLUME));
-        ServerPlayer player = FakePlayerFactory.getMinecraft(helper.getLevel());
+        ServerPlayer player = FakePlayerFactory.get(helper.getLevel(),
+                new GameProfile(UUID.randomUUID(), "dual-hatch-overflow"));
+        player.setGameMode(GameType.SURVIVAL);
+        BlockPos playerPos = helper.absolutePos(new BlockPos(2, 2, 2));
+        player.setPos(playerPos.getX() + 0.5, playerPos.getY(), playerPos.getZ() + 0.5);
         fillInventory(player, new ItemStack(Items.STONE, 64));
         player.containerMenu.setCarried(new ItemStack(Items.BUCKET, 3));
         int waterBucketsBefore = countNearbyDroppedItems(player, Items.WATER_BUCKET.getDefaultInstance());
@@ -294,24 +301,26 @@ public class DualHatchPartMachineActionTest {
 
         machine.clickFluidSlot(player, 0, true);
 
-        int droppedWaterBuckets = countNearbyDroppedItems(player, Items.WATER_BUCKET.getDefaultInstance()) -
-                waterBucketsBefore;
-        int droppedEmptyBuckets = countNearbyDroppedItems(player, Items.BUCKET.getDefaultInstance()) -
-                emptyBucketsBefore;
-        int inventoryWaterBuckets = player.getInventory().countItem(Items.WATER_BUCKET);
-        int cursorWaterBuckets = player.containerMenu.getCarried().is(Items.WATER_BUCKET) ?
-                player.containerMenu.getCarried().getCount() : 0;
-        int cursorEmptyBuckets = player.containerMenu.getCarried().is(Items.BUCKET) ?
-                player.containerMenu.getCarried().getCount() : 0;
-        helper.assertTrue(machine.tank.getFluidInTank(0).isEmpty(),
-                "full-inventory shift fill did not transfer both available buckets");
-        helper.assertTrue(droppedWaterBuckets == 2,
-                "full inventory did not drop the complete two-bucket result stack");
-        helper.assertTrue(inventoryWaterBuckets + cursorWaterBuckets + droppedWaterBuckets == 2,
-                "full-inventory shift fill did not conserve filled buckets");
-        helper.assertTrue(cursorEmptyBuckets == 1 && droppedEmptyBuckets == 0,
-                "full-inventory shift fill did not preserve exactly one unfilled cursor bucket");
-        helper.succeed();
+        helper.runAfterDelay(1, () -> {
+            int droppedWaterBuckets = countNearbyDroppedItems(player, Items.WATER_BUCKET.getDefaultInstance()) -
+                    waterBucketsBefore;
+            int droppedEmptyBuckets = countNearbyDroppedItems(player, Items.BUCKET.getDefaultInstance()) -
+                    emptyBucketsBefore;
+            int inventoryWaterBuckets = player.getInventory().countItem(Items.WATER_BUCKET);
+            int cursorWaterBuckets = player.containerMenu.getCarried().is(Items.WATER_BUCKET) ?
+                    player.containerMenu.getCarried().getCount() : 0;
+            int cursorEmptyBuckets = player.containerMenu.getCarried().is(Items.BUCKET) ?
+                    player.containerMenu.getCarried().getCount() : 0;
+            helper.assertTrue(machine.tank.getFluidInTank(0).isEmpty(),
+                    "full-inventory shift fill did not transfer both available buckets");
+            helper.assertTrue(droppedWaterBuckets == 2,
+                    "full inventory did not drop the complete two-bucket result stack");
+            helper.assertTrue(inventoryWaterBuckets + cursorWaterBuckets + droppedWaterBuckets == 2,
+                    "full-inventory shift fill did not conserve filled buckets");
+            helper.assertTrue(cursorEmptyBuckets == 1 && droppedEmptyBuckets == 0,
+                    "full-inventory shift fill did not preserve exactly one unfilled cursor bucket");
+            helper.succeed();
+        });
     }
 
     @TestHolder
@@ -503,8 +512,9 @@ public class DualHatchPartMachineActionTest {
         helper.assertTrue(shell.getSideTabsElement().getChildren().size() == 2,
                 description + " contextual preview lost its directional page");
         UIElement preview = shell.getChildren().getFirst().getChildren().getFirst();
-        helper.assertTrue(preview.getSizeWidth() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
-                preview.getSizeHeight() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
+        UITemplate.LDLib2Bounds previewBounds = UITemplate.getLDLib2Bounds(preview);
+        helper.assertTrue(previewBounds.width() == LDLib2FancyPreviewPage.PREVIEW_PAGE_WIDTH &&
+                previewBounds.height() == LDLib2FancyPreviewPage.PREVIEW_PAGE_HEIGHT &&
                 preview.getChildren().isEmpty(),
                 description + " contextual page did not create the server-safe preview body");
 
