@@ -62,6 +62,24 @@ public class GTProgressBarElement extends ProgressBar {
         return this;
     }
 
+    /**
+     * Returns the texture drawn behind the filled progress region.
+     *
+     * @return the configured empty-bar texture
+     */
+    public IGuiTexture getEmptyBarTexture() {
+        return emptyBarTexture;
+    }
+
+    /**
+     * Returns the texture cropped to the current progress region.
+     *
+     * @return the configured filled-bar texture
+     */
+    public IGuiTexture getFilledBarTexture() {
+        return filledBarTexture;
+    }
+
     public GTProgressBarElement setFillDirection(FillDirection fillDirection) {
         progressBarStyle(style -> style.fillDirection(fillDirection));
         return this;

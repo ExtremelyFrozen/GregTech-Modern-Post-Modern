@@ -536,9 +536,8 @@ public class GTRecipeTypeUI {
     private void configureLDLib2ProgressTexture(GTProgressBarElement progress, boolean isSteam,
                                                 boolean isHighPressure) {
         ProgressTexture texture = getProgressTexture(isSteam, isHighPressure);
-        progress.barBackground.style(style -> style.backgroundTexture(texture.getEmptyBarArea()));
-        progress.bar.style(style -> style.backgroundTexture(texture.getFilledBarArea()));
-        progress.progressBarStyle(style -> style.fillDirection(toLDLib2FillDirection(texture.getFillDirection())));
+        progress.setProgressTexture(texture.getEmptyBarArea(), texture.getFilledBarArea())
+                .setFillDirection(toLDLib2FillDirection(texture.getFillDirection()));
     }
 
     private ProgressTexture getProgressTexture(boolean isSteam, boolean isHighPressure) {
