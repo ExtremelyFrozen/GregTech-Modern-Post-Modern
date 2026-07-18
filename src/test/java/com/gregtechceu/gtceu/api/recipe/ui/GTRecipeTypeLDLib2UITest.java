@@ -300,11 +300,19 @@ public class GTRecipeTypeLDLib2UITest {
 
         GTFluidSlotElement fluidInput = requireElement(root, "fluid_in_0", GTFluidSlotElement.class);
         GTFluidSlotElement fluidOutput = requireElement(root, "fluid_out_0", GTFluidSlotElement.class);
-        helper.assertTrue(FluidStack.isSameFluidSameComponents(fluidInput.getFluid(),
-                new FluidStack(Fluids.WATER, 1_000)) && fluidInput.getFluid().getAmount() == 1_000,
+        var fluidInputIngredient = FluidRecipeCapability.CAP.of(
+                recipe.getInputContents(FluidRecipeCapability.CAP).getFirst().getContent());
+        FluidStack displayedFluidInput = fluidInput.getFluid();
+        helper.assertTrue(fluidInputIngredient.ingredient().test(displayedFluidInput),
+                "lightweight XEI binding displayed a fluid outside the recipe input ingredient");
+        helper.assertTrue(displayedFluidInput.getAmount() == 1_000,
                 "lightweight XEI binding did not retain the fluid input amount");
-        helper.assertTrue(FluidStack.isSameFluidSameComponents(fluidOutput.getFluid(),
-                new FluidStack(Fluids.LAVA, 500)) && fluidOutput.getFluid().getAmount() == 500,
+        var fluidOutputIngredient = FluidRecipeCapability.CAP.of(
+                recipe.getOutputContents(FluidRecipeCapability.CAP).getFirst().getContent());
+        FluidStack displayedFluidOutput = fluidOutput.getFluid();
+        helper.assertTrue(fluidOutputIngredient.ingredient().test(displayedFluidOutput),
+                "lightweight XEI binding displayed a fluid outside the recipe output ingredient");
+        helper.assertTrue(displayedFluidOutput.getAmount() == 500,
                 "lightweight XEI binding did not retain the fluid output amount");
 
         long traversedElements = root.selfAndAllChildren().count();
