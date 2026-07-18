@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 
@@ -48,6 +49,25 @@ public interface StructurePredicate {
 
     @Unmodifiable
     default List<Block> blockCandidates() {
+        return List.of();
+    }
+
+    /**
+     * Expands this predicate into definition-aware choices used to build a representative preview structure.
+     * Composite predicates override this method so nested count restrictions remain attached to their candidates.
+     *
+     * @param definition machine definition owning the pattern being previewed
+     * @return ordered preview choices, or an empty list when this predicate cannot provide a representative block
+     */
+    @Unmodifiable
+    default List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        List<MultiblockBlockInfo> previewCandidates = candidates();
+        if (!previewCandidates.isEmpty()) {
+            return List.of(StructurePreviewChoice.unrestricted(previewCandidates));
+        }
+        if (isAny() || isAir()) {
+            return List.of(StructurePreviewChoice.unrestricted(List.of(MultiblockBlockInfo.EMPTY)));
+        }
         return List.of();
     }
 

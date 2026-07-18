@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
@@ -85,6 +86,11 @@ public record CleanroomBasePredicate(boolean allowFloorBlocks, boolean allowDoor
     @Override
     public @Unmodifiable List<Block> blockCandidates() {
         return predicates(null).stream().flatMap(predicate -> predicate.blockCandidates().stream()).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        return predicates(null).stream().flatMap(predicate -> predicate.previewChoices(definition).stream()).toList();
     }
 
     private List<StructurePredicate> predicates(MultiblockState multiblockState) {

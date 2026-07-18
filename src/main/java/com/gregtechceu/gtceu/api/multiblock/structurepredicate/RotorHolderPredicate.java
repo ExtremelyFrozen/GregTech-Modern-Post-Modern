@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
@@ -33,6 +34,7 @@ public record RotorHolderPredicate(int tier) implements StructurePredicate {
     public boolean test(MultiblockState multiblockState, boolean mutateCount) {
         return MetaMachine.getMachine(multiblockState.getWorld(),
                 multiblockState.getPos()) instanceof RotorHolderPartMachine rotorHolder &&
+                rotorHolder.getTier() == tier &&
                 multiblockState.getWorld()
                         .getBlockState(multiblockState.getPos().relative(rotorHolder.self().getFrontFacing()))
                         .isAir();
@@ -45,6 +47,9 @@ public record RotorHolderPredicate(int tier) implements StructurePredicate {
 
     @Override
     public @Unmodifiable List<Block> blockCandidates() {
-        return List.copyOf(PartAbility.ROTOR_HOLDER.getAllBlocks());
+        return PartAbility.ROTOR_HOLDER.getAllBlocks().stream()
+                .filter(block -> block instanceof MetaMachineBlock machineBlock &&
+                        machineBlock.getDefinition().getTier() == tier)
+                .toList();
     }
 }

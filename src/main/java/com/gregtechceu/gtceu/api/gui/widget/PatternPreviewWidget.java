@@ -18,6 +18,8 @@ import com.gregtechceu.gtceu.api.multiblock.MultiblockPreviewLevel;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePreviewChoice;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
@@ -35,7 +37,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -125,7 +129,6 @@ public class PatternPreviewWidget extends UIElement {
                 drops.add(ItemStackKey.of(this.controllerDefinition.asStack()));
                 return controllerDefinition.getMatchingShapes().stream()
                         .map(it -> initializePattern(it, drops))
-                        .filter(Objects::nonNull)
                         .toArray(MBPattern[]::new);
             });
         }
@@ -291,6 +294,19 @@ public class PatternPreviewWidget extends UIElement {
                     predicateTips.add(simplePredicate.getToolTips(predicate));
                 }
             }
+            for (StructurePredicate structurePredicate : predicate.structurePredicates) {
+                for (StructurePreviewChoice choice : structurePredicate.previewChoices(controllerDefinition)) {
+                    List<ItemStack> itemStacks = choice.candidates().stream()
+                            .map(info -> SimplePredicate.toItem(info.getBlockState().getBlock()))
+                            .filter(item -> item != Items.AIR)
+                            .map(Item::getDefaultInstance)
+                            .toList();
+                    if (!itemStacks.isEmpty()) {
+                        candidateStacks.add(itemStacks);
+                        predicateTips.add(choice.getTooltips(predicate));
+                    }
+                }
+            }
             candidates = new GTItemSlotElement[candidateStacks.size()];
             CycleItemEntryHandler itemHandler = CycleItemEntryHandler.createFromStacks(candidateStacks);
             int maxCol = (160 - (((materialSlots.length - 1) / 9 + 1) * 18) - 35) % 18;
@@ -423,15 +439,22 @@ public class PatternPreviewWidget extends UIElement {
             for (int y = 0; y < aisle.length; y++) {
                 MultiblockBlockInfo[] column = aisle[y];
                 for (int z = 0; z < column.length; z++) {
-                    BlockState blockState = column[z].getBlockState();
+                    MultiblockBlockInfo blockInfo = column[z];
+                    if (blockInfo == null) continue;
                     BlockPos pos = multiPos.offset(x, y, z);
-                    if (column[z].getBlockEntity(pos,
-                            LEVEL.getLevel().registryAccess()) instanceof MultiblockControllerMachine controller) {
-                        controller.setLevel(LEVEL);
-                        blockEntitiesToAdd.add(controller);
-                        controllerBase = controller;
+                    BlockEntity blockEntity = blockInfo.getBlockEntity(LEVEL.getLevel().registryAccess(), LEVEL, pos);
+                    if (blockEntity != null) {
+                        blockEntitiesToAdd.add(blockEntity);
+                        if (blockEntity instanceof MultiblockControllerMachine controller) {
+                            if (controllerBase != null && controllerBase != controller) {
+                                throw new IllegalStateException(
+                                        "Multiblock preview contains multiple controllers for " +
+                                                controllerDefinition.getId());
+                            }
+                            controllerBase = controller;
+                        }
                     }
-                    blockMap.put(pos, MultiblockBlockInfo.fromBlockState(blockState));
+                    blockMap.put(pos, blockInfo);
                 }
             }
         }
@@ -441,17 +464,23 @@ public class PatternPreviewWidget extends UIElement {
             LEVEL.setInnerBlockEntity(blockEntity);
         }
 
+        if (controllerBase == null) {
+            throw new IllegalStateException("Multiblock preview contains no controller for " +
+                    controllerDefinition.getId());
+        }
+
         Map<ItemStackKey, PartInfo> parts = gatherBlockDrops(blockMap);
         blockDrops.addAll(parts.keySet());
 
         Map<BlockPos, TraceabilityPredicate> predicateMap = new HashMap<>();
-        if (controllerBase != null) {
-            loadControllerFormed(predicateMap.keySet(), controllerBase);
-            predicateMap = controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
-                    .getMatchContext()
-                    .get("predicates");
+        loadControllerFormed(blockMap.keySet(), controllerBase);
+        Map<BlockPos, TraceabilityPredicate> matchedPredicates = controllerBase
+                .getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                .getMatchContext().get("predicates");
+        if (matchedPredicates != null) {
+            predicateMap = matchedPredicates;
         }
-        return controllerBase == null ? null : new MBPattern(blockMap, parts.values().stream().sorted((one, two) -> {
+        return new MBPattern(blockMap, parts.values().stream().sorted((one, two) -> {
             if (one.isController) return -1;
             if (two.isController) return +1;
             if (one.isTile && !two.isTile) return -1;
@@ -463,10 +492,12 @@ public class PatternPreviewWidget extends UIElement {
     }
 
     private void loadControllerFormed(Collection<BlockPos> positions, MultiblockControllerMachine controllerBase) {
-        BlockPattern pattern = controllerBase.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
-        if (pattern != null &&
-                pattern.checkPatternAt(controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE),
-                        true)) {
+        BlockPattern pattern = controllerDefinition.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
+        if (pattern == null) {
+            throw new IllegalStateException("Missing preview pattern for " + controllerDefinition.getId());
+        }
+        if (pattern.checkPatternAt(controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE),
+                true)) {
             controllerBase.formStructure(MultiblockControllerMachine.DEFAULT_STRUCTURE);
         }
         if (controllerBase.isFormed()) {

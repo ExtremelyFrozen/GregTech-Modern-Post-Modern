@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
@@ -94,6 +95,15 @@ public final class DataHatchOrPredicate implements StructurePredicate {
         }
         return Stream.concat(dataHatches.get().blockCandidates().stream(), alternative.blockCandidates().stream())
                 .toList();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        if (!ConfigHolder.INSTANCE.machines.enableResearch) {
+            return alternative.previewChoices(definition);
+        }
+        return Stream.concat(dataHatches.get().previewChoices(definition).stream(),
+                alternative.previewChoices(definition).stream()).toList();
     }
 
     @Override

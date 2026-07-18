@@ -131,7 +131,7 @@ public class MultiblockMachineDefinition extends MachineDefinition {
             for (int i = 0; i < repetitionStack.size(); i++) {
                 repetition[i] = repetitionStack.getInt(i);
             }
-            pages.add(new MultiblockShapeInfo(pattern.getPreview(repetition)));
+            pages.add(new MultiblockShapeInfo(pattern.getPreview(this, repetition)));
         } else {
             for (int i = aisleRepetitions[repetitionStack.size()][0]; i <=
                     aisleRepetitions[repetitionStack.size()][1]; i++) {

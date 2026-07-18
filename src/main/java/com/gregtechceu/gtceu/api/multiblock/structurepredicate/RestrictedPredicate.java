@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
@@ -51,6 +52,16 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
     @Override
     public @Unmodifiable List<Block> blockCandidates() {
         return predicate.blockCandidates();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        StructurePreviewConstraint constraint = new StructurePreviewConstraint(this, minCount, maxCount,
+                minCountByLayer, maxCountByLayer, previewCount);
+        List<Component> additionalTooltips = tooltips.orElse(List.of());
+        return predicate.previewChoices(definition).stream()
+                .map(choice -> choice.restrictedBy(constraint, additionalTooltips))
+                .toList();
     }
 
     @Override

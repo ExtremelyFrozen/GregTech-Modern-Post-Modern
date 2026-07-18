@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
@@ -74,12 +75,22 @@ public record AutoRecipeAbilityPredicate(boolean checkEnergyIn, boolean checkEne
         return List.of();
     }
 
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        return collectPredicates(definition.getRecipeTypes()).stream()
+                .flatMap(predicate -> predicate.previewChoices(definition).stream())
+                .toList();
+    }
+
     private List<StructurePredicate> collectPredicates(MultiblockState multiblockState) {
         MultiblockControllerMachine controller = multiblockState.getController();
         if (controller == null) {
             throw new IllegalStateException("Auto recipe ability predicates require a multiblock controller");
         }
-        GTRecipeType[] recipeTypes = controller.getDefinition().getRecipeTypes();
+        return collectPredicates(controller.getDefinition().getRecipeTypes());
+    }
+
+    private List<StructurePredicate> collectPredicates(GTRecipeType[] recipeTypes) {
         List<StructurePredicate> predicates = new ArrayList<>();
         addRecipePredicate(predicates, checkEnergyIn, recipeTypes,
                 type -> type.getMaxInputs(EURecipeCapability.CAP) > 0, PartAbility.INPUT_ENERGY, true);

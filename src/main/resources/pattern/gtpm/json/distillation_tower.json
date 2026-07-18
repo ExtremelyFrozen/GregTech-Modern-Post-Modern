@@ -74,7 +74,8 @@
 						"type": "gtpm:abilities",
 						"abilities": "export_fluids_1x"
 					},
-					"maxCountByLayer": 1
+					"maxCountByLayer": 1,
+					"previewCount": 1
 				},
 				{
 					"type": "gtpm:restricted",
