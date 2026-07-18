@@ -39,6 +39,19 @@
 		},
 		"I": {
 			"type": "gtpm:cleanroom_inner"
+		},
+		"K": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": ["gtpm:plascrete", "gtpm:cleanroom_glass"]
+				},
+				{
+					"type": "gtpm:block_tags",
+					"blockTagKeys": "gtpm:cleanroom_floors"
+				}
+			]
 		}
 	}
 }

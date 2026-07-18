@@ -175,7 +175,7 @@ public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implem
             c[i] = ceilingLayer[i].toString();
         }
 
-        BlockPattern baseline = FactoryBlockPattern.start(LEFT, FRONT, UP)
+        BlockPattern baseline = FactoryBlockPattern.start(this.getDefinition(), LEFT, FRONT, UP)
                 .aisle("~")
                 .build();
         return StructurePatternResolver.rebuildRuntimeStringArrayPattern(
