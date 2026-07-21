@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2488,7 +2488,7 @@
   <span class="md-ellipsis">
     
   
-    LDLib UI Editor
+    LDLib2 UI Editor
   
 
     
@@ -3988,6 +3988,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ldlib2-ui-migration-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LDLib2 UI migration rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#annotations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4323,6 +4334,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ldlib2-ui-migration-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LDLib2 UI migration rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#annotations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4411,10 +4433,8 @@
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setCustomIntValue</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">newValue</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">customIntValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">newValue</span><span class="p">;</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">        </span><span class="c1">////// IMPORTANT: markClientSyncFieldDirty must be called to update client synced fields.</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">        </span><span class="n">getSyncDataHolder</span><span class="p">().</span><span class="na">markClientSyncFieldDirty</span><span class="p">(</span><span class="s">&quot;customIntValue&quot;</span><span class="p">);</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="p">}</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="general-migration-guidelines">General migration guidelines</h3>
 <ul>
@@ -4423,11 +4443,20 @@
 <li>Replace <code>IEnhancedManaged</code> objects with <code>ISyncManaged</code>.</li>
 <li>Replace <code>IAsyncAutoSyncBlockEntity</code>, <code>IAutoPersistBlockEntity</code>, <code>IAutoSyncBlockEntity</code> and <code>IManagedBlockEntity</code> by extending <code>ManagedSyncBlockEntity</code>.</li>
 </ul>
+<h3 id="ldlib2-ui-migration-rule">LDLib2 UI migration rule</h3>
+<p>UI migration must not replace LDLib SyncData with LDLib2 syncdata or RPC. UI state changes must continue through GTM's sync system and its automatic synchronization path. New LDLib2 UI code must not introduce <code>@RPCMethod</code>, <code>RPCEmitter</code>, <code>setOnServerClick</code>, or manual dirty-marking calls as the business synchronization path.</p>
+<p>LDLib2 UI events are split into three categories:</p>
+<ul>
+<li>Local UI state, such as selected tabs or temporary filters, stays client-local.</li>
+<li>Field changes use GTM automatic sync fields and the existing field packets.</li>
+<li>One-shot commands use GTM action packets for machine, cover, or held-item holders.</li>
+</ul>
+<p>Action handlers run only on the server. They must validate the holder identity, player permissions, action id, and payload type before applying changes. Cover UIs must keep their close notification path, and held-item UIs must validate both the opened hand and the opened stack identity before accepting actions.</p>
 <h3 id="annotations">Annotations</h3>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 </div>
-<p>Client sync fields <strong>do not</strong> automatically detect changes. When changing a client sync field, call <code>ISyncManaged.syncDataHolder.markClientSyncFieldDirty(FIELD_NAME)</code></p>
+<p>Client sync fields are scanned for value changes automatically. Use sync-managed child state or contextual codecs for mutable holders whose internal state changes without replacing the field value.</p>
 <ul>
 <li><code>@DescSynced</code> -&gt; <code>@SyncToClient</code></li>
 <li><code>@RequireRerender</code> -&gt; <code>@RerenderOnChanged</code></li>
@@ -4550,7 +4579,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.sections", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "toc.follow", "content.code.annotate", "content.action.view"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

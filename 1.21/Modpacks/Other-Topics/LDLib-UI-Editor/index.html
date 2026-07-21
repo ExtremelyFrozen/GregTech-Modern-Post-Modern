@@ -21,15 +21,15 @@
       
       
       <link rel="icon" href="../../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>LDLib UI Editor - GregTech Modern Docs</title>
+        <title>LDLib2 UI Editor - GregTech Modern Docs</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ldlib-ui-editor" class="md-skip">
+        <a href="#ldlib2-ui-editor" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              LDLib UI Editor
+              LDLib2 UI Editor
             
           </span>
         </div>
@@ -2509,6 +2509,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LDLib2 UI Editor
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -2516,7 +2534,7 @@
   <span class="md-ellipsis">
     
   
-    LDLib UI Editor
+    LDLib2 UI Editor
   
 
     
@@ -2525,6 +2543,69 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#editing-a-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a template
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workspace-and-save-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace and save paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-xml-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime XML contracts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legacy-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy files
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -4166,6 +4247,58 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#editing-a-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing a template
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#workspace-and-save-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace and save paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-xml-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime XML contracts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legacy-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy files
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -4192,10 +4325,60 @@
   
 
 
-<h1 id="ldlib-ui-editor">LDLib UI Editor</h1>
-<p>Low Drag Lib (bundled with GTCEu Modern) provides an in-game UI Editor for creating custom GUI's for 
-machines and for Recipe Types. The UI Editor is accessible in-game 
-via the command <code>/gtceu ui_editor</code>.</p>
+<h1 id="ldlib2-ui-editor">LDLib2 UI Editor</h1>
+<p>GTCEu Modern uses LDLib2 XML for editable machine and recipe type UIs. Run <code>/gtceu ui_editor</code> to open the editor. The
+command requires administrator permission.</p>
+<h2 id="editing-a-template">Editing a template</h2>
+<p>Open the <strong>Templates</strong> menu and select either <strong>Machine</strong> or <strong>Recipe</strong>. Selecting an entry creates a GT XML project from
+the XML supplied by that template and assigns its runtime target. The selected target also determines the default save
+location.</p>
+<p>The project view is an XML source editor with a rendered preview. The play/stop control switches the preview into and
+out of simulation mode. Edit the XML source directly; it is the authoritative project representation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This workflow does not provide hierarchy or inspector-based visual editing, and it does not serialize an edited
+<code>UIElement</code> tree back to XML.</p>
+</div>
+<h2 id="workspace-and-save-paths">Workspace and save paths</h2>
+<p>The active editor workspace is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&lt;gameDir&gt;/ldlib2/assets/
+</code></pre></div>
+<p>For a target resource location <code>&lt;namespace&gt;:&lt;path&gt;</code>, templates use these default paths:</p>
+<ul>
+<li>Machine: <code>&lt;assetsRoot&gt;/&lt;namespace&gt;/ui/machine/&lt;path&gt;.xml</code></li>
+<li>Recipe type: <code>&lt;assetsRoot&gt;/&lt;namespace&gt;/ui/recipe_type/&lt;path&gt;.xml</code></li>
+</ul>
+<p>Saving a recognized Machine or Recipe target under the active assets root invalidates the corresponding runtime XML
+cache. The next time that UI is created, GTCEu reads the saved XML. An already open machine or recipe UI is not rebuilt
+in place, so reopen it to see the change.</p>
+<p>XML files outside the active assets root can still be opened, edited, and saved back to their original location. GTCEu
+logs a warning for such saves and does not reload a runtime target. To make it an active override, save the project from
+the editor to its canonical path under <code>&lt;gameDir&gt;/ldlib2/assets/</code>.</p>
+<h2 id="runtime-xml-contracts">Runtime XML contracts</h2>
+<p>Keep the following contracts when editing a generated template:</p>
+<ul>
+<li>Save XML as strict UTF-8 without a byte order mark (BOM). The editor and runtime reject a BOM, and runtime loading
+  also rejects malformed UTF-8.</li>
+<li>The XML must be well-formed LDLib2 UI XML. If a custom resource exists but cannot be decoded, parsed, or bound, GTCEu
+  logs the error and fails that UI creation instead of silently falling back to the default template.</li>
+<li>The root element of both machine and recipe templates must declare fixed pixel <code>width</code> and <code>height</code> values. Percentage,
+  automatic, or otherwise non-fixed root dimensions cannot provide the size required by the machine shell and recipe
+  viewer.</li>
+<li>Recipe progress binding requires at least one <code>gtm-progress-bar</code> or <code>gtm-dual-progress</code> with <code>id="progress"</code>.</li>
+<li>Recipe capability elements that receive runtime storage or content must retain IDs in the form
+  <code>&lt;capability&gt;_&lt;io&gt;_&lt;index&gt;</code>, where <code>&lt;io&gt;</code> is <code>in</code> or <code>out</code> and <code>&lt;index&gt;</code> is zero-based. Examples include <code>item_in_0</code>
+  and <code>fluid_out_0</code>. The element type must still match the capability.</li>
+<li>Machine templates also retain the recipe binding IDs above. A simple tiered machine additionally requires exactly one
+  <code>gtm-item-slot</code> with <code>id="battery_slot"</code>; a simple generator requires exactly one <code>gtm-progress-bar</code> with
+  <code>id="energy_container"</code>.</li>
+</ul>
+<p>The generated Machine and Recipe templates already satisfy these contracts. Preserve their binding IDs when changing
+layout, styles, or textures.</p>
+<h2 id="legacy-files">Legacy files</h2>
+<p>LDLib1 <code>.mui</code> and <code>.rtui</code> files are historical formats and are no longer loaded by the runtime. They cannot be converted
+by renaming the extension or treating their contents as LDLib2 XML. Recreate the layout and binding contract in an
+LDLib2 XML template, then save it to the canonical Machine or Recipe path above. New custom UI work should not add
+LDLib1 <code>.mui</code> or <code>.rtui</code> assets.</p>
 
 
 
@@ -4306,7 +4489,7 @@ via the command <code>/gtceu ui_editor</code>.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.sections", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "toc.follow", "content.code.annotate", "content.action.view"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
