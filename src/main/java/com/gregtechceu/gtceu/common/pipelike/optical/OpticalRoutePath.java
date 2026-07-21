@@ -2,9 +2,10 @@ package com.gregtechceu.gtceu.common.pipelike.optical;
 
 import com.gregtechceu.gtceu.api.capability.GTCapability;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
-import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
+import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
 import com.gregtechceu.gtceu.api.capability.IOpticalDataAccessHatch;
+import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.pipenet.IRoutePath;
 import com.gregtechceu.gtceu.common.blockentity.OpticalPipeBlockEntity;
 
@@ -16,7 +17,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class OpticalRoutePath implements IRoutePath<IOpticalComputationProvider> {
+public class OpticalRoutePath implements IRoutePath<IDataAccessMachine> {
 
     @Getter
     private final OpticalPipeBlockEntity targetPipe;
@@ -33,7 +34,7 @@ public class OpticalRoutePath implements IRoutePath<IOpticalComputationProvider>
 
     @Nullable
     public IOpticalDataAccessHatch getDataHatch() {
-        IDataAccessHatch dataAccessHatch = getTargetCapability(GTCapability.CAPABILITY_DATA_ACCESS,
+        IDataAccessMachine dataAccessHatch = getTargetCapability(GTCapability.CAPABILITY_DATA_ACCESS,
                 targetPipe.getLevel());
         return dataAccessHatch instanceof IOpticalDataAccessHatch opticalHatch ? opticalHatch : null;
     }
@@ -43,6 +44,12 @@ public class OpticalRoutePath implements IRoutePath<IOpticalComputationProvider>
         return getTargetCapability(GTCapability.CAPABILITY_COMPUTATION_PROVIDER, targetPipe.getLevel());
     }
 
+    @Nullable
+    public ComputationPort getComputationPort(Level world) {
+        return GTCapabilityHelper.getComputationPort(world, getTargetPipePos().relative(targetFacing),
+                targetFacing.getOpposite());
+    }
+
     @Override
     public @NotNull BlockPos getTargetPipePos() {
         return targetPipe.getBlockPos();
@@ -50,8 +57,8 @@ public class OpticalRoutePath implements IRoutePath<IOpticalComputationProvider>
 
     @Nullable
     @Override
-    public IOpticalComputationProvider getHandler(Level world) {
-        return GTCapabilityHelper.getOpticalComputationProvider(world, getTargetPipePos().relative(targetFacing),
+    public IDataAccessMachine getHandler(Level world) {
+        return GTCapabilityHelper.getDataAccess(world, getTargetPipePos().relative(targetFacing),
                 targetFacing.getOpposite());
     }
 }

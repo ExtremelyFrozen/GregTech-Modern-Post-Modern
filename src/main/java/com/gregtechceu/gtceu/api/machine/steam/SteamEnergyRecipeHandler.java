@@ -6,7 +6,6 @@ import com.gregtechceu.gtceu.api.capability.recipe.IRecipeHandler;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.utils.GTMath;
 
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SteamEnergyRecipeHandler implements IRecipeHandler<EnergyStack> {
+public class SteamEnergyRecipeHandler implements IRecipeHandler<Long> {
 
     private final NotifiableFluidTank steamTank;
     private final double conversionRate; // mB steam per EU
@@ -29,15 +28,14 @@ public class SteamEnergyRecipeHandler implements IRecipeHandler<EnergyStack> {
     }
 
     @Override
-    public List<EnergyStack> handleRecipeInner(IO io, GTRecipe recipe, List<EnergyStack> left, boolean simulate) {
+    public List<Long> handleRecipeInner(IO io, GTRecipe recipe, List<Long> left, boolean simulate) {
         for (var it = left.listIterator(); it.hasNext();) {
-            EnergyStack stack = it.next();
-            if (stack.isEmpty()) {
+            long totalEU = it.next();
+            if (totalEU <= 0) {
                 it.remove();
                 continue;
             }
 
-            long totalEU = stack.getTotalEU();
             int totalSteam = GTMath.saturatedCast((long) Math.ceil(totalEU * conversionRate));
             if (totalSteam > 0) {
                 var steam = io == IO.IN ? SizedFluidIngredient.of(GTMaterials.Steam.getFluidTag(), totalSteam) :
@@ -49,7 +47,7 @@ public class SteamEnergyRecipeHandler implements IRecipeHandler<EnergyStack> {
                     it.remove();
                 } else {
                     totalEU = (long) (leftSteam.get(0).amount() / conversionRate);
-                    it.set(new EnergyStack(totalEU));
+                    it.set(totalEU);
                 }
             }
         }
@@ -84,7 +82,7 @@ public class SteamEnergyRecipeHandler implements IRecipeHandler<EnergyStack> {
     }
 
     @Override
-    public RecipeCapability<EnergyStack> getCapability() {
+    public RecipeCapability<Long> getCapability() {
         return EURecipeCapability.CAP;
     }
 

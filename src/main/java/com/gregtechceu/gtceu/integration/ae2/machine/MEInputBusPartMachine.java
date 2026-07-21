@@ -5,7 +5,8 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
 import com.gregtechceu.gtceu.api.machine.feature.IHasCircuitSlot;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.integration.ae2.gui.widget.AEItemConfigWidget;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEItemList;
@@ -17,18 +18,18 @@ import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.GenericStack;
 import appeng.api.storage.MEStorage;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MEInputBusPartMachine extends MEBusPartMachine
                                    implements IDataStickInteractable, IHasCircuitSlot {
@@ -138,9 +139,7 @@ public class MEInputBusPartMachine extends MEBusPartMachine
     @Override
     public final InteractionResult onDataStickShiftUse(Player player, ItemStack dataStick) {
         if (!isRemote()) {
-            CompoundTag tag = new CompoundTag();
-            tag.put("MEInputBus", writeConfigToTag(player.registryAccess()));
-            dataStick.set(GTDataComponents.DATA_COPY_TAG, CustomData.of(tag));
+            dataStick.set(GTDataComponents.AE_INPUT_CONFIG_COPY_DATA, writeConfigData());
             dataStick.set(DataComponents.CUSTOM_NAME,
                     Component.translatable("gtpm.machine.me.item_import.data_stick.name"));
             player.sendSystemMessage(Component.translatable("gtpm.machine.me.import_copy_settings"));
@@ -150,13 +149,13 @@ public class MEInputBusPartMachine extends MEBusPartMachine
 
     @Override
     public final InteractionResult onDataStickUse(Player player, ItemStack dataStick) {
-        CustomData tag = dataStick.get(GTDataComponents.DATA_COPY_TAG);
-        if (tag == null || !tag.contains("MEInputBus")) {
+        AEInputConfigCopyData data = dataStick.get(GTDataComponents.AE_INPUT_CONFIG_COPY_DATA);
+        if (data == null) {
             return InteractionResult.PASS;
         }
 
         if (!isRemote()) {
-            readConfigFromTag(player.registryAccess(), tag.copyTag().getCompound("MEInputBus"));
+            readConfigData(data);
             this.updateInventorySubscription();
             player.sendSystemMessage(Component.translatable("gtpm.machine.me.import_paste_settings"));
         }
@@ -167,43 +166,21 @@ public class MEInputBusPartMachine extends MEBusPartMachine
     // ****** Configuration ******//
     ////////////////////////////////
 
-    protected CompoundTag writeConfigToTag(HolderLookup.Provider provider) {
-        CompoundTag tag = new CompoundTag();
-        CompoundTag configStacks = new CompoundTag();
-        tag.put("ConfigStacks", configStacks);
+    protected AEInputConfigCopyData writeConfigData() {
+        List<GenericStack> stacks = new ArrayList<>(CONFIG_SIZE);
         for (int i = 0; i < CONFIG_SIZE; i++) {
-            var slot = this.aeItemHandler.getInventory()[i];
-            GenericStack config = slot.getConfig();
-            if (config == null) {
-                continue;
-            }
-            CompoundTag stackTag = GenericStack.writeTag(provider, config);
-            configStacks.put(Integer.toString(i), stackTag);
+            stacks.add(this.aeItemHandler.getInventory()[i].getConfig());
         }
-        tag.putByte("GhostCircuit",
-                (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0)));
-        tag.putBoolean("DistinctBuses", isDistinct());
-        return tag;
+        byte ghostCircuit = (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0));
+        return new AEInputConfigCopyData(stacks, ghostCircuit, isDistinct(), false);
     }
 
-    protected void readConfigFromTag(HolderLookup.Provider provider, CompoundTag tag) {
-        if (tag.contains("ConfigStacks")) {
-            CompoundTag configStacks = tag.getCompound("ConfigStacks");
-            for (int i = 0; i < CONFIG_SIZE; i++) {
-                String key = Integer.toString(i);
-                if (configStacks.contains(key)) {
-                    CompoundTag configTag = configStacks.getCompound(key);
-                    this.aeItemHandler.getInventory()[i].setConfig(GenericStack.readTag(provider, configTag));
-                } else {
-                    this.aeItemHandler.getInventory()[i].setConfig(null);
-                }
-            }
+    protected void readConfigData(AEInputConfigCopyData data) {
+        List<GenericStack> stacks = data.stacks();
+        for (int i = 0; i < CONFIG_SIZE; i++) {
+            this.aeItemHandler.getInventory()[i].setConfig(i < stacks.size() ? stacks.get(i) : null);
         }
-        if (tag.contains("GhostCircuit")) {
-            circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(tag.getByte("GhostCircuit")));
-        }
-        if (tag.contains("DistinctBuses")) {
-            setDistinct(tag.getBoolean("DistinctBuses"));
-        }
+        circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(data.ghostCircuit()));
+        setDistinct(data.distinctBuses());
     }
 }

@@ -12,6 +12,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -22,12 +23,14 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.annotation.TestHolder;
 import net.neoforged.testframework.gametest.EmptyTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
+import io.netty.buffer.Unpooled;
 
 import java.util.HashSet;
 import java.util.List;
@@ -67,16 +70,18 @@ public class GTRecipeSerializerTest {
         AdjacentBlockCondition blockCondition = new AdjacentBlockCondition(blockSetIn);
 
         // Serialize and back
-        GTRecipe originalRecipe = GTRecipeBuilder.ofRaw()
+        GTRecipeDefinition originalRecipe = GTRecipeBuilder.ofRaw()
                 .addCondition(fluidCondition)
                 .addCondition(blockCondition)
-                .build();
+                .blastFurnaceTemp(1800)
+                .durationIsTotalCWU(true)
+                .buildDefinition();
         JsonElement recipeJson = Recipe.CODEC.encodeStart(ops, originalRecipe)
                 .getOrThrow(GameTestAssertException::new);
 
         Recipe<?> parsedRecipe = Recipe.CODEC.parse(ops, recipeJson)
                 .getOrThrow(GameTestAssertException::new);
-        if (!(parsedRecipe instanceof GTRecipe recipe)) {
+        if (!(parsedRecipe instanceof GTRecipeDefinition recipe)) {
             helper.fail("Expected recipe to deserialize back to itself, but it didn't. Got %s instead"
                     .formatted(parsedRecipe));
             return;
@@ -102,6 +107,39 @@ public class GTRecipeSerializerTest {
         }
         if (!foundFluid) {
             helper.fail("AdjacentFluidCondition did not deserialize properly");
+        }
+        helper.assertTrue(RecipeData.getInt(recipe.data, "ebf_temp") == 1800,
+                "Recipe data int did not deserialize properly");
+        helper.assertTrue(RecipeData.getBoolean(recipe.data, "duration_is_total_cwu"),
+                "Recipe data boolean did not deserialize properly");
+        helper.succeed();
+    }
+
+    @TestHolder()
+    @EmptyTemplate("5")
+    @GameTest(template = "empty_5x5")
+    public static void networkSerializesRecipeDataComponents(GameTestHelper helper) {
+        GTRecipeDefinition originalRecipe = GTRecipeBuilder.ofRaw()
+                .blastFurnaceTemp(2100)
+                .fusionStartEU(160000000L)
+                .hideDuration(true)
+                .buildDefinition();
+
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(),
+                helper.getLevel().registryAccess(),
+                ConnectionType.OTHER);
+        try {
+            GTRecipeSerializer.STREAM_CODEC.encode(buffer, originalRecipe);
+            GTRecipeDefinition decoded = GTRecipeSerializer.STREAM_CODEC.decode(buffer);
+
+            helper.assertTrue(RecipeData.getInt(decoded.data, "ebf_temp") == 2100,
+                    "Recipe data int did not round-trip over network");
+            helper.assertTrue(RecipeData.getLong(decoded.data, "eu_to_start") == 160000000L,
+                    "Recipe data long did not round-trip over network");
+            helper.assertTrue(RecipeData.getBoolean(decoded.data, "hide_duration"),
+                    "Recipe data boolean did not round-trip over network");
+        } finally {
+            buffer.release();
         }
         helper.succeed();
     }

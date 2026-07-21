@@ -7,13 +7,12 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.util.ExtraCodecs;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
@@ -74,6 +73,10 @@ public abstract class RecipeCondition<T extends RecipeCondition<T>> {
         return false;
     }
 
+    public boolean perTick() {
+        return false;
+    }
+
     public abstract Component getTooltips();
 
     public boolean check(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
@@ -97,12 +100,13 @@ public abstract class RecipeCondition<T extends RecipeCondition<T>> {
     }
 
     public final void toNetwork(RegistryFriendlyByteBuf buf) {
-        var ops = RegistryOps.create(NbtOps.INSTANCE, buf.registryAccess());
-        buf.writeWithCodec(ops, CODEC, this);
+        var ops = RegistryOps.create(JsonOps.INSTANCE, buf.registryAccess());
+        JsonElement json = CODEC.encodeStart(ops, this).getOrThrow();
+        buf.writeJsonWithCodec(ExtraCodecs.JSON, json);
     }
 
     public static RecipeCondition<?> fromNetwork(RegistryFriendlyByteBuf buf) {
-        var ops = RegistryOps.create(NbtOps.INSTANCE, buf.registryAccess());
-        return buf.readWithCodec(ops, CODEC, NbtAccounter.create(FriendlyByteBuf.DEFAULT_NBT_QUOTA));
+        var ops = RegistryOps.create(JsonOps.INSTANCE, buf.registryAccess());
+        return CODEC.parse(ops, buf.readJsonWithCodec(ExtraCodecs.JSON)).getOrThrow();
     }
 }

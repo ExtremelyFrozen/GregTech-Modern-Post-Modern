@@ -3,33 +3,40 @@
 package com.gregtechceu.gtceu.api.sync_system
 
 import com.gregtechceu.gtceu.api.data.chemical.material.Material
+import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType
 import com.gregtechceu.gtceu.api.registry.GTRegistries
 import com.gregtechceu.gtceu.api.sync_system.codecs.CoverBehaviorCodec
+import com.gregtechceu.gtceu.api.sync_system.codecs.CustomFluidTankCodec
+import com.gregtechceu.gtceu.api.sync_system.codecs.CustomItemStackHandlerCodec
+import com.gregtechceu.gtceu.api.sync_system.codecs.DataComponentTransferCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.GTRecipeFieldCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MachineTraitHolderCodec
 import com.gregtechceu.gtceu.api.sync_system.codecs.MonitorGroupCodec
-import com.gregtechceu.gtceu.api.sync_system.codecs.NBTSerializableCodec
+import com.gregtechceu.gtceu.api.sync_system.codecs.VirtualEntryCodec
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged
+import com.gregtechceu.gtceu.api.transfer.DataComponentTransfer
+import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank
+import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.UUIDUtil
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.NbtOps
-import net.minecraft.nbt.Tag
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.ComponentSerialization
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.StringRepresentable
 import net.minecraft.world.item.ItemStack
-import net.neoforged.neoforge.common.util.INBTSerializable
 import net.neoforged.neoforge.fluids.FluidStack
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonNull
+import com.google.gson.JsonObject
 import com.mojang.datafixers.util.Pair
 import com.mojang.serialization.Codec
+import com.mojang.serialization.JsonOps
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap
 import org.jetbrains.annotations.Nullable
@@ -238,16 +245,16 @@ object FieldCodecs {
 	private fun makeContextualListCodec(type: ParameterizedType): ContextualFieldCodec<*>? {
 		val elementCodec = getContextual(type.actualTypeArguments[0]) ?: return null
 		return object : ContextualFieldCodec<List<*>> {
-			override fun serializeNBT(value: List<*>, context: ContextualFieldCodec.Context<List<*>>): Tag {
-				val list = ListTag()
+			override fun serializeField(value: List<*>, context: ContextualFieldCodec.Context<List<*>>): JsonElement {
+				val list = JsonArray()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
 				for (i in value.indices) {
 					val element = value[i]
 					if (element == null) {
-						list.add(nullTag())
+						list.add(JsonNull.INSTANCE)
 					} else {
 						list.add(
-							typedElementCodec.serializeNBT(
+							typedElementCodec.serializeField(
 								element,
 								nestedContext(context, type.actualTypeArguments[0], element, context.fieldName + "[" + i + "]"),
 							),
@@ -258,19 +265,18 @@ object FieldCodecs {
 			}
 
 			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<List<*>>): List<*>? {
-				if (tag !is ListTag) return null
+			override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<List<*>>): List<*>? {
+				if (!value.isJsonArray) return null
 				val current = context.currentValue
-				val result = ArrayList<Any?>(tag.size)
+				val result = ArrayList<Any?>(value.asJsonArray.size())
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for ((i, element1) in tag.withIndex()) {
+				for ((i, elementJson) in value.asJsonArray.withIndex()) {
 					val currentElement = if (current != null && i < current.size) current[i] else null
-					val elementTag = element1
-					val element = if (isNullTag(elementTag)) {
+					val element = if (elementJson.isJsonNull && !context.parseExplicitNull) {
 						null
 					} else {
-						typedElementCodec.deserializeNBT(
-							elementTag,
+						typedElementCodec.deserializeField(
+							elementJson,
 							nestedContext(context, type.actualTypeArguments[0], currentElement, context.fieldName + "[" + i + "]"),
 						)
 					}
@@ -286,15 +292,15 @@ object FieldCodecs {
 	private fun makeContextualSetCodec(type: ParameterizedType): ContextualFieldCodec<*>? {
 		val elementCodec = getContextual(type.actualTypeArguments[0]) ?: return null
 		return object : ContextualFieldCodec<Set<*>> {
-			override fun serializeNBT(value: Set<*>, context: ContextualFieldCodec.Context<Set<*>>): Tag {
-				val list = ListTag()
+			override fun serializeField(value: Set<*>, context: ContextualFieldCodec.Context<Set<*>>): JsonElement {
+				val list = JsonArray()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
 				for ((index, element) in value.withIndex()) {
 					if (element == null) {
-						list.add(nullTag())
+						list.add(JsonNull.INSTANCE)
 					} else {
 						list.add(
-							typedElementCodec.serializeNBT(
+							typedElementCodec.serializeField(
 								element,
 								nestedContext(context, type.actualTypeArguments[0], element, context.fieldName + "[" + index + "]"),
 							),
@@ -305,17 +311,16 @@ object FieldCodecs {
 			}
 
 			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<Set<*>>): Set<*>? {
-				if (tag !is ListTag) return null
+			override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<Set<*>>): Set<*>? {
+				if (!value.isJsonArray) return null
 				val result = LinkedHashSet<Any?>()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for ((i, element1) in tag.withIndex()) {
-					val elementTag = element1
-					val element = if (isNullTag(elementTag)) {
+				for ((i, elementJson) in value.asJsonArray.withIndex()) {
+					val element = if (elementJson.isJsonNull && !context.parseExplicitNull) {
 						null
 					} else {
-						typedElementCodec.deserializeNBT(
-							elementTag,
+						typedElementCodec.deserializeField(
+							elementJson,
 							nestedContext(context, type.actualTypeArguments[0], null, context.fieldName + "[" + i + "]"),
 						)
 					}
@@ -343,17 +348,17 @@ object FieldCodecs {
 	private fun makeContextualArrayCodec(componentType: Class<*>): ContextualFieldCodec<*>? {
 		val elementCodec = getContextual(componentType) ?: return null
 		return object : ContextualFieldCodec<Any> {
-			override fun serializeNBT(value: Any, context: ContextualFieldCodec.Context<Any>): Tag {
-				val list = ListTag()
+			override fun serializeField(value: Any, context: ContextualFieldCodec.Context<Any>): JsonElement {
+				val list = JsonArray()
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
 				val length = Array.getLength(value)
 				for (i in 0 until length) {
 					val element = Array.get(value, i)
 					if (element == null) {
-						list.add(nullTag())
+						list.add(JsonNull.INSTANCE)
 					} else {
 						list.add(
-							typedElementCodec.serializeNBT(
+							typedElementCodec.serializeField(
 								element,
 								nestedContext(context, componentType, element, context.fieldName + "[" + i + "]"),
 							),
@@ -364,19 +369,18 @@ object FieldCodecs {
 			}
 
 			@Nullable
-			override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<Any>): Any? {
-				if (tag !is ListTag) return null
+			override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<Any>): Any? {
+				if (!value.isJsonArray) return null
 				val current = context.currentValue
-				val result = if (current != null && Array.getLength(current) == tag.size) current else Array.newInstance(componentType, tag.size)
+				val result = if (current != null && Array.getLength(current) == value.asJsonArray.size()) current else Array.newInstance(componentType, value.asJsonArray.size())
 				val typedElementCodec = elementCodec as ContextualFieldCodec<Any>
-				for ((i, element1) in tag.withIndex()) {
+				for ((i, elementJson) in value.asJsonArray.withIndex()) {
 					val currentElement = if (current != null && i < Array.getLength(current)) Array.get(current, i) else null
-					val elementTag = element1
-					val element = if (isNullTag(elementTag)) {
+					val element = if (elementJson.isJsonNull && !context.parseExplicitNull) {
 						null
 					} else {
-						typedElementCodec.deserializeNBT(
-							elementTag,
+						typedElementCodec.deserializeField(
+							elementJson,
 							nestedContext(context, componentType, currentElement, context.fieldName + "[" + i + "]"),
 						)
 					}
@@ -387,12 +391,17 @@ object FieldCodecs {
 		}
 	}
 
-	private fun nullTag(): CompoundTag = CompoundTag().apply { putBoolean("null", true) }
-
-	private fun isNullTag(tag: Tag): Boolean = tag is CompoundTag && tag.getBoolean("null")
-
-	private fun <T> nestedContext(parent: ContextualFieldCodec.Context<*>, type: Type, @Nullable currentValue: T?, fieldName: String): ContextualFieldCodec.Context<T> =
-		ContextualFieldCodec.Context(parent.holder, TypeDeclaration(type), currentValue, fieldName, parent.isClientSync, parent.isClientFullSyncUpdate, parent.lookup)
+	private fun <T> nestedContext(parent: ContextualFieldCodec.Context<*>, type: Type, @Nullable currentValue: T?, fieldName: String): ContextualFieldCodec.Context<T> = ContextualFieldCodec.Context(
+		parent.holder,
+		TypeDeclaration(type),
+		currentValue,
+		fieldName,
+		parent.isClientSync,
+		parent.isClientFullSyncUpdate,
+		parent.lookup,
+		parent.serializationTarget,
+		parent.parseExplicitNull,
+	)
 
 	@Suppress("UNCHECKED_CAST")
 	private class ContextualMapCodec(
@@ -402,71 +411,72 @@ object FieldCodecs {
 		@field:Nullable private val regularKeyCodec: Codec<*>?,
 		@field:Nullable private val regularValueCodec: Codec<*>?,
 	) : ContextualFieldCodec<Map<*, *>> {
-		override fun serializeNBT(value: Map<*, *>, context: ContextualFieldCodec.Context<Map<*, *>>): Tag {
-			val list = ListTag()
+		override fun serializeField(value: Map<*, *>, context: ContextualFieldCodec.Context<Map<*, *>>): JsonElement {
+			val list = JsonArray()
 			var index = 0
 			for ((key, entryValue) in value) {
-				val entryTag = CompoundTag()
-				entryTag.put(
+				val entryJson = JsonObject()
+				entryJson.add(
 					"k",
-					serializeMapElement(key, keyCodec, regularKeyCodec, context, type.actualTypeArguments[0], context.fieldName + "[" + index + "].key"),
+					serializeMapElementData(key, keyCodec, regularKeyCodec, context, type.actualTypeArguments[0], context.fieldName + "[" + index + "].key"),
 				)
-				entryTag.put(
+				entryJson.add(
 					"v",
-					serializeMapElement(entryValue, valueCodec, regularValueCodec, context, type.actualTypeArguments[1], context.fieldName + "[" + index + "].value"),
+					serializeMapElementData(entryValue, valueCodec, regularValueCodec, context, type.actualTypeArguments[1], context.fieldName + "[" + index + "].value"),
 				)
-				list.add(entryTag)
+				list.add(entryJson)
 				index++
 			}
 			return list
 		}
 
 		@Nullable
-		override fun deserializeNBT(tag: Tag, context: ContextualFieldCodec.Context<Map<*, *>>): Map<*, *>? {
-			if (tag !is ListTag) return null
+		override fun deserializeField(value: JsonElement, context: ContextualFieldCodec.Context<Map<*, *>>): Map<*, *>? {
+			if (!value.isJsonArray) return null
 			val result: MutableMap<Any?, Any?> = LinkedHashMap()
-			for ((i, element) in tag.withIndex()) {
-				val entryTag = element as? CompoundTag ?: continue
-				val key = deserializeMapElement(entryTag.get("k"), keyCodec, regularKeyCodec, context, type.actualTypeArguments[0], context.fieldName + "[" + i + "].key")
-				val value = deserializeMapElement(entryTag.get("v"), valueCodec, regularValueCodec, context, type.actualTypeArguments[1], context.fieldName + "[" + i + "].value")
-				result[key] = value
+			for ((i, element) in value.asJsonArray.withIndex()) {
+				if (!element.isJsonObject) continue
+				val entryJson = element.asJsonObject
+				val key = deserializeMapElementData(entryJson.get("k"), keyCodec, regularKeyCodec, context, type.actualTypeArguments[0], context.fieldName + "[" + i + "].key")
+				val entryValue = deserializeMapElementData(entryJson.get("v"), valueCodec, regularValueCodec, context, type.actualTypeArguments[1], context.fieldName + "[" + i + "].value")
+				result[key] = entryValue
 			}
 			return result
 		}
 
 		companion object {
-			private fun serializeMapElement(
+			private fun serializeMapElementData(
 				@Nullable value: Any?,
 				@Nullable contextualCodec: ContextualFieldCodec<*>?,
 				@Nullable regularCodec: Codec<*>?,
 				context: ContextualFieldCodec.Context<*>,
 				type: Type,
 				fieldName: String,
-			): Tag {
-				if (value == null) return nullTag()
+			): JsonElement {
+				if (value == null) return JsonNull.INSTANCE
 				if (contextualCodec != null) {
-					return (contextualCodec as ContextualFieldCodec<Any>).serializeNBT(value, nestedContext(context, type, value, fieldName))
+					return (contextualCodec as ContextualFieldCodec<Any>).serializeField(value, nestedContext(context, type, value, fieldName))
 				}
 				return (regularCodec as Codec<Any>)
-					.encodeStart(context.lookup.createSerializationContext(NbtOps.INSTANCE), value)
+					.encodeStart(context.lookup.createSerializationContext(JsonOps.INSTANCE), value)
 					.getOrThrow()
 			}
 
 			@Nullable
-			private fun deserializeMapElement(
-				@Nullable tag: Tag?,
+			private fun deserializeMapElementData(
+				@Nullable value: JsonElement?,
 				@Nullable contextualCodec: ContextualFieldCodec<*>?,
 				@Nullable regularCodec: Codec<*>?,
 				context: ContextualFieldCodec.Context<*>,
 				type: Type,
 				fieldName: String,
 			): Any? {
-				if (tag == null || isNullTag(tag)) return null
+				if (value == null || (value.isJsonNull && !context.parseExplicitNull)) return null
 				if (contextualCodec != null) {
-					return (contextualCodec as ContextualFieldCodec<Any>).deserializeNBT(tag, nestedContext(context, type, null, fieldName))
+					return (contextualCodec as ContextualFieldCodec<Any>).deserializeField(value, nestedContext(context, type, null, fieldName))
 				}
 				return (regularCodec as Codec<Any>)
-					.parse(context.lookup.createSerializationContext(NbtOps.INSTANCE), tag)
+					.parse(context.lookup.createSerializationContext(JsonOps.INSTANCE), value)
 					.getOrThrow()
 			}
 		}
@@ -532,7 +542,6 @@ object FieldCodecs {
 
 		register(String::class.java, Codec.STRING)
 		register(UUID::class.java, UUIDUtil.CODEC)
-		register(CompoundTag::class.java, CompoundTag.CODEC)
 
 		register(BlockPos::class.java, BlockPos.CODEC)
 		register(Component::class.java, ComponentSerialization.CODEC)
@@ -555,7 +564,10 @@ object FieldCodecs {
 			),
 		)
 		registerContextual(ISyncManaged::class.java, SyncDataHolder.SYNC_MANAGED_CODEC)
-		registerContextual(INBTSerializable::class.java, NBTSerializableCodec.INSTANCE)
+		registerContextual(CustomItemStackHandler::class.java, CustomItemStackHandlerCodec.INSTANCE)
+		registerContextual(CustomFluidTank::class.java, CustomFluidTankCodec.INSTANCE)
+		registerContextual(DataComponentTransfer::class.java, DataComponentTransferCodec.INSTANCE)
+		registerContextual(VirtualEntry::class.java, VirtualEntryCodec.INSTANCE)
 		registerContextual(GTRecipeFieldCodec.TYPE, GTRecipeFieldCodec.INSTANCE)
 		registerContextual(MachineTraitHolderCodec.TYPE, MachineTraitHolderCodec.INSTANCE)
 		registerContextual(CoverBehaviorCodec.TYPE, CoverBehaviorCodec.INSTANCE)

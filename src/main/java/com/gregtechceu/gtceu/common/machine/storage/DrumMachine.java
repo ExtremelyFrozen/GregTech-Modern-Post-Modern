@@ -8,7 +8,7 @@ import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.ISubscription;

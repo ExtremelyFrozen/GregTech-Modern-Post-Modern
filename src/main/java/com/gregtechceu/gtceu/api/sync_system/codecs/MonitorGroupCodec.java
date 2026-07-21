@@ -6,11 +6,12 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorG
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
+import net.minecraft.core.component.DataComponentMap;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import org.jetbrains.annotations.Nullable;
 
 public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGroup> {
@@ -21,47 +22,80 @@ public final class MonitorGroupCodec implements ContextualFieldCodec<MonitorGrou
     private MonitorGroupCodec() {}
 
     @Override
-    public CompoundTag serializeNBT(MonitorGroup value, Context<MonitorGroup> context) {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("name", value.getName());
-        ListTag list = new ListTag();
-        value.getMonitorPositions().forEach(pos -> list.add(NbtUtils.writeBlockPos(pos)));
+    public JsonElement serializeField(MonitorGroup value, Context<MonitorGroup> context) {
+        JsonObject json = new JsonObject();
+        json.addProperty("name", value.getName());
+
+        JsonArray positions = new JsonArray();
+        value.getMonitorPositions().forEach(pos -> positions.add(BlockPos.CODEC
+                .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), pos)
+                .getOrThrow()));
+        json.add("positions", positions);
+
         if (value.getTargetRaw() != null) {
-            tag.put("targetPos", NbtUtils.writeBlockPos(value.getTargetRaw()));
+            json.add("targetPos", BlockPos.CODEC
+                    .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), value.getTargetRaw())
+                    .getOrThrow());
             if (value.getTargetCoverSide() != null) {
-                tag.putString("targetSide", value.getTargetCoverSide().getSerializedName());
+                json.add("targetSide", Direction.CODEC
+                        .encodeStart(JsonOps.INSTANCE, value.getTargetCoverSide())
+                        .getOrThrow());
             }
         }
-        tag.put("positions", list);
-        tag.putInt("dataSlot", value.getDataSlot());
-        tag.put("items", value.getItemStackHandler().serializeNBT(context.lookup()));
-        tag.put("placeholderSlots", value.getPlaceholderSlotsHandler().serializeNBT(context.lookup()));
-        return tag;
+
+        json.addProperty("dataSlot", value.getDataSlot());
+        json.add("items", serializeItems(value.getItemStackHandler(), context));
+        json.add("placeholderSlots", serializeItems(value.getPlaceholderSlotsHandler(), context));
+        return json;
     }
 
     @Override
-    public @Nullable MonitorGroup deserializeNBT(Tag tag, Context<MonitorGroup> context) {
-        if (!(tag instanceof CompoundTag compoundTag)) return null;
-        CustomItemStackHandler handler = new CustomItemStackHandler();
-        CustomItemStackHandler placeholderSlotsHandler = new CustomItemStackHandler();
-        handler.deserializeNBT(context.lookup(), compoundTag.getCompound("items"));
-        placeholderSlotsHandler.deserializeNBT(context.lookup(), compoundTag.getCompound("placeholderSlots"));
-        var group = new MonitorGroup(compoundTag.getString("name"), handler, placeholderSlotsHandler);
-        ListTag list = compoundTag.getList("positions", Tag.TAG_COMPOUND);
-        for (int i = 0; i < list.size(); i++) {
-            int[] aint = list.getIntArray(i);
-            if (aint.length != 3) continue;
-            group.add(new BlockPos(aint[0], aint[1], aint[2]));
+    public @Nullable MonitorGroup deserializeField(JsonElement value, Context<MonitorGroup> context) {
+        if (!value.isJsonObject()) return null;
+
+        JsonObject json = value.getAsJsonObject();
+        CustomItemStackHandler handler = deserializeItems(json.get("items"), context,
+                MonitorGroup.createModuleHandler());
+        CustomItemStackHandler placeholderSlotsHandler = deserializeItems(json.get("placeholderSlots"),
+                context, new CustomItemStackHandler(8));
+        var group = new MonitorGroup(json.get("name").getAsString(), handler, placeholderSlotsHandler);
+
+        JsonArray positions = json.getAsJsonArray("positions");
+        for (JsonElement position : positions) {
+            group.add(BlockPos.CODEC.parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), position)
+                    .getOrThrow());
         }
-        if (compoundTag.contains("targetPos", Tag.TAG_COMPOUND)) {
-            group.setTarget(NbtUtils.readBlockPos(compoundTag, "targetPos").orElse(BlockPos.ZERO));
-            if (compoundTag.contains("targetSide", Tag.TAG_STRING)) {
-                group.setTargetCoverSide(Direction.byName(compoundTag.getString("targetSide")));
+
+        if (json.has("targetPos")) {
+            group.setTarget(BlockPos.CODEC
+                    .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get("targetPos"))
+                    .getOrThrow());
+            if (json.has("targetSide")) {
+                group.setTargetCoverSide(Direction.CODEC.parse(JsonOps.INSTANCE, json.get("targetSide")).getOrThrow());
             }
-            if (compoundTag.contains("dataSlot", Tag.TAG_INT)) {
-                group.setDataSlot(compoundTag.getInt("dataSlot"));
+            if (json.has("dataSlot")) {
+                group.setDataSlot(json.get("dataSlot").getAsInt());
             }
         }
         return group;
+    }
+
+    private static JsonElement serializeItems(CustomItemStackHandler handler, Context<MonitorGroup> context) {
+        return DataComponentMap.CODEC
+                .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), handler.exportComponents())
+                .getOrThrow();
+    }
+
+    private static CustomItemStackHandler deserializeItems(@Nullable JsonElement json,
+                                                           Context<MonitorGroup> context,
+                                                           CustomItemStackHandler handler) {
+        if (json == null) {
+            throw new IllegalArgumentException("Sync: monitor group is missing item handler data");
+        }
+        DataComponentMap components = DataComponentMap.CODEC
+                .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json)
+                .getOrThrow();
+        handler.importComponents(components);
+        return handler;
     }
 }

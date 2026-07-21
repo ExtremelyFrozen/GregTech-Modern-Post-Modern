@@ -81,7 +81,12 @@ public class MultiblockMachineDefinition extends MachineDefinition {
         structureName = validateStructureName(structureName);
         requirePatternFactory(structureName);
         synchronized (this.patterns) {
-            return this.patterns.get(structureName);
+            BlockPattern pattern = this.patterns.get(structureName);
+            if (pattern == null) {
+                pattern = StructurePatternRegistry.resolvePattern(this, structureName);
+                patterns.put(structureName, pattern);
+            }
+            return pattern;
         }
     }
 

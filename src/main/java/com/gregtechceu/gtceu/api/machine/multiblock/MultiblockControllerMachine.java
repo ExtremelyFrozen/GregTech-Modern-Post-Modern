@@ -118,7 +118,7 @@ public class MultiblockControllerMachine extends MetaMachine {
 
         MultiblockState state = getMultiblockState(structureName);
         List<IMultiPart> newParts = new ArrayList<>();
-        Set<IMultiPart> set = state.getMatchContext().getOrCreate("parts", Collections::emptySet);
+        Set<IMultiPart> set = state.getMatchContext().getOrDefault("parts", Collections.emptySet());
         for (IMultiPart part : set) {
             if (shouldAddPartToController(part)) {
                 newParts.add(part);

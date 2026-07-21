@@ -2,17 +2,18 @@ package com.gregtechceu.gtceu.common.blockentity;
 
 import com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties;
 import com.gregtechceu.gtceu.api.blockentity.PipeBlockEntity;
-import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
+import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.pipenet.IPipeNode;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.common.pipelike.optical.*;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -32,7 +33,7 @@ public class OpticalPipeBlockEntity extends PipeBlockEntity<OpticalPipeType, Opt
     private final EnumMap<Direction, OpticalNetHandler> handlers = new EnumMap<>(Direction.class);
     // the OpticalNetHandler can only be created on the server, so we have an empty placeholder for the client
     @Getter
-    private final IDataAccessHatch clientDataHandler = new DefaultDataHandler();
+    private final IDataAccessMachine clientDataHandler = new DefaultDataHandler();
     @Getter
     private final IOpticalComputationProvider clientComputationHandler = new DefaultComputationHandler();
     private WeakReference<OpticalPipeNet> currentPipeNet = new WeakReference<>(null);
@@ -133,15 +134,10 @@ public class OpticalPipeBlockEntity extends PipeBlockEntity<OpticalPipeType, Opt
         return stack.canPerformAction(GTItemAbilities.WIRE_CUTTER_CONNECT);
     }
 
-    private static class DefaultDataHandler implements IDataAccessHatch {
+    private static class DefaultDataHandler implements IDataAccessMachine {
 
         @Override
-        public boolean isRecipeAvailable(@NotNull GTRecipe recipe, @NotNull Collection<IDataAccessHatch> seen) {
-            return false;
-        }
-
-        @Override
-        public boolean isCreative() {
+        public boolean isRecipeAvailable(@NotNull GTRecipeType recipeType, @NotNull ResourceLocation recipeId) {
             return false;
         }
     }

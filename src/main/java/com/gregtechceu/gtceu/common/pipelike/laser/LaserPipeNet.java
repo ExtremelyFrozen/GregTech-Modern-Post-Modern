@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.pipenet.PipeNet;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -51,10 +51,12 @@ public class LaserPipeNet extends PipeNet<LaserPipeProperties> {
     }
 
     @Override
-    protected void writeNodeData(LaserPipeProperties laserPipeProperties, CompoundTag compoundTag) {}
+    protected DataComponentMap writeNodeData(LaserPipeProperties laserPipeProperties) {
+        return DataComponentMap.EMPTY;
+    }
 
     @Override
-    protected LaserPipeProperties readNodeData(CompoundTag tagCompound) {
+    protected LaserPipeProperties readNodeData(DataComponentMap components) {
         return LaserPipeProperties.INSTANCE;
     }
 

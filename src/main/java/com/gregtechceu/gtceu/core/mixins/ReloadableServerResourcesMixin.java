@@ -25,6 +25,7 @@ import net.neoforged.neoforge.common.conditions.ICondition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -35,6 +36,7 @@ import java.util.concurrent.Executor;
 @Mixin(value = ReloadableServerResources.class, priority = 2000)
 public abstract class ReloadableServerResourcesMixin {
 
+    @Unique
     private static final AdvancementHolder GTCEU$ROOT_RECIPE_ADVANCEMENT = Advancement.Builder.recipeAdvancement()
             .build(RecipeBuilder.ROOT_RECIPE_ADVANCEMENT);
 

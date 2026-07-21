@@ -15,12 +15,13 @@ public class GTNetwork {
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registar = event.registrar(GTCEuAPI.NETWORK_VERSION);
         // spotless:off
-        registar.playBidirectional(SCPacketMonitorGroupNBTChange.TYPE, SCPacketMonitorGroupNBTChange.CODEC, SCPacketMonitorGroupNBTChange::execute);
+        registar.playBidirectional(SCPacketMonitorGroupDataChange.TYPE, SCPacketMonitorGroupDataChange.CODEC, SCPacketMonitorGroupDataChange::execute);
 
         registar.playToServer(CPacketImageRequest.TYPE, CPacketImageRequest.CODEC, CPacketImageRequest::execute);
         registar.playToServer(CPacketMachineSyncToServer.TYPE, CPacketMachineSyncToServer.CODEC, CPacketMachineSyncToServer::execute);
         registar.playToServer(CPacketCoverSyncToServer.TYPE, CPacketCoverSyncToServer.CODEC, CPacketCoverSyncToServer::execute);
         registar.playToClient(SPacketImageResponse.TYPE, SPacketImageResponse.CODEC, SPacketImageResponse::execute);
+        registar.playToClient(SPacketMachineSyncToClient.TYPE, SPacketMachineSyncToClient.CODEC, SPacketMachineSyncToClient::execute);
 
         registar.playToServer(CPacketKeyDown.TYPE, CPacketKeyDown.CODEC, CPacketKeyDown::execute);
 

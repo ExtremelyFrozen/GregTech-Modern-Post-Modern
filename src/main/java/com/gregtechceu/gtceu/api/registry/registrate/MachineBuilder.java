@@ -9,13 +9,15 @@ import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.MachineDefinition.BeforeWorkingPredicate;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifierList;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
@@ -121,7 +123,7 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
     private RecipeModifier recipeModifier = new RecipeModifierList(GTRecipeModifiers.OC_NON_PERFECT);
     private boolean alwaysTryModifyRecipe;
     @Getter
-    private BiPredicate<IRecipeLogicMachine, GTRecipe> beforeWorking = (machine, recipe) -> true;
+    private BeforeWorkingPredicate beforeWorking = (machine, recipe) -> null;
     @Getter
     private Predicate<IRecipeLogicMachine> onWorking = (machine) -> true;
     @Getter
@@ -247,6 +249,12 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
     }
 
     public TYPE beforeWorking(BiPredicate<IRecipeLogicMachine, GTRecipe> beforeWorking) {
+        this.beforeWorking = (machine, recipe) -> beforeWorking.test(machine, recipe) ? null :
+                ModifierFunction.DEFAULT_FAILURE;
+        return getThis();
+    }
+
+    public TYPE beforeWorking(BeforeWorkingPredicate beforeWorking) {
         this.beforeWorking = beforeWorking;
         return getThis();
     }
@@ -329,7 +337,7 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
             return;
         }
         if (!modelProperties.containsKey(GTMachineModelProperties.RECIPE_LOGIC_STATUS)) {
-            modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE);
+            modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, WorkLogic.Status.IDLE);
         }
     }
 
@@ -443,22 +451,22 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
     }
 
     public TYPE workableTieredHullModel(ResourceLocation workableModel) {
-        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE);
+        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, WorkLogic.Status.IDLE);
         return model(createWorkableTieredHullMachineModel(workableModel));
     }
 
     public TYPE simpleGeneratorModel(ResourceLocation workableModel) {
-        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE);
+        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, WorkLogic.Status.IDLE);
         return model(createSimpleGeneratorModel(workableModel));
     }
 
     public TYPE workableSteamHullModel(boolean isHighPressure, ResourceLocation workableModel) {
-        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE);
+        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, WorkLogic.Status.IDLE);
         return model(createWorkableSteamHullMachineModel(isHighPressure, workableModel));
     }
 
     public TYPE workableCasingModel(ResourceLocation baseCasing, ResourceLocation workableModel) {
-        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE);
+        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, WorkLogic.Status.IDLE);
         return model(createWorkableCasingMachineModel(baseCasing, workableModel));
     }
 
@@ -469,7 +477,7 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
 
     public TYPE sidedWorkableCasingModel(ResourceLocation baseCasing,
                                          ResourceLocation workableModel) {
-        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE);
+        modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, WorkLogic.Status.IDLE);
         return model(createSidedWorkableCasingMachineModel(baseCasing, workableModel));
     }
 

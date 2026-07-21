@@ -12,10 +12,10 @@ import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
@@ -28,7 +28,7 @@ import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.utils.Position;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.entity.player.Player;
 
 import com.google.common.collect.Tables;
@@ -177,7 +177,7 @@ public class SimpleSteamMachine extends SteamWorkableMachine implements IUIMachi
 
         var group = getRecipeType().getRecipeUI().createUITemplate(recipeLogic::getProgressPercent,
                 storages,
-                new CompoundTag(),
+                DataComponentMap.EMPTY,
                 Collections.emptyList(),
                 true,
                 isHighPressure);

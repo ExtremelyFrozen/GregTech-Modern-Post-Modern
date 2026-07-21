@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.PhantomSlotWidget;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
 import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;

@@ -1,28 +1,48 @@
 package com.gregtechceu.gtceu.integration.ae2.utils;
 
-import net.minecraft.core.HolderLookup;
+import com.gregtechceu.gtceu.api.transfer.DataComponentTransfer;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.AE2GridNodeData;
+
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.minecraft.nbt.NbtOps;
 
 import appeng.api.networking.IGridNodeListener;
+import appeng.api.networking.IManagedGridNode;
 import appeng.me.ManagedGridNode;
-import org.jetbrains.annotations.NotNull;
+import com.mojang.serialization.JsonOps;
 
-public class SerializableManagedGridNode extends ManagedGridNode implements INBTSerializable<CompoundTag> {
+public class SerializableManagedGridNode extends ManagedGridNode implements DataComponentTransfer {
 
     public <T> SerializableManagedGridNode(T nodeOwner, IGridNodeListener<? super T> listener) {
         super(nodeOwner, listener);
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.@NotNull Provider provider) {
+    public DataComponentMap exportComponents() {
+        return exportComponents(this);
+    }
+
+    public static DataComponentMap exportComponents(IManagedGridNode node) {
         CompoundTag tag = new CompoundTag();
-        super.saveToNBT(tag);
-        return tag;
+        node.saveToNBT(tag);
+        return DataComponentMap.builder()
+                .set(GTDataComponents.AE2_GRID_NODE.get(),
+                        new AE2GridNodeData(NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, tag)))
+                .build();
     }
 
     @Override
-    public void deserializeNBT(HolderLookup.@NotNull Provider provider, @NotNull CompoundTag tag) {
-        super.loadFromNBT(tag);
+    public void importComponents(DataComponentMap components) {
+        importComponents(this, components);
+    }
+
+    public static void importComponents(IManagedGridNode node, DataComponentMap components) {
+        AE2GridNodeData data = components.get(GTDataComponents.AE2_GRID_NODE.get());
+        if (data == null) {
+            throw new IllegalArgumentException("AE2 grid node component map is missing ae2_grid_node");
+        }
+        node.loadFromNBT((CompoundTag) JsonOps.INSTANCE.convertTo(NbtOps.INSTANCE, data.payload()));
     }
 }

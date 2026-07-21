@@ -3,10 +3,12 @@ package com.gregtechceu.gtceu.common.pipelike.duct;
 import com.gregtechceu.gtceu.api.pipenet.LevelPipeNet;
 import com.gregtechceu.gtceu.api.pipenet.Node;
 import com.gregtechceu.gtceu.api.pipenet.PipeNet;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.PipeNetData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 
 import java.util.*;
 
@@ -50,12 +52,19 @@ public class DuctPipeNet extends PipeNet<DuctPipeProperties> {
     }
 
     @Override
-    protected void writeNodeData(DuctPipeProperties nodeData, CompoundTag tagCompound) {
-        tagCompound.putFloat("Rate", nodeData.getTransferRate());
+    protected DataComponentMap writeNodeData(DuctPipeProperties nodeData) {
+        return DataComponentMap.builder()
+                .set(GTDataComponents.PIPE_NET_DUCT_PIPE.get(),
+                        new PipeNetData.DuctPipe(nodeData.getTransferRate()))
+                .build();
     }
 
     @Override
-    protected DuctPipeProperties readNodeData(CompoundTag tagCompound) {
-        return new DuctPipeProperties(tagCompound.getFloat("Rate"));
+    protected DuctPipeProperties readNodeData(DataComponentMap components) {
+        PipeNetData.DuctPipe data = components.get(GTDataComponents.PIPE_NET_DUCT_PIPE.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Missing duct pipe node data component");
+        }
+        return new DuctPipeProperties(data.transferRate());
     }
 }

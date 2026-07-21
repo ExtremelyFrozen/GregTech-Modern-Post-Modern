@@ -2,10 +2,8 @@ package com.gregtechceu.gtceu.utils;
 
 import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
-import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 
@@ -22,7 +20,7 @@ import java.util.*;
 // Utils for interacting with recipes without using a machine
 public class DummyRecipeUtils {
 
-    public static class DummyEnergyContainer implements IRecipeHandler<EnergyStack> {
+    public static class DummyEnergyContainer implements IRecipeHandler<Long> {
 
         private final long energyCapacity;
         private long energyStored;
@@ -35,15 +33,14 @@ public class DummyRecipeUtils {
         }
 
         @Override
-        public List<EnergyStack> handleRecipeInner(IO io, GTRecipe recipe, List<EnergyStack> left, boolean simulate) {
+        public List<Long> handleRecipeInner(IO io, GTRecipe recipe, List<Long> left, boolean simulate) {
             for (var it = left.listIterator(); it.hasNext();) {
-                EnergyStack stack = it.next();
-                if (stack.isEmpty()) {
+                long totalEU = it.next();
+                if (totalEU <= 0) {
                     it.remove();
                     continue;
                 }
 
-                long totalEU = stack.getTotalEU();
                 long canTransfer = Math.min(totalEU, (io == IO.IN ? energyStored : energyCapacity - energyStored));
                 if (!simulate) {
                     // invert the EU value if we're doing inputs (inputting *to the recipe* -> removing from handlers)
@@ -56,7 +53,7 @@ public class DummyRecipeUtils {
                 if (totalEU <= 0) {
                     it.remove();
                 } else {
-                    it.set(new EnergyStack(totalEU));
+                    it.set(totalEU);
                 }
 
             }
@@ -66,7 +63,7 @@ public class DummyRecipeUtils {
 
         @Override
         public @NotNull List<Object> getContents() {
-            return Collections.singletonList(EnergyContainerList.calculateVoltageAmperage(energyStored, maxAmps));
+            return Collections.singletonList(energyStored);
         }
 
         @Override
@@ -75,7 +72,7 @@ public class DummyRecipeUtils {
         }
 
         @Override
-        public RecipeCapability<EnergyStack> getCapability() {
+        public RecipeCapability<Long> getCapability() {
             return EURecipeCapability.CAP;
         }
     }

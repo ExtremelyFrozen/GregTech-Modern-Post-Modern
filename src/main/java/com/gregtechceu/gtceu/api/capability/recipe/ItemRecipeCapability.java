@@ -2,15 +2,16 @@ package com.gregtechceu.gtceu.api.capability.recipe;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerGroup;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerGroupDistinctness;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.ResearchData;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
 import com.gregtechceu.gtceu.api.recipe.content.SerializerIngredient;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroup;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupDistinctness;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntCircuitIngredient;
 import com.gregtechceu.gtceu.api.recipe.ingredient.IntProviderIngredient;
 import com.gregtechceu.gtceu.api.recipe.ingredient.SizedIngredientExtensions;
@@ -18,7 +19,7 @@ import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.AbstractMapIngredient;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.item.*;
 import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
 import com.gregtechceu.gtceu.common.valueprovider.*;
 import com.gregtechceu.gtceu.config.ConfigHolder;
@@ -364,7 +365,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
     }
 
     @Override
-    public @NotNull List<Object> createXEIContainerContents(List<Content> contents, GTRecipe recipe, IO io) {
+    public @NotNull List<Object> createXEIContainerContents(List<Content> contents, GTRecipeDefinition recipe, IO io) {
         List<Object> entryLists = contents.stream()
                 .map(Content::getContent)
                 .map(this::of)
@@ -383,15 +384,15 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                 if (researchData != null) break;
             }
             if (researchData != null) {
-                Collection<GTRecipe> possibleRecipes = researchData.recipeType()
+                Collection<GTRecipeDefinition> possibleRecipes = researchData.recipeType()
                         .getDataStickEntry(researchData.researchId());
                 Set<ItemStack> cache = new ObjectOpenCustomHashSet<>(ItemStackHashStrategy.comparingItem());
                 if (possibleRecipes != null) {
-                    for (GTRecipe r : possibleRecipes) {
+                    for (GTRecipeDefinition r : possibleRecipes) {
                         var outputs = r.getOutputContents(this);
                         if (outputs.isEmpty()) continue;
 
-                        Content outputContent = outputs.get(0);
+                        Content outputContent = outputs.getFirst();
                         ItemStack[] stacks = this.of(outputContent.content).getItems();
                         if (stacks.length == 0) continue;
 
@@ -438,7 +439,7 @@ public class ItemRecipeCapability extends RecipeCapability<SizedIngredient> {
                                 IO io,
                                 GTRecipeTypeUI.@UnknownNullability("null when storage == null") RecipeHolder recipeHolder,
                                 @NotNull GTRecipeType recipeType,
-                                @UnknownNullability("null when content == null") GTRecipe recipe,
+                                @UnknownNullability("null when content == null") GTRecipeDefinition recipe,
                                 @Nullable Content content,
                                 @Nullable Object storage, int recipeTier, int chanceTier) {
         if (widget instanceof SlotWidget slot) {

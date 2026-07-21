@@ -77,7 +77,7 @@ public class MachineDefinition implements Supplier<MetaMachineBlock> {
     @NotNull
     @Getter
     @Setter
-    private BiPredicate<IRecipeLogicMachine, GTRecipe> beforeWorking = (machine, recipe) -> true;
+    private BeforeWorkingPredicate beforeWorking = (machine, recipe) -> null;
     @NotNull
     @Getter
     @Setter
@@ -216,5 +216,12 @@ public class MachineDefinition implements Supplier<MetaMachineBlock> {
 
     public static void clearBuilt() {
         STATE.remove();
+    }
+
+    @FunctionalInterface
+    public interface BeforeWorkingPredicate {
+
+        @Nullable
+        Component apply(IRecipeLogicMachine machine, @Nullable GTRecipe recipe);
     }
 }

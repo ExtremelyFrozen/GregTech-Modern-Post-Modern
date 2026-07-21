@@ -86,7 +86,7 @@ public class IntProviderFluidIngredientTest {
         var centHandler = CENTRIFUGE_RECIPE_TYPE.getAdditionHandler();
         centHandler.beginStaging();
 
-        CRHandler.addStaging(CR_RECIPE_TYPE
+        CRHandler.addRuntimeStaging(CR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_input_fluid_cr"))
                 .inputFluidsRanged(CR_IN, UniformInt.of(0, 9))
                 .inputItems(COBBLE)
@@ -95,7 +95,7 @@ public class IntProviderFluidIngredientTest {
                 .duration(2)
                 .build());
 
-        CRHandler.addStaging(CR_RECIPE_TYPE
+        CRHandler.addRuntimeStaging(CR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_output_fluid_cr"))
                 .inputFluids(CR_OUT)
                 .outputFluidsRanged(REDSTONE, UniformInt.of(0, 9))
@@ -103,7 +103,7 @@ public class IntProviderFluidIngredientTest {
                 .duration(2)
                 .build());
 
-        LCRHandler.addStaging(LCR_RECIPE_TYPE
+        LCRHandler.addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_input_fluid_lcr"))
                 .inputFluidsRanged(LCR_IN, UniformInt.of(0, 9))
                 .inputFluids(RUBBER)
@@ -112,7 +112,7 @@ public class IntProviderFluidIngredientTest {
                 .duration(2)
                 .build());
 
-        LCRHandler.addStaging(LCR_RECIPE_TYPE
+        LCRHandler.addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_output_fluid_lcr"))
                 .inputFluids(LCR_OUT)
                 .outputFluidsRanged(REDSTONE, UniformInt.of(0, 9))
@@ -120,7 +120,7 @@ public class IntProviderFluidIngredientTest {
                 .duration(2)
                 .build());
 
-        centHandler.addStaging(CENTRIFUGE_RECIPE_TYPE
+        centHandler.addRuntimeStaging(CENTRIFUGE_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_input_fluid_cent"))
                 .inputFluidsRanged(LCENT_IN, UniformInt.of(0, 40))
                 .inputItems(COBBLE)
@@ -129,7 +129,7 @@ public class IntProviderFluidIngredientTest {
                 .duration(4)
                 .build());
 
-        centHandler.addStaging(CENTRIFUGE_RECIPE_TYPE
+        centHandler.addRuntimeStaging(CENTRIFUGE_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_output_fluid_cent"))
                 .inputFluids(LCENT_OUT)
                 .outputFluidsRanged(REDSTONE, UniformInt.of(0, 40))

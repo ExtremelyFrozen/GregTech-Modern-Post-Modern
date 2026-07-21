@@ -36,7 +36,7 @@ public class AssemblyLineTests {
         var assLineHandler = ASSLINE_RECIPE_TYPE.getAdditionHandler();
         assLineHandler.beginStaging();
 
-        assLineHandler.addStaging(ASSLINE_RECIPE_TYPE
+        assLineHandler.addRuntimeStaging(ASSLINE_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_assline"))
                 .inputItems(new ItemStack(Blocks.COBBLESTONE), new ItemStack(Blocks.ACACIA_WOOD))
                 .inputFluids(new FluidStack(Fluids.WATER, 1), new FluidStack(Fluids.LAVA, 1))
@@ -77,6 +77,32 @@ public class AssemblyLineTests {
                 inputHatch1, inputHatch2, inputHatch3, inputHatch4, outputBus1, controller);
     }
 
+    private static String describeState(BusHolder busHolder) {
+        var logic = busHolder.controller.getRecipeLogic();
+        var recipe = logic.getLastRecipe();
+        return " state[status=" + logic.getStatus() +
+                ", progress=" + logic.getProgress() + "/" + logic.getMaxProgress() +
+                ", waiting=" + logic.getWaitingReason() +
+                ", failures=" + logic.getFailureReasons() +
+                ", lastRecipe=" + (recipe == null ? "null" : recipe.getId()) +
+                ", input1=" + busHolder.inputBus1.getInventory().getStackInSlot(0) +
+                ", input2=" + busHolder.inputBus2.getInventory().getStackInSlot(0) +
+                ", fluid1=" + busHolder.inputHatch1.tank.getFluidInTank(0) +
+                ", fluid2=" + busHolder.inputHatch2.tank.getFluidInTank(0) +
+                ", outputStack=" + busHolder.outputBus1.getInventory().getStackInSlot(0) + "]";
+    }
+
+    private static void notifyInputsChanged(BusHolder busHolder) {
+        busHolder.inputBus1.getInventory().onContentsChanged();
+        busHolder.inputBus2.getInventory().onContentsChanged();
+        busHolder.inputBus3.getInventory().onContentsChanged();
+        busHolder.inputBus4.getInventory().onContentsChanged();
+        busHolder.inputHatch1.tank.onContentsChanged();
+        busHolder.inputHatch2.tank.onContentsChanged();
+        busHolder.inputHatch3.tank.onContentsChanged();
+        busHolder.inputHatch4.tank.onContentsChanged();
+    }
+
     @TestHolder()
     @GameTest(template = "ass_line_4aev_4in", batch = "Assline")
     public static void AsslineRecipeRunsTest(GameTestHelper helper) {
@@ -85,12 +111,14 @@ public class AssemblyLineTests {
         busHolder.inputBus2.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD));
         busHolder.inputHatch1.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 1));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 1));
+        notifyInputsChanged(busHolder);
         helper.succeedOnTickWhen(2, () -> {
             helper.assertTrue(
                     TestUtils.isItemStackEqual(busHolder.outputBus1.getInventory().getStackInSlot(0),
                             new ItemStack(Blocks.STONE)),
                     "Item didn't craft at the right tick with ok recipe" +
-                            busHolder.outputBus1.getInventory().getStackInSlot(0).getDisplayName());
+                            busHolder.outputBus1.getInventory().getStackInSlot(0).getDisplayName() +
+                            describeState(busHolder));
         });
     }
 
@@ -102,6 +130,7 @@ public class AssemblyLineTests {
         busHolder.inputBus3.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD));
         busHolder.inputHatch1.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 1));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 1));
+        notifyInputsChanged(busHolder);
         helper.onEachTick(() -> {
             helper.assertFalse(
                     TestUtils.isItemStackEqual(busHolder.outputBus1.getInventory().getStackInSlot(0),
@@ -119,6 +148,7 @@ public class AssemblyLineTests {
         busHolder.inputBus2.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 1));
         busHolder.inputHatch3.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 1));
+        notifyInputsChanged(busHolder);
         helper.onEachTick(() -> {
             helper.assertFalse(
                     TestUtils.isItemStackEqual(busHolder.outputBus1.getInventory().getStackInSlot(0),
@@ -136,6 +166,7 @@ public class AssemblyLineTests {
         busHolder.inputBus3.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 1));
         busHolder.inputHatch3.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 1));
+        notifyInputsChanged(busHolder);
         helper.onEachTick(() -> {
             helper.assertFalse(
                     TestUtils.isItemStackEqual(busHolder.outputBus1.getInventory().getStackInSlot(0),
@@ -153,12 +184,13 @@ public class AssemblyLineTests {
         busHolder.inputBus2.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD, 2));
         busHolder.inputHatch1.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 2));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 2));
+        notifyInputsChanged(busHolder);
         helper.runAtTickTime(1, () -> {
             // All 4 inputs had 1 consumed
             helper.assertTrue(
                     TestUtils.isItemStackEqual(busHolder.inputBus1.getInventory().getStackInSlot(0),
                             new ItemStack(Blocks.COBBLESTONE)),
-                    "Assline consumed both items when it should have consumed one");
+                    "Assline consumed both items when it should have consumed one" + describeState(busHolder));
             helper.assertTrue(
                     TestUtils.isItemStackEqual(busHolder.inputBus2.getInventory().getStackInSlot(0),
                             new ItemStack(Blocks.ACACIA_WOOD)),
@@ -211,6 +243,7 @@ public class AssemblyLineTests {
         busHolder.inputBus1.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD));
         busHolder.inputHatch1.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 1));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 1));
+        notifyInputsChanged(busHolder);
         helper.onEachTick(() -> {
             helper.assertFalse(
                     TestUtils.isItemStackEqual(busHolder.outputBus1.getInventory().getStackInSlot(0),
@@ -228,6 +261,7 @@ public class AssemblyLineTests {
         busHolder.inputBus2.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 1));
         busHolder.inputHatch1.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 1));
+        notifyInputsChanged(busHolder);
         helper.onEachTick(() -> {
             helper.assertFalse(
                     TestUtils.isItemStackEqual(busHolder.outputBus1.getInventory().getStackInSlot(0),
@@ -245,6 +279,7 @@ public class AssemblyLineTests {
         busHolder.inputBus1.getInventory().setStackInSlot(0, new ItemStack(Items.ACACIA_WOOD));
         busHolder.inputHatch2.tank.setFluidInTank(0, new FluidStack(Fluids.WATER, 1));
         busHolder.inputHatch1.tank.setFluidInTank(0, new FluidStack(Fluids.LAVA, 1));
+        notifyInputsChanged(busHolder);
         helper.onEachTick(() -> {
             helper.assertFalse(
                     TestUtils.isItemStackEqual(busHolder.outputBus1.getInventory().getStackInSlot(0),

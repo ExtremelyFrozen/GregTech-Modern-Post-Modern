@@ -9,9 +9,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.machine.trait.EnvironmentalExplosionTrait;
@@ -35,7 +33,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<EnergyStack> implements IEnergyContainer {
+public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<Long> implements IEnergyContainer {
 
     public static final MachineTraitType<NotifiableEnergyContainer> TYPE = new MachineTraitType<>(
             NotifiableEnergyContainer.class);
@@ -310,16 +308,15 @@ public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<Ener
     }
 
     @Override
-    public List<EnergyStack> handleRecipeInner(IO io, GTRecipe recipe, List<EnergyStack> left,
-                                               boolean simulate) {
+    public List<Long> handleRecipeInner(IO io, GTRecipe recipe, List<Long> left,
+                                        boolean simulate) {
         for (var it = left.listIterator(); it.hasNext();) {
-            EnergyStack stack = it.next();
-            if (stack.isEmpty()) {
+            long totalEU = it.next();
+            if (totalEU <= 0) {
                 it.remove();
                 continue;
             }
 
-            long totalEU = stack.getTotalEU();
             long canTransfer = Math.min(totalEU, (io == IO.IN ? this.getEnergyStored() :
                     this.getEnergyCapacity() - this.getEnergyStored()));
             if (!simulate) {
@@ -331,7 +328,7 @@ public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<Ener
             if (totalEU <= 0) {
                 it.remove();
             } else {
-                it.set(new EnergyStack(totalEU));
+                it.set(totalEU);
             }
 
         }
@@ -341,8 +338,7 @@ public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<Ener
 
     @Override
     public List<Object> getContents() {
-        long amperage = Math.max(getInputAmperage(), getOutputAmperage());
-        return Collections.singletonList(EnergyContainerList.calculateVoltageAmperage(getEnergyStored(), amperage));
+        return Collections.singletonList(getEnergyStored());
     }
 
     @Override
@@ -351,7 +347,7 @@ public class NotifiableEnergyContainer extends NotifiableRecipeHandlerTrait<Ener
     }
 
     @Override
-    public RecipeCapability<EnergyStack> getCapability() {
+    public RecipeCapability<Long> getCapability() {
         return EURecipeCapability.CAP;
     }
 }

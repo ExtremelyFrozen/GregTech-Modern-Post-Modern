@@ -6,8 +6,8 @@ import com.gregtechceu.gtceu.client.renderer.machine.DynamicRender;
 import com.gregtechceu.gtceu.client.renderer.machine.DynamicRenderType;
 import com.gregtechceu.gtceu.client.util.RenderBufferHelper;
 import com.gregtechceu.gtceu.client.util.RenderUtil;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.storage.CreativeTankMachine;
 import com.gregtechceu.gtceu.common.machine.storage.QuantumTankMachine;
 

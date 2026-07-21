@@ -19,7 +19,6 @@ import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 import com.gregtechceu.gtceu.client.renderer.machine.DynamicRenderHelper;
 import com.gregtechceu.gtceu.client.util.TooltipHelper;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.machines.*;
 import com.gregtechceu.gtceu.common.data.models.GTModels;
 import com.gregtechceu.gtceu.common.machine.electric.*;
@@ -162,7 +161,7 @@ public class GTMachines {
                     .overlayTieredHullModel("hull")
                     .abilities(PartAbility.PASSTHROUGH_HATCH)
                     .modelProperty(IS_FORMED, false)
-                    .langValue("%s §fMachine Hull".formatted(VNF[tier]))
+                    .langValue("%s 搂fMachine Hull".formatted(VNF[tier]))
                     .tooltips(Component.translatable("gtpm.machine.hull.tooltip"))
                     .register(),
             ALL_TIERS);

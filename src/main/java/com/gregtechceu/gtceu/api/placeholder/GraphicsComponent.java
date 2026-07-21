@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorMa
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
@@ -13,7 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.function.Supplier;
 
-public record GraphicsComponent(float x, float y, float x2, float y2, String rendererId, CompoundTag renderData)
+public record GraphicsComponent(float x, float y, float x2, float y2, String rendererId, DataComponentMap renderData)
         implements Supplier<IMonitorRenderer> {
 
     // spotless:off
@@ -23,11 +23,11 @@ public record GraphicsComponent(float x, float y, float x2, float y2, String ren
             Codec.FLOAT.fieldOf("x2").forGetter(GraphicsComponent::x2),
             Codec.FLOAT.fieldOf("y2").forGetter(GraphicsComponent::y2),
             Codec.STRING.fieldOf("rendererId").forGetter(GraphicsComponent::rendererId),
-            CompoundTag.CODEC.fieldOf("renderData").forGetter(GraphicsComponent::renderData)
+            DataComponentMap.CODEC.fieldOf("renderData").forGetter(GraphicsComponent::renderData)
     ).apply(instance, GraphicsComponent::new));
     // spotless:on
 
-    public GraphicsComponent(double x, double y, double x2, double y2, String rendererId, CompoundTag renderData) {
+    public GraphicsComponent(double x, double y, double x2, double y2, String rendererId, DataComponentMap renderData) {
         this((float) x, (float) y, (float) x2, (float) y2, rendererId, renderData);
     }
 

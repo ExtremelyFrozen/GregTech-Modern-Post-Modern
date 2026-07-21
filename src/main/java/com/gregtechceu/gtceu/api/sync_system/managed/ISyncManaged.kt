@@ -2,8 +2,6 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 
-import net.neoforged.neoforge.common.util.INBTSerializable
-
 import org.jetbrains.annotations.Nullable
 
 import kotlin.jvm.JvmDefaultWithCompatibility
@@ -19,7 +17,7 @@ import kotlin.jvm.JvmDefaultWithCompatibility
  * <ul>
  * <li>`T` is primitive</li>
  * <li>`T` has a [com.gregtechceu.gtceu.api.sync_system.FieldCodecs] codec registered</li>
- * <li>`T` implements [INBTSerializable]</li>
+ * <li>`T` implements [com.gregtechceu.gtceu.api.transfer.DataComponentTransfer]</li>
  * <li>`T` is an [ISyncManaged] or [ISyncAnnotated] class</li>
  * </ul>
  *

@@ -21,7 +21,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.steam.SimpleSteamMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -31,17 +31,16 @@ import com.gregtechceu.gtceu.api.registry.registrate.MachineBuilder;
 import com.gregtechceu.gtceu.api.registry.registrate.MultiblockMachineBuilder;
 import com.gregtechceu.gtceu.client.renderer.machine.*;
 import com.gregtechceu.gtceu.common.block.BoilerFireboxType;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMaterialItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.data.GTMedicalConditions;
 import com.gregtechceu.gtceu.common.data.GTRecipeModifiers;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.models.GTMachineModels;
 import com.gregtechceu.gtceu.common.item.DrumMachineItem;
 import com.gregtechceu.gtceu.common.item.QuantumTankMachineItem;
 import com.gregtechceu.gtceu.common.machine.electric.BatteryBufferMachine;
-import com.gregtechceu.gtceu.common.machine.electric.ChargerMachine;
 import com.gregtechceu.gtceu.common.machine.electric.ConverterMachine;
 import com.gregtechceu.gtceu.common.machine.electric.TransformerMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.MultiblockTankMachine;
@@ -380,7 +379,7 @@ public class GTMachineUtils {
                                         FormattingUtil.formatNumbers(GTValues.V[tier]),
                                         GTValues.VNF[tier]),
                                 Component.translatable("gtpm.universal.tooltip.amperage_in_till",
-                                        batterySlotSize * BatteryBufferMachine.AMPS_PER_BATTERY),
+                                        batterySlotSize * BatteryBufferMachine.AMPS_PER_BATTERY_NORMAL),
                                 Component.translatable("gtpm.universal.tooltip.amperage_out_till", batterySlotSize))
                         .register(),
                 ALL_TIERS);
@@ -392,10 +391,11 @@ public class GTMachineUtils {
 
     public static MachineDefinition[] registerCharger(GTRegistrate registrate, int itemSlotSize) {
         return registerTieredMachines(registrate, "charger_" + itemSlotSize + "x",
-                (holder, tier) -> new ChargerMachine(holder, tier, itemSlotSize),
+                (holder, tier) -> new BatteryBufferMachine(holder, tier, itemSlotSize,
+                        BatteryBufferMachine.AMPS_PER_BATTERY_CHARGER, 0),
                 (tier, builder) -> builder
                         .rotationState(RotationState.ALL)
-                        .modelProperty(GTMachineModelProperties.CHARGER_STATE, ChargerMachine.State.IDLE)
+                        .modelProperty(GTMachineModelProperties.CHARGER_STATE, BatteryBufferMachine.State.IDLE)
                         .model(GTMachineModels.createChargerModel())
                         .langValue("%s %sx Turbo Charger".formatted(
                                 VCF[tier] + VOLTAGE_NAMES[tier] + ChatFormatting.RESET,
@@ -405,7 +405,7 @@ public class GTMachineUtils {
                                         FormattingUtil.formatNumbers(GTValues.V[tier]),
                                         GTValues.VNF[tier]),
                                 Component.translatable("gtpm.universal.tooltip.amperage_in_till",
-                                        itemSlotSize * ChargerMachine.AMPS_PER_ITEM))
+                                        itemSlotSize * BatteryBufferMachine.AMPS_PER_BATTERY_CHARGER))
                         .register(),
                 ALL_TIERS);
     }
@@ -426,7 +426,7 @@ public class GTMachineUtils {
                 (holder, tier) -> new ConverterMachine(holder, tier, amperage),
                 (tier, builder) -> builder
                         .rotationState(RotationState.ALL)
-                        .langValue("%s %s§eA§r Energy Converter".formatted(VCF[tier] + VN[tier] + ChatFormatting.RESET,
+                        .langValue("%s %s搂eA搂r Energy Converter".formatted(VCF[tier] + VN[tier] + ChatFormatting.RESET,
                                 amperage))
                         .modelProperty(GTMachineModelProperties.IS_FE_TO_EU, false)
                         .model(GTMachineModels.createConverterModel(amperage))
@@ -459,7 +459,7 @@ public class GTMachineUtils {
         String name = io == IN ? "target" : "source";
         return registerTieredMachines(registrate, amperage + "a_laser_" + name + "_hatch",
                 (holder, tier) -> new LaserHatchPartMachine(holder, io, tier, amperage), (tier, builder) -> builder
-                        .langValue(VNF[tier] + "§r " + FormattingUtil.formatNumbers(amperage) + "§eA§r Laser " +
+                        .langValue(VNF[tier] + "搂r " + FormattingUtil.formatNumbers(amperage) + "搂eA搂r Laser " +
                                 FormattingUtil.toEnglishName(name) + " Hatch")
                         .rotationState(RotationState.ALL)
                         .tooltips(Component.translatable("gtpm.machine.laser_hatch." + name + ".tooltip"),
@@ -708,7 +708,7 @@ public class GTMachineUtils {
                 .recoveryItems(
                         () -> new ItemLike[] {
                                 GTMaterialItems.MATERIAL_ITEMS.get(TagPrefix.dustTiny, GTMaterials.Ash).get() })
-                .modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, RecipeLogic.Status.IDLE)
+                .modelProperty(GTMachineModelProperties.RECIPE_LOGIC_STATUS, WorkLogic.Status.IDLE)
                 .model(createWorkableCasingMachineModel(texture,
                         GTCEu.id("block/multiblock/generator/large_%s_boiler".formatted(name)))
                         .andThen(b -> b.addDynamicRenderer(() -> DynamicRenderHelper.makeBoilerPartRender(firebox, casing))))

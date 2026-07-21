@@ -98,7 +98,7 @@ public class NotifiableItemStackHandler extends NotifiableRecipeHandlerTrait<Siz
     public static List<SizedIngredient> handleRecipe(IO io, GTRecipe recipe, List<SizedIngredient> left,
                                                      boolean simulate,
                                                      IO handlerIO, CustomItemStackHandler storage) {
-        if (io != handlerIO) return left;
+        if (!handlerIO.support(io)) return left;
         if (io != IO.IN && io != IO.OUT) return left;
 
         // Temporarily remove listener so that we can broadcast the entire set of transactions once

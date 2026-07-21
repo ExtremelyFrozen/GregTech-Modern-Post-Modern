@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.core.mixins;
 
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.lookup.StagingRecipeDB;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
@@ -34,6 +35,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Mixin(value = RecipeManager.class, priority = 1500)
@@ -54,10 +56,10 @@ public abstract class RecipeManagerLateMixin {
                                            ProfilerFiller profiler, CallbackInfo ci) {
         var recipesByName = new HashMap<>(byName);
         byName.values().forEach(holder -> {
-            if (holder.value() instanceof GTRecipe gtRecipe) {
-                new GTRecipeBuilder(gtRecipe, gtRecipe.recipeType)
+            if (holder.value() instanceof GTRecipeDefinition definition) {
+                new GTRecipeBuilder(definition.toRuntime(), definition.recipeType)
                         .id(holder.id().withPath(path -> path.substring(path.indexOf('/') + 1)))
-                        .onSave(gtRecipe.recipeType.getRecipeBuilder().onSave)
+                        .onSave(definition.recipeType.getRecipeBuilder().onSave)
                         .save(new RecipeOutput() {
 
                             @Override
@@ -96,20 +98,28 @@ public abstract class RecipeManagerLateMixin {
                     Stream.concat(
                             this.byType.get(gtRecipeType).stream(),
                             proxyRecipes.entrySet().stream().flatMap(entry -> entry.getValue().stream()))
-                            .filter(holder -> holder != null && holder.value() instanceof GTRecipe)
-                            .forEach(holder -> {
-                                GTRecipe recipe = (GTRecipe) holder.value();
-                                recipe.setId(holder.id());
-                                stagingDB.add(recipe);
-                            });
+                            .filter(Objects::nonNull)
+                            .forEach(holder -> gtceu$addRecipeToStaging(stagingDB, holder));
                 } else if (!proxyRecipes.isEmpty()) {
                     proxyRecipes.values().stream()
                             .flatMap(List::stream)
-                            .forEach(gtRecipe -> stagingDB.add(gtRecipe.value()));
+                            .forEach(gtRecipe -> stagingDB.addRuntime(gtRecipe.value()));
                 }
 
                 stagingDB.populateDB(gtRecipeType.db());
             }
+        }
+    }
+
+    @Unique
+    private static void gtceu$addRecipeToStaging(StagingRecipeDB stagingDB, RecipeHolder<?> holder) {
+        Recipe<?> recipe = holder.value();
+        if (recipe instanceof GTRecipeDefinition definition) {
+            definition.setId(holder.id());
+            stagingDB.add(definition);
+        } else if (recipe instanceof GTRecipe gtRecipe) {
+            gtRecipe.setId(holder.id());
+            stagingDB.addRuntime(gtRecipe);
         }
     }
 

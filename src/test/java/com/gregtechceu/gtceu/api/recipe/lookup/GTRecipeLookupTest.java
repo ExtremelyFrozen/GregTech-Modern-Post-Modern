@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.api.recipe.lookup;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.lookup.ingredient.AbstractMapIngredient;
@@ -92,7 +93,7 @@ public class GTRecipeLookupTest {
                 RANGED_INPUT_ITEM,
                 RANGED_INPUT_FLUID,
                 RANGED_INPUT_BOTH)) {
-            handler.addStaging(recipe);
+            handler.addRuntimeStaging(recipe);
         }
         handler.completeStaging();
 
@@ -128,6 +129,26 @@ public class GTRecipeLookupTest {
         GTRecipe resultRecipe = DB.find(ingredients, ALWAYS_TRUE);
         helper.assertTrue(SMELT_STONE.equals(resultRecipe),
                 "GT Recipe should be smelt_stone, instead was " + resultRecipe);
+        helper.succeed();
+    }
+
+    @TestHolder()
+    @EmptyTemplate
+    @GameTest(template = "empty", batch = "GTRecipeLookup")
+    public static void definitionStagingKeepsDefinitionInCategory(GameTestHelper helper) {
+        GTRecipeType recipeType = TestUtils.createRecipeType("recipe_lookup_definition_staging");
+        GTRecipeDefinition definition = recipeType.recipeBuilder("definition_display_source")
+                .inputItems(Items.COBBLESTONE, 1)
+                .outputItems(Items.STONE, 1)
+                .buildDefinition();
+
+        RecipeAdditionHandler handler = recipeType.getAdditionHandler();
+        handler.beginStaging();
+        handler.addStaging(definition);
+        handler.completeStaging();
+
+        helper.assertTrue(recipeType.getRecipesInCategory(recipeType.getCategory()).contains(definition),
+                "category map should keep the staged definition recipe for XEI display");
         helper.succeed();
     }
 

@@ -48,7 +48,7 @@ public class PatternBufferTest {
         LCR_RECIPE_TYPE = TestUtils.createRecipeTypeAndInsertRecipe("pattern_buffer_tests",
                 GTRecipeTypes.LARGE_CHEMICAL_RECIPES);
 
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_recipe_pattern_buffer"))
                 .id(GTCEu.id("test_recipe_pattern_buffer"))
                 .inputItems(new ItemStack(Items.RED_BED))

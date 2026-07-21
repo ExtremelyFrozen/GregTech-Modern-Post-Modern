@@ -3,6 +3,8 @@ package com.gregtechceu.gtceu.integration.ae2.machine.trait;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.machine.trait.*;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupDistinctness;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferProxyPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.InternalSlotRecipeHandler.SlotRHL;

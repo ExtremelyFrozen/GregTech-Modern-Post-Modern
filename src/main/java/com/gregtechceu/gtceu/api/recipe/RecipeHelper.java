@@ -2,18 +2,17 @@ package com.gregtechceu.gtceu.api.recipe;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerGroup;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerGroupColor;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerGroupDistinctness;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.condition.RecipeConditionType;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
+import com.gregtechceu.gtceu.api.recipe.content.ContentListMap;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroup;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupColor;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerGroupDistinctness;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.ingredient.ExDataComponentFluidIngredient;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
-import com.gregtechceu.gtceu.utils.GTUtil;
 import com.gregtechceu.gtceu.utils.TagUtil;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -40,9 +39,15 @@ import java.util.stream.Collectors;
 
 public class RecipeHelper {
 
-    public static EnergyStack getRealEUt(@NotNull GTRecipe recipe) {
-        EnergyStack stack = recipe.getInputEUt();
-        if (!stack.isEmpty()) return stack;
+    public static long getRealEUt(@NotNull GTRecipe recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
+        return recipe.getOutputEUt();
+    }
+
+    public static long getRealEUt(@NotNull GTRecipeDefinition recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
         return recipe.getOutputEUt();
     }
 
@@ -50,27 +55,44 @@ public class RecipeHelper {
      * Get a pair of the absolute EU/t value this recipe inputs or outputs and if it's input or output
      *
      * @param recipe
-     * @return A pair of {@code (EnergyStack, isInput)}
+     * @return signed EU/t. Positive values are recipe inputs, negative values are recipe outputs.
      */
-    public static EnergyStack.WithIO getRealEUtWithIO(@NotNull GTRecipe recipe) {
-        EnergyStack stack = recipe.getInputEUt();
-        if (!stack.isEmpty()) return new EnergyStack.WithIO(stack, IO.IN);
-        return new EnergyStack.WithIO(recipe.getOutputEUt(), IO.OUT);
+    public static long getRealEUtWithIO(@NotNull GTRecipe recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
+        return -recipe.getOutputEUt();
+    }
+
+    public static long getRealEUtWithIO(@NotNull GTRecipeDefinition recipe) {
+        long stack = recipe.getInputEUt();
+        if (stack != 0) return stack;
+        return -recipe.getOutputEUt();
     }
 
     public static int getRecipeEUtTier(GTRecipe recipe) {
-        EnergyStack stack = getRealEUt(recipe);
-        long EUt = stack.voltage();
-        if (recipe.parallels > 1) EUt /= recipe.parallels;
-        return GTUtil.getTierByVoltage(EUt);
+        return recipe.tier;
+    }
+
+    public static int getRecipeEUtTier(GTRecipeDefinition recipe) {
+        return recipe.tier;
     }
 
     public static int getPreOCRecipeEuTier(GTRecipe recipe) {
-        EnergyStack stack = getRealEUt(recipe);
-        long EUt = stack.getTotalEU();
-        if (recipe.parallels > 1) EUt /= recipe.parallels;
-        EUt >>= (recipe.ocLevel * 2);
-        return GTUtil.getTierByVoltage(EUt);
+        return recipe.tier;
+    }
+
+    public static int getPreOCRecipeEuTier(GTRecipeDefinition recipe) {
+        return recipe.tier;
+    }
+
+    public static long calculateEUt(ContentListMap contents) {
+        var outputs = contents.get(EURecipeCapability.CAP);
+        if (outputs == null) return 0;
+        long eut = 0;
+        for (var content : outputs) {
+            eut += EURecipeCapability.CAP.of(content.content);
+        }
+        return eut;
     }
 
     public static <T> List<T> getInputContents(GTRecipeBuilder builder, RecipeCapability<T> capability) {
@@ -202,6 +224,23 @@ public class RecipeHelper {
         return result;
     }
 
+    private static RecipeHandleResult matchRecipeWithGroup(IRecipeCapabilityHolder holder, GTRecipe recipe,
+                                                           boolean tick,
+                                                           @Nullable RecipeHandlerGroup group) {
+        if (!holder.hasCapabilityProxies()) {
+            return new RecipeHandleResult(ActionResult.FAIL_NO_CAPABILITIES, group);
+        }
+
+        var inputResult = handleRecipeWithGroup(holder, recipe, IO.IN, tick ? recipe.tickInputs : recipe.inputs,
+                Collections.emptyMap(), tick, true, group);
+        if (!inputResult.result().isSuccess()) return inputResult;
+        RecipeHandlerGroup selectedGroup = inputResult.selectedGroup() == null ? group : inputResult.selectedGroup();
+
+        var outputResult = handleRecipeWithGroup(holder, recipe, IO.OUT, tick ? recipe.tickOutputs : recipe.outputs,
+                Collections.emptyMap(), tick, true, selectedGroup);
+        return new RecipeHandleResult(outputResult.result(), selectedGroup);
+    }
+
     public static ActionResult handleRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
                                               Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches) {
         if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
@@ -209,11 +248,27 @@ public class RecipeHelper {
                 false);
     }
 
+    public static ActionResult handleRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
+                                              Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
+                                              RecipeHandlerGroup group) {
+        if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
+        return handleRecipeWithGroup(holder, recipe, io, io == IO.IN ? recipe.inputs : recipe.outputs, chanceCaches,
+                false, false, group).result();
+    }
+
     public static ActionResult handleTickRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
                                                   Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches) {
         if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
         return handleRecipe(holder, recipe, io, io == IO.IN ? recipe.tickInputs : recipe.tickOutputs, chanceCaches,
                 true, false);
+    }
+
+    public static ActionResult handleTickRecipeIO(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
+                                                  Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
+                                                  RecipeHandlerGroup group) {
+        if (!holder.hasCapabilityProxies() || io == IO.BOTH) return ActionResult.FAIL_NO_CAPABILITIES;
+        return handleRecipeWithGroup(holder, recipe, io, io == IO.IN ? recipe.tickInputs : recipe.tickOutputs,
+                chanceCaches, true, false, group).result();
     }
 
     /**
@@ -226,12 +281,20 @@ public class RecipeHelper {
                                             Map<RecipeCapability<?>, List<Content>> contents,
                                             Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
                                             boolean isTick, boolean simulated) {
-        RecipeRunner runner = new RecipeRunner(recipe, io, isTick, holder, chanceCaches, simulated);
+        return handleRecipeWithGroup(holder, recipe, io, contents, chanceCaches, isTick, simulated, null).result();
+    }
+
+    public static RecipeHandleResult handleRecipeWithGroup(IRecipeCapabilityHolder holder, GTRecipe recipe, IO io,
+                                                           Map<RecipeCapability<?>, List<Content>> contents,
+                                                           Map<RecipeCapability<?>, Object2IntMap<?>> chanceCaches,
+                                                           boolean isTick, boolean simulated,
+                                                           @Nullable RecipeHandlerGroup group) {
+        RecipeRunner runner = new RecipeRunner(recipe, io, isTick, holder, chanceCaches, simulated, group);
         var result = runner.handle(contents);
 
         if (result.isSuccess() || result.capability() == null) {
             recipe.groupColor = runner.getGroupColor();
-            return result;
+            return new RecipeHandleResult(result, runner.getSelectedGroup());
         }
 
         if (!simulated && ConfigHolder.INSTANCE.dev.debug) {
@@ -239,8 +302,9 @@ public class RecipeHelper {
                     Component.translatable(io.tooltip).getString(), recipe, holder);
         }
         String key = "gtpm.recipe_logic.insufficient_" + (io == IO.IN ? "in" : "out");
-        return ActionResult.fail(Component.translatable(key)
-                .append(": ").append(result.capability().getName()), result.capability(), io);
+        return new RecipeHandleResult(ActionResult.fail(Component.translatable(key)
+                .append(": ").append(result.capability().getName()), result.capability(), io),
+                runner.getSelectedGroup());
     }
 
     public static ActionResult matchContents(IRecipeCapabilityHolder holder, GTRecipe recipe) {
@@ -250,6 +314,19 @@ public class RecipeHelper {
         return matchTickRecipe(holder, recipe);
     }
 
+    public static RecipeHandleResult matchContentsWithGroup(IRecipeCapabilityHolder holder, GTRecipe recipe,
+                                                            @Nullable RecipeHandlerGroup group) {
+        var match = matchRecipeWithGroup(holder, recipe, false, group);
+        if (!match.result().isSuccess()) return match;
+
+        var tickMatch = recipe.hasTick() ? matchRecipeWithGroup(holder, recipe, true, match.selectedGroup()) :
+                new RecipeHandleResult(ActionResult.SUCCESS, match.selectedGroup());
+        if (tickMatch.selectedGroup() == null) return match;
+        return tickMatch;
+    }
+
+    public record RecipeHandleResult(ActionResult result, @Nullable RecipeHandlerGroup selectedGroup) {}
+
     /**
      * Check whether all conditions of a recipe are valid
      *
@@ -258,9 +335,16 @@ public class RecipeHelper {
      * @return the list of failed conditions, or success if all conditions are satisfied
      */
     public static ActionResult checkConditions(GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
+        return checkConditions(recipe, recipeLogic, false);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static ActionResult checkConditions(GTRecipe recipe, @NotNull RecipeLogic recipeLogic,
+                                               boolean onlyCheckPerTick) {
         if (recipe.conditions.isEmpty()) return ActionResult.SUCCESS;
-        Map<RecipeConditionType<?>, List<RecipeCondition<?>>> or = new Reference2ObjectArrayMap<>();
-        for (RecipeCondition<?> condition : recipe.conditions) {
+        Map<RecipeConditionType<?>, List<RecipeCondition>> or = new Reference2ObjectArrayMap<>();
+        for (RecipeCondition condition : recipe.conditions) {
+            if (onlyCheckPerTick && !condition.perTick()) continue;
             if (condition.isOr()) {
                 or.computeIfAbsent(condition.getType(), type -> new ArrayList<>()).add(condition);
             } else if (!condition.check(recipe, recipeLogic)) {
@@ -270,11 +354,11 @@ public class RecipeHelper {
             }
         }
 
-        for (List<RecipeCondition<?>> conditions : or.values()) {
+        for (List<RecipeCondition> conditions : or.values()) {
             boolean passed = conditions.isEmpty();
             MutableComponent component = Component.translatable("gtpm.recipe_logic.condition_fails")
                     .append(": ");
-            for (RecipeCondition<?> condition : conditions) {
+            for (RecipeCondition condition : conditions) {
                 passed = condition.check(recipe, recipeLogic);
                 if (passed) break;
                 else component.append(condition.getTooltips());

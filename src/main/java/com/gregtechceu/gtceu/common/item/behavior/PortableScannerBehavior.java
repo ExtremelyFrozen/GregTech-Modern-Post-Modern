@@ -11,6 +11,7 @@ import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
 import com.gregtechceu.gtceu.api.machine.feature.IMufflableMachine;
+import com.gregtechceu.gtceu.api.machine.feature.IWorkLogicMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
@@ -18,15 +19,15 @@ import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncBlockEntity;
 import com.gregtechceu.gtceu.common.blockentity.FluidPipeBlockEntity;
 import com.gregtechceu.gtceu.common.capability.EnvironmentalHazardSavedData;
 import com.gregtechceu.gtceu.common.capability.LocalizedHazardSavedData;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTSoundEntries;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
 import com.gregtechceu.gtceu.common.network.packets.prospecting.SPacketProspectBedrockFluid;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
@@ -49,6 +50,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.mojang.serialization.JsonOps;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -311,24 +313,31 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
 
                 // Recipe logic for EU production/consumption
                 RecipeLogic recipeLogic = machine.getTrait(RecipeLogic.TYPE);
-                if (recipeLogic != null) {
-                    GTRecipe recipe = recipeLogic.getLastRecipe();
-                    if (recipeLogic.getStatus().equals(RecipeLogic.Status.WAITING)) {
+                boolean waitingDisplayed = false;
+                if (machine instanceof IWorkLogicMachine workLogicMachine) {
+                    var workLogic = workLogicMachine.getWorkLogic();
+                    if (workLogic.isWaiting()) {
                         list.add(Component.translatable("behavior.portable_scanner.divider"));
                         list.add(Component.translatable("gtpm.multiblock.waiting"));
-                        list.addAll(recipeLogic.getFancyTooltip());
-                    } else if (recipe != null) {
+                        list.addAll(workLogic.getFancyTooltip());
+                        waitingDisplayed = true;
+                    }
+                }
+                if (recipeLogic != null) {
+                    GTRecipe recipe = recipeLogic.getLastRecipe();
+                    if (recipe != null && !waitingDisplayed) {
                         list.add(Component.translatable("behavior.portable_scanner.divider"));
                         var EUt = RecipeHelper.getRealEUtWithIO(recipe);
+                        long displayVoltage = Math.max(1, recipeLogic.getRLMachine().getDisplayRecipeVoltage());
 
                         list.add(Component.translatable(
-                                EUt.isInput() ? "behavior.portable_scanner.workable_consumption" :
+                                EUt > 0 ? "behavior.portable_scanner.workable_consumption" :
                                         "behavior.portable_scanner.workable_production",
                                 // TODO is this supposed to show voltage or total EU/t?
-                                Component.translatable(FormattingUtil.formatNumbers(EUt.getTotalEU()))
+                                Component.translatable(FormattingUtil.formatNumbers(Math.abs(EUt)))
                                         .withStyle(ChatFormatting.RED),
                                 Component.translatable(
-                                        FormattingUtil.formatNumbers(EUt.amperage()))
+                                        FormattingUtil.formatNumbers(Math.abs(EUt) / displayVoltage))
                                         .withStyle(ChatFormatting.RED)));
                     }
                 }
@@ -459,13 +468,21 @@ public class PortableScannerBehavior implements IInteractionItem, IAddInformatio
 
             list.add(Component.translatable("behavior.portable_scanner.divider"));
             list.add(Component.literal("Save data"));
-            list.add(NbtUtils.toPrettyComponent(
-                    syncBlockEntity.getSyncDataHolder().serializeNBT(level.registryAccess(), false)));
+            list.add(Component.literal(DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(JsonOps.INSTANCE),
+                            syncBlockEntity.getSyncDataHolder()
+                                    .serializeToComponents(level.registryAccess(), false, false))
+                    .getOrThrow()
+                    .toString()));
 
             list.add(Component.translatable("behavior.portable_scanner.divider"));
             list.add(Component.literal("Update packet"));
-            list.add(NbtUtils.toPrettyComponent(
-                    syncBlockEntity.getSyncDataHolder().serializeNBT(level.registryAccess(), true, true)));
+            list.add(Component.literal(DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(JsonOps.INSTANCE),
+                            syncBlockEntity.getSyncDataHolder()
+                                    .serializeToComponents(level.registryAccess(), true, true))
+                    .getOrThrow()
+                    .toString()));
         }
 
         return energyCost;

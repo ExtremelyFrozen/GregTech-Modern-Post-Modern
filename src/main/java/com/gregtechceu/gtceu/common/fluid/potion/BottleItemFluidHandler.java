@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.common.fluid.potion;
 
 import com.gregtechceu.gtceu.api.misc.forge.FilteredFluidHandlerItemStackSimple;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 
 import net.minecraft.core.component.DataComponents;

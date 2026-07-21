@@ -3,10 +3,12 @@ package com.gregtechceu.gtceu.api.misc.virtualregistry.entries;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +24,6 @@ public class VirtualItemStorage extends VirtualEntry {
     @NotNull
     @Getter
     private final CustomItemStackHandler handler;
-
-    protected static final String ITEM_KEY = "items";
 
     public VirtualItemStorage() {
         this(DEFAULT_SLOT_AMOUNT);
@@ -45,16 +45,23 @@ public class VirtualItemStorage extends VirtualEntry {
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-        CompoundTag tag = VirtualItemStorage.super.serializeNBT(provider);
-        tag.put(ITEM_KEY, handler.serializeNBT(provider));
-        return tag;
+    public DataComponentMap exportComponents(HolderLookup.Provider provider) {
+        return putBaseComponent(DataComponentMap.builder())
+                .set(GTDataComponents.VIRTUAL_ITEM_STORAGE.get(), new VirtualEntryData.Items(handler.getStacks()))
+                .build();
     }
 
     @Override
-    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        super.deserializeNBT(provider, nbt);
-        handler.deserializeNBT(provider, nbt.getCompound(ITEM_KEY));
+    public void importComponents(HolderLookup.Provider provider, DataComponentMap components) {
+        super.importComponents(provider, components);
+        VirtualEntryData.Items data = components.get(GTDataComponents.VIRTUAL_ITEM_STORAGE.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Virtual item storage entry is missing item data component");
+        }
+        int size = Math.min(data.stacks().size(), handler.getSlots());
+        for (int i = 0; i < size; i++) {
+            handler.setStackInSlot(i, data.stacks().get(i));
+        }
     }
 
     @Override

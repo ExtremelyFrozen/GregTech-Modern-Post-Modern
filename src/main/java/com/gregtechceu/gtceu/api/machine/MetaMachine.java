@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.blockentity.ICopyable;
 import com.gregtechceu.gtceu.api.blockentity.IGregtechBlockEntity;
 import com.gregtechceu.gtceu.api.blockentity.IPaintable;
@@ -30,6 +31,7 @@ import com.gregtechceu.gtceu.api.machine.trait.feature.IRenderingTrait;
 import com.gregtechceu.gtceu.api.misc.*;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -41,7 +43,7 @@ import com.gregtechceu.gtceu.client.util.RenderUtil;
 import com.gregtechceu.gtceu.common.cover.FluidFilterCover;
 import com.gregtechceu.gtceu.common.cover.ItemFilterCover;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.common.item.behavior.MachineConfigCopyBehaviour;
@@ -234,9 +236,9 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     protected void applyImplicitComponents(DataComponentInput componentInput) {
         if (getLevel() == null) return;
 
-        CompoundTag itemData = componentInput.get(GTDataComponents.BLOCK_ITEM_DATA);
+        DataComponentMap itemData = componentInput.get(GTDataComponents.BLOCK_ITEM_DATA);
         if (itemData != null && !itemData.isEmpty()) {
-            syncDataHolder.deserializeItemNBT(getLevel().registryAccess(), itemData);
+            syncDataHolder.deserializeItemComponents(getLevel().registryAccess(), itemData);
         }
     }
 
@@ -248,7 +250,7 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     public void collectImplicitComponents(DataComponentMap.Builder components) {
         if (getLevel() == null) return;
 
-        CompoundTag itemData = syncDataHolder.serializeToItemNBT(getLevel().registryAccess());
+        DataComponentMap itemData = syncDataHolder.serializeToItemComponents(getLevel().registryAccess());
         if (!itemData.isEmpty()) {
             components.set(GTDataComponents.BLOCK_ITEM_DATA, itemData);
         }
@@ -1020,83 +1022,101 @@ public class MetaMachine extends ManagedSyncBlockEntity implements IGregtechBloc
     private static final String CIRCUIT = "circuit_config";
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        tag.putString(FACING_DIR, MachineConfigCopyBehaviour.directionToString(getFrontFacing()));
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        DataComponentMap config = ConfigCopyHelper.withFields(ICopyable.super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key(FACING_DIR),
+                        ConfigCopyHelper.stringValue(MachineConfigCopyBehaviour.directionToString(getFrontFacing()))));
 
         var outputTrait = getTrait(AutoOutputTrait.TYPE);
         if (outputTrait != null && outputTrait.supportsAutoOutputItems() &&
                 outputTrait.getItemOutputDirection() != null) {
-            tag.putString(ITEM_OUTPUT_SIDE,
-                    MachineConfigCopyBehaviour.directionToString(outputTrait.getItemOutputDirection()));
-            tag.putBoolean(ITEM_AUTO_OUTPUT, outputTrait.isAutoOutputItems());
-            tag.putBoolean(ALLOW_ITEM_IN_FROM_OUT, outputTrait.allowsItemInputFromOutputSide());
+            config = ConfigCopyHelper.withFields(config, fields -> fields
+                    .put(SyncFieldData.key(ITEM_OUTPUT_SIDE),
+                            ConfigCopyHelper.stringValue(
+                                    MachineConfigCopyBehaviour.directionToString(outputTrait.getItemOutputDirection())))
+                    .put(SyncFieldData.key(ITEM_AUTO_OUTPUT),
+                            ConfigCopyHelper.booleanValue(outputTrait.isAutoOutputItems()))
+                    .put(SyncFieldData.key(ALLOW_ITEM_IN_FROM_OUT),
+                            ConfigCopyHelper.booleanValue(outputTrait.allowsItemInputFromOutputSide())));
         }
 
         if (outputTrait != null && outputTrait.supportsAutoOutputFluids() &&
                 outputTrait.getFluidOutputDirection() != null) {
-            tag.putString(FLUID_OUTPUT_SIDE,
-                    MachineConfigCopyBehaviour.directionToString(outputTrait.getFluidOutputDirection()));
-            tag.putBoolean(FLUID_AUTO_OUTPUT, outputTrait.isAutoOutputFluids());
-            tag.putBoolean(ALLOW_FLUID_IN_FROM_OUT, outputTrait.allowsFluidInputFromOutputSide());
+            config = ConfigCopyHelper.withFields(config, fields -> fields
+                    .put(SyncFieldData.key(FLUID_OUTPUT_SIDE),
+                            ConfigCopyHelper.stringValue(
+                                    MachineConfigCopyBehaviour
+                                            .directionToString(outputTrait.getFluidOutputDirection())))
+                    .put(SyncFieldData.key(FLUID_AUTO_OUTPUT),
+                            ConfigCopyHelper.booleanValue(outputTrait.isAutoOutputFluids()))
+                    .put(SyncFieldData.key(ALLOW_FLUID_IN_FROM_OUT),
+                            ConfigCopyHelper.booleanValue(outputTrait.allowsFluidInputFromOutputSide())));
         }
 
         if (this instanceof IMufflableMachine mufflableMachine) {
-            tag.putBoolean(MUFFLED, mufflableMachine.isMuffled());
+            config = ConfigCopyHelper.withFields(config, fields -> fields
+                    .put(SyncFieldData.key(MUFFLED),
+                            ConfigCopyHelper.booleanValue(mufflableMachine.isMuffled())));
         }
 
         if (this instanceof IHasCircuitSlot circuitMachine) {
             var circuit = IntCircuitBehaviour
                     .getCircuitConfiguration(circuitMachine.getCircuitInventory().getStackInSlot(0));
             if (circuitMachine.isCircuitSlotEnabled() && circuit != 0) {
-                tag.putInt(CIRCUIT, circuit);
+                config = ConfigCopyHelper.withFields(config, fields -> fields
+                        .put(SyncFieldData.key(CIRCUIT),
+                                ConfigCopyHelper.intValue(circuit)));
             }
         }
 
-        var coverTag = new CompoundTag();
-        getCoverContainer().copyConfig(coverTag);
-        tag.put(COVER, coverTag);
+        return ConfigCopyHelper.mergeComponents(config, getCoverContainer().copyConfig(registries));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
         var outputTrait = getTrait(AutoOutputTrait.TYPE);
         if (outputTrait != null) {
-            if (tag.contains(ITEM_OUTPUT_SIDE)) {
+            if (ConfigCopyHelper.contains(config, ITEM_OUTPUT_SIDE)) {
                 outputTrait.setItemOutputDirection(
-                        MachineConfigCopyBehaviour.stringToDirection(tag.getString(ITEM_OUTPUT_SIDE)));
+                        MachineConfigCopyBehaviour
+                                .stringToDirection(ConfigCopyHelper.getString(config, ITEM_OUTPUT_SIDE)));
             }
-            if (tag.contains(ITEM_AUTO_OUTPUT)) {
-                outputTrait.setAllowAutoOutputItems(tag.getBoolean(ITEM_AUTO_OUTPUT));
+            if (ConfigCopyHelper.contains(config, ITEM_AUTO_OUTPUT)) {
+                outputTrait.setAllowAutoOutputItems(ConfigCopyHelper.getBoolean(config, ITEM_AUTO_OUTPUT));
             }
-            if (tag.contains(ALLOW_ITEM_IN_FROM_OUT)) {
-                outputTrait.setAllowItemInputFromOutputSide(tag.getBoolean(ALLOW_ITEM_IN_FROM_OUT));
+            if (ConfigCopyHelper.contains(config, ALLOW_ITEM_IN_FROM_OUT)) {
+                outputTrait
+                        .setAllowItemInputFromOutputSide(ConfigCopyHelper.getBoolean(config, ALLOW_ITEM_IN_FROM_OUT));
             }
-            if (tag.contains(FLUID_OUTPUT_SIDE)) {
+            if (ConfigCopyHelper.contains(config, FLUID_OUTPUT_SIDE)) {
                 outputTrait.setFluidOutputDirection(
-                        MachineConfigCopyBehaviour.stringToDirection(tag.getString(FLUID_OUTPUT_SIDE)));
+                        MachineConfigCopyBehaviour
+                                .stringToDirection(ConfigCopyHelper.getString(config, FLUID_OUTPUT_SIDE)));
             }
-            if (tag.contains(FLUID_AUTO_OUTPUT)) {
-                outputTrait.setAllowAutoOutputFluids(tag.getBoolean(FLUID_AUTO_OUTPUT));
+            if (ConfigCopyHelper.contains(config, FLUID_AUTO_OUTPUT)) {
+                outputTrait.setAllowAutoOutputFluids(ConfigCopyHelper.getBoolean(config, FLUID_AUTO_OUTPUT));
             }
-            if (tag.contains(ALLOW_FLUID_IN_FROM_OUT)) {
-                outputTrait.setAllowFluidInputFromOutputSide(tag.getBoolean(ALLOW_FLUID_IN_FROM_OUT));
+            if (ConfigCopyHelper.contains(config, ALLOW_FLUID_IN_FROM_OUT)) {
+                outputTrait
+                        .setAllowFluidInputFromOutputSide(ConfigCopyHelper.getBoolean(config, ALLOW_FLUID_IN_FROM_OUT));
             }
         }
 
-        Direction facingDir = Direction.byName(tag.getString(FACING_DIR));
+        Direction facingDir = Direction.byName(ConfigCopyHelper.getString(config, FACING_DIR));
         if (facingDir != null) {
             setFrontFacing(facingDir);
         }
 
-        if (this instanceof IMufflableMachine mufflableMachine && tag.contains(MUFFLED)) {
-            mufflableMachine.setMuffled(tag.getBoolean(MUFFLED));
+        if (this instanceof IMufflableMachine mufflableMachine && ConfigCopyHelper.contains(config, MUFFLED)) {
+            mufflableMachine.setMuffled(ConfigCopyHelper.getBoolean(config, MUFFLED));
         }
 
-        if (this instanceof IHasCircuitSlot circuitMachine && tag.contains(CIRCUIT)) {
-            circuitMachine.getCircuitInventory().setStackInSlot(0, IntCircuitBehaviour.stack(tag.getInt(CIRCUIT)));
+        if (this instanceof IHasCircuitSlot circuitMachine && ConfigCopyHelper.contains(config, CIRCUIT)) {
+            circuitMachine.getCircuitInventory().setStackInSlot(0,
+                    IntCircuitBehaviour.stack(ConfigCopyHelper.getInt(config, CIRCUIT)));
         }
 
-        getCoverContainer().pasteConfig(player, tag.getCompound(COVER));
+        getCoverContainer().pasteConfig(player, registries, config);
     }
 
     @Override

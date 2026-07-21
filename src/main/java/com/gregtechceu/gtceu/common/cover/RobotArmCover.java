@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.cover;
 
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
@@ -7,6 +8,7 @@ import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.SimpleItemFilter;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.cover.data.TransferMode;
@@ -15,7 +17,8 @@ import com.gregtechceu.gtceu.common.pipelike.item.ItemNetHandler;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -212,16 +215,18 @@ public class RobotArmCover extends ConveyorCover {
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        super.copyConfig(tag);
-        tag.putInt("transferMode", transferMode.ordinal());
-        tag.putInt("transferLimit", globalTransferLimit);
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("transferMode"),
+                        ConfigCopyHelper.intValue(transferMode.ordinal()))
+                .put(SyncFieldData.key("transferLimit"),
+                        ConfigCopyHelper.intValue(globalTransferLimit)));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setTransferMode(TransferMode.values()[tag.getInt("transferMode")]);
-        setGlobalTransferLimit(tag.getInt("transferLimit"));
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setTransferMode(TransferMode.values()[ConfigCopyHelper.getInt(config, "transferMode")]);
+        setGlobalTransferLimit(ConfigCopyHelper.getInt(config, "transferLimit"));
+        super.pasteConfig(player, registries, config);
     }
 }

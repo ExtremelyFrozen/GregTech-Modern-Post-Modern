@@ -9,6 +9,7 @@ import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.utils.Position;
 
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -53,8 +54,8 @@ public interface IUICover extends IUIHolder {
             return;
         }
 
-        byte[] changes = self().getSyncDataHolder().collectServerNetworkChanges(level.registryAccess());
-        if (changes.length > 0) {
+        DataComponentMap changes = self().getSyncDataHolder().collectServerNetworkChanges(level.registryAccess());
+        if (!changes.isEmpty()) {
             PacketDistributor.sendToServer(new CPacketCoverSyncToServer(self().coverHolder.getBlockPos(),
                     self().attachedSide, changes));
         }

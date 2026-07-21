@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.api.data.chemical.material.properties.FluidPipeProp
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
 import com.gregtechceu.gtceu.api.misc.forge.ThermalFluidHandlerItemStack;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.machines.GTMachineUtils;
 
 import net.neoforged.neoforge.capabilities.Capabilities;

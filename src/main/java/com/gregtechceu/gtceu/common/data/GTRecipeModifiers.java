@@ -5,13 +5,14 @@ import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.data.medicalcondition.MedicalCondition;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IOverclockMachine;
+import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.CoilWorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.OverclockingLogic;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
@@ -37,11 +38,12 @@ public class GTRecipeModifiers {
      */
     public static final Function<OverclockingLogic, RecipeModifier> ELECTRIC_OVERCLOCK = Util
             .memoize(logic -> (machine, recipe) -> {
-                if (!(machine instanceof IOverclockMachine overclockMachine)) return ModifierFunction.IDENTITY;
-                if (RecipeHelper.getRecipeEUtTier(recipe) > overclockMachine.getMaxOverclockTier()) {
+                if (machine instanceof ITieredMachine tieredMachine &&
+                        RecipeHelper.getRecipeEUtTier(recipe) > tieredMachine.getTier()) {
                     return ModifierFunction
                             .cancel(Component.translatable("gtpm.recipe_modifier.insufficient_voltage"));
                 }
+                if (!(machine instanceof IOverclockMachine overclockMachine)) return ModifierFunction.IDENTITY;
                 return logic.getModifier(machine, recipe, overclockMachine.getOverclockVoltage());
             });
 
@@ -175,8 +177,8 @@ public class GTRecipeModifiers {
 
         int blastFurnaceTemperature = coilMachine.getCoilType().getCoilTemperature() +
                 (100 * Math.max(0, coilMachine.getTier() - GTValues.MV));
-        int recipeTemp = recipe.data.getInt("ebf_temp");
-        if (!recipe.data.contains("ebf_temp") || recipeTemp > blastFurnaceTemperature) {
+        int recipeTemp = RecipeData.getInt(recipe.data, "ebf_temp");
+        if (!RecipeData.contains(recipe.data, "ebf_temp") || recipeTemp > blastFurnaceTemperature) {
             return ModifierFunction.cancel(Component.translatable("gtpm.recipe_modifier.coil_temperature_too_low"));
         }
 
@@ -255,7 +257,7 @@ public class GTRecipeModifiers {
         long eut = 4 * (long) (parallels / (8.0 * coilMachine.getCoilType().getEnergyDiscount()));
         ModifierFunction baseModifier = r -> {
             var copy = r.copy();
-            EURecipeCapability.putEUContent(copy.tickInputs, new EnergyStack(Math.max(1, eut)));
+            EURecipeCapability.putEUContent(copy.tickInputs, Math.max(1, eut));
             copy.duration = Math.max(1, duration);
             return copy;
         };

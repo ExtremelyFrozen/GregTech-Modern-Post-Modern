@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
+import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.ae2.machine.feature.multiblock.IMEStockingPart;
@@ -20,8 +21,6 @@ import com.gregtechceu.gtceu.integration.ae2.slot.IConfigurableSlotList;
 import com.gregtechceu.gtceu.integration.ae2.utils.AEUtil;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -38,6 +37,7 @@ import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.function.Predicate;
 
@@ -266,31 +266,23 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     ////////////////////////////////
 
     @Override
-    protected CompoundTag writeConfigToTag(HolderLookup.Provider provider) {
+    protected AEInputConfigCopyData writeConfigData() {
         if (!autoPull) {
-            CompoundTag tag = super.writeConfigToTag(provider);
-            tag.putBoolean("AutoPull", false);
-            return tag;
+            return super.writeConfigData();
         }
-        // if in auto-pull, no need to write actual configured slots, but still need to write the ghost circuit
-        CompoundTag tag = new CompoundTag();
-        tag.putBoolean("AutoPull", true);
-        tag.putByte("GhostCircuit",
-                (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0)));
-        return tag;
+        byte ghostCircuit = (byte) IntCircuitBehaviour.getCircuitConfiguration(circuitInventory.getStackInSlot(0));
+        return new AEInputConfigCopyData(List.of(), ghostCircuit, false, true);
     }
 
     @Override
-    protected void readConfigFromTag(HolderLookup.Provider provider, CompoundTag tag) {
-        if (tag.getBoolean("AutoPull")) {
-            // if being set to auto-pull, no need to read the configured slots
+    protected void readConfigData(AEInputConfigCopyData data) {
+        if (data.autoPull()) {
             this.setAutoPull(true);
-            circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(tag.getByte("GhostCircuit")));
+            circuitInventory.setStackInSlot(0, IntCircuitBehaviour.stack(data.ghostCircuit()));
             return;
         }
-        // set auto pull first to avoid issues with clearing the config after reading from the data stick
         this.setAutoPull(false);
-        super.readConfigFromTag(provider, tag);
+        super.readConfigData(data);
     }
 
     private class ExportOnlyAEStockingFluidList extends ExportOnlyAEFluidList {

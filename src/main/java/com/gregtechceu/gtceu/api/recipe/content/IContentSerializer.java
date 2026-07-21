@@ -1,8 +1,6 @@
 package com.gregtechceu.gtceu.api.recipe.content;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 
 import com.google.gson.JsonElement;
@@ -51,12 +49,4 @@ public interface IContentSerializer<T> {
     Class<T> contentClass();
 
     Codec<T> codec();
-
-    default Tag toNbt(T content, HolderLookup.Provider provider) {
-        return codec().encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), content).getOrThrow();
-    }
-
-    default T fromNbt(Tag tag, HolderLookup.Provider provider) {
-        return codec().parse(provider.createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
-    }
 }

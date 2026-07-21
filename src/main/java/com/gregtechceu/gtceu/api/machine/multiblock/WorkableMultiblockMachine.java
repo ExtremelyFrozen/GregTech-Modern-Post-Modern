@@ -13,6 +13,7 @@ import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.*;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
@@ -20,6 +21,7 @@ import com.gregtechceu.gtceu.common.machine.trait.CleanroomReceiverTrait;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -128,7 +130,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
             for (var handlerList : handlerLists) {
                 if (!handlerList.isValid(io)) continue;
                 this.addHandlerList(handlerList);
-                traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+                traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
             }
         }
 
@@ -143,7 +145,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         for (var entry : ioTraits.entrySet()) {
             var handlerList = RecipeHandlerList.of(entry.getKey(), entry.getValue());
             this.addHandlerList(handlerList);
-            traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+            traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
         }
         // schedule recipe logic
         recipeLogic.updateTickSubscription();
@@ -164,7 +166,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         String structureName = part.getSubstructureName(this);
         if (structureName == null) return IO.BOTH;
         Long2ObjectMap<IO> ioMap = getMultiblockState(structureName).getMatchContext()
-                .getOrCreate("ioMap", Long2ObjectMaps::emptyMap);
+                .getOrDefault("ioMap", Long2ObjectMaps.emptyMap());
         return ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
     }
 
@@ -249,10 +251,10 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     @Override
-    public void notifyStatusChanged(RecipeLogic.Status oldStatus, RecipeLogic.Status newStatus) {
-        IWorkableMultiController.super.notifyStatusChanged(oldStatus, newStatus);
-        if (newStatus == RecipeLogic.Status.WORKING || oldStatus == RecipeLogic.Status.WORKING) {
-            updateActiveBlocks(newStatus == RecipeLogic.Status.WORKING);
+    public void notifyWorkStatusChanged(WorkLogic.Status oldStatus, WorkLogic.Status newStatus) {
+        IWorkableMultiController.super.notifyWorkStatusChanged(oldStatus, newStatus);
+        if (newStatus == WorkLogic.Status.WORKING || oldStatus == WorkLogic.Status.WORKING) {
+            updateActiveBlocks(newStatus == WorkLogic.Status.WORKING);
         }
         for (IMultiPart part : getParts()) {
             MachineRenderState state = part.self().getRenderState();
@@ -263,7 +265,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     @Override
-    public boolean isRecipeLogicAvailable() {
+    public boolean isWorkLogicAvailable() {
         return isFormed && !getMultiblockState(DEFAULT_STRUCTURE).hasError();
     }
 
@@ -276,10 +278,12 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     @Override
-    public boolean beforeWorking(@Nullable GTRecipe recipe) {
+    @Nullable
+    public Component beforeWorking(@Nullable GTRecipe recipe) {
         for (IMultiPart part : getParts()) {
-            if (!part.beforeWorking(this)) {
-                return false;
+            Component failReason = part.beforeWorking(this);
+            if (failReason != null) {
+                return failReason;
             }
         }
         return IWorkableMultiController.super.beforeWorking(recipe);
@@ -338,6 +342,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
             recipeIndex = recipeTypes.length - 1;
         }
         setActiveRecipeType(recipeIndex);
+        recipeLogic.updateTickSubscription();
     }
 
     @Override

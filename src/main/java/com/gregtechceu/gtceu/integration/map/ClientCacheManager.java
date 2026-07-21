@@ -5,16 +5,18 @@ import com.gregtechceu.gtceu.integration.map.cache.client.IClientCache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.fml.loading.FMLPaths;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import lombok.Getter;
@@ -24,6 +26,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,6 +45,7 @@ public class ClientCacheManager {
     private static final char resourceLocationSeparator = '=';
     private static final String filePrefix = "DIM";
     private static final String fileEnding = ".componentPatch";
+    private static final Gson GSON = new Gson();
     @Getter
     private static File worldFolder;
     private static final Reference2ObjectMap<IClientCache, ClientCacheInfo> caches = new Reference2ObjectArrayMap<>();
@@ -76,9 +82,7 @@ public class ClientCacheManager {
                                             dimFile.getName().length() - fileEnding.length()),
                                     resourceLocationSeparator));
                     try {
-                        cache.readDimFile(dimFilePrefix, dimId,
-                                NbtIo.readCompressed(new FileInputStream(dimFile), NbtAccounter.unlimitedHeap()),
-                                provider);
+                        cache.readDimFile(dimFilePrefix, dimId, readComponents(dimFile, provider), provider);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -88,9 +92,7 @@ public class ClientCacheManager {
                 File singleFile = new File(cacheInfo.cacheFolder, singleFileName + fileEnding);
                 if (!singleFile.exists()) continue;
                 try {
-                    cache.readSingleFile(singleFileName,
-                            NbtIo.readCompressed(new FileInputStream(singleFile), NbtAccounter.unlimitedHeap()),
-                            provider);
+                    cache.readSingleFile(singleFileName, readComponents(singleFile, provider), provider);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -110,24 +112,24 @@ public class ClientCacheManager {
             ClientCacheInfo cacheInfo = caches.get(cache);
             for (String dimFilePrefix : cacheInfo.dimFilePrefixes) {
                 for (ResourceKey<Level> dim : cache.getExistingDimensions(dimFilePrefix)) {
-                    CompoundTag data = cache.saveDimFile(dimFilePrefix, dim, provider);
+                    DataComponentMap data = cache.saveDimFile(dimFilePrefix, dim, provider);
                     if (data == null) continue;
                     File dimFile = new File(cacheInfo.cacheFolder,
                             dimFilePrefix + filePrefix + dim.location().getNamespace() + "=" +
                                     dim.location().getPath() + fileEnding);
                     try {
-                        NbtIo.writeCompressed(data, new FileOutputStream(dimFile));
+                        writeComponents(data, dimFile, provider);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 }
             }
             for (String singleFileName : cacheInfo.singleFiles) {
-                CompoundTag data = cache.saveSingleFile(singleFileName, provider);
+                DataComponentMap data = cache.saveSingleFile(singleFileName, provider);
                 if (data == null) continue;
                 File singleFile = new File(cacheInfo.cacheFolder, singleFileName + fileEnding);
                 try {
-                    NbtIo.writeCompressed(data, new FileOutputStream(singleFile));
+                    writeComponents(data, singleFile, provider);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -162,32 +164,56 @@ public class ClientCacheManager {
             ClientCacheInfo cacheInfo = caches.get(cache);
             for (String dimPrefix : cacheInfo.dimFilePrefixes) {
                 for (ResourceKey<Level> dim : cache.getExistingDimensions(dimPrefix)) {
-                    CompoundTag data = cache.saveDimFile(dimPrefix, dim, registries);
+                    DataComponentMap data = cache.saveDimFile(dimPrefix, dim, registries);
                     if (data == null) continue;
-                    result.add(new ProspectionInfo(cacheInfo.key, dimPrefix, true, dim, data));
+                    result.add(new ProspectionInfo(cacheInfo.key, dimPrefix, true, dim, toJson(data, registries)));
                 }
             }
             for (String singleFileName : cacheInfo.singleFiles) {
-                CompoundTag data = cache.saveSingleFile(singleFileName, registries);
+                DataComponentMap data = cache.saveSingleFile(singleFileName, registries);
                 if (data == null) continue;
-                result.add(new ProspectionInfo(cacheInfo.key, singleFileName, false, Level.OVERWORLD, data));
+                result.add(new ProspectionInfo(cacheInfo.key, singleFileName, false, Level.OVERWORLD,
+                        toJson(data, registries)));
             }
         }
         return result;
     }
 
     public static void processProspectionShare(String cacheName, String key, boolean isDimCache, ResourceKey<Level> dim,
-                                               CompoundTag data, HolderLookup.Provider provider) {
+                                               JsonElement data, HolderLookup.Provider provider) {
         for (IClientCache cache : caches.keySet()) {
             ClientCacheInfo cacheInfo = caches.get(cache);
             if (cacheInfo.key.equals(cacheName)) {
+                DataComponentMap cacheData = fromJson(data, provider);
                 if (isDimCache) {
-                    cache.readDimFile(key, dim, data, provider);
+                    cache.readDimFile(key, dim, cacheData, provider);
                 } else {
-                    cache.readSingleFile(key, data, provider);
+                    cache.readSingleFile(key, cacheData, provider);
                 }
                 break;
             }
+        }
+    }
+
+    private static JsonElement toJson(DataComponentMap data, HolderLookup.Provider provider) {
+        return DataComponentMap.CODEC.encodeStart(provider.createSerializationContext(JsonOps.INSTANCE), data)
+                .getOrThrow();
+    }
+
+    private static DataComponentMap fromJson(JsonElement data, HolderLookup.Provider provider) {
+        return DataComponentMap.CODEC.parse(provider.createSerializationContext(JsonOps.INSTANCE), data).getOrThrow();
+    }
+
+    private static DataComponentMap readComponents(File file, HolderLookup.Provider provider) throws IOException {
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            return fromJson(JsonParser.parseReader(reader), provider);
+        }
+    }
+
+    private static void writeComponents(DataComponentMap data, File file,
+                                        HolderLookup.Provider provider) throws IOException {
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+            GSON.toJson(toJson(data, provider), writer);
         }
     }
 
@@ -225,10 +251,10 @@ public class ClientCacheManager {
         public String key;
         public boolean isDimCache;
         public ResourceKey<Level> dim;
-        public CompoundTag data;
+        public JsonElement data;
 
         public ProspectionInfo(String cacheName, String key, boolean isDimCache, ResourceKey<Level> dim,
-                               CompoundTag data) {
+                               JsonElement data) {
             this.cacheName = cacheName;
             this.key = key;
             this.isDimCache = isDimCache;

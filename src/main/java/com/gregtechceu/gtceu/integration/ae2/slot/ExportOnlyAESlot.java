@@ -1,9 +1,5 @@
 package com.gregtechceu.gtceu.integration.ae2.slot;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.neoforged.neoforge.common.util.INBTSerializable;
-
 import appeng.api.stacks.GenericStack;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,10 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * An export only slot to hold {@link appeng.api.stacks.GenericStack}
  */
-public abstract class ExportOnlyAESlot implements IConfigurableSlot, INBTSerializable<CompoundTag> {
-
-    protected final static String CONFIG_TAG = "config";
-    protected final static String STOCK_TAG = "stock";
+public abstract class ExportOnlyAESlot implements IConfigurableSlot {
 
     @Getter
     @Setter
@@ -76,30 +69,6 @@ public abstract class ExportOnlyAESlot implements IConfigurableSlot, INBTSeriali
     }
 
     protected abstract void addStack(GenericStack stack);
-
-    @Override
-    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-        CompoundTag tag = new CompoundTag();
-        if (this.config != null) {
-            CompoundTag configTag = GenericStack.writeTag(provider, this.config);
-            tag.put(CONFIG_TAG, configTag);
-        }
-        if (this.stock != null) {
-            CompoundTag stockTag = GenericStack.writeTag(provider, this.stock);
-            tag.put(STOCK_TAG, stockTag);
-        }
-        return tag;
-    }
-
-    @Override
-    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
-        if (tag.contains(CONFIG_TAG)) {
-            this.config = GenericStack.readTag(provider, tag.getCompound(CONFIG_TAG));
-        }
-        if (tag.contains(STOCK_TAG)) {
-            this.stock = GenericStack.readTag(provider, tag.getCompound(STOCK_TAG));
-        }
-    }
 
     public static GenericStack copy(GenericStack stack) {
         return new GenericStack(stack.what(), stack.amount());

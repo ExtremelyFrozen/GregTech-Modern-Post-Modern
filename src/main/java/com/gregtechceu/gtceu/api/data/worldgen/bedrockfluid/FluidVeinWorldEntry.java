@@ -1,23 +1,27 @@
 package com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid;
 
-import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.config.ConfigHolder;
-import com.gregtechceu.gtceu.utils.memoization.GTMemoizer;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class FluidVeinWorldEntry {
+
+    // spotless:off
+    public static final Codec<FluidVeinWorldEntry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            BedrockFluidDefinition.CODEC.optionalFieldOf("vein").forGetter(entry -> Optional.ofNullable(entry.getDefinition())),
+            Codec.INT.fieldOf("fluidYield").forGetter(FluidVeinWorldEntry::getFluidYield),
+            Codec.INT.fieldOf("operationsRemaining").forGetter(FluidVeinWorldEntry::getOperationsRemaining)
+    ).apply(instance, FluidVeinWorldEntry::newEntry));
+    // spotless:on
 
     @Setter
     private Supplier<@Nullable Holder<BedrockFluidDefinition>> definition;
@@ -32,8 +36,6 @@ public class FluidVeinWorldEntry {
         this.fluidYield = fluidYield;
         this.operationsRemaining = operationsRemaining;
     }
-
-    private FluidVeinWorldEntry() {}
 
     @Nullable
     public Holder<BedrockFluidDefinition> getDefinition() {
@@ -50,34 +52,8 @@ public class FluidVeinWorldEntry {
                 Math.max(0, operationsRemaining - amount);
     }
 
-    public CompoundTag writeToNBT() {
-        var tag = new CompoundTag();
-        tag.putInt("fluidYield", fluidYield);
-        tag.putInt("operationsRemaining", operationsRemaining);
-
-        Holder<BedrockFluidDefinition> def = getDefinition();
-        if (def != null && def.unwrapKey().isPresent()) {
-            tag.putString("vein", def.unwrapKey().get().location().toString());
-        }
-        return tag;
-    }
-
-    @NotNull
-    public static FluidVeinWorldEntry readFromNBT(@NotNull CompoundTag tag, HolderLookup.Provider provider) {
-        FluidVeinWorldEntry info = new FluidVeinWorldEntry();
-        info.fluidYield = tag.getInt("fluidYield");
-        info.operationsRemaining = tag.getInt("operationsRemaining");
-
-        if (tag.contains("vein")) {
-            ResourceLocation id = ResourceLocation.parse(tag.getString("vein"));
-            info.setDefinition(GTMemoizer.memoize(() -> {
-                return provider.lookup(GTRegistries.BEDROCK_FLUID_REGISTRY)
-                        .flatMap(reg -> reg.get(ResourceKey.create(GTRegistries.BEDROCK_FLUID_REGISTRY, id)))
-                        .orElse(null);
-            }));
-        } else {
-            info.setDefinition(() -> null);
-        }
-        return info;
+    private static FluidVeinWorldEntry newEntry(Optional<Holder<BedrockFluidDefinition>> definition, int fluidYield,
+                                                int operationsRemaining) {
+        return new FluidVeinWorldEntry(definition.orElse(null), fluidYield, operationsRemaining);
     }
 }

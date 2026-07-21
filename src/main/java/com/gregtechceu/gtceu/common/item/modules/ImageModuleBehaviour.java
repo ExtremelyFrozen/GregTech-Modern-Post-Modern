@@ -4,10 +4,10 @@ import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
 import com.gregtechceu.gtceu.client.renderer.monitor.IMonitorRenderer;
 import com.gregtechceu.gtceu.client.renderer.monitor.MonitorImageRenderer;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.CentralMonitorMachine;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
-import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupNBTChange;
+import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupDataChange;
 
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
@@ -34,7 +34,7 @@ public class ImageModuleBehaviour implements IMonitorModuleItem {
             if (!click.isRemote) return;
 
             stack.set(GTDataComponents.IMAGE_MODULE_URL, textField.getCurrentString());
-            PacketDistributor.sendToServer(new SCPacketMonitorGroupNBTChange(stack, group, machine));
+            PacketDistributor.sendToServer(new SCPacketMonitorGroupDataChange(stack, group, machine));
         });
         saveButton.setButtonTexture(GuiTextures.BUTTON_CHECK);
         builder.addWidget(textField);

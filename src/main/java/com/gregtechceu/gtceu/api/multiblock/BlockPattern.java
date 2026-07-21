@@ -307,7 +307,7 @@ public class BlockPattern {
                                         matchContext.reset();
                                         findFirstAisle = false;
                                     } else {
-                                        z = repeatStartZ + unitDepth;
+                                        z = repeatStartZ;
                                     }
                                 } else {
                                     z = repeatStartZ + 1;// continue searching for the first aisle

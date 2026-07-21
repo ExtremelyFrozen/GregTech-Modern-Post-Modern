@@ -34,13 +34,13 @@ public class RecipeLogicTest {
         CR_RECIPE_TYPE = TestUtils.createRecipeType("recipe_logic_test_cr", GTRecipeTypes.CHEMICAL_RECIPES);
 
         LCR_RECIPE_TYPE.getAdditionHandler().beginStaging();
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_multiblock_recipelogic"))
                 .inputItems(new ItemStack(Blocks.COBBLESTONE))
                 .outputItems(new ItemStack(Blocks.STONE))
                 .EUt(GTValues.VA[GTValues.HV]).duration(1)
                 .build());
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_multiblock_recipelogic_16_items"))
                 .inputItems(new ItemStack(Blocks.STONE, 16))
                 .outputItems(new ItemStack(Blocks.STONE))
@@ -49,7 +49,7 @@ public class RecipeLogicTest {
         LCR_RECIPE_TYPE.getAdditionHandler().completeStaging();
 
         CR_RECIPE_TYPE.getAdditionHandler().beginStaging();
-        CR_RECIPE_TYPE.getAdditionHandler().addStaging(CR_RECIPE_TYPE
+        CR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(CR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_singleblock_recipelogic"))
                 .inputItems(new ItemStack(Blocks.COBBLESTONE))
                 .outputItems(new ItemStack(Blocks.STONE))
@@ -232,7 +232,7 @@ public class RecipeLogicTest {
 
     // Test for putting both ingredients in the same bus in 2 stacks.
     @TestHolder
-    @GameTest(template = "lcr_input_separation", batch = "RecipeLogicTest")
+    @GameTest(template = "lcr_input_separation", batch = "RecipeLogic")
     public static void recipeLogicInTwoStacksTest(GameTestHelper helper) {
         RecipeLogicTest.BusHolder busHolder = getBussesAndForm(helper);
         busHolder.inputBus1.getInventory().setStackInSlot(0, new ItemStack(Blocks.STONE, 10));

@@ -50,6 +50,11 @@ public class RainingCondition extends RecipeCondition<RainingCondition> {
     }
 
     @Override
+    public boolean perTick() {
+        return true;
+    }
+
+    @Override
     public boolean testCondition(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
         Level level = recipeLogic.getLevel();
         return level.getRainLevel(1) >= this.level;

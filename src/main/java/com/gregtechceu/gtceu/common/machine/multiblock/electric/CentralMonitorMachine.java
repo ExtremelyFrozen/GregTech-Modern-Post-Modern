@@ -26,7 +26,7 @@ import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 import com.gregtechceu.gtceu.common.machine.trait.CentralMonitorLogic;
-import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupNBTChange;
+import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupDataChange;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternKey;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
@@ -136,7 +136,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                 }
                 module.tick(stack, this, group);
                 PacketDistributor.sendToPlayersTrackingChunk(serverLevel, new ChunkPos(getBlockPos()),
-                        new SCPacketMonitorGroupNBTChange(stack, group, this));
+                        new SCPacketMonitorGroupDataChange(stack, group, this));
             }
         }
     }
@@ -252,7 +252,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             aisle[i] = pattern[i].toString();
         }
 
-        BlockPattern baseline = FactoryBlockPattern.start()
+        BlockPattern baseline = FactoryBlockPattern.start(getDefinition())
                 .aisle("~")
                 .build();
         return StructurePatternResolver.rebuildRuntimeStringArrayPattern(

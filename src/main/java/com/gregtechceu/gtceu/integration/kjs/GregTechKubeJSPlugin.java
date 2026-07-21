@@ -5,14 +5,12 @@ import com.gregtechceu.gtceu.api.capability.recipe.RecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTRecipeCategories;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.integration.kjs.helpers.GTResourceLocation;
 import com.gregtechceu.gtceu.integration.kjs.recipe.GTRecipeSchema;
 import com.gregtechceu.gtceu.integration.kjs.recipe.GTShapedRecipeSchema;
-import com.gregtechceu.gtceu.integration.kjs.recipe.KJSHelpers;
 import com.gregtechceu.gtceu.integration.kjs.recipe.components.*;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -47,7 +45,7 @@ public class GregTechKubeJSPlugin implements KubeJSPlugin {
 
     @Override
     public void registerRecipeComponents(RecipeComponentTypeRegistry registry) {
-        registry.register(NbtTagComponent.NBT_TAG);
+        registry.register(RecipeDataComponent.RECIPE_DATA);
         registry.register(RecipeConditionComponent.RECIPE_CONDITION);
         registry.register(ResourceLocationComponent.RESOURCE_LOCATION);
         registry.register(RecipeCapabilityComponent.RECIPE_CAPABILITY);
@@ -65,8 +63,6 @@ public class GregTechKubeJSPlugin implements KubeJSPlugin {
         event.add("GTRecipeCategories", GTRecipeCategories.class);
         event.add("RecipeCapability", RecipeCapability.class);
         event.add("ChanceLogic", ChanceLogic.class);
-        event.add("EnergyStack", EnergyStack.class);
-        event.add("IOEnergyStack", EnergyStack.WithIO.class);
     }
 
     @Override
@@ -100,7 +96,5 @@ public class GregTechKubeJSPlugin implements KubeJSPlugin {
             if (wrapper == null) return null;
             return GTRegistries.CHANCE_LOGICS.get(wrapper.wrapped());
         });
-        registry.register(EnergyStack.class, KJSHelpers::parseEnergyStack);
-        registry.register(EnergyStack.WithIO.class, KJSHelpers::parseIOEnergyStack);
     }
 }

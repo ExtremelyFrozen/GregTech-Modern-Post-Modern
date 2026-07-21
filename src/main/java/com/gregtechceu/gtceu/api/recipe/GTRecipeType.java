@@ -18,9 +18,9 @@ import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.function.*;
 
 @Accessors(chain = true)
-public class GTRecipeType implements RecipeType<GTRecipe> {
+public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
 
     public static final String LANGUAGE_KEY_PATH = "recipe_type";
 
@@ -75,7 +75,7 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
     @Getter
     protected SoundEntry sound;
     @Getter
-    protected List<Function<CompoundTag, String>> dataInfos = new ArrayList<>();
+    protected List<Function<DataComponentMap, String>> dataInfos = new ArrayList<>();
     @Getter
     @Setter
     protected boolean isScanner;
@@ -88,7 +88,7 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
     @Getter
     private final GTRecipeCategory category;
     @Getter
-    private final Map<GTRecipeCategory, Set<GTRecipe>> categoryMap = new Object2ObjectOpenHashMap<>();
+    private final Map<GTRecipeCategory, Set<GTRecipeDefinition>> categoryMap = new Object2ObjectOpenHashMap<>();
     private final RecipeDB db = new RecipeDB();
     @ApiStatus.Internal
     @Getter
@@ -99,7 +99,7 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
     @Setter
     @Getter
     private int voltageTextOffset = 20;
-    private final Map<String, Collection<GTRecipe>> researchEntries = new Object2ObjectOpenHashMap<>();
+    private final Map<String, Collection<GTRecipeDefinition>> researchEntries = new Object2ObjectOpenHashMap<>();
     @Getter
     private final List<ICustomRecipeLogic> customRecipeLogicRunners = new ArrayList<>();
     @Getter
@@ -166,7 +166,7 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
         return this;
     }
 
-    public GTRecipeType setUiBuilder(BiConsumer<GTRecipe, WidgetGroup> uiBuilder) {
+    public GTRecipeType setUiBuilder(BiConsumer<GTRecipeDefinition, WidgetGroup> uiBuilder) {
         this.recipeUI.setUiBuilder(uiBuilder);
         return this;
     }
@@ -181,7 +181,7 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
         return this;
     }
 
-    public GTRecipeType addDataInfo(Function<CompoundTag, String> dataInfo) {
+    public GTRecipeType addDataInfo(Function<DataComponentMap, String> dataInfo) {
         this.dataInfos.add(dataInfo);
         return this;
     }
@@ -280,18 +280,19 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
         return this;
     }
 
-    public void addDataStickEntry(@NotNull String researchId, @NotNull GTRecipe recipe) {
-        Collection<GTRecipe> collection = researchEntries.computeIfAbsent(researchId, (k) -> new ObjectOpenHashSet<>());
+    public void addDataStickEntry(@NotNull String researchId, @NotNull GTRecipeDefinition recipe) {
+        Collection<GTRecipeDefinition> collection = researchEntries.computeIfAbsent(researchId,
+                (k) -> new ObjectOpenHashSet<>());
         collection.add(recipe);
     }
 
     @Nullable
-    public Collection<GTRecipe> getDataStickEntry(@NotNull String researchId) {
+    public Collection<GTRecipeDefinition> getDataStickEntry(@NotNull String researchId) {
         return researchEntries.get(researchId);
     }
 
-    public boolean removeDataStickEntry(@NotNull String researchId, @NotNull GTRecipe recipe) {
-        Collection<GTRecipe> collection = researchEntries.get(researchId);
+    public boolean removeDataStickEntry(@NotNull String researchId, @NotNull GTRecipeDefinition recipe) {
+        Collection<GTRecipeDefinition> collection = researchEntries.get(researchId);
         if (collection == null) return false;
         if (collection.remove(recipe)) {
             if (collection.isEmpty()) {
@@ -322,11 +323,11 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
         }
     }
 
-    public void addToMainCategory(GTRecipe recipe) {
+    public void addToMainCategory(GTRecipeDefinition recipe) {
         addToCategoryMap(category, recipe);
     }
 
-    public void addToCategoryMap(GTRecipeCategory category, GTRecipe recipe) {
+    public void addToCategoryMap(GTRecipeCategory category, GTRecipeDefinition recipe) {
         categoryMap.computeIfAbsent(category, k -> new ObjectLinkedOpenHashSet<>()).add(recipe);
     }
 
@@ -334,7 +335,7 @@ public class GTRecipeType implements RecipeType<GTRecipe> {
         return Collections.unmodifiableSet(categoryMap.keySet());
     }
 
-    public Set<GTRecipe> getRecipesInCategory(GTRecipeCategory category) {
+    public Set<GTRecipeDefinition> getRecipesInCategory(GTRecipeCategory category) {
         return Collections.unmodifiableSet(categoryMap.getOrDefault(category, Set.of()));
     }
 

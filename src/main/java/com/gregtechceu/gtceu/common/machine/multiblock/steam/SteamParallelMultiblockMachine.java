@@ -12,10 +12,10 @@ import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.steam.SteamEnergyRecipeHandler;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeHelper;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.modifier.ModifierFunction;
 import com.gregtechceu.gtceu.api.recipe.modifier.ParallelLogic;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
@@ -112,7 +112,8 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine im
 
         // Duration = 1.5x base duration
         // EUt (not steam) = (4/3) * (2/3) * parallels * base EUt, up to a max of 32 EUt
-        long eut = recipe.getInputEUt().getTotalEU();
+        long eut = recipe.getInputEUt();
+        if (eut <= 0) return ModifierFunction.NULL;
         int parallelAmount = ParallelLogic.getParallelAmount(machine, recipe, steamMachine.maxParallels);
         double eutMultiplier = (eut * 0.8888 * parallelAmount <= 32) ? (0.8888 * parallelAmount) : (32.0 / eut);
         return ModifierFunction.builder()
@@ -128,16 +129,17 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine im
     public void addDisplayText(List<Component> textList) {
         IDisplayUIMachine.super.addDisplayText(textList);
         if (isFormed()) {
+            var workLogic = getWorkLogic();
             if (steamEnergy != null && steamEnergy.getCapacity() > 0) {
                 long steamStored = steamEnergy.getStored();
                 textList.add(Component.translatable("gtpm.multiblock.steam.steam_stored", steamStored,
                         steamEnergy.getCapacity()));
             }
 
-            if (!isWorkingEnabled()) {
+            if (!workLogic.isWorkingEnabled()) {
                 textList.add(Component.translatable("gtpm.multiblock.work_paused"));
 
-            } else if (isActive()) {
+            } else if (workLogic.isActive()) {
                 textList.add(Component.translatable("gtpm.multiblock.running"));
                 if (maxParallels > 1) textList.add(Component.translatable("gtpm.multiblock.parallel", maxParallels));
                 int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
@@ -150,7 +152,7 @@ public class SteamParallelMultiblockMachine extends WorkableMultiblockMachine im
                 textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
-            if (recipeLogic.isWaiting()) {
+            if (workLogic.isWaiting()) {
                 textList.add(Component.translatable("gtpm.multiblock.steam.low_steam")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }

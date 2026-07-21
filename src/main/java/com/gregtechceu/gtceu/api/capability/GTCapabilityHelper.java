@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.api.capability;
 
+import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.common.data.GTAttachmentTypes;
@@ -91,7 +92,12 @@ public class GTCapabilityHelper {
     }
 
     @Nullable
-    public static IDataAccessHatch getDataAccess(Level level, BlockPos pos, @Nullable Direction side) {
+    public static ComputationPort getComputationPort(Level level, BlockPos pos, @Nullable Direction side) {
+        return level.getCapability(GTCapability.CAPABILITY_COMPUTATION_PORT, pos, side);
+    }
+
+    @Nullable
+    public static IDataAccessMachine getDataAccess(Level level, BlockPos pos, @Nullable Direction side) {
         return level.getCapability(GTCapability.CAPABILITY_DATA_ACCESS, pos, side);
     }
 

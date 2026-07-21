@@ -52,7 +52,7 @@ public class ResearchComputationTests {
         var handler = RESEARCH_RECIPE_TYPE.getAdditionHandler();
         handler.beginStaging();
         // Research a data stick into a data orb so completion is observable in the object holder's data slot.
-        handler.addStaging(RESEARCH_RECIPE_TYPE
+        handler.addRuntimeStaging(RESEARCH_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_research"))
                 .inputItems(GTItems.TOOL_DATA_STICK.asStack())
                 .outputItems(GTItems.TOOL_DATA_ORB.asStack())
@@ -102,6 +102,16 @@ public class ResearchComputationTests {
         return TestUtils.isItemStackEqual(holder.getDataItem(false), GTItems.TOOL_DATA_ORB.asStack());
     }
 
+    private static void succeedWhenResearchFinished(GameTestHelper helper, ObjectHolderMachine holder) {
+        helper.onEachTick(() -> {
+            if (researchFinished(holder)) {
+                helper.succeed();
+            } else if (helper.getTick() >= 180) {
+                helper.fail("Research recipe did not complete");
+            }
+        });
+    }
+
     @GameTest(template = "research_computer_and_hpca",
               batch = "ResearchComputation",
               setupTicks = 40,
@@ -116,8 +126,7 @@ public class ResearchComputationTests {
         ObjectHolderMachine holder = getObjectHolder(helper);
         holder.setDataItem(GTItems.TOOL_DATA_STICK.asStack());
 
-        helper.succeedWhen(() -> helper.assertTrue(researchFinished(holder),
-                "Research recipe did not complete with a working HPCA providing computation"));
+        succeedWhenResearchFinished(helper, holder);
     }
 
     @GameTest(template = "research_computer_and_hpca",
@@ -148,8 +157,7 @@ public class ResearchComputationTests {
         ObjectHolderMachine holder = getObjectHolder(helper);
         holder.setDataItem(GTItems.TOOL_DATA_STICK.asStack());
 
-        helper.succeedWhen(() -> helper.assertTrue(researchFinished(holder),
-                "Research recipe did not complete while the Creative Computation Provider was supplying computation"));
+        succeedWhenResearchFinished(helper, holder);
     }
 
     @GameTest(template = "research_computer", batch = "ResearchComputation", setupTicks = 40, timeoutTicks = 200)
@@ -175,14 +183,10 @@ public class ResearchComputationTests {
         helper.assertTrue(hpca != null, "HPCA controller not found");
         TestUtils.formMultiblock(hpca);
 
-        // The HPCA only reports computation once it has powered on (energy stored), which takes a few ticks.
+        // The HPCA only offers computation once it has powered on (energy stored), which takes a few ticks.
         helper.succeedWhen(() -> {
-            helper.assertTrue(hpca.getMaxCWUt() == 20,
-                    "HPCA should provide a maximum of 20 CWU/t, got " + hpca.getMaxCWUt());
-            helper.assertTrue(hpca.requestCWUt(RECIPE_CWUT, true) == RECIPE_CWUT,
-                    "HPCA should be able to supply a 16 CWU/t request");
-            helper.assertTrue(hpca.requestCWUt(1000, true) == 20,
-                    "HPCA should cap a request at its maximum of 20 CWU/t");
+            helper.assertTrue(hpca.getOfferedCWUt() == 20,
+                    "HPCA should offer 20 CWU/t, got " + hpca.getOfferedCWUt());
         });
     }
 
@@ -194,10 +198,8 @@ public class ResearchComputationTests {
         hpca.setWorkingEnabled(false);
 
         helper.onEachTick(() -> {
-            helper.assertTrue(hpca.getMaxCWUt() == 0,
-                    "Disabled HPCA should report 0 max CWU/t, got " + hpca.getMaxCWUt());
-            helper.assertTrue(hpca.requestCWUt(RECIPE_CWUT, true) == 0,
-                    "Disabled HPCA should supply 0 CWU/t");
+            helper.assertTrue(hpca.getOfferedCWUt() == 0,
+                    "Disabled HPCA should offer 0 CWU/t, got " + hpca.getOfferedCWUt());
         });
         TestUtils.succeedAfterTest(helper);
     }
@@ -219,12 +221,12 @@ public class ResearchComputationTests {
         AtomicBoolean sawFullComputation = new AtomicBoolean(false);
         helper.onEachTick(() -> {
             // keep the HPCA under full computational load so it heats up
-            hpca.requestCWUt(Integer.MAX_VALUE, false);
-            int maxCWUt = hpca.getMaxCWUt();
-            if (maxCWUt == 24) {
+            hpca.applyProducedCWUt(Integer.MAX_VALUE);
+            int offeredCWUt = hpca.getOfferedCWUt();
+            if (offeredCWUt == 24) {
                 sawFullComputation.set(true);
             }
-            if (sawFullComputation.get() && maxCWUt < 24) {
+            if (sawFullComputation.get() && offeredCWUt < 24) {
                 helper.succeed();
             }
         });

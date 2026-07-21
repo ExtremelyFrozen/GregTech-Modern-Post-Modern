@@ -21,6 +21,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 
+import com.mojang.serialization.Codec;
 import lombok.Getter;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotResult;
@@ -51,6 +52,7 @@ public class HazardProperty implements IMaterialProperty {
             implements StringRepresentable {
 
         public static final Map<String, HazardTrigger> ALL_TRIGGERS = new HashMap<>();
+        public static final Codec<HazardTrigger> CODEC = Codec.stringResolver(HazardTrigger::name, ALL_TRIGGERS::get);
 
         public static final HazardTrigger INHALATION = new HazardTrigger("inhalation", ProtectionType.MASK,
                 TagPrefix.dust, TagPrefix.dustSmall, TagPrefix.dustTiny, TagPrefix.dustPure, TagPrefix.dustImpure);

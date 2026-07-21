@@ -5,9 +5,9 @@ import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IMachineFeature;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -118,8 +118,9 @@ public interface IMultiPart extends IMachineFeature, IFancyUIMachine {
     /**
      * Called in {@link RecipeLogic#setupRecipe(GTRecipe)}
      */
-    default boolean beforeWorking(IWorkableMultiController controller) {
-        return true;
+    @Nullable
+    default Component beforeWorking(IWorkableMultiController controller) {
+        return null;
     }
 
     /**

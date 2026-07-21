@@ -2,10 +2,12 @@ package com.gregtechceu.gtceu.common.machine.storage;
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
+import com.gregtechceu.gtceu.api.computation.ComputationProducer;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
+import com.gregtechceu.gtceu.api.machine.trait.DirectComputationPortTrait;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 
 import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
@@ -25,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class CreativeComputationProviderMachine extends MetaMachine
-                                                implements IUIMachine, IOpticalComputationProvider {
+                                                implements IUIMachine, IOpticalComputationProvider,
+                                                ComputationProducer {
 
     @SaveField
     private int maxCWUt;
@@ -39,6 +42,7 @@ public class CreativeComputationProviderMachine extends MetaMachine
 
     public CreativeComputationProviderMachine(BlockEntityCreationInfo info) {
         super(info);
+        new DirectComputationPortTrait(this, true, this, null);
     }
 
     @Override
@@ -86,6 +90,16 @@ public class CreativeComputationProviderMachine extends MetaMachine
     public boolean canBridge(@NotNull Collection<IOpticalComputationProvider> seen) {
         seen.add(this);
         return true;
+    }
+
+    @Override
+    public int getOfferedCWUt() {
+        return active ? maxCWUt : 0;
+    }
+
+    @Override
+    public void applyProducedCWUt(int allocatedCWUt) {
+        this.requestedCWUPerSec += allocatedCWUt;
     }
 
     public void setActive(boolean active) {

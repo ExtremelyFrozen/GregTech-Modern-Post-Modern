@@ -155,7 +155,11 @@ public class OpticalPipeBlock extends PipeBlock<OpticalPipeType, OpticalPipeProp
     public boolean canPipeConnectToBlock(IPipeNode<OpticalPipeType, OpticalPipeProperties> selfTile, Direction side,
                                          Level level, BlockPos pos) {
         if (level.getCapability(GTCapability.CAPABILITY_DATA_ACCESS, pos, side.getOpposite()) != null) return true;
-        return level.getCapability(GTCapability.CAPABILITY_COMPUTATION_PROVIDER, pos, side.getOpposite()) != null;
+        if (level.getCapability(GTCapability.CAPABILITY_COMPUTATION_PROVIDER, pos, side.getOpposite()) != null) {
+            return true;
+        }
+        var computationPort = level.getCapability(GTCapability.CAPABILITY_COMPUTATION_PORT, pos, side.getOpposite());
+        return computationPort != null && computationPort.getComputationPortPolicy().acceptsOptical();
     }
 
     @Override

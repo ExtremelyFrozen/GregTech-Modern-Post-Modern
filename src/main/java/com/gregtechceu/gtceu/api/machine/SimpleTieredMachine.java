@@ -35,7 +35,7 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.Position;
 
 import net.minecraft.Util;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -235,7 +235,7 @@ public class SimpleTieredMachine extends WorkableTieredMachine
                     tieredMachine.getRecipeType().getRecipeUI().createEditableUITemplate(false, false).setupUI(template,
                             new GTRecipeTypeUI.RecipeHolder(tieredMachine.recipeLogic::getProgressPercent,
                                     storages,
-                                    new CompoundTag(),
+                                    DataComponentMap.EMPTY,
                                     Collections.emptyList(),
                                     false, false));
                     createBatterySlot().setupUI(template, tieredMachine);

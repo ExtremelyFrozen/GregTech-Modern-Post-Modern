@@ -1,11 +1,13 @@
 package com.gregtechceu.gtceu.common.cover.voiding;
 
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.SimpleItemFilter;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.cover.data.VoidingMode;
@@ -13,7 +15,8 @@ import com.gregtechceu.gtceu.common.cover.data.VoidingMode;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -152,15 +155,18 @@ public class AdvancedItemVoidingCover extends ItemVoidingCover {
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        tag.putInt("voidingMode", getVoidingMode().ordinal());
-        tag.putInt("voidSize", getGlobalVoidingLimit());
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("voidingMode"),
+                        ConfigCopyHelper.intValue(getVoidingMode().ordinal()))
+                .put(SyncFieldData.key("voidSize"),
+                        ConfigCopyHelper.intValue(getGlobalVoidingLimit())));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setVoidingMode(VoidingMode.values()[tag.getInt("voidingMode")]);
-        globalVoidingLimit = tag.getInt("voidSize");
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setVoidingMode(VoidingMode.values()[ConfigCopyHelper.getInt(config, "voidingMode")]);
+        globalVoidingLimit = ConfigCopyHelper.getInt(config, "voidSize");
+        super.pasteConfig(player, registries, config);
     }
 }

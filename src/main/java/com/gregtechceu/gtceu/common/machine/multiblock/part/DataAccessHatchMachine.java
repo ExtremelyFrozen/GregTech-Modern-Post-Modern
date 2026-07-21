@@ -3,22 +3,23 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
-import com.gregtechceu.gtceu.api.capability.IDataAccessHatch;
+import com.gregtechceu.gtceu.api.capability.IDataAccessMachine;
 import com.gregtechceu.gtceu.api.capability.IMonitorComponent;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
+import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.research.DataBankMachine;
-import com.gregtechceu.gtceu.common.recipe.condition.ResearchCondition;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 import com.gregtechceu.gtceu.utils.ResearchManager;
 
@@ -28,6 +29,7 @@ import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -37,13 +39,14 @@ import net.neoforged.neoforge.items.IItemHandler;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class DataAccessHatchMachine extends TieredPartMachine
-                                    implements IDataAccessHatch, IDataInfoProvider, IMonitorComponent {
+                                    implements IDataAccessMachine, IDataInfoProvider, IMonitorComponent {
 
-    private final Set<GTRecipe> recipes;
+    private final Set<GTRecipeDefinition> recipeDefinitions;
     @Getter
     private final boolean isCreative;
     @SaveField
@@ -52,7 +55,7 @@ public class DataAccessHatchMachine extends TieredPartMachine
     public DataAccessHatchMachine(BlockEntityCreationInfo info, int tier, boolean isCreative) {
         super(info, tier);
         this.isCreative = isCreative;
-        this.recipes = isCreative ? Collections.emptySet() : new ObjectOpenHashSet<>();
+        this.recipeDefinitions = isCreative ? Collections.emptySet() : new ObjectOpenHashSet<>();
         this.importItems = attachTrait(createImportItemHandler());
     }
 
@@ -68,13 +71,26 @@ public class DataAccessHatchMachine extends TieredPartMachine
 
             @Override
             public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-                boolean isDataBank = isFormed() && getControllers().first() instanceof DataBankMachine;
-                if (ResearchManager.isStackDataItem(stack, isDataBank) && stack.has(GTDataComponents.RESEARCH_ITEM)) {
+                if (acceptsDataItem(stack)) {
                     return super.insertItem(slot, stack, simulate);
                 }
                 return stack;
             }
+
+            @Override
+            public void setStackInSlot(int index, ItemStack stack) {
+                if (!stack.isEmpty() && !acceptsDataItem(stack)) {
+                    throw new IllegalArgumentException("Data access hatch received an invalid data item: " + stack);
+                }
+                super.setStackInSlot(index, stack);
+            }
         };
+    }
+
+    private boolean acceptsDataItem(ItemStack stack) {
+        boolean isDataBank = isFormed() && getControllers().first() instanceof DataBankMachine;
+        return ResearchManager.isStackDataItem(stack, isDataBank) &&
+                (stack.has(GTDataComponents.RESEARCH_ITEM) || stack.has(GTDataComponents.MONITOR_TARGET));
     }
 
     @Override
@@ -110,39 +126,47 @@ public class DataAccessHatchMachine extends TieredPartMachine
 
     private void rebuildData(boolean isDataBank) {
         if (isCreative || getLevel() == null || getLevel().isClientSide) return;
-        recipes.clear();
+        recipeDefinitions.clear();
         for (int i = 0; i < this.importItems.getSlots(); i++) {
             ItemStack stack = this.importItems.getStackInSlot(i);
             ResearchManager.ResearchItem researchData = stack.get(GTDataComponents.RESEARCH_ITEM);
             boolean isValid = ResearchManager.isStackDataItem(stack, isDataBank);
             if (researchData != null && isValid) {
-                Collection<GTRecipe> collection = researchData.recipeType()
+                Collection<GTRecipeDefinition> collection = researchData.recipeType()
                         .getDataStickEntry(researchData.researchId());
                 if (collection != null) {
-                    recipes.addAll(collection);
+                    recipeDefinitions.addAll(collection);
                 }
             }
         }
+        notifyDataAccessControllers();
     }
 
     @Override
-    public boolean isRecipeAvailable(GTRecipe recipe, Collection<IDataAccessHatch> seen) {
-        seen.add(this);
-        return recipe.conditions.stream().noneMatch(ResearchCondition.class::isInstance) || recipes.contains(recipe);
+    public boolean isRecipeAvailable(@NotNull GTRecipeType recipeType, @NotNull ResourceLocation recipeId) {
+        return isCreative ||
+                recipeDefinitions.stream().anyMatch(definition -> isSameRecipe(definition, recipeType, recipeId));
+    }
+
+    private static boolean isSameRecipe(GTRecipeDefinition definition, GTRecipeType recipeType,
+                                        ResourceLocation recipeId) {
+        return definition.recipeType == recipeType &&
+                definition.getId() != null &&
+                definition.getId().equals(recipeId);
     }
 
     @Override
     public List<Component> getDataInfo(PortableScannerBehavior.DisplayMode mode) {
         if (mode == PortableScannerBehavior.DisplayMode.SHOW_ALL ||
                 mode == PortableScannerBehavior.DisplayMode.SHOW_RECIPE_INFO) {
-            if (recipes.isEmpty())
+            if (recipeDefinitions.isEmpty())
                 return Collections.emptyList();
             List<Component> list = new ArrayList<>();
 
             list.add(Component.translatable("behavior.data_item.title"));
             list.add(Component.empty());
             Collection<ItemStack> itemsAdded = new ObjectOpenCustomHashSet<>(ItemStackHashStrategy.comparingAll());
-            for (GTRecipe recipe : recipes) {
+            for (GTRecipeDefinition recipe : recipeDefinitions) {
                 ItemStack stack = ItemRecipeCapability.CAP
                         .of(recipe.getOutputContents(ItemRecipeCapability.CAP).getFirst().content).getItems()[0];
                 if (!itemsAdded.contains(stack)) {
@@ -167,11 +191,6 @@ public class DataAccessHatchMachine extends TieredPartMachine
     }
 
     @Override
-    public GTRecipe modifyRecipe(GTRecipe recipe) {
-        return IDataAccessHatch.super.modifyRecipe(recipe);
-    }
-
-    @Override
     public IGuiTexture getComponentIcon() {
         return new ResourceTexture(GTCEu.id("textures/item/data_module.png")).getSubTexture(0, 0, 1, 1 / 13f);
     }
@@ -179,5 +198,16 @@ public class DataAccessHatchMachine extends TieredPartMachine
     @Override
     public IItemHandler getDataItems() {
         return importItems.storage;
+    }
+
+    private void notifyDataAccessControllers() {
+        if (!isFormed()) return;
+        for (MultiblockControllerMachine controller : getControllers()) {
+            if (controller instanceof IDataAccessMachine dataAccessMachine) {
+                dataAccessMachine.notifyListeners();
+            } else if (controller instanceof IRecipeLogicMachine recipeLogicMachine) {
+                recipeLogicMachine.getRecipeLogic().onRecipeHandlerChanged();
+            }
+        }
     }
 }

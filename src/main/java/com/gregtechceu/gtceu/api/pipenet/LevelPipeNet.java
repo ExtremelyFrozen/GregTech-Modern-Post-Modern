@@ -5,8 +5,10 @@ import com.gregtechceu.gtceu.utils.GTUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -31,7 +33,7 @@ public abstract class LevelPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
         for (int i = 0; i < allEnergyNets.size(); i++) {
             CompoundTag pNetTag = allEnergyNets.getCompound(i);
             T pipeNet = createNetInstance();
-            pipeNet.deserializeNBT(provider, pNetTag);
+            pipeNet.importComponents(provider, readComponents(provider, pNetTag));
             addPipeNetSilently(pipeNet);
         }
         init();
@@ -142,10 +144,22 @@ public abstract class LevelPipeNet<NodeDataType, T extends PipeNet<NodeDataType>
     public CompoundTag save(CompoundTag compound, HolderLookup.Provider provider) {
         ListTag allPipeNets = new ListTag();
         for (T pipeNet : pipeNets) {
-            CompoundTag pNetTag = pipeNet.serializeNBT(provider);
+            CompoundTag pNetTag = writeComponents(provider, pipeNet.exportComponents(provider));
             allPipeNets.add(pNetTag);
         }
         compound.put("PipeNets", allPipeNets);
         return compound;
+    }
+
+    private static DataComponentMap readComponents(HolderLookup.Provider provider, CompoundTag tag) {
+        return DataComponentMap.CODEC
+                .parse(provider.createSerializationContext(NbtOps.INSTANCE), tag)
+                .getOrThrow();
+    }
+
+    private static CompoundTag writeComponents(HolderLookup.Provider provider, DataComponentMap components) {
+        return (CompoundTag) DataComponentMap.CODEC
+                .encodeStart(provider.createSerializationContext(NbtOps.INSTANCE), components)
+                .getOrThrow();
     }
 }

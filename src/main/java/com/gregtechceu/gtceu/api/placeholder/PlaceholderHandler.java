@@ -18,7 +18,7 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.MutableComponent;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -69,19 +69,19 @@ public class PlaceholderHandler {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static @Nullable IMonitorRenderer getRenderer(String id, CompoundTag renderData) {
+    public static @Nullable IMonitorRenderer getRenderer(String id, DataComponentMap renderData) {
         if (!RendererHolder.renderers.containsKey(id)) {
             GTCEu.LOGGER.warn("Attempt to access a placeholder renderer that doesn't exist ({})", id);
             return null;
         }
         IPlaceholderRenderer renderer = RendererHolder.renderers.get(id);
-        CompoundTag tag = renderData.copy();
+        DataComponentMap data = DataComponentMap.builder().addAll(renderData).build();
         return (machine, group,
                 partialTick, poseStack, buffer,
                 packedLight, packedOverlay) -> renderer.render(
                         machine, group,
                         partialTick, poseStack, buffer,
-                        packedLight, packedOverlay, tag);
+                        packedLight, packedOverlay, data);
     }
 
     public static MultiLineComponent processPlaceholder(List<MultiLineComponent> placeholder,

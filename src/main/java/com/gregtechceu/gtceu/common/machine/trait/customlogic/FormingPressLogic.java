@@ -4,9 +4,9 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.IRecipeCapabilityHolder;
 import com.gregtechceu.gtceu.api.capability.recipe.IRecipeHandler;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTRecipeTypes;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
@@ -123,13 +123,13 @@ public enum FormingPressLogic implements GTRecipeType.ICustomRecipeLogic {
         toName.set(DataComponents.CUSTOM_NAME, Component.translatable("gtpm.forming_press.naming.to_name"));
         ItemStack named = new ItemStack(Items.NAME_TAG);
         named.set(DataComponents.CUSTOM_NAME, Component.translatable("gtpm.forming_press.naming.named"));
-        GTRecipe recipe = GTRecipeTypes.FORMING_PRESS_RECIPES.recipeBuilder("name_item")
+        var recipe = GTRecipeTypes.FORMING_PRESS_RECIPES.recipeBuilder("name_item")
                 .notConsumable(press)
                 .inputItems(toName)
                 .outputItems(named)
                 .duration(40)
                 .EUt(4)
-                .build();
+                .buildDefinition();
         // for EMI to detect it's a synthetic recipe (not ever in JSON)
         recipe.setId(recipe.getId().withPrefix("/"));
         GTRecipeTypes.FORMING_PRESS_RECIPES.addToMainCategory(recipe);

@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.common.blockentity.OpticalPipeBlockEntity;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
@@ -194,7 +195,7 @@ public class NotifiableComputationContainer extends NotifiableRecipeHandlerTrait
         if (io == IO.IN) {
             int availableCWUt = requestCWUt(Integer.MAX_VALUE, true);
             if (availableCWUt >= sum) {
-                if (recipe.data.getBoolean("duration_is_total_cwu")) {
+                if (RecipeData.getBoolean(recipe.data, "duration_is_total_cwu")) {
                     int drawn = provider.requestCWUt(availableCWUt, simulate);
                     if (!simulate) {
                         var machine = getMachine();

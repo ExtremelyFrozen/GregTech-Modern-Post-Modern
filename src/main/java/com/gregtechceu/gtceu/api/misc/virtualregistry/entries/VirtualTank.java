@@ -2,10 +2,11 @@ package com.gregtechceu.gtceu.api.misc.virtualregistry.entries;
 
 import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.core.component.DataComponentMap;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
@@ -15,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 public class VirtualTank extends VirtualEntry {
 
     public static final int DEFAULT_CAPACITY = 160_000; // 160B for per second transfer
-    protected static final String CAPACITY_KEY = "capacity";
-    protected static final String FLUID_KEY = "fluid";
     @NotNull
     @Getter
     private final FluidTank fluidTank;
@@ -47,23 +46,23 @@ public class VirtualTank extends VirtualEntry {
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.@NotNull Provider registries) {
-        var tag = super.serializeNBT(registries);
-        tag.putInt(CAPACITY_KEY, this.capacity);
-
-        if (!this.fluidTank.getFluid().isEmpty()) {
-            tag.put(FLUID_KEY, FluidStack.CODEC.encodeStart(NbtOps.INSTANCE, this.fluidTank.getFluid()).getOrThrow());
-        }
-        return tag;
+    public DataComponentMap exportComponents(HolderLookup.@NotNull Provider registries) {
+        return putBaseComponent(DataComponentMap.builder())
+                .set(GTDataComponents.VIRTUAL_TANK.get(), new VirtualEntryData.Tank(this.capacity,
+                        this.fluidTank.getFluid()))
+                .build();
     }
 
     @Override
-    public void deserializeNBT(HolderLookup.@NotNull Provider registries, CompoundTag nbt) {
-        super.deserializeNBT(registries, nbt);
-        this.capacity = nbt.getInt(CAPACITY_KEY);
-
-        if (nbt.contains(FLUID_KEY))
-            setFluid(FluidStack.CODEC.parse(NbtOps.INSTANCE, nbt.getCompound(FLUID_KEY)).getOrThrow());
+    public void importComponents(HolderLookup.@NotNull Provider registries, DataComponentMap components) {
+        super.importComponents(registries, components);
+        VirtualEntryData.Tank data = components.get(GTDataComponents.VIRTUAL_TANK.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Virtual tank entry is missing tank data component");
+        }
+        this.capacity = data.capacity();
+        this.fluidTank.setCapacity(this.capacity);
+        setFluid(data.fluid());
     }
 
     @Override

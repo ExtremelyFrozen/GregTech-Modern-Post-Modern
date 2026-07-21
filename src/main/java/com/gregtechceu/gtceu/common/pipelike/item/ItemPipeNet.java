@@ -4,10 +4,12 @@ import com.gregtechceu.gtceu.api.data.chemical.material.properties.ItemPipePrope
 import com.gregtechceu.gtceu.api.pipenet.LevelPipeNet;
 import com.gregtechceu.gtceu.api.pipenet.Node;
 import com.gregtechceu.gtceu.api.pipenet.PipeNet;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.PipeNetData;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 
 import java.util.*;
 
@@ -86,13 +88,19 @@ public class ItemPipeNet extends PipeNet<ItemPipeProperties> {
     }
 
     @Override
-    protected void writeNodeData(ItemPipeProperties nodeData, CompoundTag tagCompound) {
-        tagCompound.putInt("Resistance", nodeData.getPriority());
-        tagCompound.putFloat("Rate", nodeData.getTransferRate());
+    protected DataComponentMap writeNodeData(ItemPipeProperties nodeData) {
+        return DataComponentMap.builder()
+                .set(GTDataComponents.PIPE_NET_ITEM_PIPE.get(), new PipeNetData.ItemPipe(nodeData.getPriority(),
+                        nodeData.getTransferRate()))
+                .build();
     }
 
     @Override
-    protected ItemPipeProperties readNodeData(CompoundTag tagCompound) {
-        return new ItemPipeProperties(tagCompound.getInt("Resistance"), tagCompound.getFloat("Rate"));
+    protected ItemPipeProperties readNodeData(DataComponentMap components) {
+        PipeNetData.ItemPipe data = components.get(GTDataComponents.PIPE_NET_ITEM_PIPE.get());
+        if (data == null) {
+            throw new IllegalArgumentException("Missing item pipe node data component");
+        }
+        return new ItemPipeProperties(data.priority(), data.transferRate());
     }
 }

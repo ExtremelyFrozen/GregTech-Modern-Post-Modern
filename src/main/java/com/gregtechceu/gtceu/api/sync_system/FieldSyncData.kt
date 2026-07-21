@@ -7,6 +7,8 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToServer
 
+import net.minecraft.resources.ResourceLocation
+
 import com.mojang.serialization.Codec
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
@@ -27,7 +29,18 @@ class FieldSyncData(field: Field, @JvmField val handle: VarHandle, @JvmField val
 	val nbtSaveKey: String
 
 	@JvmField
-	val itemNbtKey: String
+	val itemDataName: String
+
+	@JvmField
+	@field:Nullable
+	val itemComponentKey: ResourceLocation?
+
+	@JvmField
+	@field:Nullable
+	val itemDataKey: ResourceLocation?
+
+	@JvmField
+	val componentKey: ResourceLocation
 
 	@JvmField
 	val triggerClientRerender: Boolean
@@ -67,7 +80,13 @@ class FieldSyncData(field: Field, @JvmField val handle: VarHandle, @JvmField val
 		hasSyncToServer = field.isAnnotationPresent(SyncToServer::class.java)
 		hasSyncBoth = field.isAnnotationPresent(SyncBoth::class.java)
 		nbtSaveKey = if (saveField != null && saveField.nbtKey.isNotBlank()) saveField.nbtKey else fieldName
-		itemNbtKey = if (itemSave != null && itemSave.nbtKey.isNotBlank()) itemSave.nbtKey else fieldName
+		itemDataName = if (itemSave != null && itemSave.nbtKey.isNotBlank()) itemSave.nbtKey else fieldName
+		itemComponentKey = itemSave?.let {
+			val componentKey = if (it.component.isNotBlank()) it.component else itemDataName
+			SyncFieldData.key(componentKey)
+		}
+		itemDataKey = itemComponentKey
+		componentKey = SyncFieldData.key(nbtSaveKey)
 		triggerClientRerender = field.isAnnotationPresent(RerenderOnChanged::class.java)
 		codec = FieldCodecs.get(field.genericType)
 		contextualCodec = FieldCodecs.getContextual(field.genericType)

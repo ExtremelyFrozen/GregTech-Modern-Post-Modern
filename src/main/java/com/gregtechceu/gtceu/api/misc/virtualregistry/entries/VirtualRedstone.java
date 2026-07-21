@@ -2,20 +2,22 @@ package com.gregtechceu.gtceu.api.misc.virtualregistry.entries;
 
 import com.gregtechceu.gtceu.api.misc.virtualregistry.EntryTypes;
 import com.gregtechceu.gtceu.api.misc.virtualregistry.VirtualEntry;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.datacomponents.VirtualEntryData;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 
 import it.unimi.dsi.fastutil.objects.Object2ShortMap;
 import it.unimi.dsi.fastutil.objects.Object2ShortOpenHashMap;
 import lombok.Getter;
 import org.jspecify.annotations.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class VirtualRedstone extends VirtualEntry {
-
-    private static final String MEMBERS_KEY = "members";
 
     @Getter
     private final Object2ShortMap<UUID> members = new Object2ShortOpenHashMap<>();
@@ -45,21 +47,24 @@ public class VirtualRedstone extends VirtualEntry {
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.@NonNull Provider provider) {
-        CompoundTag tag = super.serializeNBT(provider);
-        CompoundTag tag2 = new CompoundTag();
-        for (var entry : members.object2ShortEntrySet())
-            tag2.putShort(entry.getKey().toString(), entry.getShortValue());
-        tag.put(MEMBERS_KEY, tag2);
-        return tag;
+    public DataComponentMap exportComponents(HolderLookup.@NonNull Provider provider) {
+        List<VirtualEntryData.Member> data = new ArrayList<>(members.size());
+        for (var entry : members.object2ShortEntrySet()) {
+            data.add(new VirtualEntryData.Member(entry.getKey(), entry.getShortValue()));
+        }
+        return putBaseComponent(DataComponentMap.builder())
+                .set(GTDataComponents.VIRTUAL_REDSTONE.get(), new VirtualEntryData.Redstone(data))
+                .build();
     }
 
     @Override
-    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        super.deserializeNBT(provider, nbt);
-        CompoundTag tag = nbt.getCompound(MEMBERS_KEY);
-        for (String uuid : tag.getAllKeys()) {
-            members.put(UUID.fromString(uuid), tag.getShort(uuid));
+    public void importComponents(HolderLookup.Provider provider, DataComponentMap components) {
+        super.importComponents(provider, components);
+        VirtualEntryData.Redstone data = components.getOrDefault(GTDataComponents.VIRTUAL_REDSTONE.get(),
+                VirtualEntryData.Redstone.EMPTY);
+        members.clear();
+        for (VirtualEntryData.Member member : data.members()) {
+            members.put(member.id(), member.signal());
         }
     }
 

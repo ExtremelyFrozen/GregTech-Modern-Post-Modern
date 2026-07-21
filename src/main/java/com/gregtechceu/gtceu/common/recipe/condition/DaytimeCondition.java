@@ -41,6 +41,11 @@ public class DaytimeCondition extends RecipeCondition<DaytimeCondition> {
 	}
 
 	@Override
+	public boolean perTick() {
+		return true;
+	}
+
+	@Override
 	public boolean testCondition(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
 		Level level = recipeLogic.getLevel();
 		return level != null && level.isDay();

@@ -176,7 +176,7 @@ public class SteamMinerMachine extends SteamWorkableMachine implements IControll
         if (this.getRecipeLogic().isDone())
             textList.add(Component.translatable("gtpm.multiblock.large_miner.done")
                     .withStyle(ChatFormatting.GREEN));
-        else if (this.getRecipeLogic().isWorking())
+        else if (getWorkLogic().isWorking())
             textList.add(Component.translatable("gtpm.multiblock.large_miner.working")
                     .withStyle(ChatFormatting.GOLD));
         else if (!this.isWorkingEnabled())

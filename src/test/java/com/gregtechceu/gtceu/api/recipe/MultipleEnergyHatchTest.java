@@ -46,7 +46,7 @@ public class MultipleEnergyHatchTest {
                 GTRecipeTypes.LARGE_CHEMICAL_RECIPES);
 
         LCR_RECIPE_TYPE.getAdditionHandler().beginStaging();
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_multiple_energy_hatch_ev"))
                 .inputItems(new ItemStack(Items.CYAN_BED))
                 .outputItems(new ItemStack(Items.CYAN_BED))
@@ -54,7 +54,7 @@ public class MultipleEnergyHatchTest {
                 .duration(16)
                 .build());
 
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_multiple_energy_hatch_iv"))
                 .inputItems(new ItemStack(Items.BROWN_BED))
                 .outputItems(new ItemStack(Items.BROWN_BED))
@@ -62,7 +62,7 @@ public class MultipleEnergyHatchTest {
                 .duration(16)
                 .build());
 
-        LCR_RECIPE_TYPE.getAdditionHandler().addStaging(LCR_RECIPE_TYPE
+        LCR_RECIPE_TYPE.getAdditionHandler().addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_multiple_energy_hatch_iv"))
                 .inputItems(new ItemStack(Items.GREEN_BED))
                 .outputItems(new ItemStack(Items.GREEN_BED))
@@ -109,14 +109,14 @@ public class MultipleEnergyHatchTest {
     }
 
     private static void checkContainerList(GameTestHelper helper, BusHolder busHolder, List<Hatch> hatches) {
-        long totalVoltage = 0;
+        long totalEUt = 0;
         for (var hatch : hatches) {
-            totalVoltage += hatch.EU * hatch.amps;
+            totalEUt += hatch.EU * hatch.amps;
         }
         EnergyContainerList containerList = busHolder.controller.getEnergyContainer();
 
-        helper.assertTrue(totalVoltage == containerList.getInputVoltage(),
-                "Hatches on multiblock didn't match expected input voltage");
+        helper.assertTrue(totalEUt == containerList.getTotalEUt(),
+                "Hatches on multiblock didn't match expected input EU/t");
     }
 
     @TestHolder()

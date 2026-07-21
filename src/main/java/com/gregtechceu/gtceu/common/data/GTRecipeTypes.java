@@ -213,14 +213,14 @@ public class GTRecipeTypes {
                     recipeBuilder
                             .copy(recipeBuilder.id.withSuffix("_water"))
                             .inputFluids(GTMaterials.Water.getFluid((int) GTMath.clamp(
-                                    recipeBuilder.duration * recipeBuilder.EUt().getTotalEU() / 320, 4, 1000)))
+                                    recipeBuilder.duration * recipeBuilder.EUt() / 320, 4, 1000)))
                             .duration(recipeBuilder.duration * 2)
                             .save(provider);
 
                     recipeBuilder
                             .copy(recipeBuilder.id.withSuffix("_distilled_water"))
                             .inputFluids(GTMaterials.DistilledWater.getFluid((int) GTMath.clamp(
-                                    recipeBuilder.duration * recipeBuilder.EUt().getTotalEU() / 426, 3, 750)))
+                                    recipeBuilder.duration * recipeBuilder.EUt() / 426, 3, 750)))
                             .duration((int) (recipeBuilder.duration * 1.5))
                             .save(provider);
 
@@ -228,7 +228,7 @@ public class GTRecipeTypes {
                     // buildAndRegister call.
                     // Adding a second call will result in duplicate recipe generation attempts
                     recipeBuilder.inputFluids(GTMaterials.Lubricant.getFluid((int) GTMath.clamp(
-                            recipeBuilder.duration * recipeBuilder.EUt().getTotalEU() / 1280, 1, 250)));
+                            recipeBuilder.duration * recipeBuilder.EUt() / 1280, 1, 250)));
                 }
             });
 
@@ -420,7 +420,7 @@ public class GTRecipeTypes {
                 List<HolderSet<Fluid>> fluids = new ArrayList<>();
                 for (RecipeCondition condition : recipe.conditions) {
                     if (condition instanceof AdjacentFluidCondition adjacentFluid) {
-                        fluids.addAll(adjacentFluid.getOrInitFluids(recipe));
+                        fluids.addAll(adjacentFluid.getOrInitFluids(recipe.data));
                     }
                 }
                 if (fluids.isEmpty()) {
@@ -507,11 +507,11 @@ public class GTRecipeTypes {
     public final static GTRecipeType BLAST_RECIPES = register("electric_blast_furnace", MULTIBLOCK)
             .setMaxIOSize(3, 3, 1, 1).setEUIO(IO.IN)
             .addDataInfo(data -> {
-                int temp = data.getInt("ebf_temp");
+                int temp = RecipeData.getInt(data, "ebf_temp");
                 return LocalizationUtils.format("gtpm.recipe.temperature", FormattingUtil.formatTemperature(temp));
             })
             .addDataInfo(data -> {
-                int temp = data.getInt("ebf_temp");
+                int temp = RecipeData.getInt(data, "ebf_temp");
                 ICoilType requiredCoil = ICoilType.getMinRequiredType(temp);
 
                 if (requiredCoil != null && !requiredCoil.getMaterial().isNull()) {
@@ -521,7 +521,7 @@ public class GTRecipeTypes {
                 return "";
             })
             .setUiBuilder((recipe, widgetGroup) -> {
-                int temp = recipe.data.getInt("ebf_temp");
+                int temp = RecipeData.getInt(recipe.data, "ebf_temp");
                 List<List<ItemStack>> items = new ArrayList<>();
                 items.add(GTCEuAPI.HEATING_COILS.entrySet().stream()
                         .filter(coil -> coil.getKey().getCoilTemperature() >= temp)
@@ -536,7 +536,7 @@ public class GTRecipeTypes {
             .setSound(GTSoundEntries.CHEMICAL)
             .setProgressBar(GuiTextures.PROGRESS_BAR_ARROW_MULTIPLE, LEFT_TO_RIGHT)
             .onRecipeBuild((recipeBuilder, provider) -> {
-                if (recipeBuilder.data.getBoolean("disable_distillery")) return;
+                if (RecipeData.getBoolean(recipeBuilder.data, "disable_distillery")) return;
                 if (recipeBuilder.output.containsKey(FluidRecipeCapability.CAP)) {
                     Content inputContent = recipeBuilder.input.get(FluidRecipeCapability.CAP).getFirst();
                     SizedFluidIngredient input = FluidRecipeCapability.CAP.of(inputContent.getContent());
@@ -555,7 +555,8 @@ public class GTRecipeTypes {
                         GTRecipeBuilder builder = DISTILLERY_RECIPES
                                 .recipeBuilder(recipeBuilder.id.getPath() + "_to_" +
                                         BuiltInRegistries.FLUID.getKey(output.getFluids()[0].getFluid()).getPath())
-                                .EUt(Math.max(1, recipeBuilder.EUt().voltage() / 4), recipeBuilder.EUt().amperage())
+                                .EUt(Math.max(1, recipeBuilder.EUt() / 4))
+                                .tier(recipeBuilder.tier)
                                 .circuitMeta(i + 1);
 
                         int ratio = RecipeHelper.getRatioForDistillery(input, output, outputItem);

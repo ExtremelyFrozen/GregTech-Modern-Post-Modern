@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.common.recipe.condition;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
+import com.gregtechceu.gtceu.api.recipe.RecipeData;
 import com.gregtechceu.gtceu.api.recipe.condition.RecipeConditionType;
 import com.gregtechceu.gtceu.common.data.GTRecipeConditions;
 import com.gregtechceu.gtceu.utils.GTUtil;
@@ -128,14 +129,17 @@ public class AdjacentBlockCondition extends RecipeCondition<AdjacentBlockConditi
             return resolvedBlocks;
         }
 
-        if (recipe != null && recipe.data.contains("blockA") && recipe.data.contains("blockB")) {
+        if (recipe != null && RecipeData.contains(recipe.data, "blockA") &&
+                RecipeData.contains(recipe.data, "blockB")) {
             this.resolvedBlocks.clear();
 
-            Block blockA = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(recipe.data.getString("blockA")));
+            Block blockA = BuiltInRegistries.BLOCK
+                    .get(ResourceLocation.parse(RecipeData.getString(recipe.data, "blockA")));
             if (!blockA.defaultBlockState().isAir()) {
                 this.resolvedBlocks.add(HolderSet.direct(blockA.builtInRegistryHolder()));
             }
-            Block blockB = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(recipe.data.getString("blockB")));
+            Block blockB = BuiltInRegistries.BLOCK
+                    .get(ResourceLocation.parse(RecipeData.getString(recipe.data, "blockB")));
             if (!blockB.defaultBlockState().isAir()) {
                 this.resolvedBlocks.add(HolderSet.direct(blockB.builtInRegistryHolder()));
             }

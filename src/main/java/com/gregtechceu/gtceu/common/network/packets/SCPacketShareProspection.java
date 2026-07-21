@@ -6,7 +6,6 @@ import com.gregtechceu.gtceu.integration.map.ClientCacheManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
@@ -15,10 +14,12 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public class SCPacketShareProspection implements CustomPacketPayload {
     private String key;
     private boolean isDimCache;
     private ResourceKey<Level> dimension;
-    private CompoundTag data;
+    private JsonElement data;
     private boolean first;
 
     public SCPacketShareProspection(FriendlyByteBuf buf) {
@@ -49,7 +50,7 @@ public class SCPacketShareProspection implements CustomPacketPayload {
         key = buf.readUtf();
         isDimCache = buf.readBoolean();
         dimension = buf.readResourceKey(Registries.DIMENSION);
-        data = buf.readNbt();
+        data = buf.readJsonWithCodec(ExtraCodecs.JSON);
         first = buf.readBoolean();
     }
 
@@ -60,7 +61,7 @@ public class SCPacketShareProspection implements CustomPacketPayload {
         buf.writeUtf(key);
         buf.writeBoolean(isDimCache);
         buf.writeResourceKey(dimension);
-        buf.writeNbt(data);
+        buf.writeJsonWithCodec(ExtraCodecs.JSON, data);
         buf.writeBoolean(first);
     }
 

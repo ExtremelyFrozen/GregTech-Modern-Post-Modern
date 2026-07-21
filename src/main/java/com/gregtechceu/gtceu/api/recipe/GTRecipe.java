@@ -5,10 +5,9 @@ import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
 import com.gregtechceu.gtceu.api.recipe.content.ContentModifier;
-import com.gregtechceu.gtceu.api.recipe.ingredient.EnergyStack;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
@@ -44,38 +43,22 @@ public class GTRecipe implements Recipe<RecipeInput> {
     // Must be List<?> to not cause crashes without KubeJS.
     public final List<?> ingredientActions;
     @NotNull
-    public CompoundTag data;
+    public DataComponentMap data;
+    public int tier;
     public int duration;
     public int parallels = 1;
     public int subtickParallels = 1;
     public int batchParallels = 1;
     public int ocLevel = 0;
     public final GTRecipeCategory recipeCategory;
-    // Lazy fields, since we need the recipe EUt very often
-    @Getter(lazy = true)
-    private final @NotNull EnergyStack inputEUt = calculateEUt(tickInputs);
-    @Getter(lazy = true)
-    private final @NotNull EnergyStack outputEUt = calculateEUt(tickOutputs);
     public int groupColor = -1;
 
-    public GTRecipe(GTRecipeType recipeType,
-                    Map<RecipeCapability<?>, List<Content>> inputs,
-                    Map<RecipeCapability<?>, List<Content>> outputs,
-                    Map<RecipeCapability<?>, List<Content>> tickInputs,
-                    Map<RecipeCapability<?>, List<Content>> tickOutputs,
-                    Map<RecipeCapability<?>, ChanceLogic> inputChanceLogics,
-                    Map<RecipeCapability<?>, ChanceLogic> outputChanceLogics,
-                    Map<RecipeCapability<?>, ChanceLogic> tickInputChanceLogics,
-                    Map<RecipeCapability<?>, ChanceLogic> tickOutputChanceLogics,
-                    List<RecipeCondition<?>> conditions,
-                    List<?> ingredientActions,
-                    @NotNull CompoundTag data,
-                    int duration,
-                    @NotNull GTRecipeCategory recipeCategory,
-                    int groupColor) {
-        this(recipeType, null, inputs, outputs, tickInputs, tickOutputs,
-                inputChanceLogics, outputChanceLogics, tickInputChanceLogics, tickOutputChanceLogics,
-                conditions, ingredientActions, data, duration, recipeCategory, groupColor);
+    public long getInputEUt() {
+        return calculateEUt(tickInputs);
+    }
+
+    public long getOutputEUt() {
+        return calculateEUt(tickOutputs);
     }
 
     public GTRecipe(GTRecipeType recipeType,
@@ -88,13 +71,35 @@ public class GTRecipe implements Recipe<RecipeInput> {
                     Map<RecipeCapability<?>, ChanceLogic> tickInputChanceLogics,
                     Map<RecipeCapability<?>, ChanceLogic> tickOutputChanceLogics,
                     List<RecipeCondition<?>> conditions,
-                    @NotNull CompoundTag data,
+                    List<?> ingredientActions,
+                    @NotNull DataComponentMap data,
+                    int tier,
                     int duration,
                     @NotNull GTRecipeCategory recipeCategory,
                     int groupColor) {
         this(recipeType, null, inputs, outputs, tickInputs, tickOutputs,
                 inputChanceLogics, outputChanceLogics, tickInputChanceLogics, tickOutputChanceLogics,
-                conditions, List.of(), data, duration, recipeCategory, groupColor);
+                conditions, ingredientActions, data, tier, duration, recipeCategory, groupColor);
+    }
+
+    public GTRecipe(GTRecipeType recipeType,
+                    Map<RecipeCapability<?>, List<Content>> inputs,
+                    Map<RecipeCapability<?>, List<Content>> outputs,
+                    Map<RecipeCapability<?>, List<Content>> tickInputs,
+                    Map<RecipeCapability<?>, List<Content>> tickOutputs,
+                    Map<RecipeCapability<?>, ChanceLogic> inputChanceLogics,
+                    Map<RecipeCapability<?>, ChanceLogic> outputChanceLogics,
+                    Map<RecipeCapability<?>, ChanceLogic> tickInputChanceLogics,
+                    Map<RecipeCapability<?>, ChanceLogic> tickOutputChanceLogics,
+                    List<RecipeCondition<?>> conditions,
+                    @NotNull DataComponentMap data,
+                    int tier,
+                    int duration,
+                    @NotNull GTRecipeCategory recipeCategory,
+                    int groupColor) {
+        this(recipeType, null, inputs, outputs, tickInputs, tickOutputs,
+                inputChanceLogics, outputChanceLogics, tickInputChanceLogics, tickOutputChanceLogics,
+                conditions, List.of(), data, tier, duration, recipeCategory, groupColor);
     }
 
     public GTRecipe(GTRecipeType recipeType,
@@ -109,7 +114,8 @@ public class GTRecipe implements Recipe<RecipeInput> {
                     Map<RecipeCapability<?>, ChanceLogic> tickOutputChanceLogics,
                     List<RecipeCondition<?>> conditions,
                     List<?> ingredientActions,
-                    @NotNull CompoundTag data,
+                    @NotNull DataComponentMap data,
+                    int tier,
                     int duration,
                     @NotNull GTRecipeCategory recipeCategory, int groupColor) {
         this.recipeType = recipeType;
@@ -128,6 +134,7 @@ public class GTRecipe implements Recipe<RecipeInput> {
         this.conditions = conditions;
         this.ingredientActions = ingredientActions;
         this.data = data;
+        this.tier = tier;
         this.duration = duration;
         this.recipeCategory = (recipeCategory != GTRecipeCategory.DEFAULT) ? recipeCategory : recipeType.getCategory();
         this.groupColor = groupColor;
@@ -148,7 +155,7 @@ public class GTRecipe implements Recipe<RecipeInput> {
                 new HashMap<>(inputChanceLogics), new HashMap<>(outputChanceLogics),
                 new HashMap<>(tickInputChanceLogics), new HashMap<>(tickOutputChanceLogics),
                 new ArrayList<>(conditions),
-                new ArrayList<>(ingredientActions), data, duration, recipeCategory, groupColor);
+                new ArrayList<>(ingredientActions), RecipeData.copy(data), tier, duration, recipeCategory, groupColor);
         if (modifyDuration) {
             copied.duration = modifier.apply(this.duration);
         }
@@ -234,16 +241,14 @@ public class GTRecipe implements Recipe<RecipeInput> {
     }
 
     // Technically should account for overflow but realistically not an issue.
-    protected @NotNull EnergyStack calculateEUt(Map<RecipeCapability<?>, List<Content>> contents) {
+    protected long calculateEUt(Map<RecipeCapability<?>, List<Content>> contents) {
         var outputs = contents.get(EURecipeCapability.CAP);
-        if (outputs == null) return EnergyStack.EMPTY;
-        long v = 0, a = 0;
+        if (outputs == null) return 0;
+        long eut = 0;
         for (var content : outputs) {
-            EnergyStack stack = EURecipeCapability.CAP.of(content.content);
-            v += stack.voltage();
-            a += stack.amperage();
+            eut += EURecipeCapability.CAP.of(content.content);
         }
-        return new EnergyStack(v, a);
+        return eut;
     }
 
     public int getTotalRuns() {

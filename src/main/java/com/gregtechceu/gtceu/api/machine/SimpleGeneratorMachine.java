@@ -20,7 +20,7 @@ import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
 
 import net.minecraft.Util;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.ResourceLocation;
 
 import com.google.common.collect.Tables;
@@ -88,7 +88,7 @@ public class SimpleGeneratorMachine extends WorkableTieredMachine
         if (!(machine instanceof SimpleGeneratorMachine generator)) {
             return RecipeModifier.nullWrongType(SimpleGeneratorMachine.class, machine);
         }
-        long EUt = recipe.getOutputEUt().getTotalEU();
+        long EUt = recipe.getOutputEUt();
         if (EUt <= 0) return ModifierFunction.NULL;
 
         int maxParallel = (int) (generator.getOverclockVoltage() / EUt);
@@ -152,7 +152,7 @@ public class SimpleGeneratorMachine extends WorkableTieredMachine
                             template,
                             new GTRecipeTypeUI.RecipeHolder(generatorMachine.recipeLogic::getProgressPercent,
                                     storages,
-                                    new CompoundTag(),
+                                    DataComponentMap.EMPTY,
                                     Collections.emptyList(),
                                     false, false));
                     createEnergyBar().setupUI(template, generatorMachine);

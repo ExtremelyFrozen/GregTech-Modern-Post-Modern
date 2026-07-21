@@ -9,7 +9,7 @@ import com.gregtechceu.gtceu.api.multiblock.autobuild.AutoBuildMaterialSource;
 import com.gregtechceu.gtceu.api.multiblock.autobuild.AutoBuildMaterialSources;
 import com.gregtechceu.gtceu.api.multiblock.autobuild.AutoBuildProblem;
 import com.gregtechceu.gtceu.api.multiblock.autobuild.AutoBuildRequest;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.item.datacomponents.TerminalAutoBuildConfig;
 
 import net.minecraft.core.BlockPos;

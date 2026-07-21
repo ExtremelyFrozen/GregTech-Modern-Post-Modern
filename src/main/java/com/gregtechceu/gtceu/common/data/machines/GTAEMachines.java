@@ -5,6 +5,7 @@ import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.integration.ae2.machine.*;
+import com.gregtechceu.gtceu.integration.ae2.utils.AE2SyncCodecs;
 
 import net.minecraft.network.chat.Component;
 
@@ -131,5 +132,7 @@ public class GTAEMachines {
                     Component.translatable("gtpm.part_sharing.enabled"))
             .register();
 
-    public static void init() {}
+    public static void init() {
+        AE2SyncCodecs.register();
+    }
 }

@@ -18,8 +18,9 @@ import com.gregtechceu.gtceu.api.machine.multiblock.IBatteryData;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTraitType;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
+import com.gregtechceu.gtceu.api.sync_system.FieldCodecs;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
@@ -28,17 +29,16 @@ import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
 import com.lowdragmc.lowdraglib.gui.widget.*;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.common.util.INBTSerializable;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import lombok.Getter;
@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.LongStream;
 
 public class PowerSubstationMachine extends WorkableMultiblockMachine
                                     implements IEnergyInfoProvider, IFancyUIMachine, IDisplayUIMachine {
@@ -97,8 +98,8 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         List<IEnergyContainer> inputs = new ArrayList<>();
         List<IEnergyContainer> outputs = new ArrayList<>();
-        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrCreate("ioMap",
-                Long2ObjectMaps::emptyMap);
+        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrDefault("ioMap",
+                Long2ObjectMaps.emptyMap());
         for (IMultiPart part : getParts()) {
             IO io = ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
             if (io == IO.NONE) continue;
@@ -166,8 +167,8 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         if (!getLevel().isClientSide) {
             if (getOffsetTimer() % 20 == 0) {
                 // active here is just used for rendering
-                getRecipeLogic()
-                        .setStatus(energyBank.hasEnergy() ? RecipeLogic.Status.WORKING : RecipeLogic.Status.IDLE);
+                getWorkLogic()
+                        .setStatus(energyBank.hasEnergy() ? WorkLogic.Status.WORKING : WorkLogic.Status.IDLE);
                 inputPerSec = netInLastSec;
                 outputPerSec = netOutLastSec;
                 netInLastSec = 0;
@@ -202,17 +203,11 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
 
             } else if (isActive()) {
                 textList.add(Component.translatable("gtpm.multiblock.running"));
-                int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
-                double maxInSec = (float) recipeLogic.getDuration() / 20.0f;
-                double currentInSec = (float) recipeLogic.getProgress() / 20.0f;
-                textList.add(
-                        Component.translatable("gtpm.multiblock.progress", String.format("%.2f", (float) currentInSec),
-                                String.format("%.2f", (float) maxInSec), currentProgress));
             } else {
                 textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
-            if (recipeLogic.isWaiting()) {
+            if (getWorkLogic().isWaiting()) {
                 textList.add(Component.translatable("gtpm.multiblock.waiting")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }
@@ -364,19 +359,25 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         }
     }
 
-    public static class PowerStationEnergyBank extends MachineTrait implements INBTSerializable<CompoundTag> {
+    public static class PowerStationEnergyBank extends MachineTrait {
 
         public static final MachineTraitType<PowerStationEnergyBank> TYPE = new MachineTraitType<>(
                 PowerStationEnergyBank.class);
+        public static final Codec<PowerStationEnergyBank> CODEC = RecordCodecBuilder.create(instance -> instance
+                .group(Codec.LONG_STREAM.xmap(LongStream::toArray, Arrays::stream).fieldOf("storage")
+                        .forGetter(PowerStationEnergyBank::copyStorage),
+                        Codec.LONG_STREAM.xmap(LongStream::toArray, Arrays::stream).fieldOf("maximums")
+                                .forGetter(PowerStationEnergyBank::copyMaximums))
+                .apply(instance, PowerStationEnergyBank::new));
+
+        static {
+            FieldCodecs.register(PowerStationEnergyBank.class, CODEC);
+        }
 
         @Override
         public MachineTraitType<PowerStationEnergyBank> getTraitType() {
             return TYPE;
         }
-
-        private static final String NBT_SIZE = "Size";
-        private static final String NBT_STORED = "Stored";
-        private static final String NBT_MAX = "Max";
 
         private long[] storage;
         private long[] maximums;
@@ -389,6 +390,16 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
             setupBatteries(batteries);
         }
 
+        private PowerStationEnergyBank(long[] storage, long[] maximums) {
+            if (storage.length != maximums.length) {
+                throw new IllegalArgumentException("Power Substation power bank storage and capacity sizes differ");
+            }
+            this.storage = storage.clone();
+            this.maximums = maximums.clone();
+            this.capacity = summarize(this.maximums);
+            updateIndex();
+        }
+
         public void setupBatteries(List<IBatteryData> batteries) {
             storage = new long[batteries.size()];
             maximums = new long[batteries.size()];
@@ -396,34 +407,6 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
                 maximums[i] = batteries.get(i).getCapacity();
             }
             capacity = summarize(maximums);
-        }
-
-        public void deserializeNBT(HolderLookup.Provider lookup, CompoundTag storageTag) {
-            int size = storageTag.getInt(NBT_SIZE);
-            storage = new long[size];
-            maximums = new long[size];
-            for (int i = 0; i < size; i++) {
-                CompoundTag subtag = storageTag.getCompound(String.valueOf(i));
-                if (subtag.contains(NBT_STORED)) {
-                    storage[i] = subtag.getLong(NBT_STORED);
-                }
-                maximums[i] = subtag.getLong(NBT_MAX);
-            }
-            capacity = summarize(maximums);
-        }
-
-        public CompoundTag serializeNBT(HolderLookup.Provider lookup) {
-            var compound = new CompoundTag();
-            compound.putInt(NBT_SIZE, storage.length);
-            for (int i = 0; i < storage.length; i++) {
-                CompoundTag subtag = new CompoundTag();
-                if (storage[i] > 0) {
-                    subtag.putLong(NBT_STORED, storage[i]);
-                }
-                subtag.putLong(NBT_MAX, maximums[i]);
-                compound.put(String.valueOf(i), subtag);
-            }
-            return compound;
         }
 
         /**
@@ -445,6 +428,7 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         /** @return Amount filled into storage */
         public long fill(long amount) {
             if (amount < 0) throw new IllegalArgumentException("Amount cannot be negative!");
+            if (storage.length == 0) return 0;
 
             // ensure index
             if (index != storage.length - 1 && storage[index] == maximums[index]) {
@@ -475,6 +459,7 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
         /** @return Amount drained from storage */
         public long drain(long amount) {
             if (amount < 0) throw new IllegalArgumentException("Amount cannot be negative!");
+            if (storage.length == 0) return 0;
 
             // ensure index
             if (index != 0 && storage[index] == 0) {
@@ -512,6 +497,24 @@ public class PowerSubstationMachine extends WorkableMultiblockMachine
                 if (l > 0) return true;
             }
             return false;
+        }
+
+        private long[] copyStorage() {
+            return storage.clone();
+        }
+
+        private long[] copyMaximums() {
+            return maximums.clone();
+        }
+
+        private void updateIndex() {
+            index = 0;
+            for (int i = storage.length - 1; i >= 0; i--) {
+                if (storage[i] > 0) {
+                    index = i;
+                    return;
+                }
+            }
         }
 
         private static BigInteger summarize(long[] values) {

@@ -13,7 +13,7 @@ import com.gregtechceu.gtceu.integration.map.layer.builtin.OreRenderLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.resources.ResourceKey;
@@ -72,22 +72,23 @@ public class GTClientCache extends WorldCache implements IClientCache {
     }
 
     @Override
-    public CompoundTag saveDimFile(String prefix, ResourceKey<Level> dim, HolderLookup.Provider registries) {
+    public DataComponentMap saveDimFile(String prefix, ResourceKey<Level> dim, HolderLookup.Provider registries) {
         if (!cache.containsKey(dim)) return null;
-        return cache.get(dim).toNBT(registries);
+        return cache.get(dim).saveComponents(registries);
     }
 
     @Override
-    public CompoundTag saveSingleFile(String name, HolderLookup.Provider registries) {
-        return fluids.toNbt();
+    public DataComponentMap saveSingleFile(String name, HolderLookup.Provider registries) {
+        return fluids.saveComponents();
     }
 
     @Override
-    public void readDimFile(String prefix, ResourceKey<Level> dim, CompoundTag data, HolderLookup.Provider registries) {
+    public void readDimFile(String prefix, ResourceKey<Level> dim, DataComponentMap data,
+                            HolderLookup.Provider registries) {
         if (!cache.containsKey(dim)) {
             cache.put(dim, new DimensionCache());
         }
-        cache.get(dim).fromNBT(data, registries);
+        cache.get(dim).readComponents(data, registries);
 
         // FIXME janky hack mate
         GenericMapRenderer renderer = GroupingMapRenderer.getInstance();
@@ -101,8 +102,8 @@ public class GTClientCache extends WorldCache implements IClientCache {
     }
 
     @Override
-    public void readSingleFile(String name, CompoundTag data, HolderLookup.Provider registries) {
-        fluids.fromNbt(data);
+    public void readSingleFile(String name, DataComponentMap data, HolderLookup.Provider registries) {
+        fluids.readComponents(data);
     }
 
     @Override

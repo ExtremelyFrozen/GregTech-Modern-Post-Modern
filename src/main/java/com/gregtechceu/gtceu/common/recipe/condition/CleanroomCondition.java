@@ -50,6 +50,11 @@ public class CleanroomCondition extends RecipeCondition<CleanroomCondition> {
     }
 
     @Override
+    public boolean perTick() {
+        return true;
+    }
+
+    @Override
     public boolean testCondition(@NotNull GTRecipe recipe, @NotNull RecipeLogic recipeLogic) {
         MetaMachine machine = recipeLogic.getMachine();
 

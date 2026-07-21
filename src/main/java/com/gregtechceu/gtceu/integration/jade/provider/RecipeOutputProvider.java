@@ -52,7 +52,7 @@ public class RecipeOutputProvider extends MachineTraitProvider<RecipeLogic, Comp
     @Override
     protected CompoundTag write(RecipeLogic recipeLogic) {
         CompoundTag data = new CompoundTag();
-        if (!recipeLogic.isWorking()) {
+        if (!recipeLogic.getWorkMachine().getWorkLogic().isWorking()) {
             return data;
         }
         data.putBoolean("Working", true);
@@ -156,7 +156,7 @@ public class RecipeOutputProvider extends MachineTraitProvider<RecipeLogic, Comp
         }
         var ops = block.getLevel().registryAccess().createSerializationContext(NbtOps.INSTANCE);
 
-        List<SizedIngredient> outputItems = new ArrayList<>();
+        List<ItemOutput> outputItems = new ArrayList<>();
         if (capData.contains("OutputItems", Tag.TAG_LIST)) {
             ListTag itemTags = capData.getList("OutputItems", Tag.TAG_COMPOUND);
             if (!itemTags.isEmpty()) {
@@ -165,11 +165,16 @@ public class RecipeOutputProvider extends MachineTraitProvider<RecipeLogic, Comp
                         if (tCompoundTag.contains("count_provider")) {
                             var ingredient = IntProviderIngredient.CODEC.codec()
                                     .parse(ops, tCompoundTag).getOrThrow();
-                            outputItems.add(new SizedIngredient(ingredient.toVanilla(), 1));
+                            ItemStack stack = copyFirst(ingredient.getInner().getItems());
+                            if (!stack.isEmpty()) {
+                                outputItems.add(new ItemOutput(stack,
+                                        ingredient.getCountProvider().getMinValue(),
+                                        ingredient.getCountProvider().getMaxValue()));
+                            }
                         } else {
                             ItemStack stack = ItemStack.CODEC.parse(ops, tag).getOrThrow();
                             if (!stack.isEmpty()) {
-                                outputItems.add(RecipeHelper.makeSizedIngredient(stack));
+                                outputItems.add(new ItemOutput(stack, stack.getCount(), stack.getCount()));
                             }
                         }
                     }
@@ -201,26 +206,27 @@ public class RecipeOutputProvider extends MachineTraitProvider<RecipeLogic, Comp
         addFluidTooltips(tooltip, outputFluids);
     }
 
-    private void addItemTooltips(ITooltip tooltip, List<SizedIngredient> outputItems) {
+    private void addItemTooltips(ITooltip tooltip, List<ItemOutput> outputItems) {
         IElementHelper helper = IElementHelper.get();
-        for (SizedIngredient itemOutput : outputItems) {
-            if (itemOutput == null || itemOutput.ingredient().hasNoItems()) {
+        for (ItemOutput itemOutput : outputItems) {
+            if (itemOutput == null || itemOutput.stack().isEmpty()) {
                 continue;
             }
-            ItemStack item = itemOutput.getItems()[0];
-            int count = item.getCount();
+            ItemStack item = itemOutput.stack().copy();
             item.setCount(1);
 
             tooltip.add(helper.smallItem(item));
             MutableComponent text = CommonComponents.space();
-            item = itemOutput.getItems()[0];
-            text.append(String.valueOf(item.getCount()));
-            item.setCount(1);
+            if (itemOutput.minCount() != itemOutput.maxCount()) {
+                text.append(Component.translatable("gtpm.gui.content.range",
+                        itemOutput.minCount(), itemOutput.maxCount()));
+            } else {
+                text.append(String.valueOf(itemOutput.maxCount()));
+            }
             text.append(Component.translatable("gtpm.gui.content.times_item",
                     getItemName(item))
                     .withStyle(ChatFormatting.WHITE));
 
-            tooltip.add(helper.smallItem(item));
             tooltip.append(text);
         }
     }
@@ -260,4 +266,15 @@ public class RecipeOutputProvider extends MachineTraitProvider<RecipeLogic, Comp
     private JadeFluidObject getFluid(FluidStack stack) {
         return JadeFluidObject.of(stack.getFluid(), stack.getAmount());
     }
+
+    private ItemStack copyFirst(ItemStack[] stacks) {
+        for (ItemStack stack : stacks) {
+            if (!stack.isEmpty()) {
+                return stack.copy();
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+    private record ItemOutput(ItemStack stack, int minCount, int maxCount) {}
 }

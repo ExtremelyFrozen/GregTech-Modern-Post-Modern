@@ -10,6 +10,7 @@ import com.gregtechceu.gtceu.api.machine.feature.IMufflableMachine;
 import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
 import com.gregtechceu.gtceu.api.machine.trait.*;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -108,7 +109,7 @@ public abstract class SteamWorkableMachine extends SteamMachine
         for (var entry : ioTraits.entrySet()) {
             var handlerList = RecipeHandlerList.of(entry.getKey(), entry.getValue());
             this.addHandlerList(handlerList);
-            traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+            traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
         }
     }
 

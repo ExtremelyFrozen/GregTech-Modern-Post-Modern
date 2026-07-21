@@ -14,6 +14,13 @@ public @interface ItemSave {
 
     /**
      * Specifies the NBT key the data should be stored under, defaulting to the field name.
+     * This is only used by legacy NBT boundaries.
      */
     String nbtKey() default "";
+
+    /**
+     * Specifies the field id inside the sync-field data component, defaulting to {@link #nbtKey()} or the field name.
+     * A path without namespace is resolved in the GTCEu namespace.
+     */
+    String component() default "";
 }

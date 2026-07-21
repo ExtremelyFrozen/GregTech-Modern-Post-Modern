@@ -4,6 +4,7 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties;
 import com.gregtechceu.gtceu.api.capability.*;
 import com.gregtechceu.gtceu.api.capability.compat.EnergyStorageList;
+import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
@@ -15,7 +16,6 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.MachineTrait;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
-import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.misc.EnergyInfoProviderList;
 import com.gregtechceu.gtceu.api.misc.LaserContainerList;
 import com.gregtechceu.gtceu.api.sync_system.managed.ManagedSyncEntityBlock;
@@ -438,9 +438,7 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
                 }
                 var list = getCapabilitiesFromTraits(machine.getTraitHolder().getAllTraits(), side,
                         IEnergyContainer.class);
-                if (!list.isEmpty()) {
-                    return list.size() == 1 ? list.getFirst() : new EnergyContainerList(list);
-                }
+                if (!list.isEmpty()) return list.getFirst();
             }
             return null;
         }, this);
@@ -501,6 +499,19 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
             }
             return null;
         }, this);
+        event.registerBlock(GTCapability.CAPABILITY_COMPUTATION_PORT, (level, pos, state, blockEntity, side) -> {
+            if (blockEntity instanceof MetaMachine machine) {
+                if (machine instanceof ComputationPort computationPort) {
+                    return computationPort;
+                }
+                var list = getCapabilitiesFromTraits(machine.getTraitHolder().getAllTraits(), side,
+                        ComputationPort.class);
+                if (!list.isEmpty()) {
+                    return list.getFirst();
+                }
+            }
+            return null;
+        }, this);
         event.registerBlock(GTCapability.CAPABILITY_COMPUTATION_PROVIDER, (level, pos, state, blockEntity, side) -> {
             if (blockEntity instanceof MetaMachine machine) {
                 if (machine instanceof IOpticalComputationProvider computationProvider) {
@@ -516,11 +527,11 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
         }, this);
         event.registerBlock(GTCapability.CAPABILITY_DATA_ACCESS, (level, pos, state, blockEntity, side) -> {
             if (blockEntity instanceof MetaMachine machine) {
-                if (machine instanceof IDataAccessHatch dataAccess) {
+                if (machine instanceof IDataAccessMachine dataAccess) {
                     return dataAccess;
                 }
                 var list = getCapabilitiesFromTraits(machine.getTraitHolder().getAllTraits(), side,
-                        IDataAccessHatch.class);
+                        IDataAccessMachine.class);
                 if (!list.isEmpty()) {
                     return list.getFirst();
                 }

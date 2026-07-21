@@ -2,42 +2,43 @@ package com.gregtechceu.gtceu.common.machine.multiblock.electric.research;
 
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
-import com.gregtechceu.gtceu.api.capability.IOpticalComputationHatch;
-import com.gregtechceu.gtceu.api.capability.IOpticalComputationProvider;
-import com.gregtechceu.gtceu.api.capability.recipe.CWURecipeCapability;
-import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.capability.IControllable;
+import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
+import com.gregtechceu.gtceu.api.machine.TickableSubscription;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockDisplayText;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
-import com.gregtechceu.gtceu.api.machine.trait.NotifiableComputationContainer;
+import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
+import com.gregtechceu.gtceu.common.computation.ComputationNetworkManager;
+import com.gregtechceu.gtceu.common.machine.multiblock.part.OpticalComputationHatchMachine;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import lombok.AccessLevel;
-import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
-public class NetworkSwitchMachine extends DataBankMachine implements IOpticalComputationProvider {
+public class NetworkSwitchMachine extends WorkableElectricMultiblockMachine implements IControllable {
 
     public static final int EUT_PER_HATCH = GTValues.VA[GTValues.IV];
 
-    private final MultipleComputationHandler computationHandler;
+    private int energyUsage = 0;
+    private boolean computationBridgeActive;
+
+    @Nullable
+    protected TickableSubscription tickSubs;
 
     public NetworkSwitchMachine(BlockEntityCreationInfo info) {
         super(info);
-        computationHandler = attachTrait(new MultipleComputationHandler());
     }
 
-    @Override
     protected int calculateEnergyUsage() {
         int receivers = 0;
         int transmitters = 0;
         for (var part : this.getParts()) {
-            net.minecraft.world.level.block.Block block = part.self().getBlockState().getBlock();
+            var block = part.self().getBlockState().getBlock();
             if (PartAbility.COMPUTATION_DATA_RECEPTION.isApplicable(block)) {
                 ++receivers;
             }
@@ -45,219 +46,142 @@ public class NetworkSwitchMachine extends DataBankMachine implements IOpticalCom
                 ++transmitters;
             }
         }
-        return GTValues.VA[GTValues.IV] * (receivers + transmitters);
+        return EUT_PER_HATCH * (receivers + transmitters);
     }
 
     @Override
     public void formStructure(String structureName) {
         super.formStructure(structureName);
         if (!DEFAULT_STRUCTURE.equals(structureName)) return;
-        List<IOpticalComputationHatch> receivers = new ArrayList<>();
-        List<IOpticalComputationHatch> transmitters = new ArrayList<>();
-        for (var part : this.getParts()) {
-            net.minecraft.world.level.block.Block block = part.self().getBlockState().getBlock();
-            List<IOpticalComputationHatch> list;
-            if (PartAbility.COMPUTATION_DATA_RECEPTION.isApplicable(block)) {
-                list = receivers;
-            } else if (PartAbility.COMPUTATION_DATA_TRANSMISSION.isApplicable(block)) {
-                list = transmitters;
-            } else {
-                continue;
-            }
-            if (part instanceof IOpticalComputationHatch hatch) {
-                list.add(hatch);
-            } else {
-                var handlerLists = part.getRecipeHandlers();
-                for (var handlerList : handlerLists) {
-                    for (var cwu : handlerList.getCapability(CWURecipeCapability.CAP)) {
-                        if (cwu instanceof IOpticalComputationHatch hatch) {
-                            list.add(hatch);
-                        }
-                    }
-                }
-            }
-        }
-        computationHandler.onStructureForm(receivers, transmitters);
+        energyUsage = calculateEnergyUsage();
+        updateTickSubscription();
+        markComputationTopologyDirty();
     }
 
     @Override
     public void invalidateStructure(String structureName) {
         super.invalidateStructure(structureName);
         if (!DEFAULT_STRUCTURE.equals(structureName)) return;
-        computationHandler.reset();
+        energyUsage = 0;
+        updateComputationBridgeActive(false);
+        updateTickSubscription();
     }
 
     @Override
+    public void onLoad() {
+        super.onLoad();
+        scheduleForNextServerTick(this::updateTickSubscription);
+    }
+
+    @Override
+    public void onUnload() {
+        super.onUnload();
+        if (tickSubs != null) {
+            tickSubs.unsubscribe();
+            tickSubs = null;
+        }
+    }
+
+    protected void updateTickSubscription() {
+        if (isFormed() && isWorkingEnabled()) {
+            tickSubs = subscribeServerTick(tickSubs, this::tick);
+        } else if (tickSubs != null) {
+            tickSubs.unsubscribe();
+            tickSubs = null;
+        }
+    }
+
+    public void tick() {
+        if (energyContainer == null) {
+            updateComputationBridgeActive(false);
+            getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in").append(": ")
+                    .append(EURecipeCapability.CAP.getName()));
+            updateTickSubscription();
+            return;
+        }
+
+        int energyToConsume = getEnergyUsage();
+        if (energyContainer.getEnergyStored() >= energyToConsume &&
+                energyContainer.removeEnergy(energyToConsume) >= energyToConsume) {
+            getWorkLogic().setStatus(WorkLogic.Status.WORKING);
+            updateComputationBridgeActive(true);
+        } else {
+            getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in").append(": ")
+                    .append(EURecipeCapability.CAP.getName()));
+            updateComputationBridgeActive(false);
+        }
+        updateTickSubscription();
+    }
+
+    private void updateComputationBridgeActive(boolean active) {
+        if (computationBridgeActive == active) return;
+        computationBridgeActive = active;
+        markComputationTopologyDirty();
+    }
+
+    private void markComputationTopologyDirty() {
+        if (getLevel() instanceof ServerLevel serverLevel) {
+            ComputationNetworkManager.get(serverLevel).markTopologyDirty();
+        }
+    }
+
+    private int getMaxCWUt() {
+        if (!(getLevel() instanceof ServerLevel serverLevel)) {
+            return 0;
+        }
+        for (IMultiPart part : getParts()) {
+            if (part instanceof OpticalComputationHatchMachine opticalHatch) {
+                return ComputationNetworkManager.get(serverLevel)
+                        .getNetWorkMaxCWUt(opticalHatch.getComputationPort());
+            }
+        }
+        return 0;
+    }
+
+    private int getUsedCWUt() {
+        if (!(getLevel() instanceof ServerLevel serverLevel)) {
+            return 0;
+        }
+        for (IMultiPart part : getParts()) {
+            if (part instanceof OpticalComputationHatchMachine opticalHatch) {
+                return ComputationNetworkManager.get(serverLevel)
+                        .getNetWorkUsedCWUt(opticalHatch.getComputationPort());
+            }
+        }
+        return 0;
+    }
+
     public int getEnergyUsage() {
-        return isFormed() ? computationHandler.getEUt() : 0;
+        return isFormed() ? energyUsage : 0;
     }
 
     @Override
-    public int requestCWUt(int cwut, boolean simulate, Collection<IOpticalComputationProvider> seen) {
-        seen.add(this);
-        return isActive() && !getRecipeLogic().isWaiting() ? computationHandler.requestCWUt(cwut, simulate, seen) : 0;
+    public boolean isWorkingEnabled() {
+        return !getWorkLogic().isSuspend();
     }
 
     @Override
-    public int getMaxCWUt(Collection<IOpticalComputationProvider> seen) {
-        seen.add(this);
-        return isFormed() ? computationHandler.getMaxCWUt(seen) : 0;
-    }
-
-    // allows chaining Network Switches together
-    @Override
-    public boolean canBridge(Collection<IOpticalComputationProvider> seen) {
-        seen.add(this);
-        return true;
+    public void setWorkingEnabled(boolean isWorkingAllowed) {
+        if (isWorkingAllowed) {
+            getWorkLogic().setStatus(WorkLogic.Status.IDLE);
+        } else {
+            getWorkLogic().setStatus(WorkLogic.Status.SUSPEND);
+            updateComputationBridgeActive(false);
+        }
+        updateTickSubscription();
     }
 
     @Override
     public void addDisplayText(List<Component> textList) {
         MultiblockDisplayText.builder(textList, isFormed())
-                .setWorkingStatus(true, isActive() && isWorkingEnabled()) // transform into two-state system for display
+                .setWorkingStatus(true, isActive() && isWorkingEnabled())
                 .setWorkingStatusKeys(
                         "gtpm.multiblock.idling",
                         "gtpm.multiblock.idling",
                         "gtpm.multiblock.data_bank.providing")
                 .addEnergyUsageExactLine(getEnergyUsage())
-                .addComputationUsageLine(computationHandler.getMaxCWUtForDisplay())
+                .addComputationUsageLine(getMaxCWUt())
+                .addComputationUsageExactLine(getUsedCWUt())
                 .addWorkingStatusLine();
-    }
-
-    /*
-     * @Override
-     * protected void addWarningText(List<Component> textList) {
-     * super.addWarningText(textList);
-     * if (isFormed() && computationHandler.hasNonBridgingConnections()) {
-     * textList.add(Component.translatable("gtceu.multiblock.computation.non_bridging.detailed").withStyle(
-     * ChatFormatting.YELLOW));
-     * }
-     * }
-     */
-
-    /** Handles computation load across multiple receivers and to multiple transmitters. */
-    private class MultipleComputationHandler extends NotifiableComputationContainer {
-
-        // providers in the NS provide distributable computation to the NS
-        private final Set<IOpticalComputationHatch> providers = new ObjectOpenHashSet<>();
-        // transmitters in the NS give computation to other multis
-        private final Set<IOpticalComputationHatch> transmitters = new ObjectOpenHashSet<>();
-
-        /** The EU/t cost of this Network Switch given the attached providers and transmitters. */
-        @Getter(value = AccessLevel.PRIVATE)
-        private int EUt;
-
-        private boolean tickSaturated;
-        private long timerCWUt = -1;
-
-        public MultipleComputationHandler() {
-            super(IO.IN, false);
-        }
-
-        private void onStructureForm(Collection<IOpticalComputationHatch> providers,
-                                     Collection<IOpticalComputationHatch> transmitters) {
-            reset();
-            this.providers.addAll(providers);
-            this.transmitters.addAll(transmitters);
-            this.EUt = (providers.size() + transmitters.size()) * EUT_PER_HATCH;
-        }
-
-        private void reset() {
-            providers.clear();
-            transmitters.clear();
-            EUt = 0;
-        }
-
-        @Override
-        public int requestCWUt(int cwut, boolean simulate, Collection<IOpticalComputationProvider> seen) {
-            if (seen.contains(this)) return 0;
-            // The max CWU/t that this Network Switch can provide, combining all its inputs.
-            seen.add(this);
-
-            if (cwut == 0) return 0;
-
-            // Exit early if this Network Switch has already provided all available CWUt on its subnetwork for this tick
-            long timer = NetworkSwitchMachine.this.getOffsetTimer();
-            if (timerCWUt == timer) {
-                if (tickSaturated) {
-                    return 0;
-                }
-            } else {
-                // First call this tick, reset saturation
-                timerCWUt = timer;
-                tickSaturated = false;
-            }
-
-            Collection<IOpticalComputationProvider> bridgeSeen = new ArrayList<>(seen);
-            int allocatedCWUt = 0;
-            for (var provider : providers) {
-                if (!provider.canBridge(bridgeSeen)) continue;
-                int allocated = provider.requestCWUt(cwut, simulate, seen);
-                allocatedCWUt += allocated;
-                cwut -= allocated;
-                if (cwut == 0) break;
-            }
-
-            if (!simulate && allocatedCWUt == 0) {
-                // No computation left to give, remember this for subsequent calls this tick
-                tickSaturated = true;
-            }
-
-            return allocatedCWUt;
-        }
-
-        public int getMaxCWUtForDisplay() {
-            Collection<IOpticalComputationProvider> seen = new ArrayList<>();
-            // The max CWU/t that this Network Switch can provide, combining all its inputs.
-            seen.add(this);
-            Collection<IOpticalComputationProvider> bridgeSeen = new ArrayList<>(seen);
-            int maximumCWUt = 0;
-            for (var provider : providers) {
-                if (!provider.canBridge(bridgeSeen)) continue;
-                maximumCWUt += provider.getMaxCWUt(seen);
-            }
-            return maximumCWUt;
-        }
-
-        public int getMaxCWUt(Collection<IOpticalComputationProvider> seen) {
-            if (seen.contains(this)) return 0;
-            // The max CWU/t that this Network Switch can provide, combining all its inputs.
-            seen.add(this);
-            Collection<IOpticalComputationProvider> bridgeSeen = new ArrayList<>(seen);
-            int maximumCWUt = 0;
-            for (var provider : providers) {
-                if (!provider.canBridge(bridgeSeen)) continue;
-                maximumCWUt += provider.getMaxCWUt(seen);
-            }
-            return maximumCWUt;
-        }
-
-        @Override
-        public boolean canBridge(Collection<IOpticalComputationProvider> seen) {
-            if (seen.contains(this)) return false;
-            seen.add(this);
-            for (var provider : providers) {
-                if (provider.canBridge(seen)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /** Test if any of the provider hatches do not allow bridging */
-        private boolean hasNonBridgingConnections() {
-            Collection<IOpticalComputationProvider> seen = new ArrayList<>();
-            for (var provider : providers) {
-                if (!provider.canBridge(seen)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public IOpticalComputationProvider getComputationProvider() {
-            return this;
-        }
     }
 }

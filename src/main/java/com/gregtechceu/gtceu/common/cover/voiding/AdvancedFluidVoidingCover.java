@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.cover.voiding;
 
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.filter.FluidFilter;
@@ -7,6 +8,7 @@ import com.gregtechceu.gtceu.api.cover.filter.SimpleFluidFilter;
 import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
 import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
 import com.gregtechceu.gtceu.api.gui.widget.NumberInputWidget;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
@@ -17,7 +19,8 @@ import com.gregtechceu.gtceu.utils.GTMath;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -172,17 +175,21 @@ public class AdvancedFluidVoidingCover extends FluidVoidingCover {
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        tag.putInt("voidingMode", getVoidingMode().ordinal());
-        tag.putInt("voidSize", getGlobalTransferSizeMillibuckets());
-        tag.putInt("voidBucketMode", getTransferBucketMode().ordinal());
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("voidingMode"),
+                        ConfigCopyHelper.intValue(getVoidingMode().ordinal()))
+                .put(SyncFieldData.key("voidSize"),
+                        ConfigCopyHelper.intValue(getGlobalTransferSizeMillibuckets()))
+                .put(SyncFieldData.key("voidBucketMode"),
+                        ConfigCopyHelper.intValue(getTransferBucketMode().ordinal())));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setVoidingMode(VoidingMode.values()[tag.getInt("voidingMode")]);
-        setTransferBucketMode(BucketMode.values()[tag.getInt("voidBucketMode")]);
-        setCurrentBucketModeTransferSize(tag.getInt("voidSize"));
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setVoidingMode(VoidingMode.values()[ConfigCopyHelper.getInt(config, "voidingMode")]);
+        setTransferBucketMode(BucketMode.values()[ConfigCopyHelper.getInt(config, "voidBucketMode")]);
+        setCurrentBucketModeTransferSize(ConfigCopyHelper.getInt(config, "voidSize"));
+        super.pasteConfig(player, registries, config);
     }
 }

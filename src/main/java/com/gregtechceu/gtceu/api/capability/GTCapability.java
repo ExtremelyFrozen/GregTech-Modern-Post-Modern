@@ -1,6 +1,7 @@
 package com.gregtechceu.gtceu.api.capability;
 
 import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 
@@ -28,10 +29,12 @@ public class GTCapability {
             .createSided(GTCEu.id("maintenance"), IMaintenanceMachine.class);
     public static final BlockCapability<ILaserContainer, Direction> CAPABILITY_LASER = BlockCapability
             .createSided(GTCEu.id("laser_container"), ILaserContainer.class);
+    public static final BlockCapability<ComputationPort, Direction> CAPABILITY_COMPUTATION_PORT = BlockCapability
+            .createSided(GTCEu.id("computation_port"), ComputationPort.class);
     public static final BlockCapability<IOpticalComputationProvider, Direction> CAPABILITY_COMPUTATION_PROVIDER = BlockCapability
             .createSided(GTCEu.id("computation_provider"), IOpticalComputationProvider.class);
-    public static final BlockCapability<IDataAccessHatch, Direction> CAPABILITY_DATA_ACCESS = BlockCapability
-            .createSided(GTCEu.id("data_access"), IDataAccessHatch.class);
+    public static final BlockCapability<IDataAccessMachine, Direction> CAPABILITY_DATA_ACCESS = BlockCapability
+            .createSided(GTCEu.id("data_access"), IDataAccessMachine.class);
     public static final BlockCapability<IHazardParticleContainer, Direction> CAPABILITY_HAZARD_CONTAINER = BlockCapability
             .createSided(GTCEu.id("hazard_particle_container"), IHazardParticleContainer.class);
     public static final BlockCapability<IMonitorComponent, Direction> CAPABILITY_MONITOR_COMPONENT = BlockCapability

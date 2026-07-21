@@ -1,5 +1,6 @@
 package com.gregtechceu.gtceu.common.cover.detector;
 
+import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.IUICover;
@@ -9,6 +10,7 @@ import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
 import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.utils.RedstoneUtil;
@@ -20,7 +22,8 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -143,21 +146,25 @@ public class AdvancedItemDetectorCover extends ItemDetectorCover implements IUIC
     }
 
     @Override
-    public void copyConfig(CompoundTag tag) {
-        super.copyConfig(tag);
-        tag.putInt("min", minValue);
-        tag.putInt("max", maxValue);
-        tag.putBoolean("latched", isLatched);
-        tag.put("filter", filterHandler.getFilterItem().save(coverHolder.getLevel().registryAccess()));
+    public DataComponentMap copyConfig(HolderLookup.Provider registries) {
+        return ConfigCopyHelper.withFields(super.copyConfig(registries), fields -> fields
+                .put(SyncFieldData.key("min"),
+                        ConfigCopyHelper.intValue(minValue))
+                .put(SyncFieldData.key("max"),
+                        ConfigCopyHelper.intValue(maxValue))
+                .put(SyncFieldData.key("latched"),
+                        ConfigCopyHelper.booleanValue(isLatched))
+                .put(SyncFieldData.key("filter"),
+                        ConfigCopyHelper.encodeItem(registries, filterHandler.getFilterItem())));
     }
 
     @Override
-    public void pasteConfig(ServerPlayer player, CompoundTag tag) {
-        setMinValue(tag.getInt("min"));
-        setMaxValue(tag.getInt("max"));
-        setLatched(tag.getBoolean("latched"));
-        filterHandler.setFilterItem(ItemStack.parse(coverHolder.getLevel().registryAccess(), tag.getCompound("filter"))
-                .orElse(ItemStack.EMPTY));
-        super.pasteConfig(player, tag);
+    public void pasteConfig(ServerPlayer player, HolderLookup.Provider registries, DataComponentMap config) {
+        setMinValue(ConfigCopyHelper.getInt(config, "min"));
+        setMaxValue(ConfigCopyHelper.getInt(config, "max"));
+        setLatched(ConfigCopyHelper.getBoolean(config, "latched"));
+        filterHandler
+                .setFilterItem(ConfigCopyHelper.decodeItem(registries, ConfigCopyHelper.getField(config, "filter")));
+        super.pasteConfig(player, registries, config);
     }
 }

@@ -1,7 +1,7 @@
 package com.gregtechceu.gtceu.client.renderer.machine.impl;
 
 import com.gregtechceu.gtceu.api.block.property.GTBlockStateProperties;
-import com.gregtechceu.gtceu.api.machine.feature.IRecipeLogicMachine;
+import com.gregtechceu.gtceu.api.machine.feature.IWorkLogicMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -117,7 +117,8 @@ public class BoilerMultiPartRender extends DynamicRender<MultiblockControllerMac
         int partY = partPos.get(relativeDown.getAxis());
         if (belowControllerY == partY) {
             // firebox
-            if (controller instanceof IRecipeLogicMachine rlm && rlm.getRecipeLogic().isWorking()) {
+            if (controller instanceof IWorkLogicMachine workLogicMachine &&
+                    workLogicMachine.getWorkLogic().isWorking()) {
                 emitQuads(quads, fireboxActiveModel, controller.getLevel(), partPos, fireboxActive,
                         side, rand, modelData, renderType);
             } else {

@@ -82,7 +82,7 @@ public class IntProviderIngredientTest {
         var centHandler = CENTRIFUGE_RECIPE_TYPE.getAdditionHandler();
         centHandler.beginStaging();
 
-        CRHandler.addStaging(CR_RECIPE_TYPE
+        CRHandler.addRuntimeStaging(CR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_input_item_cr"))
                 .inputItemsRanged(CR_IN, UniformInt.of(0, 9))
                 .inputItems(COBBLE)
@@ -91,7 +91,7 @@ public class IntProviderIngredientTest {
                 .duration(2)
                 .build());
 
-        CRHandler.addStaging(CR_RECIPE_TYPE
+        CRHandler.addRuntimeStaging(CR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_output_item_cr"))
                 .inputItems(CR_OUT)
                 .outputItemsRanged(STONE, UniformInt.of(0, 9))
@@ -99,7 +99,7 @@ public class IntProviderIngredientTest {
                 .duration(2)
                 .build());
 
-        LCRHandler.addStaging(LCR_RECIPE_TYPE
+        LCRHandler.addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_input_item_lcr"))
                 .inputItemsRanged(LCR_IN, UniformInt.of(0, 9))
                 .inputItems(COBBLE)
@@ -108,7 +108,7 @@ public class IntProviderIngredientTest {
                 .duration(2)
                 .build());
 
-        LCRHandler.addStaging(LCR_RECIPE_TYPE
+        LCRHandler.addRuntimeStaging(LCR_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_output_item_lcr"))
                 .inputItems(LCR_OUT)
                 .outputItemsRanged(STONE, UniformInt.of(0, 9))
@@ -116,7 +116,7 @@ public class IntProviderIngredientTest {
                 .duration(2)
                 .build());
 
-        centHandler.addStaging(CENTRIFUGE_RECIPE_TYPE
+        centHandler.addRuntimeStaging(CENTRIFUGE_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_input_item_cent"))
                 .inputItemsRanged(LCENT_IN, UniformInt.of(0, 4))
                 .inputItems(COBBLE)
@@ -125,7 +125,7 @@ public class IntProviderIngredientTest {
                 .duration(4)
                 .build());
 
-        centHandler.addStaging(CENTRIFUGE_RECIPE_TYPE
+        centHandler.addRuntimeStaging(CENTRIFUGE_RECIPE_TYPE
                 .recipeBuilder(GTCEu.id("test_ranged_output_item_cent"))
                 .inputItems(LCENT_OUT)
                 .outputItemsRanged(STONE, UniformInt.of(0, 4))

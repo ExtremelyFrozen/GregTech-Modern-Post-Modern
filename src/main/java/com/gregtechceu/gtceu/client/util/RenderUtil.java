@@ -3,8 +3,9 @@ package com.gregtechceu.gtceu.client.util;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.content.Content;
-import com.gregtechceu.gtceu.common.data.item.GTDataComponents;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.core.mixins.client.GuiGraphicsAccessor;
 import com.gregtechceu.gtceu.utils.GTMatrixUtils;
 import com.gregtechceu.gtceu.utils.ResearchManager;
@@ -389,7 +390,7 @@ public class RenderUtil {
         ResearchManager.ResearchItem researchData = stack.get(GTDataComponents.RESEARCH_ITEM);
         if (researchData == null) return false;
 
-        Collection<GTRecipe> recipes = researchData.recipeType().getDataStickEntry(researchData.researchId());
+        Collection<GTRecipeDefinition> recipes = researchData.recipeType().getDataStickEntry(researchData.researchId());
         if (recipes == null || recipes.isEmpty()) return false;
 
         for (var recipe : recipes) {

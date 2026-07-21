@@ -241,7 +241,7 @@ public class MinerMachine extends WorkableTieredMachine
         if (getRecipeLogic().isDone())
             textList.add(Component.translatable("gtpm.multiblock.large_miner.done")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)));
-        else if (getRecipeLogic().isWorking())
+        else if (getWorkLogic().isWorking())
             textList.add(Component.translatable("gtpm.multiblock.large_miner.working")
                     .setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)));
         else if (!this.isWorkingEnabled())

@@ -2,7 +2,7 @@ package com.gregtechceu.gtceu.integration.jei.recipe;
 
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
@@ -28,10 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
+public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipeDefinition> {
 
-    public static final Function<GTRecipeCategory, RecipeType<GTRecipe>> TYPES = Util
-            .memoize(c -> new RecipeType<>(c.registryKey, GTRecipe.class));
+    public static final Function<GTRecipeCategory, RecipeType<GTRecipeDefinition>> TYPES = Util
+            .memoize(c -> new RecipeType<>(c.registryKey, GTRecipeDefinition.class));
 
     private final GTRecipeCategory category;
     private final int width;
@@ -92,7 +92,7 @@ public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
 
     @Override
     @NotNull
-    public RecipeType<GTRecipe> getRecipeType() {
+    public RecipeType<GTRecipeDefinition> getRecipeType() {
         return TYPES.apply(category);
     }
 
@@ -118,7 +118,7 @@ public class GTRecipeJEICategory extends ModularUIRecipeCategory<GTRecipe> {
     }
 
     @Override
-    public @Nullable ResourceLocation getRegistryName(@NotNull GTRecipe recipe) {
+    public @Nullable ResourceLocation getRegistryName(@NotNull GTRecipeDefinition recipe) {
         return recipe.id;
     }
 }

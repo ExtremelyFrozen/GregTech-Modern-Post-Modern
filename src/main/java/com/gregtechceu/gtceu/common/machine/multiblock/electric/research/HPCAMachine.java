@@ -6,6 +6,7 @@ import com.gregtechceu.gtceu.api.capability.*;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.FluidRecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.computation.ComputationProducer;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.util.TimedProgressSupplier;
 import com.gregtechceu.gtceu.api.gui.widget.ExtendedProgressWidget;
@@ -15,7 +16,7 @@ import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockDisplayText;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
@@ -68,13 +69,13 @@ import static com.gregtechceu.gtceu.data.recipe.CustomTags.HPCA_COOLANTS;
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public class HPCAMachine extends WorkableElectricMultiblockMachine
-                         implements IOpticalComputationProvider, IControllable {
+                         implements IOpticalComputationProvider, IControllable, ComputationProducer {
 
     private static final double IDLE_TEMPERATURE = 200;
     private static final double DAMAGE_TEMPERATURE = 1000;
 
     private IMaintenanceMachine maintenance;
-    private IEnergyContainer energyContainer;
+    private EnergyContainerList energyContainer;
     private IFluidHandler coolantHandler;
     @SaveField
     @SyncToClient
@@ -92,7 +93,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
 
     public HPCAMachine(BlockEntityCreationInfo info) {
         super(info);
-        this.energyContainer = new EnergyContainerList(new ArrayList<>());
+        this.energyContainer = EnergyContainerList.EMPTY;
         this.progressSupplier = new TimedProgressSupplier(200, 47, false);
         this.hpcaHandler = new HPCAGridHandler(this);
     }
@@ -104,8 +105,8 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
         List<IEnergyContainer> energyContainers = new ArrayList<>();
         List<IFluidHandler> coolantContainers = new ArrayList<>();
         List<HPCAComponentTrait> componentTraits = new ArrayList<>();
-        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrCreate("ioMap",
-                Long2ObjectMaps::emptyMap);
+        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrDefault("ioMap",
+                Long2ObjectMaps.emptyMap());
         for (IMultiPart part : getParts()) {
             IO io = ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
 
@@ -165,7 +166,7 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
         super.invalidateStructure(structureName);
         if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         this.updateActive(false);
-        this.energyContainer = new EnergyContainerList(new ArrayList<>());
+        this.energyContainer = EnergyContainerList.EMPTY;
         this.hpcaHandler.onStructureInvalidate();
     }
 
@@ -186,6 +187,23 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
         seen.add(this);
         // don't show a problem if the structure is not yet formed
         return !isFormed() || hpcaHandler.hasHPCABridge();
+    }
+
+    @Override
+    public int getOfferedCWUt() {
+        return isActive() && isWorkingEnabled() && !hasNotEnoughEnergy ? hpcaHandler.getMaxCWUt() : 0;
+    }
+
+    @Override
+    public void applyProducedCWUt(int allocatedCWUt) {
+        if (allocatedCWUt > 0) {
+            hpcaHandler.setAllocatedCWUt(allocatedCWUt);
+        }
+    }
+
+    @Override
+    public boolean canBridgeComputation() {
+        return hpcaHandler.hasHPCABridge();
     }
 
     public void tick() {
@@ -234,15 +252,17 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
             if (!hasNotEnoughEnergy) {
                 long consumed = this.energyContainer.removeEnergy(energyToConsume);
                 if (consumed == energyToConsume) {
-                    getRecipeLogic().setStatus(RecipeLogic.Status.WORKING);
+                    getWorkLogic().setStatus(WorkLogic.Status.WORKING);
                 } else {
                     this.hasNotEnoughEnergy = true;
-                    getRecipeLogic().setStatus(RecipeLogic.Status.WAITING);
+                    getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
+                            .append(": ").append(EURecipeCapability.CAP.getName()));
                 }
             }
         } else {
             this.hasNotEnoughEnergy = true;
-            getRecipeLogic().setStatus(RecipeLogic.Status.WAITING);
+            getWorkLogic().setWaiting(Component.translatable("gtpm.recipe_logic.insufficient_in")
+                    .append(": ").append(EURecipeCapability.CAP.getName()));
         }
     }
 
@@ -561,6 +581,10 @@ public class HPCAMachine extends WorkableElectricMultiblockMachine
                 this.allocatedCWUt += toAllocate;
             }
             return toAllocate;
+        }
+
+        public void setAllocatedCWUt(int allocatedCWUt) {
+            this.allocatedCWUt = Math.max(0, Math.min(allocatedCWUt, getMaxCWUt()));
         }
 
         /** The maximum amount of CWUs (Compute Work Units) created per tick. */

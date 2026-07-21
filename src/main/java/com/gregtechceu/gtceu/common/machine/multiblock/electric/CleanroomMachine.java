@@ -148,8 +148,8 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
 
     protected void initializeAbilities() {
         List<IEnergyContainer> energyContainers = new ArrayList<>();
-        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrCreate("ioMap",
-                Long2ObjectMaps::emptyMap);
+        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrDefault("ioMap",
+                Long2ObjectMaps.emptyMap());
         for (IMultiPart part : getParts()) {
             if (isPartIgnored(part)) continue;
             IO io = ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
@@ -169,7 +169,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
         }
         this.inputEnergyContainers = new EnergyContainerList(energyContainers);
         getRecipeLogic().setEnergyContainer(this.inputEnergyContainers);
-        this.tier = Math.min(GTValues.MAX, GTUtil.getFloorTierByVoltage(getMaxVoltage()));
+        this.tier = Math.min(GTValues.MAX, inputEnergyContainers.getTier());
     }
 
     @SuppressWarnings("RedundantIfStatement") // `return false` being a separate statement is better for readability
@@ -370,6 +370,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     @Override
     public void addDisplayText(List<Component> textList) {
         if (isFormed()) {
+            var workLogic = getWorkLogic();
             var maxVoltage = getMaxVoltage();
             if (maxVoltage > 0) {
                 String voltageName = GTValues.VNF[GTUtil.getFloorTierByVoltage(maxVoltage)];
@@ -380,10 +381,10 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
                 textList.add(Component.translatable(cleanroomType.translationKey()));
             }
 
-            if (!isWorkingEnabled()) {
+            if (!workLogic.isWorkingEnabled()) {
                 textList.add(Component.translatable("gtpm.multiblock.work_paused"));
 
-            } else if (isActive()) {
+            } else if (workLogic.isActive()) {
                 textList.add(Component.translatable("gtpm.multiblock.running"));
                 int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
                 double maxInSec = (float) recipeLogic.getDuration() / 20.0f;
@@ -395,7 +396,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
                 textList.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
-            if (recipeLogic.isWaiting()) {
+            if (workLogic.isWaiting()) {
                 textList.add(Component.translatable("gtpm.multiblock.waiting")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }
@@ -443,7 +444,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     @Override
     public long getMaxVoltage() {
         if (inputEnergyContainers == null) return GTValues.LV;
-        return inputEnergyContainers.getInputVoltage();
+        return GTValues.V[inputEnergyContainers.getTier()];
     }
 
     // Do not allow cleanroom to be paused due to custom recipe logic

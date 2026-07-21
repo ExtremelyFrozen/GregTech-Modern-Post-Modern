@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.machine.feature.*;
 import com.gregtechceu.gtceu.api.machine.trait.*;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
+import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.machine.trait.CleanroomReceiverTrait;
@@ -125,7 +126,7 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
         for (var entry : ioTraits.entrySet()) {
             var handlerList = RecipeHandlerList.of(entry.getKey(), entry.getValue());
             this.addHandlerList(handlerList);
-            traitSubscriptions.add(handlerList.subscribe(recipeLogic::updateTickSubscription));
+            traitSubscriptions.add(handlerList.subscribe(recipeLogic::onRecipeHandlerChanged));
         }
     }
 
@@ -151,12 +152,10 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
     // ******** OVERCLOCK *********//
     //////////////////////////////////////
 
-    @Override
     public int getMaxOverclockTier() {
         return GTUtil.getTierByVoltage(Math.max(energyContainer.getInputVoltage(), energyContainer.getOutputVoltage()));
     }
 
-    @Override
     public int getMinOverclockTier() {
         return 0;
     }
@@ -220,5 +219,6 @@ public abstract class WorkableTieredMachine extends TieredEnergyMachine implemen
             recipeIndex = recipeTypes.length - 1;
         }
         setActiveRecipeType(recipeIndex);
+        recipeLogic.updateTickSubscription();
     }
 }

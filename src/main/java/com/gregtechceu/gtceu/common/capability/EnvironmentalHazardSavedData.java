@@ -13,7 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +22,8 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -72,7 +74,7 @@ public class EnvironmentalHazardSavedData extends SavedData {
             CompoundTag zoneTag = allHazardZones.getCompound(i);
 
             ChunkPos source = new ChunkPos(zoneTag.getLong("pos"));
-            HazardZone zone = HazardZone.deserializeNBT(zoneTag);
+            HazardZone zone = readZone(zoneTag);
 
             this.hazardZones.put(source, zone);
         }
@@ -241,7 +243,7 @@ public class EnvironmentalHazardSavedData extends SavedData {
             CompoundTag zoneTag = new CompoundTag();
 
             zoneTag.putLong("pos", entry.getKey().toLong());
-            entry.getValue().serializeNBT(zoneTag);
+            zoneTag.merge(writeZone(entry.getValue()));
 
             hazardZonesTag.add(zoneTag);
         }
@@ -249,9 +251,27 @@ public class EnvironmentalHazardSavedData extends SavedData {
         return compoundTag;
     }
 
+    private static HazardZone readZone(CompoundTag tag) {
+        return HazardZone.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();
+    }
+
+    private static CompoundTag writeZone(HazardZone zone) {
+        return (CompoundTag) HazardZone.CODEC.encodeStart(NbtOps.INSTANCE, zone).getOrThrow();
+    }
+
     @Accessors(fluent = true)
     @AllArgsConstructor
     public static class HazardZone {
+
+        // spotless:off
+        public static final Codec<HazardZone> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                BlockPos.CODEC.fieldOf("source").forGetter(HazardZone::source),
+                Codec.FLOAT.fieldOf("strength").forGetter(HazardZone::strength),
+                Codec.BOOL.fieldOf("can_spread").forGetter(HazardZone::canSpread),
+                HazardProperty.HazardTrigger.CODEC.fieldOf("trigger").forGetter(HazardZone::trigger),
+                MedicalCondition.CODEC.fieldOf("condition").forGetter(HazardZone::condition)
+        ).apply(instance, HazardZone::new));
+        // spotless:on
 
         @Getter
         private final BlockPos source;
@@ -276,28 +296,6 @@ public class EnvironmentalHazardSavedData extends SavedData {
                 return null;
             }
             return this;
-        }
-
-        public CompoundTag serializeNBT(CompoundTag zoneTag) {
-            zoneTag.put("source", NbtUtils.writeBlockPos(source));
-            zoneTag.putFloat("strength", strength);
-            zoneTag.putBoolean("can_spread", canSpread);
-            zoneTag.putString("trigger", trigger.name());
-            zoneTag.putString("condition", condition.name);
-
-            return zoneTag;
-        }
-
-        public static HazardZone deserializeNBT(CompoundTag zoneTag) {
-            BlockPos source = NbtUtils.readBlockPos(zoneTag, "source").orElse(null);
-            float strength = zoneTag.getFloat("strength");
-            boolean canSpread = zoneTag.getBoolean("can_spread");
-            HazardProperty.HazardTrigger trigger = HazardProperty.HazardTrigger.ALL_TRIGGERS
-                    .get(zoneTag.getString("trigger"));
-            MedicalCondition condition = MedicalCondition.CONDITIONS
-                    .get(zoneTag.getString("condition"));
-
-            return new HazardZone(source, strength, canSpread, trigger, condition);
         }
 
         public void toNetwork(FriendlyByteBuf buf) {

@@ -12,7 +12,7 @@ import com.gregtechceu.gtceu.api.gui.editor.IEditableUI;
 import com.gregtechceu.gtceu.api.gui.widget.DualProgressWidget;
 import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
 import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
-import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.RecipeCondition;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
@@ -35,6 +35,7 @@ import com.lowdragmc.lowdraglib.utils.Position;
 import com.lowdragmc.lowdraglib.utils.Size;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
@@ -80,7 +81,7 @@ public class GTRecipeTypeUI {
     private ProgressTexture.FillDirection steamMoveType = ProgressTexture.FillDirection.LEFT_TO_RIGHT;
     @Setter
     @Nullable
-    protected BiConsumer<GTRecipe, WidgetGroup> uiBuilder;
+    protected BiConsumer<GTRecipeDefinition, WidgetGroup> uiBuilder;
     @Setter
     @Getter
     protected int maxTooltips = 3;
@@ -151,7 +152,7 @@ public class GTRecipeTypeUI {
 
     public record RecipeHolder(DoubleSupplier progressSupplier,
                                Table<IO, RecipeCapability<?>, Object> storages,
-                               CompoundTag data,
+                               DataComponentMap data,
                                List<RecipeCondition<?>> conditions,
                                boolean isSteam,
                                boolean isHighPressure) {}
@@ -163,7 +164,7 @@ public class GTRecipeTypeUI {
      */
     public WidgetGroup createUITemplate(DoubleSupplier progressSupplier,
                                         Table<IO, RecipeCapability<?>, Object> storages,
-                                        CompoundTag data,
+                                        DataComponentMap data,
                                         List<RecipeCondition<?>> conditions,
                                         boolean isSteam,
                                         boolean isHighPressure) {
@@ -176,7 +177,7 @@ public class GTRecipeTypeUI {
 
     public WidgetGroup createUITemplate(DoubleSupplier progressSupplier,
                                         Table<IO, RecipeCapability<?>, Object> storages,
-                                        CompoundTag data,
+                                        DataComponentMap data,
                                         List<RecipeCondition<?>> conditions) {
         return createUITemplate(progressSupplier, storages, data, conditions, false, false);
     }
@@ -403,7 +404,7 @@ public class GTRecipeTypeUI {
         return maxPropertyCount * 10; // GTRecipeWidget#LINE_HEIGHT
     }
 
-    public void appendJEIUI(GTRecipe recipe, WidgetGroup widgetGroup) {
+    public void appendJEIUI(GTRecipeDefinition recipe, WidgetGroup widgetGroup) {
         if (uiBuilder != null) {
             uiBuilder.accept(recipe, widgetGroup);
         }

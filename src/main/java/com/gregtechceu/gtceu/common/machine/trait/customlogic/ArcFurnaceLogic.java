@@ -9,11 +9,13 @@ import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
+import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMaterialItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.common.item.behavior.TurbineRotorBehaviour;
+import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -69,6 +71,23 @@ public enum ArcFurnaceLogic implements GTRecipeType.ICustomRecipeLogic {
     public @Nullable GTRecipe applyDurabilityRecipe(String id, ItemStack inputStack, @NotNull Material mat,
                                                     float fullAmount, float durability, long voltage,
                                                     int durationFactor) {
+        GTRecipeBuilder builder = createDurabilityRecipe(id, inputStack, mat, fullAmount, durability, voltage,
+                durationFactor);
+        return builder == null ? null : builder.build();
+    }
+
+    private @Nullable GTRecipeDefinition applyDurabilityRecipeDefinition(String id, ItemStack inputStack,
+                                                                         @NotNull Material mat,
+                                                                         float fullAmount, float durability,
+                                                                         long voltage, int durationFactor) {
+        GTRecipeBuilder builder = createDurabilityRecipe(id, inputStack, mat, fullAmount, durability, voltage,
+                durationFactor);
+        return builder == null ? null : builder.buildDefinition();
+    }
+
+    private @Nullable GTRecipeBuilder createDurabilityRecipe(String id, ItemStack inputStack, @NotNull Material mat,
+                                                             float fullAmount, float durability, long voltage,
+                                                             int durationFactor) {
         if (!mat.hasProperty(PropertyKey.INGOT)) return null;
 
         var material = mat.getProperty(PropertyKey.INGOT);
@@ -93,22 +112,22 @@ public enum ArcFurnaceLogic implements GTRecipeType.ICustomRecipeLogic {
             builder.outputItems(nugget, materialArc, leftover);
         }
 
-        return builder.build();
+        return builder;
     }
 
     @Override
     public void buildRepresentativeRecipes() {
         ItemStack stack = GTItems.TURBINE_ROTOR.asStack();
         stack.set(DataComponents.CUSTOM_NAME, Component.translatable("gtpm.auto_decomp.rotor"));
-        GTRecipe rotorRecipe;
-        GTRecipe pickaxeRecipe;
+        GTRecipeDefinition rotorRecipe;
+        GTRecipeDefinition pickaxeRecipe;
         float durability = 0.69f;
         var turbineBehaviour = TurbineRotorBehaviour.getBehaviour(stack);
         assert turbineBehaviour != null : "Default Turbine Stack doesn't have Turbine Behaviour";
         turbineBehaviour.setPartMaterial(stack, GTMaterials.Iron);
         turbineBehaviour.setPartDamage(stack, 8928);
 
-        rotorRecipe = applyDurabilityRecipe("rotor_decomp", stack, turbineBehaviour.getPartMaterial(stack),
+        rotorRecipe = applyDurabilityRecipeDefinition("rotor_decomp", stack, turbineBehaviour.getPartMaterial(stack),
                 (float) (turbineBlade.materialAmount() * 8) / GTValues.M, durability, GTValues.VH[GTValues.EV], 1);
         assert rotorRecipe != null : "Default Turbine Decomp recipe couldn't be generated";
         rotorRecipe.setId(rotorRecipe.getId().withPrefix("/"));
@@ -117,7 +136,7 @@ public enum ArcFurnaceLogic implements GTRecipeType.ICustomRecipeLogic {
         stack = GTMaterialItems.TOOL_ITEMS.get(GTMaterials.Iron, GTToolType.PICKAXE).asStack();
         stack.set(DataComponents.CUSTOM_NAME, Component.translatable("gtpm.auto_decomp.tool"));
         stack.setDamageValue(79);
-        pickaxeRecipe = applyDurabilityRecipe("tool_decomp", stack, GTMaterials.Iron,
+        pickaxeRecipe = applyDurabilityRecipeDefinition("tool_decomp", stack, GTMaterials.Iron,
                 (float) (GTToolType.PICKAXE.materialAmount / GTValues.M), durability,
                 GTValues.VH[GTValues.LV], 2);
 

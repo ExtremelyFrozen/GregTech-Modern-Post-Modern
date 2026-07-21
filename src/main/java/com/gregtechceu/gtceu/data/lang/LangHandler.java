@@ -1795,10 +1795,10 @@ public class LangHandler {
                 "Usage:",
                 "  {bufferText <line>} -> text from the buffer on the specified line (line is 1-100)");
         multiLang(provider, "gtpm.placeholder_info.blockNbt",
-                "Returns the NBT of the block entity",
+                "Returns the data components of the block entity",
                 "Usage:",
-                "  {blockNbt} -> full block entity nbt",
-                "  {blockNbt [key1] [key2] ...} -> part of the nbt");
+                "  {blockNbt} -> full block entity data component map",
+                "  {blockNbt <component_id>} -> the value of a data component");
         provider.add("gtpm.ender_item_link_cover.title", "Ender Item Link");
         provider.add("gtpm.ender_item_link_cover.tooltip",
                 "§7Transports §fItems§7 with a §fWireless §dEnder§f Connection§7 as §fCover§7.");

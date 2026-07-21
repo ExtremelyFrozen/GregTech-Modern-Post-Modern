@@ -6,8 +6,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -66,7 +65,6 @@ public class ReservoirHatchPartMachine extends FluidHatchPartMachine {
 
     protected static class InfiniteWaterTank extends CustomFluidTank {
 
-        private static final CompoundTag EMPTY = new CompoundTag();
         private static final FluidStack WATER = new FluidStack(Fluids.WATER, Integer.MAX_VALUE);
 
         public InfiniteWaterTank(int capacity) {
@@ -97,12 +95,12 @@ public class ReservoirHatchPartMachine extends FluidHatchPartMachine {
         }
 
         @Override
-        public CompoundTag serializeNBT(HolderLookup.Provider provider) {
-            // serialization is unnecessary here, we can always recreate it completely full since it would refill anyway
-            return EMPTY;
+        public DataComponentMap exportComponents() {
+            // Component persistence is unnecessary here. The tank can always be recreated full and will refill anyway.
+            return DataComponentMap.EMPTY;
         }
 
         @Override
-        public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {}
+        public void importComponents(DataComponentMap components) {}
     }
 }
