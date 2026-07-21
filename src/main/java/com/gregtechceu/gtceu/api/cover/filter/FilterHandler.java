@@ -3,7 +3,8 @@ package com.gregtechceu.gtceu.api.cover.filter;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
 import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
@@ -12,9 +13,7 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.sync_system.managed.ISyncManaged;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -37,7 +36,7 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
 
     private @Nullable F filter;
     private @Nullable CustomItemStackHandler filterSlot;
-    private @Nullable WidgetGroup filterGroup;
+    private @Nullable UIElement filterLDLib2Group;
 
     private Consumer<F> onFilterLoaded = (filter) -> {};
     private Consumer<F> onFilterRemoved = (filter) -> {};
@@ -57,19 +56,21 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
     // ***** PUBLIC API ******//
     //////////////////////////////////
 
-    public Widget createFilterSlotUI(int xPos, int yPos) {
-        return new SlotWidget(getFilterSlot(), 0, xPos, yPos)
+    public UIElement createFilterSlotLDLib2UI(int xPos, int yPos) {
+        GTItemSlotElement slot = new GTItemSlotElement(getFilterSlot(), 0)
                 .setChangeListener(this::updateFilter)
-                .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY));
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY));
+        return UITemplate.setLDLib2Bounds(slot, xPos, yPos, 18, 18);
     }
 
-    public Widget createFilterConfigUI(int xPos, int yPos, int width, int height) {
-        this.filterGroup = new WidgetGroup(xPos, yPos, width, height);
-        if (!this.filterItem.isEmpty()) {
-            this.filterGroup.addWidget(getFilter().openConfigurator(0, 0));
+    public UIElement createFilterConfigLDLib2UI(int xPos, int yPos, int width, int height) {
+        F loadedFilter = this.filterItem.isEmpty() ? null : getFilter();
+        this.filterLDLib2Group = UITemplate.setLDLib2Bounds(new UIElement(), xPos, yPos, width, height);
+        if (!this.filterItem.isEmpty() && loadedFilter != null) {
+            this.filterLDLib2Group.addChild(loadedFilter.openLDLib2Configurator(0, 0));
         }
 
-        return this.filterGroup;
+        return this.filterLDLib2Group;
     }
 
     public boolean isFilterPresent() {
@@ -145,8 +146,9 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
         syncDataHolder.markClientSyncFieldDirty("filterItem");
 
         if (this.filter != null) {
+            F removedFilter = this.filter;
             this.filter = null;
-            this.onFilterRemoved.accept(this.filter);
+            this.onFilterRemoved.accept(removedFilter);
         }
 
         loadFilterFromItem();
@@ -170,13 +172,14 @@ public abstract class FilterHandler<T, F extends Filter<T, F>> implements ISyncM
     }
 
     private void updateFilterGroupUI() {
-        if (this.filterGroup == null)
-            return;
+        if (this.filterLDLib2Group != null) {
+            for (UIElement child : this.filterLDLib2Group.getSafeChildren()) {
+                this.filterLDLib2Group.removeChild(child);
+            }
 
-        this.filterGroup.clearAllWidgets();
-
-        if (!this.filterItem.isEmpty() && this.filter != null) {
-            this.filterGroup.addWidget(this.filter.openConfigurator(0, 0));
+            if (!this.filterItem.isEmpty() && this.filter != null) {
+                this.filterLDLib2Group.addChild(this.filter.openLDLib2Configurator(0, 0));
+            }
         }
     }
 

@@ -3,7 +3,7 @@ package com.gregtechceu.gtceu.api.data.chemical.material.info;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.common.data.models.GTModels;
 
-import com.lowdragmc.lowdraglib.utils.ResourceHelper;
+import com.lowdragmc.lowdraglib2.utils.ResourceHelper;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

@@ -5,11 +5,16 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
-import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
+import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
-import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -22,28 +27,38 @@ import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.*;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.FillDirection;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+import com.lowdragmc.lowdraglib2.gui.ui.event.HoverTooltips;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.neoforged.neoforge.common.SoundActions;
+import net.neoforged.neoforge.fluids.FluidActionResult;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 
 import lombok.Getter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +67,16 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class SteamBoilerMachine extends SteamWorkableMachine
-                                         implements IUIMachine, IDataInfoProvider {
+                                         implements LDLib2MachineUIProvider, IDataInfoProvider,
+                                         SteamBoilerFluidSlotActionTarget {
+
+    protected static final int WATER_FLUID_SLOT = 0;
+    protected static final int STEAM_FLUID_SLOT = 1;
+    protected static final int FUEL_FLUID_SLOT = 2;
+
+    static {
+        SteamBoilerMachineActions.initialize();
+    }
 
     @SaveField
     public final NotifiableFluidTank waterTank;
@@ -113,7 +137,7 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
     //////////////////////////////////////
 
     @Override
-    public void onNeighborChanged(net.minecraft.world.level.block.Block block, BlockPos fromPos, boolean isMoving) {
+    public void onNeighborChanged(Block block, BlockPos fromPos, boolean isMoving) {
         super.onNeighborChanged(block, fromPos, isMoving);
         updateAutoOutputSubscription();
     }
@@ -298,27 +322,208 @@ public abstract class SteamBoilerMachine extends SteamWorkableMachine
     //////////////////////////////////////
 
     @Override
-    public ModularUI createUI(Player entityPlayer) {
-        return new ModularUI(176, 166, this, entityPlayer)
-                .background(GuiTextures.BACKGROUND_STEAM.get(isHighPressure))
-                .widget(new LabelWidget(6, 6, getBlockState().getBlock().getDescriptionId()))
-                .widget(new ProgressWidget(this::getTemperaturePercent, 96, 26, 10, 54)
-                        .setProgressTexture(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure),
-                                GuiTextures.PROGRESS_BAR_BOILER_HEAT)
-                        .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP)
-                        .setDynamicHoverTips(pct -> I18n.get("gtpm.multiblock.large_boiler.temperature",
-                                currentTemperature + 274, getMaxTemperature() + 274)))
-                .widget(new TankWidget(waterTank.getStorages()[0], 83, 26, 10, 54, false, true)
-                        .setShowAmount(false)
-                        .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP)
-                        .setBackground(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure)))
-                .widget(new TankWidget(steamTank.getStorages()[0], 70, 26, 10, 54, true, false)
-                        .setShowAmount(false)
-                        .setFillDirection(ProgressTexture.FillDirection.DOWN_TO_UP)
-                        .setBackground(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure)))
-                .widget(new ImageWidget(43, 44, 18, 18, GuiTextures.CANISTER_OVERLAY_STEAM.get(isHighPressure)))
-                .widget(UITemplate.bindPlayerInventory(entityPlayer.getInventory(),
-                        GuiTextures.SLOT_STEAM.get(isHighPressure), 7, 84, true));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        UIElement root = createLDLib2Root(player, holder);
+        addLDLib2AdditionalWidgets(root, player, holder);
+        return UI.of(root);
+    }
+
+    protected UIElement createLDLib2Root(Player player, MachineUIHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 166);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_STEAM.get(isHighPressure)));
+        root.addChild(createLDLib2TitleLabel());
+        root.addChild(createLDLib2TemperatureProgressBar());
+        root.addChild(createLDLib2FluidSlot(player, holder, waterTank.getStorages()[0], 83, 26,
+                WATER_FLUID_SLOT, false, true));
+        root.addChild(createLDLib2FluidSlot(player, holder, steamTank.getStorages()[0], 70, 26,
+                STEAM_FLUID_SLOT, true, false));
+        root.addChild(new GTImageElement(43, 44, 18, 18, GuiTextures.CANISTER_OVERLAY_STEAM.get(isHighPressure)));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(),
+                GuiTextures.SLOT_STEAM.get(isHighPressure), 7, 84, true));
+        return root;
+    }
+
+    protected void addLDLib2AdditionalWidgets(UIElement root, Player player, MachineUIHolder holder) {}
+
+    private GTLabelElement createLDLib2TitleLabel() {
+        GTLabelElement label = new GTLabelElement(6, 6, 164, 10,
+                getBlockState().getBlock().getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private GTProgressBarElement createLDLib2TemperatureProgressBar() {
+        var progressTexture = GuiTextures.progressBar(
+                GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure),
+                GuiTextures.PROGRESS_BAR_BOILER_HEAT);
+        GTProgressBarElement progressBar = new GTProgressBarElement(this::getTemperaturePercent)
+                .setProgressTexture(progressTexture.getEmptyBarArea(), progressTexture.getFilledBarArea())
+                .setFillDirection(FillDirection.DOWN_TO_UP);
+        progressBar.addEventListener(UIEvents.HOVER_TOOLTIPS, event -> event.hoverTooltips = new HoverTooltips(
+                List.of(Component.translatable("gtpm.multiblock.large_boiler.temperature",
+                        currentTemperature + 274, getMaxTemperature() + 274)),
+                null, null, null));
+        return UITemplate.setLDLib2Bounds(progressBar, 96, 26, 10, 54);
+    }
+
+    protected GTFluidSlotElement createLDLib2FluidSlot(Player player, MachineUIHolder holder, IFluidHandler storage,
+                                                       int x, int y, int fluidSlot, boolean allowClickFilled,
+                                                       boolean allowClickDrained) {
+        GTFluidSlotElement tank = new GTFluidSlotElement()
+                .setFluidTank(storage, 0)
+                .setShowAmount(false)
+                .setAllowClickFilled(allowClickFilled)
+                .setAllowClickDrained(allowClickDrained)
+                .setBackgroundTexture(GuiTextures.PROGRESS_BAR_BOILER_EMPTY.get(isHighPressure));
+        if (allowClickFilled || allowClickDrained) {
+            tank.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+                if (event.button == 0 && player.level().isClientSide() &&
+                        FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isPresent()) {
+                    MachineUIHelper.sendAction(holder, SteamBoilerMachineActions.createClickSteamBoilerFluidSlotAction(
+                            fluidSlot, GTUtil.isShiftDown()));
+                    event.stopImmediatePropagation();
+                    event.hasHandler = true;
+                }
+            });
+        }
+        return UITemplate.setLDLib2Bounds(tank, x, y, 10, 54);
+    }
+
+    protected @Nullable LDLib2FluidClickTarget getLDLib2FluidClickTarget(int fluidSlot) {
+        return switch (fluidSlot) {
+            case WATER_FLUID_SLOT -> createLDLib2FluidClickTarget(waterTank.getStorages()[0], false, true);
+            case STEAM_FLUID_SLOT -> createLDLib2FluidClickTarget(steamTank.getStorages()[0], true, false);
+            default -> null;
+        };
+    }
+
+    protected LDLib2FluidClickTarget createLDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
+                                                                  boolean allowClickDrained) {
+        return new LDLib2FluidClickTarget(fluidTank, allowClickFilled, allowClickDrained);
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public void clickSteamBoilerFluidSlot(@NotNull ServerPlayer player, int fluidSlot, boolean shiftDown) {
+        LDLib2FluidClickTarget target = getLDLib2FluidClickTarget(fluidSlot);
+        if (target == null) {
+            throw new IllegalArgumentException("Invalid steam boiler fluid slot: " + fluidSlot);
+        }
+        target.click(player, shiftDown);
+    }
+
+    protected record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
+                                            boolean allowClickDrained) {
+
+        private void click(ServerPlayer player, boolean shiftDown) {
+            ItemStack currentStack = player.containerMenu.getCarried();
+            var handler = FluidUtil.getFluidHandler(currentStack).orElse(null);
+            if (handler == null) {
+                return;
+            }
+            int maxAttempts = shiftDown ? currentStack.getCount() : 1;
+            FluidStack initialFluid = fluidTank.getFluidInTank(0).copy();
+            if (allowClickFilled && initialFluid.getAmount() > 0 && fillContainer(player, currentStack,
+                    maxAttempts, initialFluid)) {
+                return;
+            }
+            if (allowClickDrained) {
+                emptyContainer(player, currentStack, maxAttempts);
+            }
+        }
+
+        private boolean fillContainer(ServerPlayer player, ItemStack currentStack, int maxAttempts,
+                                      FluidStack initialFluid) {
+            boolean performedFill = false;
+            ItemStack filledResult = ItemStack.EMPTY;
+            for (int i = 0; i < maxAttempts; i++) {
+                FluidActionResult result = FluidUtil.tryFillContainer(currentStack, fluidTank,
+                        Integer.MAX_VALUE, null, false);
+                if (!result.isSuccess()) {
+                    break;
+                }
+                ItemStack remainingStack = FluidUtil.tryFillContainer(currentStack, fluidTank,
+                        Integer.MAX_VALUE, null, true).getResult();
+                performedFill = true;
+                currentStack.shrink(1);
+                filledResult = mergeOrStoreResult(player, filledResult, remainingStack);
+            }
+            if (!performedFill) {
+                return false;
+            }
+            SoundEvent sound = initialFluid.getFluid().getFluidType().getSound(initialFluid,
+                    SoundActions.BUCKET_FILL);
+            if (sound == null) {
+                sound = SoundEvents.BUCKET_FILL;
+            }
+            player.level().playSound(null, player, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
+            finishContainerClick(player, currentStack, filledResult);
+            return true;
+        }
+
+        private void emptyContainer(ServerPlayer player, ItemStack currentStack, int maxAttempts) {
+            boolean performedEmptying = false;
+            ItemStack drainedResult = ItemStack.EMPTY;
+            for (int i = 0; i < maxAttempts; i++) {
+                int remainingCapacity = fluidTank.getTankCapacity(0) - fluidTank.getFluidInTank(0).getAmount();
+                FluidActionResult result = FluidUtil.tryEmptyContainer(currentStack, fluidTank,
+                        remainingCapacity, null, false);
+                if (!result.isSuccess()) {
+                    break;
+                }
+                ItemStack remainingStack = FluidUtil.tryEmptyContainer(currentStack, fluidTank,
+                        remainingCapacity, null, true).getResult();
+                performedEmptying = true;
+                currentStack.shrink(1);
+                drainedResult = mergeOrStoreResult(player, drainedResult, remainingStack);
+            }
+            FluidStack filledFluid = fluidTank.getFluidInTank(0);
+            if (performedEmptying) {
+                SoundEvent sound = filledFluid.getFluid().getFluidType().getSound(filledFluid,
+                        SoundActions.BUCKET_EMPTY);
+                if (sound == null) {
+                    sound = SoundEvents.BUCKET_EMPTY;
+                }
+                player.level().playSound(null, player, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
+                finishContainerClick(player, currentStack, drainedResult);
+            }
+        }
+
+        private ItemStack mergeOrStoreResult(ServerPlayer player, ItemStack storedResult, ItemStack remainingStack) {
+            if (storedResult.isEmpty()) {
+                return remainingStack.copy();
+            }
+            if (ItemStack.isSameItemSameComponents(storedResult, remainingStack)) {
+                if (storedResult.getCount() < storedResult.getMaxStackSize()) {
+                    storedResult.grow(1);
+                } else {
+                    player.getInventory().placeItemBackInInventory(remainingStack);
+                }
+                return storedResult;
+            }
+            player.getInventory().placeItemBackInInventory(storedResult);
+            return remainingStack.copy();
+        }
+
+        private void finishContainerClick(ServerPlayer player, ItemStack currentStack, ItemStack resultStack) {
+            if (currentStack.isEmpty()) {
+                player.containerMenu.setCarried(resultStack);
+            } else {
+                player.containerMenu.setCarried(currentStack);
+                player.getInventory().placeItemBackInInventory(resultStack);
+            }
+            player.containerMenu.broadcastChanges();
+        }
     }
 
     //////////////////////////////////////

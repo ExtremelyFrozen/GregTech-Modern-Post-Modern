@@ -17,8 +17,6 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 @Accessors(chain = true, fluent = true)
 public class SimpleCookingRecipeBuilder<T extends AbstractCookingRecipe> {
 
@@ -103,7 +101,7 @@ public class SimpleCookingRecipeBuilder<T extends AbstractCookingRecipe> {
     }
 
     private T create() {
-        return constructor.create(Objects.requireNonNullElse(this.group, ""), this.category, this.input, this.output,
+        return constructor.create(this.group == null ? "" : this.group, this.category, this.input, this.output,
                 this.experience, this.cookingTime);
     }
 

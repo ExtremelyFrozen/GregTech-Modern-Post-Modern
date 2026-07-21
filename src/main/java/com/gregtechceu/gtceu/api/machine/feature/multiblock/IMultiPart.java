@@ -1,7 +1,6 @@
 package com.gregtechceu.gtceu.api.machine.feature.multiblock;
 
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.machine.feature.IMachineFeature;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.util.List;
 import java.util.SortedSet;
 
-public interface IMultiPart extends IMachineFeature, IFancyUIMachine {
+public interface IMultiPart extends IMachineFeature {
 
     /**
      * Can it be shared among multi multiblock.
@@ -142,7 +141,11 @@ public interface IMultiPart extends IMachineFeature, IFancyUIMachine {
     default void addMultiText(List<Component> textList) {}
 
     /**
-     * Attach part's tooltips to the controller.
+     * Attaches warnings owned by this part to an LDLib2 controller page.
+     *
+     * @param controller    controller whose page exposes the warning
+     * @param tooltipsPanel tooltip panel owned by the current Fancy opening
      */
-    default void attachFancyTooltipsToController(MultiblockControllerMachine controller, TooltipsPanel tooltipsPanel) {}
+    default void attachLDLib2FancyTooltipsToController(MultiblockControllerMachine controller,
+                                                       LDLib2FancyTooltipsPanelElement tooltipsPanel) {}
 }

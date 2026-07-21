@@ -3,18 +3,20 @@ package com.gregtechceu.gtceu.common.item.behavior;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
+import com.gregtechceu.gtceu.api.gui.element.ProspectingMapElement;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
 import com.gregtechceu.gtceu.api.gui.misc.ProspectorMode;
-import com.gregtechceu.gtceu.api.gui.widget.ProspectingMapWidget;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.item.component.IAddInformation;
 import com.gregtechceu.gtceu.api.item.component.IInteractionItem;
 import com.gregtechceu.gtceu.api.item.component.IItemUIFactory;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -29,9 +31,7 @@ import net.minecraft.world.level.Level;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class ProspectorScannerBehavior implements IItemUIFactory, IInteractionItem, IAddInformation {
 
@@ -41,7 +41,7 @@ public class ProspectorScannerBehavior implements IItemUIFactory, IInteractionIt
 
     public ProspectorScannerBehavior(int radius, long cost, ProspectorMode<?>... modes) {
         this.radius = radius + 1;
-        this.modes = Arrays.stream(modes).filter(Objects::nonNull).toArray(ProspectorMode[]::new);
+        this.modes = modes.clone();
         this.cost = cost;
     }
 
@@ -85,20 +85,46 @@ public class ProspectorScannerBehavior implements IItemUIFactory, IInteractionIt
     }
 
     @Override
-    public ModularUI createUI(HeldItemUIFactory.HeldItemHolder holder, Player entityPlayer) {
+    public boolean canCreateLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
+        return ItemStack.isSameItem(holder.getHeld(), holder.getOpenedStack());
+    }
+
+    @Override
+    public boolean isLDLib2UIStillValid(HeldItemUIHolder holder, Player entityPlayer) {
+        return ItemStack.isSameItem(holder.getHeld(), holder.getOpenedStack());
+    }
+
+    @Override
+    public UI createLDLib2UI(HeldItemUIHolder holder, Player entityPlayer) {
         var mode = getMode(holder.getHeld());
-        var map = new ProspectingMapWidget(4, 4, 332 - 8, 200 - 8, radius, mode, 1);
-        return new ModularUI(332, 200, holder, entityPlayer)
-                .background(GuiTextures.BACKGROUND)
-                .widget(map)
-                .widget(new SwitchWidget(-20, 4, 18, 18, (cd, pressed) -> map.setDarkMode(pressed))
-                        .setSupplier(map::isDarkMode)
-                        .setTexture(
-                                new GuiTextureGroup(GuiTextures.BUTTON,
-                                        GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(true).copy()
-                                                .getSubTexture(0, 0.5, 1, 0.5).scale(0.8f)),
-                                new GuiTextureGroup(GuiTextures.BUTTON, GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(true)
-                                        .copy().getSubTexture(0, 0, 1, 0.5).scale(0.8f))));
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 332, 200);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+
+        var map = new ProspectingMapElement(4, 4, 332 - 8, 200 - 8, radius, mode, 1, holder);
+        root.addChild(map);
+        root.addChild(createDarkModeButton(map));
+        return UI.of(root);
+    }
+
+    private static GTButtonElement createDarkModeButton(ProspectingMapElement map) {
+        GTButtonElement button = new GTButtonElement(-20, 4, 18, 18);
+        button.noText();
+        updateDarkModeButton(button, map.isDarkMode());
+        button.setOnClick(event -> {
+            map.setDarkMode(!map.isDarkMode());
+            updateDarkModeButton(button, map.isDarkMode());
+        });
+        return button;
+    }
+
+    private static void updateDarkModeButton(GTButtonElement button, boolean darkMode) {
+        button.setButtonTexture(darkModeTexture(darkMode));
+    }
+
+    private static IGuiTexture darkModeTexture(boolean darkMode) {
+        return GuiTextures.group(GuiTextures.BUTTON,
+                GuiTextures.buttonState(GuiTextures.PROGRESS_BAR_SOLAR_STEAM.get(true), !darkMode).copy().scale(0.8f));
     }
 
     @Override

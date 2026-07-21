@@ -4,10 +4,15 @@ import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.SmartItemFilter;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTEnumSelectorElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.machine.MachineCoverContainer;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
@@ -17,23 +22,29 @@ import com.gregtechceu.gtceu.api.transfer.item.ItemHandlerDelegate;
 import com.gregtechceu.gtceu.common.cover.data.FilterMode;
 import com.gregtechceu.gtceu.common.cover.data.ManualIOMode;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ItemFilterCover extends CoverBehavior implements IUICover {
+public class ItemFilterCover extends CoverBehavior
+                             implements LDLib2CoverUIProvider, ItemFilterCoverConfigActionTarget {
+
+    static {
+        ItemFilterCoverConfigActions.initialize();
+    }
 
     protected ItemFilter itemFilter;
     @SaveField
@@ -42,7 +53,6 @@ public class ItemFilterCover extends CoverBehavior implements IUICover {
     protected FilterMode filterMode = FilterMode.FILTER_INSERT;
     private FilteredItemHandlerWrapper itemFilterWrapper;
     @SaveField
-    @Setter
     @Getter
     protected ManualIOMode allowFlow = ManualIOMode.DISABLED;
 
@@ -61,9 +71,15 @@ public class ItemFilterCover extends CoverBehavior implements IUICover {
         return itemFilter;
     }
 
+    @Override
     public void setFilterMode(FilterMode filterMode) {
         this.filterMode = filterMode;
         syncDataHolder.markClientSyncFieldDirty("filterMode");
+    }
+
+    @Override
+    public void setAllowFlow(ManualIOMode allowFlow) {
+        this.allowFlow = allowFlow;
     }
 
     @Override
@@ -88,14 +104,51 @@ public class ItemFilterCover extends CoverBehavior implements IUICover {
     }
 
     @Override
-    public Widget createUIWidget() {
-        final var group = new WidgetGroup(0, 0, 178, 85);
-        group.addWidget(new LabelWidget(60, 5, attachItem.getDescriptionId()));
-        group.addWidget(new EnumSelectorWidget<>(35, 25, 18, 18,
-                FilterMode.VALUES, filterMode, this::setFilterMode));
-        group.addWidget(new EnumSelectorWidget<>(35, 45, 18, 18, ManualIOMode.VALUES, allowFlow, this::setAllowFlow));
-        group.addWidget(getItemFilter().openConfigurator(62, 25));
-        return group;
+    public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+        return holder.getCover() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, UICoverHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 167);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+
+        root.addChild(createLDLib2Label());
+        root.addChild(GTEnumSelectorElement.selectable(35, 25, 18, 18, FilterMode.VALUES, this::getFilterMode,
+                mode -> setLDLib2FilterMode(player, holder, mode)));
+        root.addChild(GTEnumSelectorElement.selectable(35, 45, 18, 18, ManualIOMode.VALUES, this::getAllowFlow,
+                mode -> setLDLib2ManualIO(player, holder, mode)));
+        root.addChild(getItemFilter().openLDLib2Configurator(62, 25));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 85, true));
+        return UI.of(root);
+    }
+
+    private GTLabelElement createLDLib2Label() {
+        GTLabelElement label = new GTLabelElement(60, 5, 111, 10, attachItem.getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private void setLDLib2FilterMode(Player player, UICoverHolder holder, FilterMode mode) {
+        setFilterMode(mode);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2ManualIO(Player player, UICoverHolder holder, ManualIOMode mode) {
+        setAllowFlow(mode);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
+        if (player.level().isClientSide()) {
+            CoverUIHelper.sendAction(holder,
+                    ItemFilterCoverConfigActions.createSetConfigAction(getFilterMode(), getAllowFlow()));
+        }
     }
 
     private class FilteredItemHandlerWrapper extends ItemHandlerDelegate {

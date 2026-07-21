@@ -1,0 +1,50 @@
+package com.gregtechceu.gtceu.common.network.packets;
+
+import com.gregtechceu.gtceu.GTCEu;
+import com.gregtechceu.gtceu.api.gui.factory.GTDynamicItemSlotContainerMenu;
+import com.gregtechceu.gtceu.api.gui.slot.DynamicItemSlotOpeningToken;
+
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+
+/** Confirms that the client appended every disabled range and resolved every present UUID target. */
+public record CPacketDynamicItemSlotPreparedToServer(DynamicItemSlotOpeningToken token)
+        implements CustomPacketPayload {
+
+    public static final ResourceLocation ID = GTCEu.id("dynamic_item_slot_prepared_to_server");
+    public static final Type<CPacketDynamicItemSlotPreparedToServer> TYPE = new Type<>(ID);
+    public static final StreamCodec<RegistryFriendlyByteBuf, CPacketDynamicItemSlotPreparedToServer> CODEC = StreamCodec
+            .ofMember(CPacketDynamicItemSlotPreparedToServer::encode,
+                    CPacketDynamicItemSlotPreparedToServer::decode);
+
+    public CPacketDynamicItemSlotPreparedToServer {
+        if (token == null) {
+            throw new IllegalArgumentException("dynamic item-slot PREPARED token must be present");
+        }
+    }
+
+    private static CPacketDynamicItemSlotPreparedToServer decode(RegistryFriendlyByteBuf buffer) {
+        return new CPacketDynamicItemSlotPreparedToServer(
+                DynamicItemSlotOpeningToken.STREAM_CODEC.decode(buffer));
+    }
+
+    private void encode(RegistryFriendlyByteBuf buffer) {
+        DynamicItemSlotOpeningToken.STREAM_CODEC.encode(buffer, token);
+    }
+
+    public void execute(IPayloadContext context) {
+        GTDynamicItemSlotContainerMenu menu = DynamicItemSlotPacketRoute.resolveServer(context, token, ID);
+        if (menu != null) {
+            menu.receivePrepared((ServerPlayer) context.player(), token);
+        }
+    }
+
+    @Override
+    public Type<CPacketDynamicItemSlotPreparedToServer> type() {
+        return TYPE;
+    }
+}

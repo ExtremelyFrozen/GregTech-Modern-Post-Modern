@@ -6,7 +6,7 @@ import com.gregtechceu.gtceu.integration.ae2.slot.IConfigurableSlotList;
 import appeng.api.stacks.GenericStack;
 import org.jetbrains.annotations.Nullable;
 
-public interface IMEStockingPart extends IAutoPullPart {
+public interface IMEStockingPart extends IAutoPullPart, AutoStockingPart {
 
     @Override
     default void addedToController(MultiblockControllerMachine controller, String structureName) {
@@ -51,12 +51,4 @@ public interface IMEStockingPart extends IAutoPullPart {
             }
         }
     }
-
-    int getMinStackSize();
-
-    void setMinStackSize(int newSize);
-
-    int getTicksPerCycle();
-
-    void setTicksPerCycle(int newSize);
 }

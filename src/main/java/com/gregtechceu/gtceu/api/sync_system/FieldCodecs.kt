@@ -28,6 +28,7 @@ import net.minecraft.network.chat.ComponentSerialization
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.StringRepresentable
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.block.state.BlockState
 import net.neoforged.neoforge.fluids.FluidStack
 
 import com.google.gson.JsonArray
@@ -401,6 +402,7 @@ object FieldCodecs {
 		parent.lookup,
 		parent.serializationTarget,
 		parent.parseExplicitNull,
+		parent.notifyUnchangedOnFullSync,
 	)
 
 	@Suppress("UNCHECKED_CAST")
@@ -544,6 +546,7 @@ object FieldCodecs {
 		register(UUID::class.java, UUIDUtil.CODEC)
 
 		register(BlockPos::class.java, BlockPos.CODEC)
+		register(BlockState::class.java, BlockState.CODEC)
 		register(Component::class.java, ComponentSerialization.CODEC)
 		register(ItemStack::class.java, ItemStack.OPTIONAL_CODEC)
 		register(FluidStack::class.java, FluidStack.OPTIONAL_CODEC)

@@ -44,7 +44,6 @@ public class FacadeCover extends CoverBehavior {
 
     public void setFacadeState(BlockState state) {
         facadeState = state;
-        syncDataHolder.markClientSyncFieldDirty("facadeState");
     }
 
     /**

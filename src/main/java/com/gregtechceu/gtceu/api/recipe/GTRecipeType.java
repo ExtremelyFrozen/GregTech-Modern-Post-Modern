@@ -3,6 +3,8 @@ package com.gregtechceu.gtceu.api.recipe;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.gui.SteamTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.api.recipe.category.GTRecipeCategory;
 import com.gregtechceu.gtceu.api.recipe.chance.boost.ChanceBoostFunction;
 import com.gregtechceu.gtceu.api.recipe.lookup.RecipeAdditionHandler;
@@ -12,10 +14,7 @@ import com.gregtechceu.gtceu.api.sound.SoundEntry;
 import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentMap;
@@ -155,8 +154,8 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
         return this;
     }
 
-    public GTRecipeType setProgressBar(ResourceTexture progressBar, ProgressTexture.FillDirection moveType) {
-        this.recipeUI.setProgressBar(progressBar, moveType);
+    public GTRecipeType setProgressBar(ProgressTexture progressBar) {
+        this.recipeUI.setProgressBar(progressBar);
         return this;
     }
 
@@ -166,8 +165,13 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
         return this;
     }
 
-    public GTRecipeType setUiBuilder(BiConsumer<GTRecipeDefinition, WidgetGroup> uiBuilder) {
-        this.recipeUI.setUiBuilder(uiBuilder);
+    public GTRecipeType setLDLib2UiBuilder(BiConsumer<GTRecipeDefinition, UIElement> uiBuilder) {
+        this.recipeUI.setLdLib2UiBuilder((recipe, root, rootSize) -> uiBuilder.accept(recipe, root));
+        return this;
+    }
+
+    public GTRecipeType setLDLib2UiBuilder(GTRecipeTypeUI.LDLib2UiBuilder uiBuilder) {
+        this.recipeUI.setLdLib2UiBuilder(uiBuilder);
         return this;
     }
 
@@ -328,6 +332,7 @@ public class GTRecipeType implements RecipeType<GTRecipeDefinition> {
     }
 
     public void addToCategoryMap(GTRecipeCategory category, GTRecipeDefinition recipe) {
+        setMinRecipeConditions(recipe.conditions.size());
         categoryMap.computeIfAbsent(category, k -> new ObjectLinkedOpenHashSet<>()).add(recipe);
     }
 

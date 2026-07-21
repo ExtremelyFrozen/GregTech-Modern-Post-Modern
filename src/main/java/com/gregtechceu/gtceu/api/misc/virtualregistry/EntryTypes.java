@@ -13,7 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,6 @@ public final class EntryTypes<T extends VirtualEntry> {
     // ENDER_ENERGY("ender_energy", null),
     // ENDER_REDSTONE("ender_redstone", null);
 
-    @Getter
     private final ResourceLocation id;
     private final Supplier<T> factory;
     private final DeferredHolder<DataComponentType<?>, DataComponentType<Map<String, DataComponentMap>>> dataComponentType;
@@ -69,6 +67,10 @@ public final class EntryTypes<T extends VirtualEntry> {
 
     public T createInstance() {
         return factory.get();
+    }
+
+    public ResourceLocation getId() {
+        return id;
     }
 
     public static Iterable<EntryTypes<?>> values() {

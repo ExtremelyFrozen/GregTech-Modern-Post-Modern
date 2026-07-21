@@ -39,8 +39,8 @@ public class NetworkBuilder extends Thread {
 
     public NetworkBuilder(LongDistanceNetwork.WorldData worldData, LongDistanceNetwork network,
                           Collection<BlockPos> starts) {
-        this.worldData = Objects.requireNonNull(worldData);
-        this.originalNetwork = Objects.requireNonNull(network);
+        this.worldData = worldData;
+        this.originalNetwork = network;
         this.network = network;
         this.world = worldData.getWorld();
         this.starts.addAll(starts);

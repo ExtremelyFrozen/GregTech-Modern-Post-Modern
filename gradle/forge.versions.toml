@@ -1,6 +1,6 @@
 [versions]
 kotlinforforge = "5.7.0"
-ldlib = "1.0.35.a"
+ldlib2 = "2.2.28"
 registrate = "MC1.21-1.3.0+67"
 configuration = "3.1.1-neoforge"
 
@@ -47,7 +47,7 @@ observable = "5733591"
 
 [libraries]
 kotlinforforge      = { module = "thedarkcolour:kotlinforforge-neoforge", version.ref = "kotlinforforge" }
-ldlib               = { module = "com.lowdragmc.ldlib:ldlib-neoforge-1.21.1", version.ref = "ldlib" }
+ldlib2              = { module = "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1", version.ref = "ldlib2" }
 registrate          = { module = "com.tterrag.registrate:Registrate", version.ref = "registrate" }
 configuration       = { module = "dev.toma.configuration:configuration-1.21.1", version.ref = "configuration" }
 

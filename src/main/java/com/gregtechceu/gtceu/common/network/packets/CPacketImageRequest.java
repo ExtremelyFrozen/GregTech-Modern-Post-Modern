@@ -11,8 +11,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 public class CPacketImageRequest implements CustomPacketPayload {
 
     public static final ResourceLocation ID = GTCEu.id("image_request");
@@ -21,25 +19,34 @@ public class CPacketImageRequest implements CustomPacketPayload {
             .ofMember(CPacketImageRequest::encode, CPacketImageRequest::new);
 
     private final String url;
+    private final long requestId;
 
-    public CPacketImageRequest(String url) {
+    public CPacketImageRequest(String url, long requestId) {
         this.url = url;
+        this.requestId = requestId;
     }
 
     public CPacketImageRequest(FriendlyByteBuf buf) {
         this.url = buf.readUtf();
+        this.requestId = buf.readLong();
     }
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeUtf(url);
+        buffer.writeLong(requestId);
     }
 
     public void execute(IPayloadContext context) {
-        ImageCache.queryServerImage(url, image -> {
-            try {
-                SPacketImageResponse.sendImage(url, image, context);
-            } catch (IOException ignored) {}
-        });
+        ImageCache.queryServerImage(url,
+                result -> SPacketImageResponse.sendResult(url, requestId, result, context));
+    }
+
+    String url() {
+        return url;
+    }
+
+    long requestId() {
+        return requestId;
     }
 
     @Override

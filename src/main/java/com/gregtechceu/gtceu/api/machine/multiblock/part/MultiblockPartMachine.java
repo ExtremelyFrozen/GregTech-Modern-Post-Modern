@@ -52,8 +52,6 @@ public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
 
     @Override
     public boolean hasController(BlockPos controllerPos, String structureName) {
-        Objects.requireNonNull(controllerPos, "controllerPos");
-        Objects.requireNonNull(structureName, "structureName");
         Set<String> structures = controllerStructures.get(controllerPos);
         return structures != null && structures.contains(structureName);
     }

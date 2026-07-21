@@ -24,7 +24,6 @@ public final class CoverDefinition {
         CoverBehavior create(CoverDefinition definition, ICoverable coverable, Direction side, int tier);
     }
 
-    @Getter
     private final ResourceLocation id;
     private final CoverBehaviourProvider behaviorCreator;
     @Getter
@@ -39,6 +38,15 @@ public final class CoverDefinition {
         } else {
             this.coverRenderer = null;
         }
+    }
+
+    /**
+     * Exposes the cover identifier to callers compiled before Lombok-generated methods are available.
+     *
+     * @return the cover identifier
+     */
+    public ResourceLocation getId() {
+        return id;
     }
 
     public CoverBehavior createCoverBehavior(ICoverable metaTileEntity, Direction side) {

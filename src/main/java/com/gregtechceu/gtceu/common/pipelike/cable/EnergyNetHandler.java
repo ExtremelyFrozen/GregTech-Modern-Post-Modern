@@ -11,8 +11,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 
-import java.util.Objects;
-
 public class EnergyNetHandler implements IEnergyContainer {
 
     private EnergyNet net;
@@ -21,8 +19,8 @@ public class EnergyNetHandler implements IEnergyContainer {
     private final Direction facing;
 
     public EnergyNetHandler(EnergyNet net, CableBlockEntity cable, Direction facing) {
-        this.net = Objects.requireNonNull(net);
-        this.cable = Objects.requireNonNull(cable);
+        this.net = net;
+        this.cable = cable;
         this.facing = facing;
     }
 

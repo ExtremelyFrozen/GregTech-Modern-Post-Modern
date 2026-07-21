@@ -1,9 +1,9 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -45,13 +45,23 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
     }
 
     @Override
-    public List<BlockInfo> candidates() {
+    public List<MultiblockBlockInfo> candidates() {
         return predicate.candidates();
     }
 
     @Override
     public @Unmodifiable List<Block> blockCandidates() {
         return predicate.blockCandidates();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        StructurePreviewConstraint constraint = new StructurePreviewConstraint(this, minCount, maxCount,
+                minCountByLayer, maxCountByLayer, previewCount);
+        List<Component> additionalTooltips = tooltips.orElse(List.of());
+        return predicate.previewChoices(definition).stream()
+                .map(choice -> choice.restrictedBy(constraint, additionalTooltips))
+                .toList();
     }
 
     @Override
@@ -123,7 +133,7 @@ public record RestrictedPredicate(StructurePredicate predicate, Optional<Integer
         }
 
         public RestrictedPredicate build() {
-            return new RestrictedPredicate(Objects.requireNonNull(base), Optional.ofNullable(minCount),
+            return new RestrictedPredicate(base, Optional.ofNullable(minCount),
                     Optional.ofNullable(maxCount), Optional.ofNullable(minCountByLayer),
                     Optional.ofNullable(maxCountByLayer), Optional.ofNullable(previewCount),
                     Optional.ofNullable(tooltips));

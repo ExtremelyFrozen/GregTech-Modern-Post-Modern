@@ -2,10 +2,9 @@ package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.block.IFilterType;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.api.multiblock.error.PatternStringError;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 
@@ -46,10 +45,10 @@ public enum CleanroomFilterPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return GTCEuAPI.CLEANROOM_FILTERS.entrySet().stream()
                 .sorted(Comparator.comparing(entry -> entry.getKey().getSerializedName()))
-                .map(entry -> BlockInfo.fromBlockState(entry.getValue().get().defaultBlockState()))
+                .map(entry -> MultiblockBlockInfo.fromBlockState(entry.getValue().get().defaultBlockState()))
                 .toList();
     }
 

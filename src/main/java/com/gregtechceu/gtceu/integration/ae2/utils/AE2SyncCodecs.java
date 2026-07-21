@@ -3,6 +3,8 @@ package com.gregtechceu.gtceu.integration.ae2.utils;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.sync_system.ContextualFieldCodec;
 import com.gregtechceu.gtceu.api.sync_system.FieldCodecs;
+import com.gregtechceu.gtceu.integration.ae2.machine.AEFluidConfigSnapshot;
+import com.gregtechceu.gtceu.integration.ae2.machine.AEItemConfigSnapshot;
 import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferPartMachine;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.GridNodeHolder;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidSlot;
@@ -24,6 +26,9 @@ import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class AE2SyncCodecs {
 
     private AE2SyncCodecs() {}
@@ -34,7 +39,207 @@ public final class AE2SyncCodecs {
         FieldCodecs.registerContextual(GridNodeHolder.class, GridNodeHolderCodec.INSTANCE);
         FieldCodecs.registerContextual(ExportOnlyAEItemSlot.class, ExportOnlyAESlotCodec.ITEM);
         FieldCodecs.registerContextual(ExportOnlyAEFluidSlot.class, ExportOnlyAESlotCodec.FLUID);
+        FieldCodecs.registerContextual(AEFluidConfigSnapshot.class, AEFluidConfigSnapshotCodec.INSTANCE);
+        FieldCodecs.registerContextual(AEItemConfigSnapshot.class, AEItemConfigSnapshotCodec.INSTANCE);
         FieldCodecs.registerContextual(MEPatternBufferPartMachine.InternalSlot.class, InternalSlotCodec.INSTANCE);
+    }
+
+    private static final class AEFluidConfigSnapshotCodec implements ContextualFieldCodec<AEFluidConfigSnapshot> {
+
+        private static final AEFluidConfigSnapshotCodec INSTANCE = new AEFluidConfigSnapshotCodec();
+        private static final String ONLINE = "online";
+        private static final String STOCKING = "stocking";
+        private static final String AUTO_PULL = "autoPull";
+        private static final String SLOTS = "slots";
+        private static final String CONFIG = "config";
+        private static final String STOCK = "stock";
+
+        @Override
+        public JsonElement serializeField(AEFluidConfigSnapshot value, Context<AEFluidConfigSnapshot> context) {
+            JsonObject json = new JsonObject();
+            json.addProperty(ONLINE, value.online());
+            json.addProperty(STOCKING, value.stocking());
+            json.addProperty(AUTO_PULL, value.autoPull());
+
+            JsonArray slots = new JsonArray();
+            for (AEFluidConfigSnapshot.Slot slot : value.slots()) {
+                JsonObject slotJson = new JsonObject();
+                slotJson.add(CONFIG, encodeStack(context.lookup(), slot.config()));
+                slotJson.add(STOCK, encodeStack(context.lookup(), slot.stock()));
+                slots.add(slotJson);
+            }
+            json.add(SLOTS, slots);
+            return json;
+        }
+
+        @Override
+        public AEFluidConfigSnapshot deserializeField(JsonElement value, Context<AEFluidConfigSnapshot> context) {
+            try {
+                JsonObject json = requireSnapshotObject(value, context.fieldName());
+                boolean online = requireBoolean(json, ONLINE, context.fieldName());
+                boolean stocking = requireBoolean(json, STOCKING, context.fieldName());
+                boolean autoPull = requireBoolean(json, AUTO_PULL, context.fieldName());
+                JsonArray slotsJson = requireArray(json, SLOTS, context.fieldName());
+                if (slotsJson.size() != AEFluidConfigSnapshot.SLOT_COUNT) {
+                    throw new IllegalArgumentException("Sync: ME fluid configuration snapshot field " +
+                            context.fieldName() + " must contain exactly " + AEFluidConfigSnapshot.SLOT_COUNT +
+                            " slots");
+                }
+
+                ArrayList<AEFluidConfigSnapshot.Slot> slots = new ArrayList<>(AEFluidConfigSnapshot.SLOT_COUNT);
+                for (int index = 0; index < slotsJson.size(); index++) {
+                    JsonElement slotElement = slotsJson.get(index);
+                    if (!slotElement.isJsonObject()) {
+                        throw new IllegalArgumentException("Sync: ME fluid configuration snapshot field " +
+                                context.fieldName() + " slot " + index + " must be an object");
+                    }
+                    JsonObject slotJson = slotElement.getAsJsonObject();
+                    if (slotJson.size() != 2 || !slotJson.has(CONFIG) || !slotJson.has(STOCK)) {
+                        throw new IllegalArgumentException("Sync: ME fluid configuration snapshot field " +
+                                context.fieldName() + " slot " + index + " must contain config and stock");
+                    }
+                    slots.add(new AEFluidConfigSnapshot.Slot(
+                            decodeStack(context.lookup(), slotJson.get(CONFIG)),
+                            decodeStack(context.lookup(), slotJson.get(STOCK))));
+                }
+                return new AEFluidConfigSnapshot(online, stocking, autoPull, slots);
+            } catch (RuntimeException exception) {
+                GTCEu.LOGGER.error("Failed to decode ME fluid configuration snapshot field {}",
+                        context.fieldName(), exception);
+                throw exception;
+            }
+        }
+
+        private static JsonObject requireSnapshotObject(JsonElement value, String fieldName) {
+            if (!value.isJsonObject()) {
+                throw new IllegalArgumentException("Sync: ME fluid configuration snapshot field " + fieldName +
+                        " must be an object");
+            }
+            JsonObject json = value.getAsJsonObject();
+            if (json.size() != 4 || !json.has(ONLINE) || !json.has(STOCKING) ||
+                    !json.has(AUTO_PULL) || !json.has(SLOTS)) {
+                throw new IllegalArgumentException("Sync: ME fluid configuration snapshot field " + fieldName +
+                        " must contain online, stocking, autoPull, and slots");
+            }
+            return json;
+        }
+
+        private static boolean requireBoolean(JsonObject json, String key, String fieldName) {
+            JsonElement value = json.get(key);
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) {
+                throw new IllegalArgumentException("Sync: ME fluid configuration snapshot field " + fieldName +
+                        " must contain boolean " + key);
+            }
+            return value.getAsBoolean();
+        }
+
+        private static JsonArray requireArray(JsonObject json, String key, String fieldName) {
+            JsonElement value = json.get(key);
+            if (!value.isJsonArray()) {
+                throw new IllegalArgumentException("Sync: ME fluid configuration snapshot field " + fieldName +
+                        " must contain array " + key);
+            }
+            return value.getAsJsonArray();
+        }
+    }
+
+    private static final class AEItemConfigSnapshotCodec implements ContextualFieldCodec<AEItemConfigSnapshot> {
+
+        private static final AEItemConfigSnapshotCodec INSTANCE = new AEItemConfigSnapshotCodec();
+        private static final String ONLINE = "online";
+        private static final String STOCKING = "stocking";
+        private static final String AUTO_PULL = "autoPull";
+        private static final String SLOTS = "slots";
+        private static final String CONFIG = "config";
+        private static final String STOCK = "stock";
+
+        @Override
+        public JsonElement serializeField(AEItemConfigSnapshot value, Context<AEItemConfigSnapshot> context) {
+            JsonObject json = new JsonObject();
+            json.addProperty(ONLINE, value.online());
+            json.addProperty(STOCKING, value.stocking());
+            json.addProperty(AUTO_PULL, value.autoPull());
+
+            JsonArray slots = new JsonArray();
+            for (AEItemConfigSnapshot.Slot slot : value.slots()) {
+                JsonObject slotJson = new JsonObject();
+                slotJson.add(CONFIG, encodeStack(context.lookup(), slot.config()));
+                slotJson.add(STOCK, encodeStack(context.lookup(), slot.stock()));
+                slots.add(slotJson);
+            }
+            json.add(SLOTS, slots);
+            return json;
+        }
+
+        @Override
+        public AEItemConfigSnapshot deserializeField(JsonElement value, Context<AEItemConfigSnapshot> context) {
+            try {
+                JsonObject json = requireSnapshotObject(value, context.fieldName());
+                boolean online = requireBoolean(json, ONLINE, context.fieldName());
+                boolean stocking = requireBoolean(json, STOCKING, context.fieldName());
+                boolean autoPull = requireBoolean(json, AUTO_PULL, context.fieldName());
+                JsonArray slotsJson = requireArray(json, SLOTS, context.fieldName());
+                if (slotsJson.size() != AEItemConfigSnapshot.SLOT_COUNT) {
+                    throw new IllegalArgumentException("Sync: ME item configuration snapshot field " +
+                            context.fieldName() + " must contain exactly " + AEItemConfigSnapshot.SLOT_COUNT +
+                            " slots");
+                }
+
+                ArrayList<AEItemConfigSnapshot.Slot> slots = new ArrayList<>(AEItemConfigSnapshot.SLOT_COUNT);
+                for (int index = 0; index < slotsJson.size(); index++) {
+                    JsonElement slotElement = slotsJson.get(index);
+                    if (!slotElement.isJsonObject()) {
+                        throw new IllegalArgumentException("Sync: ME item configuration snapshot field " +
+                                context.fieldName() + " slot " + index + " must be an object");
+                    }
+                    JsonObject slotJson = slotElement.getAsJsonObject();
+                    if (slotJson.size() != 2 || !slotJson.has(CONFIG) || !slotJson.has(STOCK)) {
+                        throw new IllegalArgumentException("Sync: ME item configuration snapshot field " +
+                                context.fieldName() + " slot " + index + " must contain config and stock");
+                    }
+                    slots.add(new AEItemConfigSnapshot.Slot(
+                            decodeStack(context.lookup(), slotJson.get(CONFIG)),
+                            decodeStack(context.lookup(), slotJson.get(STOCK))));
+                }
+                return new AEItemConfigSnapshot(online, stocking, autoPull, slots);
+            } catch (RuntimeException exception) {
+                GTCEu.LOGGER.error("Failed to decode ME item configuration snapshot field {}",
+                        context.fieldName(), exception);
+                throw exception;
+            }
+        }
+
+        private static JsonObject requireSnapshotObject(JsonElement value, String fieldName) {
+            if (!value.isJsonObject()) {
+                throw new IllegalArgumentException("Sync: ME item configuration snapshot field " + fieldName +
+                        " must be an object");
+            }
+            JsonObject json = value.getAsJsonObject();
+            if (json.size() != 4 || !json.has(ONLINE) || !json.has(STOCKING) ||
+                    !json.has(AUTO_PULL) || !json.has(SLOTS)) {
+                throw new IllegalArgumentException("Sync: ME item configuration snapshot field " + fieldName +
+                        " must contain online, stocking, autoPull, and slots");
+            }
+            return json;
+        }
+
+        private static boolean requireBoolean(JsonObject json, String key, String fieldName) {
+            JsonElement value = json.get(key);
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) {
+                throw new IllegalArgumentException("Sync: ME item configuration snapshot field " + fieldName +
+                        " must contain boolean " + key);
+            }
+            return value.getAsBoolean();
+        }
+
+        private static JsonArray requireArray(JsonObject json, String key, String fieldName) {
+            JsonElement value = json.get(key);
+            if (!value.isJsonArray()) {
+                throw new IllegalArgumentException("Sync: ME item configuration snapshot field " + fieldName +
+                        " must contain array " + key);
+            }
+            return value.getAsJsonArray();
+        }
     }
 
     private static final class KeyStorageCodec implements ContextualFieldCodec<KeyStorage> {
@@ -46,12 +251,12 @@ public final class AE2SyncCodecs {
         @Override
         public JsonElement serializeField(KeyStorage value, Context<KeyStorage> context) {
             JsonArray json = new JsonArray();
-            for (var entry : value.storage.object2LongEntrySet()) {
+            for (KeyStorage.Change entry : value.snapshot()) {
                 JsonObject element = new JsonObject();
                 element.add(KEY, AEKey.CODEC
-                        .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), entry.getKey())
+                        .encodeStart(context.lookup().createSerializationContext(JsonOps.INSTANCE), entry.key())
                         .getOrThrow());
-                element.addProperty(AMOUNT, entry.getLongValue());
+                element.addProperty(AMOUNT, entry.amount());
                 json.add(element);
             }
             return json;
@@ -65,15 +270,45 @@ public final class AE2SyncCodecs {
                         " must be encoded as an array");
             }
 
-            storage.storage.clear();
+            List<KeyStorage.Change> replacement = new ArrayList<>(value.getAsJsonArray().size());
             for (JsonElement element : value.getAsJsonArray()) {
+                if (!element.isJsonObject()) {
+                    throw new IllegalArgumentException("Sync: AE2 key storage field " + context.fieldName() +
+                            " contains a non-object entry");
+                }
                 JsonObject json = element.getAsJsonObject();
-                storage.storage.put(AEKey.CODEC
+                if (json.size() != 2 || !json.has(KEY) || !json.has(AMOUNT)) {
+                    throw new IllegalArgumentException("Sync: AE2 key storage field " + context.fieldName() +
+                            " entries must contain exactly key and amount");
+                }
+                AEKey key = AEKey.CODEC
                         .parse(context.lookup().createSerializationContext(JsonOps.INSTANCE), json.get(KEY))
-                        .getOrThrow(), json.get(AMOUNT).getAsLong());
+                        .getOrThrow();
+                replacement.add(new KeyStorage.Change(key,
+                        readPositiveLong(json.get(AMOUNT), context.fieldName())));
             }
-            storage.onChanged();
+            storage.replaceContents(replacement);
             return storage;
+        }
+
+        private static long readPositiveLong(JsonElement value, String fieldName) {
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+                throw new IllegalArgumentException("Sync: AE2 key storage field " + fieldName +
+                        " contains a non-numeric amount");
+            }
+            try {
+                long amount = value.getAsBigDecimal().longValueExact();
+                if (amount <= 0) {
+                    throw new IllegalArgumentException("Sync: AE2 key storage field " + fieldName +
+                            " contains a non-positive amount: " + amount);
+                }
+                return amount;
+            } catch (NumberFormatException | ArithmeticException exception) {
+                GTCEu.LOGGER.error("Sync: AE2 key storage field {} contains an invalid long amount", fieldName,
+                        exception);
+                throw new IllegalArgumentException("Sync: AE2 key storage field " + fieldName +
+                        " contains an invalid long amount", exception);
+            }
         }
     }
 

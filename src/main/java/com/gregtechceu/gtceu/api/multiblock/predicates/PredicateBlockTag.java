@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.predicates;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -22,7 +22,7 @@ public class PredicateBlockTag extends SimplePredicate {
     public SimplePredicate buildPredicate() {
         if (tag == null) {
             predicate = o -> false;
-            blockInfo = () -> BlockInfo.EMPTY;
+            blockInfo = () -> MultiblockBlockInfo.EMPTY;
             candidates = () -> new Block[] { Blocks.AIR };
             return this;
         }
@@ -35,7 +35,7 @@ public class PredicateBlockTag extends SimplePredicate {
         if (blocks.length == 0) blocks = new Block[] { Blocks.BARRIER };
         Block[] finalBlocks = blocks;
         candidates = () -> finalBlocks;
-        var info = BlockInfo.fromBlock(blocks[0]);
+        var info = MultiblockBlockInfo.fromBlock(blocks[0]);
         blockInfo = () -> info;
         return this;
     }

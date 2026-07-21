@@ -136,7 +136,7 @@ public class GTOreDefinition {
         this.biomes = biomes;
         this.biomeWeightModifier = biomeWeightModifier;
         this.veinGenerator = veinGenerator;
-        this.indicatorGenerators = Objects.requireNonNullElseGet(indicatorGenerators, ArrayList::new);
+        this.indicatorGenerators = indicatorGenerators == null ? new ArrayList<>() : indicatorGenerators;
         this.biomeLookup = biomeLookup;
     }
 
@@ -200,7 +200,7 @@ public class GTOreDefinition {
     }
 
     public GTOreDefinition biomes(HolderSet<Biome> biomes) {
-        this.biomes = Objects.requireNonNullElseGet(biomes, HolderSet::empty);
+        this.biomes = biomes == null ? HolderSet.empty() : biomes;
         return this;
     }
 

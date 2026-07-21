@@ -7,12 +7,13 @@ import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.info.MaterialFlags;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
+import com.gregtechceu.gtceu.integration.xei.widgets.GTOreByProductWidget;
 
-import com.lowdragmc.lowdraglib.jei.ModularUIRecipeCategory;
+import com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory;
 
 import net.minecraft.network.chat.Component;
 
-import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
@@ -29,13 +30,12 @@ public class GTOreProcessingInfoCategory extends ModularUIRecipeCategory<Materia
             Material.class);
     private final int width;
     private final int height;
-    private final mezz.jei.api.gui.drawable.IDrawable icon;
+    private final IDrawable icon;
 
     public GTOreProcessingInfoCategory(IJeiHelpers helpers) {
-        super(GTOreProcessingInfoWrapper::new);
-        IGuiHelper guiHelper = helpers.getGuiHelper();
-        this.width = 186;
-        this.height = 174;
+        super(GTOreByProductWidget::createModularUI);
+        this.width = GTOreByProductWidget.JEI_WIDTH;
+        this.height = GTOreByProductWidget.JEI_HEIGHT;
         this.icon = helpers.getGuiHelper().createDrawableItemStack(ChemicalHelper.get(rawOre, Iron));
     }
 
@@ -64,7 +64,7 @@ public class GTOreProcessingInfoCategory extends ModularUIRecipeCategory<Materia
 
     @NotNull
     @Override
-    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+    public IDrawable getIcon() {
         return icon;
     }
 
@@ -79,7 +79,7 @@ public class GTOreProcessingInfoCategory extends ModularUIRecipeCategory<Materia
     }
 
     @Override
-    public Component getTitle() {
+    public @NotNull Component getTitle() {
         return Component.translatable("gtpm.jei.ore_processing_diagram");
     }
 }

@@ -10,10 +10,10 @@ pull request with your changes.
 
 The following pages describe a few important concepts that you will likely run into when working with our codebase.
 
-!!! link "LDLib Docs"
-    [:material-github: LDLib-Architectury :material-arrow-right: Wiki](https://github.com/Low-Drag-MC/LDLib-Architectury/wiki)
+!!! link "LDLib2 Docs"
+    [:material-github: LDLib2 :material-arrow-right: Docs](https://low-drag-mc.github.io/LowDragMC-Doc/en/ldlib2/)
 
-    This mod is based on the LDLib library for a lot of comminly used functionalities.  
+    This mod is based on the LDLib2 library for a lot of commonly used functionality.
     Please refer to its documentation as well.
 
 !!! link "Architectury Gradle Plugin"

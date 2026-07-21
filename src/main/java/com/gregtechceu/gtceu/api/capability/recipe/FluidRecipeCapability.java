@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.capability.recipe;
 
-import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
+import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
@@ -19,16 +19,15 @@ import com.gregtechceu.gtceu.api.recipe.ui.GTRecipeTypeUI;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.client.TooltipsHandler;
 import com.gregtechceu.gtceu.common.valueprovider.*;
+import com.gregtechceu.gtceu.integration.xei.GTRecipeXEIHelper;
+import com.gregtechceu.gtceu.integration.xei.GTXEIHelper;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidEntryList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidStackList;
 import com.gregtechceu.gtceu.integration.xei.entry.fluid.FluidTagList;
 import com.gregtechceu.gtceu.integration.xei.handlers.fluid.CycleFluidEntryHandler;
-import com.gregtechceu.gtceu.integration.xei.widgets.GTRecipeWidget;
 import com.gregtechceu.gtceu.utils.GTMath;
 
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.jei.IngredientIO;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentPatch;
@@ -46,6 +45,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.Unmodifiable;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -352,7 +353,7 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                 .map(FluidRecipeCapability::mapFluid)
                 .collect(Collectors.toList());
 
-        while (entryLists.size() < recipe.recipeType.getMaxOutputs(this)) entryLists.add(null);
+        while (entryLists.size() < getXEIContainerSlotCount(recipe, io)) entryLists.add(null);
         return entryLists;
     }
 
@@ -364,43 +365,60 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
 
     @NotNull
     @Override
-    public Widget createWidget() {
-        TankWidget tank = new TankWidget();
-        tank.initTemplate();
-        tank.setFillDirection(ProgressTexture.FillDirection.ALWAYS_FULL);
-        return tank;
+    public GTFluidSlotElement createLDLib2Element() {
+        return new GTFluidSlotElement().setShowAmount(true);
     }
 
     @NotNull
     @Override
-    public Class<? extends Widget> getWidgetClass() {
-        return TankWidget.class;
+    public Class<? extends UIElement> getLDLib2ElementClass() {
+        return GTFluidSlotElement.class;
     }
 
     @Override
-    public void applyWidgetInfo(@NotNull Widget widget,
-                                int index,
-                                boolean isXEI,
-                                IO io,
-                                GTRecipeTypeUI.@UnknownNullability("null when storage == null") RecipeHolder recipeHolder,
-                                @NotNull GTRecipeType recipeType,
-                                @UnknownNullability("null when content == null") GTRecipeDefinition recipe,
-                                @Nullable Content content,
-                                @Nullable Object storage, int recipeTier, int chanceTier) {
-        if (widget instanceof TankWidget tank) {
+    public Element createLDLib2XmlElement(Document document) {
+        Element element = document.createElement("gtm-fluid-slot");
+        element.setAttribute("draw-hover-overlay", "true");
+        element.setAttribute("draw-hover-tips", "true");
+        element.setAttribute("show-amount", "true");
+        element.setAttribute("legacy-allow-click-filled", "true");
+        element.setAttribute("legacy-allow-click-drained", "true");
+        element.setAttribute("fill-direction", "DOWN_TO_UP");
+        element.setAttribute("legacy-background", "border_texture:gtpm:textures/gui/base/fluid_slot.png");
+        return element;
+    }
+
+    @Override
+    public void applyLDLib2ElementInfo(@NotNull UIElement element,
+                                       int index,
+                                       boolean isXEI,
+                                       IO io,
+                                       GTRecipeTypeUI.@UnknownNullability("null when storage == null") RecipeHolder recipeHolder,
+                                       @NotNull GTRecipeType recipeType,
+                                       @UnknownNullability("null when content == null") GTRecipeDefinition recipe,
+                                       @Nullable Content content,
+                                       @Nullable Object storage, int recipeTier, int chanceTier) {
+        if (element instanceof GTFluidSlotElement tank) {
             if (storage instanceof IFluidHandler fluidHandler) {
                 tank.setFluidTank(fluidHandler, index);
             }
-            tank.setIngredientIO(io == IO.IN ? IngredientIO.INPUT : IngredientIO.OUTPUT);
+            tank.setIngredientIO(io == IO.IN ? GTXEIHelper.input() : GTXEIHelper.output());
             tank.setAllowClickFilled(!isXEI);
             tank.setAllowClickDrained(!isXEI && io.support(IO.IN));
-            if (isXEI) tank.setShowAmount(false);
+            if (isXEI) {
+                tank.setShowAmount(false);
+            }
             if (content != null) {
+                SizedFluidIngredient ingredient = FluidRecipeCapability.CAP.of(content.content);
                 float chance = (float) recipeType.getChanceFunction()
                         .getBoostedChance(content, recipeTier, chanceTier) / content.maxChance;
                 tank.setXEIChance(chance);
+                tank.setXEIAmount(getXEIAmount(ingredient));
+                tank.setXEIPossibleFluids(() -> mapFluid(ingredient).getStacks().stream());
+                if (io == IO.IN && content.chance == 0) {
+                    tank.setIngredientIO(GTXEIHelper.catalyst());
+                }
                 tank.setOnAddedTooltips((w, tooltips) -> {
-                    SizedFluidIngredient ingredient = FluidRecipeCapability.CAP.of(content.content);
                     if (!isXEI && ingredient.getFluids().length > 0) {
                         FluidStack stack = ingredient.getFluids()[0];
                         TooltipsHandler.appendFluidTooltips(stack, tooltips::add,
@@ -412,18 +430,23 @@ public class FluidRecipeCapability extends RecipeCapability<SizedFluidIngredient
                                 countProvider.getMinValue(), countProvider.getMaxValue())
                                 .withStyle(ChatFormatting.GOLD));
                     }
-                    GTRecipeWidget.setConsumedChance(content,
+                    GTRecipeXEIHelper.setConsumedChance(content,
                             recipe.getChanceLogicForCapability(this, io, isTickSlot(index, io, recipe)),
                             tooltips, recipeTier, chanceTier, recipeType.getChanceFunction());
                     if (isTickSlot(index, io, recipe)) {
                         tooltips.add(Component.translatable("gtpm.gui.content.per_tick"));
                     }
                 });
-                if (io == IO.IN && (content.chance == 0)) {
-                    tank.setIngredientIO(IngredientIO.CATALYST);
+                if (isXEI) {
+                    tank.xeiRecipeIngredient();
+                    tank.xeiRecipeSlot();
                 }
             }
         }
+    }
+
+    private int getXEIAmount(SizedFluidIngredient ingredient) {
+        return ingredient.ingredient() instanceof IntProviderFluidIngredient ? 1 : Math.max(ingredient.amount(), 1);
     }
 
     // Maps ingredients to an FluidEntryList for XEI: either an FluidTagList or a FluidStackList

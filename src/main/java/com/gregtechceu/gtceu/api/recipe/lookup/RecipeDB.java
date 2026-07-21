@@ -229,7 +229,7 @@ public final class RecipeDB {
                     return v;
                 }
                 // if there is an existing ingredient, use it, otherwise create a new branch for the ingredient
-                return Objects.requireNonNullElseGet(v, () -> Either.right(new Branch()));
+                return v == null ? Either.right(new Branch()) : v;
             });
             if (either.left().isPresent()) {
                 if (either.left().get() == recipe) {

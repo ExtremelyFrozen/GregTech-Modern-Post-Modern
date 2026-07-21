@@ -46,7 +46,6 @@ public class GTEarlyConfig {
         // hidden rules for mod dependencies
         enableIfModPresent("emi", "emi");
         enableIfModPresent("jei", "jei");
-        enableIfModPresent("rei", "roughlyenoughitems");
 
         final String[] EMBEDDIUM_MOD_IDS = { "embeddium", "sodium" };
         final String[] SODIUM_MOD_IDS = { "sodium" };

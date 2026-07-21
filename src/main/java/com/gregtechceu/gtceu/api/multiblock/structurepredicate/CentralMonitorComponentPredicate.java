@@ -1,12 +1,12 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTMachines;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.util.Lazy;
@@ -43,13 +43,18 @@ public enum CentralMonitorComponentPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return predicates().stream().flatMap(predicate -> predicate.candidates().stream()).toList();
     }
 
     @Override
     public @Unmodifiable List<Block> blockCandidates() {
         return predicates().stream().flatMap(predicate -> predicate.blockCandidates().stream()).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        return predicates().stream().flatMap(predicate -> predicate.previewChoices(definition).stream()).toList();
     }
 
     private static List<StructurePredicate> predicates() {

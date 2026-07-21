@@ -5,9 +5,19 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.data.chemical.material.Material;
 import com.gregtechceu.gtceu.api.data.chemical.material.properties.PropertyKey;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
-import com.gregtechceu.gtceu.api.gui.widget.BlockableSlotWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.*;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
@@ -23,8 +33,8 @@ import com.gregtechceu.gtceu.common.item.behavior.TurbineRotorBehaviour;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.MethodsReturnNonnullByDefault;
@@ -32,6 +42,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import lombok.Getter;
@@ -45,10 +56,14 @@ import static com.gregtechceu.gtceu.api.machine.property.GTMachineModelPropertie
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class RotorHolderPartMachine extends TieredPartMachine {
+public class RotorHolderPartMachine extends TieredPartMachine
+                                    implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider {
 
     public static final int SPEED_INCREMENT = 1;
     public static final int SPEED_DECREMENT = 3;
+    private static final int PAGE_WIDTH = 34;
+    private static final int PAGE_HEIGHT = 34;
+    private static final int ROTOR_SLOT_LOCKED_OVERLAY_COLOR = 0x80404040;
     @SaveField
     public final NotifiableItemStackHandler inventory;
     @Getter
@@ -231,15 +246,118 @@ public class RotorHolderPartMachine extends TieredPartMachine {
     // ********** GUI ***********//
     //////////////////////////////////////
     @Override
-    public Widget createUIWidget() {
-        var group = new WidgetGroup(0, 0, 18 + 16, 18 + 16);
-        var container = new WidgetGroup(4, 4, 18 + 8, 18 + 8);
-        container.addWidget(new BlockableSlotWidget(inventory.storage, 0, 4, 4)
-                .setIsBlocked(() -> rotorSpeed != 0)
-                .setBackground(GuiTextures.SLOT, GuiTextures.TURBINE_OVERLAY));
-        container.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        group.addWidget(container);
-        return group;
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        requireMatchingLDLib2Holder(holder);
+        return UI.of(createLDLib2RotorPage());
+    }
+
+    /**
+     * Creates a new holder-scoped Rotor Holder page for one surrounding multiblock UI opening.
+     */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new RotorHolderLDLib2Page(player, holder);
+    }
+
+    private UIElement createLDLib2RotorPage() {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+
+        UIElement container = new UIElement();
+        UITemplate.setLDLib2Bounds(container, 4, 4, 26, 26);
+        UITemplate.setLDLib2BackgroundTexture(container, GuiTextures.BACKGROUND_INVERSE);
+        root.addChild(container);
+        root.addChild(createLDLib2RotorSlot());
+        root.addChild(createLDLib2RotorLockedOverlay());
+        return root;
+    }
+
+    private void requireMatchingLDLib2Holder(MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException("Rotor Holder page holder must resolve the opened machine.");
+        }
+    }
+
+    private GTItemSlotElement createLDLib2RotorSlot() {
+        GTItemSlotElement slot = new GTItemSlotElement(inventory.storage, 0)
+                .setBackgroundTexture(GuiTextures.SLOT)
+                .setContentOverlay(GuiTextures.TURBINE_OVERLAY)
+                .setCanPut(stack -> !isRotorSlotBlocked())
+                .setCanTake(player -> !isRotorSlotBlocked());
+        return UITemplate.setLDLib2Bounds(slot, 8, 8, 18, 18);
+    }
+
+    private GTImageElement createLDLib2RotorLockedOverlay() {
+        return new GTImageElement(9, 9, 16, 16, GuiTextures.colorRect(ROTOR_SLOT_LOCKED_OVERLAY_COLOR))
+                .setVisibleSupplier(this::isRotorSlotBlocked);
+    }
+
+    private boolean isRotorSlotBlocked() {
+        return rotorSpeed != 0;
+    }
+
+    /**
+     * Owns the contextual Rotor Holder page state for exactly one menu opening.
+     */
+    private final class RotorHolderLDLib2Page implements LDLib2FancyUIProvider {
+
+        private final MachineUIHolder holder;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+
+        private RotorHolderLDLib2Page(Player player, MachineUIHolder holder) {
+            requireMatchingLDLib2Holder(holder);
+            this.holder = holder;
+            this.directionalPage = new LDLib2DirectionalFancyConfigurator(RotorHolderPartMachine.this, player,
+                    holder);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != RotorHolderPartMachine.this) {
+                throw new IllegalStateException("Rotor Holder page holder no longer resolves its opened machine.");
+            }
+            return createLDLib2RotorPage();
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return PAGE_WIDTH;
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return PAGE_HEIGHT;
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            tooltipsPanel.attachTooltips(createRotorObstructionTooltip());
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(getTitle());
+        }
     }
 
     //////////////////////////////////////
@@ -257,18 +375,18 @@ public class RotorHolderPartMachine extends TieredPartMachine {
     // ******* FANCY GUI ********//
     //////////////////////////////////////
     @Override
-    public void attachFancyTooltipsToController(MultiblockControllerMachine controller, TooltipsPanel tooltipsPanel) {
-        attachTooltips(tooltipsPanel);
+    public void attachLDLib2FancyTooltipsToController(MultiblockControllerMachine controller,
+                                                      LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+        tooltipsPanel.attachTooltips(createRotorObstructionTooltip());
     }
 
-    @Override
-    public void attachTooltips(TooltipsPanel tooltipsPanel) {
-        tooltipsPanel.attachTooltips(new Basic(
+    private IFancyTooltip.Basic createRotorObstructionTooltip() {
+        return new IFancyTooltip.Basic(
                 () -> GuiTextures.INDICATOR_NO_STEAM.get(false),
                 () -> List.of(Component.translatable("gtpm.multiblock.universal.rotor_obstructed")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED))),
                 () -> !isFrontFaceFree(),
-                () -> null));
+                () -> null);
     }
 
     /**

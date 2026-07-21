@@ -1,49 +1,65 @@
 package com.gregtechceu.gtceu.integration.ae2.machine;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.util.FluidContainerSlotInteraction;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.ButtonConfigurator;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.CircuitFancyConfigurator;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyInvConfigurator;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.FancyTankConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2ButtonConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2CircuitFancyConfiguratorActions;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalCoverActions;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2FancyInvConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2FancyTankConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.recipe.ingredient.SizedIngredientExtensions;
+import com.gregtechceu.gtceu.api.sync_system.SyncActionData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.machines.GTAEMachines;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.AETextInputButtonWidget;
-import com.gregtechceu.gtceu.integration.ae2.gui.widget.slot.AEPatternViewSlotWidget;
+import com.gregtechceu.gtceu.integration.ae2.gui.element.MEPatternBufferPageElement;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.InternalSlotRecipeHandler;
 import com.gregtechceu.gtceu.utils.FluidStackHashStrategy;
 import com.gregtechceu.gtceu.utils.GTMath;
 import com.gregtechceu.gtceu.utils.ItemStackHashStrategy;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvent;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import appeng.api.crafting.IPatternDetails;
@@ -74,13 +90,77 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ExtensionMethod(SizedIngredientExtensions.class)
 public class MEPatternBufferPartMachine extends MEBusPartMachine
-                                        implements ICraftingProvider, PatternContainer, IDataStickInteractable {
+                                        implements ICraftingProvider, PatternContainer, IDataStickInteractable,
+                                        LDLib2FancyPartUIProvider, MEPatternBufferActionTarget {
+
+    static {
+        MEPatternBufferActions.initialize();
+    }
 
     protected static final int MAX_PATTERN_COUNT = 27;
+
+    /**
+     * Creates every authoritative command exposed by one Pattern Buffer Fancy page.
+     */
+    interface PatternBufferPageActions extends LDLib2DirectionalFancyConfigurator.CoverActionRequests {
+
+        /** Creates the exact terminal-name command for this opening. */
+        SyncActionData createSetNameAction(String name);
+
+        /** Creates the command that refunds every buffered crafting input. */
+        SyncActionData createRefundAllAction();
+
+        /** Creates one shared-tank container interaction. */
+        SyncActionData createClickShareTankAction(int tankIndex, boolean shiftDown);
+
+        /** Creates one programmed-circuit configuration command. */
+        SyncActionData createSetCircuitConfigurationAction(int configuration);
+    }
+
+    private static final PatternBufferPageActions DIRECT_PAGE_ACTIONS = new PatternBufferPageActions() {
+
+        @Override
+        public SyncActionData createSetNameAction(String name) {
+            return MEPatternBufferActions.createSetNameAction(name);
+        }
+
+        @Override
+        public SyncActionData createRefundAllAction() {
+            return MEPatternBufferActions.createRefundAllAction();
+        }
+
+        @Override
+        public SyncActionData createClickShareTankAction(int tankIndex, boolean shiftDown) {
+            return MEPatternBufferActions.createClickShareTankAction(tankIndex, shiftDown);
+        }
+
+        @Override
+        public SyncActionData createSetCircuitConfigurationAction(int configuration) {
+            return LDLib2CircuitFancyConfiguratorActions.createSetMachineCircuitConfigurationAction(configuration);
+        }
+
+        @Override
+        public SyncActionData createPlaceCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createPlaceCoverAction(side);
+        }
+
+        @Override
+        public SyncActionData createRemoveCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createRemoveCoverAction(side);
+        }
+
+        @Override
+        public SyncActionData createOpenCoverAction(Direction side) {
+            return LDLib2DirectionalCoverActions.createOpenCoverAction(side);
+        }
+    };
     private final InternalInventory internalPatternInventory = new InternalInventory() {
 
         @Override
@@ -124,6 +204,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
 
     @SyncToClient
     @SaveField
+    @Getter
     private String customName = "";
 
     private boolean needPatternSync;
@@ -131,6 +212,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     @SaveField
     private final Set<BlockPos> proxies = new ObjectOpenHashSet<>();
     private final Set<MEPatternBufferProxyPartMachine> proxyMachines = new ReferenceOpenHashSet<>();
+    private final Set<MEPatternBufferProxyUIContainerMenu> proxyUIMenus = new ReferenceOpenHashSet<>();
 
     @Getter
     protected final InternalSlotRecipeHandler internalRecipeHandler;
@@ -177,9 +259,11 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     }
 
     public void setCustomName(String newName) {
+        if (customName.equals(newName)) {
+            return;
+        }
         customName = newName;
         syncDataHolder.markClientSyncFieldDirty("customName");
-        markAsDirty();
     }
 
     @Override
@@ -225,24 +309,63 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
         proxyMachines.remove(proxy);
     }
 
-    @UnmodifiableView
-    public Set<MEPatternBufferProxyPartMachine> getProxies() {
-        if (proxyMachines.size() != proxies.size()) {
-            proxyMachines.clear();
-            for (var pos : proxies) {
-                if (MetaMachine.getMachine(getLevel(), pos) instanceof MEPatternBufferProxyPartMachine proxy) {
-                    proxyMachines.add(proxy);
+    void addProxyUIMenu(MEPatternBufferProxyUIContainerMenu menu) {
+        if (!proxyUIMenus.add(menu)) {
+            throw new IllegalStateException("Pattern Buffer Proxy menu was registered more than once.");
+        }
+    }
+
+    void removeProxyUIMenu(MEPatternBufferProxyUIContainerMenu menu) {
+        proxyUIMenus.remove(menu);
+    }
+
+    @Override
+    protected void onClientNetworkChanges(DataComponentMap changes) {
+        for (MEPatternBufferProxyUIContainerMenu menu : List.copyOf(proxyUIMenus)) {
+            try {
+                menu.sendBufferChanges(this, changes);
+            } catch (RuntimeException exception) {
+                proxyUIMenus.remove(menu);
+                try {
+                    menu.closeAfterSyncFailure();
+                } catch (RuntimeException closeException) {
+                    exception.addSuppressed(closeException);
                 }
+                GTCEu.LOGGER.error("Failed to forward client sync changes from Pattern Buffer at {} to Proxy menu {}",
+                        getBlockPos(), menu.containerId, exception);
             }
         }
+    }
+
+    @UnmodifiableView
+    public Set<MEPatternBufferProxyPartMachine> getProxies() {
+        var level = getLevel();
+        if (level == null) {
+            return Collections.unmodifiableSet(proxyMachines);
+        }
+        Set<MEPatternBufferProxyPartMachine> resolvedProxies = new ReferenceOpenHashSet<>();
+        Set<BlockPos> stalePositions = new ObjectOpenHashSet<>();
+        for (var pos : List.copyOf(proxies)) {
+            MetaMachine machine = MetaMachine.getMachine(level, pos);
+            if (machine instanceof MEPatternBufferProxyPartMachine proxy) {
+                if (proxy.getBuffer() == this) {
+                    resolvedProxies.add(proxy);
+                } else {
+                    stalePositions.add(pos);
+                }
+            } else if (machine != null) {
+                stalePositions.add(pos);
+            }
+        }
+        proxies.removeAll(stalePositions);
+        proxyMachines.clear();
+        proxyMachines.addAll(resolvedProxies);
         return Collections.unmodifiableSet(proxyMachines);
     }
 
-    private void refundAll(ClickData clickData) {
-        if (!clickData.isRemote) {
-            for (InternalSlot internalSlot : internalInventory) {
-                internalSlot.refund();
-            }
+    private void refundAllContents() {
+        for (InternalSlot internalSlot : internalInventory) {
+            internalSlot.refund();
         }
     }
 
@@ -269,62 +392,265 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
     // ********** GUI ***********//
     //////////////////////////////////////
     @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        configuratorPanel.attachConfigurators(new ButtonConfigurator(
-                new GuiTextureGroup(GuiTextures.BUTTON, GuiTextures.REFUND_OVERLAY), this::refundAll)
-                .setTooltips(List.of(Component.translatable("gui.gtpm.refund_all.desc"))));
-        if (isHasCircuitSlot() && isCircuitSlotEnabled()) {
-            configuratorPanel.attachConfigurators(new CircuitFancyConfigurator(circuitInventory.storage));
-        }
-        configuratorPanel.attachConfigurators(new FancyInvConfigurator(
-                shareInventory.storage, Component.translatable("gui.gtpm.share_inventory.title"))
-                .setTooltips(List.of(
-                        Component.translatable("gui.gtpm.share_inventory.desc.0"),
-                        Component.translatable("gui.gtpm.share_inventory.desc.1"))));
-        configuratorPanel.attachConfigurators(new FancyTankConfigurator(
-                shareTank.getStorages(), Component.translatable("gui.gtpm.share_tank.title"))
-                .setTooltips(List.of(
-                        Component.translatable("gui.gtpm.share_tank.desc.0"),
-                        Component.translatable("gui.gtpm.share_inventory.desc.1"))));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return matchesDirectLDLib2Opening(holder) && supportsMEPatternBufferActions();
     }
 
     @Override
-    public Widget createUIWidget() {
-        int rowSize = 9;
-        int colSize = 3;
-        var group = new WidgetGroup(0, 0, 18 * rowSize + 16, 18 * colSize + 16);
-        int index = 0;
-        for (int y = 0; y < colSize; ++y) {
-            for (int x = 0; x < rowSize; ++x) {
-                int finalI = index;
-                var slot = new AEPatternViewSlotWidget(patternInventory, index++, 8 + x * 18, 14 + y * 18)
-                        .setOccupiedTexture(GuiTextures.SLOT)
-                        .setItemHook(stack -> {
-                            if (!stack.isEmpty() && stack.getItem() instanceof EncodedPatternItem<?> iep) {
-                                final ItemStack out = iep.getOutput(stack);
-                                if (!out.isEmpty()) {
-                                    return out;
-                                }
-                            }
-                            return stack;
-                        })
-                        .setChangeListener(() -> onPatternChange(finalI))
-                        .setBackground(GuiTextures.SLOT, GuiTextures.PATTERN_OVERLAY);
-                group.addWidget(slot);
-            }
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        LDLib2FancyUIProvider page = createLDLib2Page(player, holder);
+        return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    /**
+     * Creates one standalone opening-scoped page after validating the holder and exact machine definition.
+     */
+    LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder) {
+        BooleanSupplier openingValid = () -> matchesDirectLDLib2Opening(holder);
+        return createOpeningScopedLDLib2Page(player, holder, MachineUIHelper::sendAction, openingValid,
+                () -> player.level().isClientSide() && openingValid.getAsBoolean(),
+                UIEvent::isShiftDown, DIRECT_PAGE_ACTIONS);
+    }
+
+    /**
+     * Builds an opening-scoped page with injectable action transport for direct interaction tests.
+     */
+    LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder,
+                                           BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                           BooleanSupplier canSendAction, Predicate<UIEvent> shiftDown) {
+        requireMatchingLDLib2Holder(holder);
+        BooleanSupplier openingValid = () -> matchesDirectLDLib2Opening(holder);
+        return createOpeningScopedLDLib2Page(player, holder, actionSender, openingValid,
+                () -> openingValid.getAsBoolean() && canSendAction.getAsBoolean(), shiftDown, DIRECT_PAGE_ACTIONS);
+    }
+
+    /**
+     * Builds this buffer's page around a caller-owned holder and immutable opening identity.
+     */
+    LDLib2FancyUIProvider createOpeningScopedLDLib2Page(Player player, MachineUIHolder holder,
+                                                        BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                                        BooleanSupplier openingValid,
+                                                        BooleanSupplier canSendAction,
+                                                        Predicate<UIEvent> shiftDown,
+                                                        PatternBufferPageActions pageActions) {
+        requireValidOpening(openingValid);
+        requirePatternBufferDefinition();
+        return new MEPatternBufferFancyPage(player, holder, actionSender, openingValid, canSendAction,
+                shiftDown, pageActions);
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return createLDLib2Page(player, holder);
+    }
+
+    /**
+     * Builds the directly testable Pattern Buffer body for one validated opening.
+     */
+    MEPatternBufferPageElement createLDLib2MainElement(Player player, MachineUIHolder holder,
+                                                       BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                                       BooleanSupplier canSendAction) {
+        requireMatchingLDLib2Holder(holder);
+        BooleanSupplier openingValid = () -> matchesDirectLDLib2Opening(holder);
+        return createOpeningScopedLDLib2MainElement(player, holder, actionSender, openingValid,
+                () -> openingValid.getAsBoolean() && canSendAction.getAsBoolean(), DIRECT_PAGE_ACTIONS);
+    }
+
+    /**
+     * Builds the directly testable body for a validated direct or Proxy opening.
+     */
+    MEPatternBufferPageElement createOpeningScopedLDLib2MainElement(
+                                                                    Player player, MachineUIHolder holder,
+                                                                    BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                                                    BooleanSupplier openingValid,
+                                                                    BooleanSupplier canSendAction,
+                                                                    PatternBufferPageActions pageActions) {
+        requireValidOpening(openingValid);
+        requirePatternBufferDefinition();
+        return new MEPatternBufferPageElement(this, player.level(), holder, actionSender, canSendAction,
+                openingValid, pageActions::createSetNameAction);
+    }
+
+    public int getLDLib2PageWidth() {
+        return MEPatternBufferPageElement.WIDTH;
+    }
+
+    public int getLDLib2PageHeight() {
+        return MEPatternBufferPageElement.HEIGHT;
+    }
+
+    private void requireMatchingLDLib2Holder(MachineUIHolder holder) {
+        if (!matchesDirectLDLib2Opening(holder)) {
+            throw new IllegalArgumentException("Pattern Buffer page holder must resolve the opened definition.");
         }
-        // ME Network status
-        group.addWidget(new LabelWidget(
-                8,
-                2,
-                () -> this.isOnline ? "gtpm.gui.me_network.online" : "gtpm.gui.me_network.offline"));
+    }
 
-        group.addWidget(new AETextInputButtonWidget(18 * rowSize + 8 - 70, 2, 70, 10)
-                .setText(customName)
-                .setOnConfirm(this::setCustomName)
-                .setButtonTooltips(Component.translatable("gui.gtpm.rename.desc")));
+    private boolean matchesDirectLDLib2Opening(MachineUIHolder holder) {
+        return holder.getMachine() == this &&
+                holder.getMachineDefinitionId().equals(GTAEMachines.ME_PATTERN_BUFFER.getId());
+    }
 
-        return group;
+    private static void requireValidOpening(BooleanSupplier openingValid) {
+        if (!openingValid.getAsBoolean()) {
+            throw new IllegalArgumentException("Pattern Buffer page requires a valid opening identity.");
+        }
+    }
+
+    private void requirePatternBufferDefinition() {
+        if (!supportsMEPatternBufferActions()) {
+            throw new IllegalStateException("Pattern Buffer LDLib2 UI requires the exact Pattern Buffer definition.");
+        }
+    }
+
+    @Override
+    public boolean supportsMEPatternBufferActions() {
+        return getDefinition() == GTAEMachines.ME_PATTERN_BUFFER;
+    }
+
+    @Override
+    public void setMEPatternBufferName(String name) {
+        requirePatternBufferDefinition();
+        setCustomName(name);
+    }
+
+    @Override
+    public void refundMEPatternBufferContents() {
+        requirePatternBufferDefinition();
+        refundAllContents();
+    }
+
+    @Override
+    public int getMEPatternBufferShareTankCount() {
+        return shareTank.getStorages().length;
+    }
+
+    @Override
+    public void clickMEPatternBufferShareTank(ServerPlayer player, int tankIndex, boolean shiftDown) {
+        requirePatternBufferDefinition();
+        if (tankIndex < 0 || tankIndex >= getMEPatternBufferShareTankCount()) {
+            throw new IllegalArgumentException("Invalid Pattern Buffer shared tank index: " + tankIndex);
+        }
+        new FluidContainerSlotInteraction(shareTank.getStorages()[tankIndex], true, true)
+                .click(player, shiftDown);
+    }
+
+    /**
+     * Owns one menu opening's page-local state, holder, actions, and directional subpage.
+     */
+    private final class MEPatternBufferFancyPage implements LDLib2FancyUIProvider {
+
+        private final Player player;
+        private final MachineUIHolder holder;
+        private final BiConsumer<MachineUIHolder, SyncActionData> actionSender;
+        private final BooleanSupplier openingValid;
+        private final BooleanSupplier canSendAction;
+        private final Predicate<UIEvent> shiftDown;
+        private final PatternBufferPageActions pageActions;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+
+        private MEPatternBufferFancyPage(Player player, MachineUIHolder holder,
+                                         BiConsumer<MachineUIHolder, SyncActionData> actionSender,
+                                         BooleanSupplier openingValid, BooleanSupplier canSendAction,
+                                         Predicate<UIEvent> shiftDown, PatternBufferPageActions pageActions) {
+            requireValidOpening(openingValid);
+            this.player = player;
+            this.holder = holder;
+            this.actionSender = actionSender;
+            this.openingValid = openingValid;
+            this.canSendAction = canSendAction;
+            this.shiftDown = shiftDown;
+            this.pageActions = pageActions;
+            directionalPage = new LDLib2DirectionalFancyConfigurator(MEPatternBufferPartMachine.this, player,
+                    holder, actionSender, openingValid, pageActions);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (!openingValid.getAsBoolean()) {
+                throw new IllegalStateException("Pattern Buffer page no longer resolves its opened machine context.");
+            }
+            return createOpeningScopedLDLib2MainElement(player, holder, actionSender, openingValid,
+                    canSendAction, pageActions);
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return MEPatternBufferPartMachine.this.getLDLib2PageWidth();
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return MEPatternBufferPartMachine.this.getLDLib2PageHeight();
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+            configuratorPanel.attachConfigurators(new LDLib2ButtonConfigurator(
+                    GuiTextures.group(GuiTextures.BUTTON, GuiTextures.REFUND_OVERLAY), event -> {
+                        if (canSendAction.getAsBoolean()) {
+                            actionSender.accept(holder, pageActions.createRefundAllAction());
+                        }
+                    }).setTooltips(List.of(Component.translatable("gui.gtpm.refund_all.desc"))));
+            if (isHasCircuitSlot() && isCircuitSlotEnabled()) {
+                configuratorPanel.attachConfigurators(new LDLib2CircuitFancyConfigurator(
+                        MEPatternBufferPartMachine.this, holder, actionSender, openingValid,
+                        pageActions::createSetCircuitConfigurationAction));
+            }
+            configuratorPanel.attachConfigurators(new LDLib2FancyInvConfigurator(
+                    shareInventory.storage, Component.translatable("gui.gtpm.share_inventory.title"), openingValid)
+                    .setTooltips(List.of(
+                            Component.translatable("gui.gtpm.share_inventory.desc.0"),
+                            Component.translatable("gui.gtpm.share_inventory.desc.1"))));
+            configuratorPanel.attachConfigurators(new LDLib2FancyTankConfigurator(
+                    shareTank.getStorages(), Component.translatable("gui.gtpm.share_tank.title"))
+                    .setTankClickHandler((tankIndex, event) -> {
+                        if (!canSendAction.getAsBoolean() ||
+                                FluidUtil.getFluidHandler(player.containerMenu.getCarried()).isEmpty()) {
+                            return false;
+                        }
+                        actionSender.accept(holder, pageActions.createClickShareTankAction(
+                                tankIndex, shiftDown.test(event)));
+                        return true;
+                    })
+                    .setTooltips(List.of(
+                            Component.translatable("gui.gtpm.share_tank.desc.0"),
+                            Component.translatable("gui.gtpm.share_inventory.desc.1"))));
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            tooltipsPanel.attachTooltips(MEPatternBufferPartMachine.this);
+            getTraitHolder().getAllTraits().stream()
+                    .filter(IFancyTooltip.class::isInstance)
+                    .map(IFancyTooltip.class::cast)
+                    .forEach(tooltipsPanel::attachTooltips);
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(Component.translatable(getDefinition().getDescriptionId()));
+        }
+
+        @Override
+        public PageGroupingData getPageGroupingData() {
+            return new PageGroupingData("gtpm.multiblock.page_switcher.io.import", 1);
+        }
     }
 
     @Override

@@ -1,14 +1,13 @@
 package com.gregtechceu.gtceu.integration.ae2.machine;
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
-import com.gregtechceu.gtceu.api.gui.fancy.ConfiguratorPanel;
-import com.gregtechceu.gtceu.api.gui.fancy.TabsWidget;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
-import com.gregtechceu.gtceu.api.machine.fancyconfigurator.AutoStockingFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.datacomponents.AEInputConfigCopyData;
 import com.gregtechceu.gtceu.common.item.behavior.IntCircuitBehaviour;
@@ -16,7 +15,6 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.ae2.machine.feature.multiblock.IMEStockingPart;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidList;
 import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAEFluidSlot;
-import com.gregtechceu.gtceu.integration.ae2.slot.ExportOnlyAESlot;
 import com.gregtechceu.gtceu.integration.ae2.slot.IConfigurableSlotList;
 import com.gregtechceu.gtceu.integration.ae2.utils.AEUtil;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
@@ -34,6 +32,7 @@ import appeng.api.storage.MEStorage;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -51,13 +50,13 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     private boolean autoPull;
 
     @Getter
-    @Setter
     @SaveField
+    @SyncBoth
     private int minStackSize = 1;
 
     @Getter
-    @Setter
     @SaveField
+    @SyncBoth
     private int ticksPerCycle = 40;
 
     @Setter
@@ -109,7 +108,7 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
 
     @Override
     protected void syncME() {
-        MEStorage networkInv = this.getMainNode().getGrid().getStorageService().getInventory();
+        MEStorage networkInv = getStockingFluidNetworkStorage();
         for (ExportOnlyAEFluidSlot slot : aeFluidHandler.getInventory()) {
             var config = slot.getConfig();
             if (config != null) {
@@ -125,9 +124,8 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
         }
     }
 
-    @Override
-    public void attachSideTabs(TabsWidget sideTabs) {
-        sideTabs.setMainTab(this); // removes the cover configurator, it's pointless and clashes with layout.
+    MEStorage getStockingFluidNetworkStorage() {
+        return getMainNode().getGrid().getStorageService().getInventory();
     }
 
     @Override
@@ -138,6 +136,37 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
     @Override
     public IConfigurableSlotList getSlotList() {
         return aeFluidHandler;
+    }
+
+    @Override
+    public void setMinStackSize(int minStackSize) {
+        this.minStackSize = minStackSize;
+    }
+
+    @Override
+    public void setTicksPerCycle(int ticksPerCycle) {
+        this.ticksPerCycle = ticksPerCycle;
+    }
+
+    @ServerFieldNormalizer(fieldName = "minStackSize")
+    private int normalizeMinStackSize(int candidate) {
+        if (candidate < 1) {
+            throw new IllegalArgumentException("Auto-stocking minimum stack size must be at least one.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "ticksPerCycle")
+    private int normalizeTicksPerCycle(int candidate) {
+        if (candidate < ConfigHolder.INSTANCE.compat.ae2.updateIntervals) {
+            throw new IllegalArgumentException("Auto-stocking ticks per cycle is below the configured minimum.");
+        }
+        return candidate;
+    }
+
+    @Override
+    public StockingTarget getStockingTarget() {
+        return StockingTarget.FLUID;
     }
 
     @Override
@@ -160,6 +189,9 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
 
     @Override
     public void setAutoPull(boolean autoPull) {
+        if (this.autoPull == autoPull) {
+            return;
+        }
         this.autoPull = autoPull;
         if (!isRemote()) {
             syncDataHolder.markClientSyncFieldDirty("autoPull");
@@ -169,7 +201,28 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
                 this.refreshList();
                 updateTankSubscription();
             }
+            refreshFluidConfigSnapshot();
         }
+    }
+
+    @Override
+    public boolean isMEFluidConfigAutoPull() {
+        return autoPull;
+    }
+
+    @Override
+    public boolean isMEFluidStocking() {
+        return true;
+    }
+
+    @Override
+    public void setMEFluidAutoPull(boolean autoPull) {
+        setAutoPull(autoPull);
+    }
+
+    @Override
+    protected boolean isConfiguredInOtherStockingPart(@NotNull GenericStack stack) {
+        return testConfiguredInOtherPart(stack);
     }
 
     private void refreshList() {
@@ -198,7 +251,7 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
             if (request == 0) continue;
 
             // Ensure that it is valid to configure with this stack
-            if (autoPullTest != null && !autoPullTest.test(new GenericStack(fluidKey, amount))) continue;
+            if (!autoPullTest.test(new GenericStack(fluidKey, amount))) continue;
             if (amount >= minStackSize) {
                 if (topFluids.size() < CONFIG_SIZE) {
                     topFluids.offer(entry);
@@ -229,17 +282,6 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
         }
 
         aeFluidHandler.clearInventory(index);
-    }
-
-    ///////////////////////////////
-    // ********** GUI ***********//
-    ///////////////////////////////
-
-    @Override
-    public void attachConfigurators(ConfiguratorPanel configuratorPanel) {
-        IMEStockingPart.super.attachConfigurators(configuratorPanel);
-        super.attachConfigurators(configuratorPanel);
-        configuratorPanel.attachConfigurators(new AutoStockingFancyConfigurator(this));
     }
 
     ////////////////////////////////
@@ -335,24 +377,20 @@ public class MEStockingHatchPartMachine extends MEInputHatchPartMachine implemen
                 // Extract the items from the real net to either validate (simulate)
                 // or extract (modulate) when this is called
                 if (!isOnline()) return FluidStack.EMPTY;
-                MEStorage aeNetwork = getMainNode().getGrid().getStorageService().getInventory();
+                MEStorage aeNetwork = getStockingFluidNetworkStorage();
 
                 Actionable actionable = action.simulate() ? Actionable.SIMULATE : Actionable.MODULATE;
-                var key = config.what();
+                if (!(config.what() instanceof AEFluidKey key)) {
+                    throw new IllegalStateException("Stocking fluid slot contained a non-fluid configuration key.");
+                }
                 long extracted = aeNetwork.extract(key, maxDrain, actionable, actionSource);
 
                 if (extracted > 0) {
-                    FluidStack resultStack = key instanceof AEFluidKey fluidKey ?
-                            AEUtil.toFluidStack(fluidKey, extracted) : FluidStack.EMPTY;
+                    FluidStack resultStack = AEUtil.toFluidStack(key, extracted);
                     if (action.execute()) {
-                        // may as well update the display here
-                        this.stock = ExportOnlyAESlot.copy(stock, stock.amount() - extracted);
-                        if (this.stock.amount() == 0) {
-                            this.stock = null;
-                        }
-                        if (this.onContentsChanged != null) {
-                            this.onContentsChanged.run();
-                        }
+                        long remaining = aeNetwork.extract(key, Long.MAX_VALUE, Actionable.SIMULATE, actionSource);
+                        this.stock = remaining > 0 ? new GenericStack(key, remaining) : null;
+                        this.onContentsChanged.run();
                     }
                     return resultStack;
                 }

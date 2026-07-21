@@ -3,9 +3,9 @@ package com.gregtechceu.gtceu.client.renderer;
 import com.gregtechceu.gtceu.api.blockentity.PipeBlockEntity;
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.item.PipeBlockItem;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.IToolGridHighlight;
 import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -14,8 +14,6 @@ import com.gregtechceu.gtceu.client.util.RenderUtil;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.common.item.behavior.CoverPlaceBehavior;
 import com.gregtechceu.gtceu.common.item.tool.rotation.CustomBlockRotations;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -77,11 +75,12 @@ public class BlockHighlightRenderer {
                             gridHighlight = new IToolGridHighlight() {
 
                                 @Override
-                                public @Nullable ResourceTexture sideTips(Player player, BlockPos pos, BlockState state,
-                                                                          Set<GTToolType> toolTypes, ItemStack held,
-                                                                          Direction side) {
-                                    return behavior.showSideTip(state, side) ? GuiTextures.TOOL_FRONT_FACING_ROTATION :
-                                            null;
+                                public @Nullable GridHighlightTexture sideTips(Player player, BlockPos pos,
+                                                                               BlockState state,
+                                                                               Set<GTToolType> toolTypes,
+                                                                               ItemStack held, Direction side) {
+                                    return behavior.showSideTip(state, side) ?
+                                            GridHighlightTexture.TOOL_FRONT_FACING_ROTATION : null;
                                 }
                             };
                         }
@@ -134,7 +133,7 @@ public class BlockHighlightRenderer {
                 poseStack.pushPose();
 
                 drawGridOverlays(poseStack, multiBufferSource, cameraPos, target,
-                        side -> coverable.hasCover(side) ? null : GuiTextures.TOOL_ATTACH_COVER);
+                        side -> coverable.hasCover(side) ? null : GridHighlightTexture.TOOL_ATTACH_COVER);
 
                 poseStack.popPose();
             }
@@ -160,7 +159,8 @@ public class BlockHighlightRenderer {
     private static float bColour;
 
     private static void drawGridOverlays(PoseStack poseStack, MultiBufferSource bufferSource, Vec3 cameraPos,
-                                         BlockHitResult blockHitResult, Function<Direction, ResourceTexture> texture) {
+                                         BlockHitResult blockHitResult,
+                                         Function<Direction, GridHighlightTexture> texture) {
         rColour = gColour = 0.2F + (float) Math.sin((System.currentTimeMillis() % (Mth.PI * 800)) / 800) / 2;
         bColour = 1f;
         BlockPos blockPos = blockHitResult.getBlockPos();
@@ -199,12 +199,12 @@ public class BlockHighlightRenderer {
         shiftX.rotate(rotation);
         shiftY.rotate(rotation);
 
-        ResourceTexture leftBlocked = texture.apply(left);
-        ResourceTexture rightBlocked = texture.apply(right);
-        ResourceTexture topBlocked = texture.apply(top);
-        ResourceTexture bottomBlocked = texture.apply(bottom);
-        ResourceTexture frontBlocked = texture.apply(front);
-        ResourceTexture backBlocked = texture.apply(back);
+        GridHighlightTexture leftBlocked = texture.apply(left);
+        GridHighlightTexture rightBlocked = texture.apply(right);
+        GridHighlightTexture topBlocked = texture.apply(top);
+        GridHighlightTexture bottomBlocked = texture.apply(bottom);
+        GridHighlightTexture frontBlocked = texture.apply(front);
+        GridHighlightTexture backBlocked = texture.apply(back);
 
         topRight.add(cubeCenter);
         bottomRight.add(cubeCenter);
@@ -283,12 +283,12 @@ public class BlockHighlightRenderer {
     }
 
     private static void drawResourceTexture(PoseStack poseStack, MultiBufferSource bufferSource,
-                                            ResourceTexture texture, int color,
+                                            GridHighlightTexture texture, int color,
                                             float x, float y, float w, float h) {
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.text(texture.imageLocation));
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.text(texture.imageLocation()));
         var pose = poseStack.last().pose();
-        float u0 = texture.offsetX, v0 = texture.offsetY;
-        float u1 = texture.imageWidth, v1 = texture.imageHeight;
+        float u0 = texture.offsetX(), v0 = texture.offsetY();
+        float u1 = texture.imageWidth(), v1 = texture.imageHeight();
         // spotless:off
         consumer.addVertex(pose, x, y + h, 0).setColor(color).setUv(u0, v0 + v1).setLight(LightTexture.FULL_BRIGHT);
         consumer.addVertex(pose, x + w, y + h, 0).setColor(color).setUv(u0 + u1, v0 + v1).setLight(LightTexture.FULL_BRIGHT);

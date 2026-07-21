@@ -4,9 +4,16 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.*;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDisplayUIMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -18,9 +25,12 @@ import com.gregtechceu.gtceu.common.data.GTMaterials;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.util.ClickData;
-import com.lowdragmc.lowdraglib.gui.widget.ComponentPanelWidget;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
@@ -28,25 +38,37 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import lombok.Getter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDisplayUIMachine {
+public class LargeBoilerMachine extends WorkableMultiblockMachine
+                                implements LDLib2MachineUIProvider, LargeBoilerThrottleActionTarget {
 
     public static final int TICKS_PER_STEAM_GENERATION = 5;
+    private static final int THROTTLE_STEP = 5;
+    private static final int MIN_THROTTLE = 25;
+    private static final int MAX_THROTTLE = 100;
+    static {
+        LargeBoilerMachineActions.initialize();
+    }
 
     @Getter
     public final int maxTemperature, heatSpeed;
     @SaveField
+    @SyncToClient
     @Getter
     private int currentTemperature, throttle;
     @Nullable
     protected TickableSubscription temperatureSubs;
+    @SyncToClient
     private int steamGenerated;
 
     public LargeBoilerMachine(BlockEntityCreationInfo info, int maxTemperature, int heatSpeed) {
@@ -102,18 +124,18 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
         if (getWorkLogic().isWorking()) {
             if (getOffsetTimer() % 10 == 0) {
                 if (currentTemperature < getMaxTemperature()) {
-                    currentTemperature = Mth.clamp(currentTemperature + heatSpeed * 10, 0, getMaxTemperature());
+                    setCurrentTemperature(Mth.clamp(currentTemperature + heatSpeed * 10, 0, getMaxTemperature()));
                 }
             }
         } else if (currentTemperature > 0) {
-            currentTemperature -= getCoolDownRate();
+            setCurrentTemperature(currentTemperature - getCoolDownRate());
         }
 
         if (isFormed() && getOffsetTimer() % TICKS_PER_STEAM_GENERATION == 0) {
             var maxDrain = currentTemperature * throttle * TICKS_PER_STEAM_GENERATION /
                     (ConfigHolder.INSTANCE.machines.largeBoilers.steamPerWater * 100);
             if (currentTemperature < 100) {
-                steamGenerated = 0;
+                setSteamGenerated(0);
             } else if (maxDrain > 0) { // if maxDrain is 0 because throttle is too low, skip trying to make steam
                 // drain water
                 var drainWater = List.of(SizedFluidIngredient.of(Fluids.WATER, maxDrain));
@@ -129,7 +151,7 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
                 var drained = (drainWater == null || drainWater.isEmpty()) ? maxDrain :
                         maxDrain - drainWater.getFirst().amount();
 
-                steamGenerated = drained * ConfigHolder.INSTANCE.machines.largeBoilers.steamPerWater;
+                setSteamGenerated(drained * ConfigHolder.INSTANCE.machines.largeBoilers.steamPerWater);
 
                 if (drained > 0) {
                     // fill steam
@@ -171,7 +193,7 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
     public boolean onWorking() {
         boolean value = super.onWorking();
         if (currentTemperature < getMaxTemperature()) {
-            currentTemperature = Math.max(1, currentTemperature);
+            setCurrentTemperature(Math.max(1, currentTemperature));
             updateSteamSubscription();
         }
         return value;
@@ -193,7 +215,9 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
     }
 
     public void addDisplayText(List<Component> textList) {
-        IDisplayUIMachine.super.addDisplayText(textList);
+        for (var part : getParts()) {
+            part.addMultiText(textList);
+        }
         if (isFormed()) {
             textList.add(Component.translatable("gtpm.multiblock.large_boiler.temperature",
                     currentTemperature + 274, maxTemperature + 274));
@@ -208,24 +232,108 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
 
             var buttonText = Component.translatable("gtpm.multiblock.large_boiler.throttle_modify");
             buttonText.append(" ");
-            buttonText.append(ComponentPanelWidget.withButton(Component.literal("[-]"), "sub"));
+            buttonText.append(GTComponentPanelElement.withButton(Component.literal("[-]"), "sub"));
             buttonText.append(" ");
-            buttonText.append(ComponentPanelWidget.withButton(Component.literal("[+]"), "add"));
+            buttonText.append(GTComponentPanelElement.withButton(Component.literal("[+]"), "add"));
             textList.add(buttonText);
         }
     }
 
-    public void handleDisplayClick(String componentData, ClickData clickData) {
-        if (!clickData.isRemote) {
-            int result = componentData.equals("add") ? 5 : -5;
-            this.throttle = Mth.clamp(throttle + result, 25, 100);
-            this.getRecipeLogic().modifyFuelBurnTime(this.throttle);
+    public IGuiTexture getScreenTexture() {
+        return GuiTextures.DISPLAY_STEAM.get(maxTemperature > 800);
+    }
+
+    @Override
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 216);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+        root.addChild(createDisplayScreen(player, holder));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 134, true));
+        return UI.of(root);
+    }
+
+    private GTScrollerViewElement createDisplayScreen(Player player, MachineUIHolder holder) {
+        GTScrollerViewElement screen = new GTScrollerViewElement(7, 4, 162, 121);
+        screen.style(style -> style.backgroundTexture(getScreenTexture()));
+        screen.viewPort(viewPort -> viewPort
+                .layout(layout -> layout.paddingAll(0))
+                .style(style -> style.backgroundTexture(getScreenTexture())));
+        screen.scrollerStyle(style -> style
+                .mode(ScrollerMode.VERTICAL)
+                .verticalScrollDisplay(ScrollDisplay.AUTO)
+                .horizontalScrollDisplay(ScrollDisplay.NEVER));
+        screen.addScrollViewChild(createTitleLabel());
+        screen.addScrollViewChild(createDisplayTextPanel(player, holder));
+        return screen;
+    }
+
+    private GTLabelElement createTitleLabel() {
+        GTLabelElement label = new GTLabelElement(4, 5, 154, 10,
+                self().getBlockState().getBlock().getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private GTComponentPanelElement createDisplayTextPanel(Player player, MachineUIHolder holder) {
+        return new GTComponentPanelElement(4, 17, this::addDisplayText)
+                .setMaxWidthLimit(150)
+                .clickHandler((componentData, clickData) -> adjustLDLib2Throttle(player, holder, componentData));
+    }
+
+    private void adjustLDLib2Throttle(Player player, MachineUIHolder holder, String componentData) {
+        int direction = readThrottleButtonDirection(componentData);
+        if (player.level().isClientSide()) {
+            MachineUIHelper.sendAction(holder,
+                    LargeBoilerMachineActions.createAdjustLargeBoilerThrottleAction(direction));
         }
     }
 
     @Override
-    public IGuiTexture getScreenTexture() {
-        return GuiTextures.DISPLAY_STEAM.get(maxTemperature > 800);
+    @ApiStatus.Internal
+    public void adjustLargeBoilerThrottle(int direction) {
+        if (direction != -1 && direction != 1) {
+            throw new IllegalArgumentException("Invalid large boiler throttle direction: " + direction);
+        }
+        setThrottle(Mth.clamp(throttle + direction * THROTTLE_STEP, MIN_THROTTLE, MAX_THROTTLE));
+    }
+
+    void setThrottle(int throttle) {
+        if (this.throttle != throttle) {
+            this.throttle = throttle;
+        }
+        this.getRecipeLogic().modifyFuelBurnTime(this.throttle);
+    }
+
+    void setCurrentTemperature(int currentTemperature) {
+        if (this.currentTemperature == currentTemperature) {
+            return;
+        }
+        this.currentTemperature = currentTemperature;
+    }
+
+    void setSteamGenerated(int steamGenerated) {
+        if (this.steamGenerated == steamGenerated) {
+            return;
+        }
+        this.steamGenerated = steamGenerated;
+    }
+
+    private static int readThrottleButtonDirection(String componentData) {
+        return switch (componentData) {
+            case "sub" -> -1;
+            case "add" -> 1;
+            default -> throw new IllegalArgumentException("Unknown large boiler throttle action: " + componentData);
+        };
     }
 
     public static class LargeBoilerRecipeLogic extends RecipeLogic {
@@ -251,8 +359,10 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
         }
 
         public void setCurrentThrottle(int currentThrottle) {
+            if (this.currentThrottle == currentThrottle) {
+                return;
+            }
             this.currentThrottle = currentThrottle;
-            syncDataHolder.markClientSyncFieldDirty("currentThrottle");
         }
 
         @Override

@@ -7,6 +7,9 @@ import com.gregtechceu.gtceu.api.data.tag.TagPrefix;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidVeinSavedData;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.FluidVeinWorldEntry;
 import com.gregtechceu.gtceu.api.data.worldgen.bedrockore.BedrockOreVeinSavedData;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
 import com.gregtechceu.gtceu.api.gui.texture.ProspectingTexture;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
@@ -15,10 +18,7 @@ import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTUtil;
 import com.gregtechceu.gtceu.utils.TagUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ItemStackTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ProgressTexture;
-import com.lowdragmc.lowdraglib.gui.util.DrawerHelper;
+import com.lowdragmc.lowdraglib2.gui.util.DrawerHelper;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -107,10 +107,10 @@ public abstract class ProspectorMode<T> {
                                 list.add(new ItemStack(block));
                             }
                         }
-                        return new ItemStackTexture(list.toArray(ItemStack[]::new)).scale(0.8f);
+                        return GuiTextures.itemStack(list.toArray(ItemStack[]::new)).scale(0.8f);
                     }
                 }
-                return new ItemStackTexture(new ItemStack(BuiltInRegistries.BLOCK.get(ResourceLocation.parse(name))))
+                return GuiTextures.itemStack(new ItemStack(BuiltInRegistries.BLOCK.get(ResourceLocation.parse(name))))
                         .scale(0.8f);
             });
         }
@@ -219,7 +219,7 @@ public abstract class ProspectorMode<T> {
 
         @Override
         public IGuiTexture getItemIcon(FluidInfo item) {
-            return new ItemStackTexture(item.fluid.getBucket());
+            return GuiTextures.itemStack(item.fluid.getBucket());
         }
 
         @Override
@@ -268,7 +268,7 @@ public abstract class ProspectorMode<T> {
                 float drawnHeight = (float) ProgressTexture.FillDirection.DOWN_TO_UP.getDrawnHeight(progress);
                 DrawerHelper.drawFluidForGui(graphics, new FluidStack(item.fluid(), item.left),
                         (int) (x + drawnU * width), (int) (y + drawnV * height), ((int) (width * drawnWidth)),
-                        ((int) (height * drawnHeight)));
+                        ((int) (height * drawnHeight)), -1);
             }
         }
     };
@@ -309,7 +309,7 @@ public abstract class ProspectorMode<T> {
                     ChemicalHelper.get(TagPrefix.gem, material),
                     ChemicalHelper.get(TagPrefix.ore, material),
                     ChemicalHelper.get(TagPrefix.dust, material));
-            return new ItemStackTexture(stack).scale(0.8f);
+            return GuiTextures.itemStack(stack).scale(0.8f);
         }
 
         @Override
@@ -357,6 +357,28 @@ public abstract class ProspectorMode<T> {
             }
         }
     };
+
+    public static int getNetworkId(ProspectorMode<?> mode) {
+        if (mode == ORE) {
+            return 0;
+        }
+        if (mode == FLUID) {
+            return 1;
+        }
+        if (mode == BEDROCK_ORE) {
+            return 2;
+        }
+        throw new IllegalStateException("Unknown prospector mode: " + mode.unlocalizedName);
+    }
+
+    public static ProspectorMode<?> fromNetworkId(int id) {
+        return switch (id) {
+            case 0 -> ORE;
+            case 1 -> FLUID;
+            case 2 -> BEDROCK_ORE;
+            default -> throw new IllegalStateException("Unknown prospector mode id: " + id);
+        };
+    }
 
     public final String unlocalizedName;
     public final int cellSize;

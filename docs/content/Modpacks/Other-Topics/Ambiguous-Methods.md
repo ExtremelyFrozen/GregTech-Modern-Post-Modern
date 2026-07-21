@@ -69,9 +69,14 @@ GTCEuStartupEvents.registry("gtceu:recipe_type", event => {
 ```
 You'd get the following error:
 ```
-dev.latvian.mods.rhino.EvaluatorException: The choice of Java constructor com.lowdragmc.lowdraglib.gui.texture.ResourceTexture matching JavaScript argument types (string) is ambiguous; candidate constructors are: 
+dev.latvian.mods.rhino.EvaluatorException: The choice of Java constructor com.gregtechceu.gtceu.api.gui.texture.ResourceTexture matching JavaScript argument types (string) is ambiguous; candidate constructors are: 
     ResourceTexture(net.minecraft.resources.ResourceLocation)
     ResourceTexture(java.lang.String) (startup_scripts:example.js#17)
+```
+
+For new scripts, prefer the GTCEu texture facade when possible:
+```js
+GuiTextures.resource("kubejs:textures/gui/progress_bar/progress_bar_stone_oreifier.png")
 ```
 
 You would want to select one of the two, and this can be done in the following way:

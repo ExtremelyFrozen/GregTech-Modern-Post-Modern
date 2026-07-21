@@ -49,7 +49,7 @@
 		},
 		"F": {
 			"type": "gtpm:blocks",
-			"blocks": "gtpm:tungstensteel_frame"
+			"blocks": "gtpm:tungsten_steel_frame"
 		},
 		"#": {
 			"type": "gtpm:any"

@@ -1,11 +1,11 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.common.machine.multiblock.part.RotorHolderPartMachine;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 
@@ -34,18 +34,22 @@ public record RotorHolderPredicate(int tier) implements StructurePredicate {
     public boolean test(MultiblockState multiblockState, boolean mutateCount) {
         return MetaMachine.getMachine(multiblockState.getWorld(),
                 multiblockState.getPos()) instanceof RotorHolderPartMachine rotorHolder &&
+                rotorHolder.getTier() == tier &&
                 multiblockState.getWorld()
                         .getBlockState(multiblockState.getPos().relative(rotorHolder.self().getFrontFacing()))
                         .isAir();
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
-        return blockCandidates().stream().map(BlockInfo::fromBlock).toList();
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
+        return blockCandidates().stream().map(MultiblockBlockInfo::fromBlock).toList();
     }
 
     @Override
     public @Unmodifiable List<Block> blockCandidates() {
-        return List.copyOf(PartAbility.ROTOR_HOLDER.getAllBlocks());
+        return PartAbility.ROTOR_HOLDER.getAllBlocks().stream()
+                .filter(block -> block instanceof MetaMachineBlock machineBlock &&
+                        machineBlock.getDefinition().getTier() == tier)
+                .toList();
     }
 }

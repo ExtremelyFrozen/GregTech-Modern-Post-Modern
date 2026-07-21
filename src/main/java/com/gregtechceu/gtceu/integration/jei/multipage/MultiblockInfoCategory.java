@@ -5,29 +5,19 @@ import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.machines.GTMultiMachines;
 
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.jei.ModularUIRecipeCategory;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
-import net.minecraft.client.gui.navigation.ScreenPosition;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
-import mezz.jei.api.gui.inputs.RecipeSlotUnderMouse;
-import mezz.jei.api.gui.widgets.IRecipeExtrasBuilder;
-import mezz.jei.api.gui.widgets.ISlottedRecipeWidget;
-import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IJeiHelpers;
-import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeRegistration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -40,11 +30,10 @@ public class MultiblockInfoCategory extends ModularUIRecipeCategory<MultiblockIn
             MultiblockInfoWrapper.class);
     private final int width;
     private final int height;
-    private final mezz.jei.api.gui.drawable.IDrawable icon;
+    private final IDrawable icon;
 
     public MultiblockInfoCategory(IJeiHelpers helpers) {
-        super((def) -> new MultiblockInfoWrapper(def.definition));
-        IGuiHelper guiHelper = helpers.getGuiHelper();
+        super(MultiblockInfoCategory::createModularUI);
         this.width = 160;
         this.height = 160;
         this.icon = helpers.getGuiHelper().createDrawableItemStack(GTMultiMachines.ELECTRIC_BLAST_FURNACE.asStack());
@@ -60,46 +49,6 @@ public class MultiblockInfoCategory extends ModularUIRecipeCategory<MultiblockIn
     }
 
     @Override
-    public void createRecipeExtras(@NotNull IRecipeExtrasBuilder builder, @NotNull MultiblockInfoWrapper recipe,
-                                   @NotNull IFocusGroup focuses) {
-        super.createRecipeExtras(builder, recipe, focuses);
-        List<IRecipeSlotDrawable> slots = new ArrayList<>(builder.getRecipeSlots().getSlots());
-        class ProxyRecipeWidget implements ISlottedRecipeWidget {
-
-            private final ScreenPosition position = new ScreenPosition(0, 0);
-
-            @Override
-            public Optional<RecipeSlotUnderMouse> getSlotUnderMouse(double mouseX, double mouseY) {
-                var panel = recipe.getWidget();
-                var pos = panel.getSelfPosition();
-                var size = panel.getSize();
-                boolean inParent = Widget.isMouseOver(pos.x, pos.y, size.width, size.height, mouseX, mouseY);
-                if (!inParent) return Optional.empty();
-                List<Widget> widgets = recipe.modularUI.getFlatWidgetCollection();
-                return slots.stream()
-                        .filter(slot -> {
-                            Optional<String> slotName = slot.getSlotName();
-                            if (slotName.isEmpty()) return false;
-                            String name = slotName.get();
-                            int index = Integer.parseInt(name.substring(5));
-                            Widget widget = widgets.get(index);
-                            slot.setPosition(widget.getPositionX(), widget.getPositionY());
-                            return slot.isMouseOver(mouseX, mouseY);
-                        })
-                        .findFirst()
-                        .map(slot -> new RecipeSlotUnderMouse(slot, 0, 0));
-            }
-
-            @Override
-            public ScreenPosition getPosition() {
-                return position;
-            }
-        }
-
-        builder.addSlottedWidget(new ProxyRecipeWidget(), slots);
-    }
-
-    @Override
     public @Nullable ResourceLocation getRegistryName(@NotNull MultiblockInfoWrapper recipe) {
         return recipe.definition.getId();
     }
@@ -112,7 +61,7 @@ public class MultiblockInfoCategory extends ModularUIRecipeCategory<MultiblockIn
 
     @NotNull
     @Override
-    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+    public IDrawable getIcon() {
         return icon;
     }
 
@@ -129,5 +78,9 @@ public class MultiblockInfoCategory extends ModularUIRecipeCategory<MultiblockIn
     @Override
     public Component getTitle() {
         return Component.translatable("gtpm.jei.multiblock_info");
+    }
+
+    private static ModularUI createModularUI(MultiblockInfoWrapper wrapper) {
+        return wrapper.createModularUI();
     }
 }

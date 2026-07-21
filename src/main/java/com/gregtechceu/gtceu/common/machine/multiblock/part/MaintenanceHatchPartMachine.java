@@ -4,11 +4,21 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
+import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
 import com.gregtechceu.gtceu.api.item.tool.ToolHelper;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
@@ -19,8 +29,8 @@ import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.widget.*;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -36,21 +46,26 @@ import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.DoubleSupplier;
 
 public class MaintenanceHatchPartMachine extends TieredPartMachine
-                                         implements IMaintenanceMachine {
+                                         implements IMaintenanceMachine, LDLib2MachineUIProvider,
+                                         LDLib2FancyPartUIProvider, MaintenanceHatchActionTarget {
 
     private static final float MAX_DURATION_MULTIPLIER = 1.1f;
     private static final float MIN_DURATION_MULTIPLIER = 0.9f;
     private static final float DURATION_ACTION_AMOUNT = 0.01f;
+    static {
+        MaintenanceHatchPartMachineActions.initialize();
+    }
 
     @Getter
     private final boolean isConfigurable;
@@ -70,6 +85,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
     protected byte maintenanceProblems = startProblems();
     @Getter
     @SaveField
+    @SyncToClient
     private float durationMultiplier = 1f;
     @Nullable
     protected TickableSubscription maintenanceSubs;
@@ -230,7 +246,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
                 if (ToolHelper.is(heldItem, toolToMatch)) {
                     fixProblemWithTool(i, heldItem, entityPlayer);
 
-                    if (toolsToMatch.stream().allMatch(Objects::isNull)) {
+                    if (allMaintenanceToolsMatched(toolsToMatch)) {
                         return;
                     }
                 }
@@ -240,7 +256,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
                     if (ToolHelper.is(itemStack, toolToMatch)) {
                         fixProblemWithTool(i, itemStack, entityPlayer);
 
-                        if (toolsToMatch.stream().allMatch(Objects::isNull)) {
+                        if (allMaintenanceToolsMatched(toolsToMatch)) {
                             return;
                         }
                     }
@@ -251,7 +267,7 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
                         if (ToolHelper.is(stack, toolToMatch)) {
                             setMaintenanceFixed(i);
                             ToolHelper.damageItem(stack, player, 1);
-                            if (toolsToMatch.stream().allMatch(Objects::isNull)) {
+                            if (allMaintenanceToolsMatched(toolsToMatch)) {
                                 return;
                             }
                         }
@@ -322,43 +338,67 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
     // ******** GUI *********//
     //////////////////////////////////////
     @Override
-    public Widget createUIWidget() {
-        WidgetGroup group;
-        if (isConfigurable) {
-            group = new WidgetGroup(0, 0, 150, 70);
-            group.addWidget(new DraggableScrollableWidgetGroup(4, 4, 150 - 8, 70 - 8).setBackground(GuiTextures.DISPLAY)
-                    .addWidget(new ComponentPanelWidget(4, 5, list -> {
-                        list.add(getTextWidgetText("duration", this::getDurationMultiplier));
-                        list.add(getTextWidgetText("time", this::getTimeMultiplier));
-                        var buttonText = Component.translatable("gtpm.maintenance.configurable_duration.modify");
-                        buttonText.append(" ");
-                        buttonText.append(ComponentPanelWidget.withButton(Component.literal("[-]"), "sub"));
-                        buttonText.append(" ");
-                        buttonText.append(ComponentPanelWidget.withButton(Component.literal("[+]"), "add"));
-                        list.add(buttonText);
-                    }).setMaxWidthLimit(150 - 8 - 8 - 4).clickHandler((componentData, clickData) -> {
-                        if (!clickData.isRemote) {
-                            if (componentData.equals("sub")) {
-                                durationMultiplier = Mth.clamp(durationMultiplier - DURATION_ACTION_AMOUNT,
-                                        MIN_DURATION_MULTIPLIER, MAX_DURATION_MULTIPLIER);
-                            } else if (componentData.equals("add")) {
-                                durationMultiplier = Mth.clamp(durationMultiplier + DURATION_ACTION_AMOUNT,
-                                        MIN_DURATION_MULTIPLIER, MAX_DURATION_MULTIPLIER);
-                            }
-                        }
-                    })));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
 
-        } else {
-            group = new WidgetGroup(0, 0, 8 + 18, 8 + 20 + 18);
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException("Maintenance Hatch UI holder must resolve the opened part.");
         }
-        group.addWidget(new SlotWidget(itemStackHandler, 0, group.getSize().width - 4 - 18, 4)
-                .setBackgroundTexture(new GuiTextureGroup(GuiTextures.SLOT, GuiTextures.DUCT_TAPE_OVERLAY))
-                .setHoverTooltips("gtpm.machine.maintenance_hatch_tape_slot.tooltip"));
-        group.addWidget(new ButtonWidget(group.getSize().width - 4 - 18, 4 + 20, 18, 18, GuiTextures.MAINTENANCE_BUTTON,
-                data -> fixMaintenanceProblems(group.getGui().entityPlayer))
-                .setHoverTooltips("gtpm.machine.maintenance_hatch_tool_slot.tooltip"));
-        group.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        return group;
+        int rootWidth = isConfigurable ? 150 : 8 + 18;
+        int rootHeight = isConfigurable ? 70 : 8 + 20 + 18;
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, rootWidth, rootHeight);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+        if (isConfigurable) {
+            root.addChild(new GTImageElement(4, 4, 150 - 8, 70 - 8, GuiTextures.DISPLAY));
+            root.addChild(createLDLib2DurationPanel(player, holder));
+        }
+        root.addChild(createLDLib2DuctTapeSlot(rootWidth));
+        root.addChild(createLDLib2MaintenanceButton(player, holder, rootWidth));
+        return UI.of(root);
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2FancyPreviewPage(this, player, holder, null,
+                this::attachLDLib2MaintenanceTooltips);
+    }
+
+    private GTComponentPanelElement createLDLib2DurationPanel(Player player, MachineUIHolder holder) {
+        return new GTComponentPanelElement(8, 9, list -> {
+            list.add(getTextWidgetText("duration", this::getDurationMultiplier));
+            list.add(getTextWidgetText("time", this::getTimeMultiplier));
+            var buttonText = Component.translatable("gtpm.maintenance.configurable_duration.modify");
+            buttonText.append(" ");
+            buttonText.append(GTComponentPanelElement.withButton(Component.literal("[-]"), "sub"));
+            buttonText.append(" ");
+            buttonText.append(GTComponentPanelElement.withButton(Component.literal("[+]"), "add"));
+            list.add(buttonText);
+        }).setMaxWidthLimit(150 - 8 - 8 - 4).clickHandler((componentData, clickData) -> {
+            switch (componentData) {
+                case "sub" -> adjustLDLib2Duration(player, holder, -1);
+                case "add" -> adjustLDLib2Duration(player, holder, 1);
+                default -> throw new IllegalArgumentException("Unknown maintenance duration action: " + componentData);
+            }
+        });
+    }
+
+    private GTItemSlotElement createLDLib2DuctTapeSlot(int rootWidth) {
+        GTItemSlotElement slot = new GTItemSlotElement(itemStackHandler, 0)
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.DUCT_TAPE_OVERLAY))
+                .setOnAddedTooltips((slotElement, tooltips) -> tooltips.add(Component.translatable(
+                        "gtpm.machine.maintenance_hatch_tape_slot.tooltip")));
+        return UITemplate.setLDLib2Bounds(slot, rootWidth - 4 - 18, 4, 18, 18);
+    }
+
+    private GTButtonElement createLDLib2MaintenanceButton(Player player, MachineUIHolder holder, int rootWidth) {
+        GTButtonElement button = new GTButtonElement(rootWidth - 4 - 18, 4 + 20, 18, 18,
+                GuiTextures.MAINTENANCE_BUTTON, event -> fixLDLib2MaintenanceProblems(player, holder));
+        button.style(style -> style.tooltips("gtpm.machine.maintenance_hatch_tool_slot.tooltip"));
+        return button;
     }
 
     private static Component getTextWidgetText(String type, DoubleSupplier multiplier) {
@@ -373,5 +413,58 @@ public class MaintenanceHatchPartMachine extends TieredPartMachine
                 .translatable("gtpm.maintenance.configurable_" + type,
                         FormattingUtil.formatNumber2Places(multiplier.getAsDouble()))
                 .setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip)));
+    }
+
+    private void adjustLDLib2Duration(Player player, MachineUIHolder holder, int direction) {
+        adjustDurationMultiplier(direction);
+        if (player.level().isClientSide()) {
+            MachineUIHelper.sendAction(holder,
+                    MaintenanceHatchPartMachineActions.createAdjustMaintenanceDurationAction(direction));
+        }
+    }
+
+    private void fixLDLib2MaintenanceProblems(Player player, MachineUIHolder holder) {
+        if (player.level().isClientSide()) {
+            MachineUIHelper.sendAction(holder, MaintenanceHatchPartMachineActions.createFixMaintenanceProblemsAction());
+        } else if (player instanceof ServerPlayer serverPlayer) {
+            fixMaintenanceProblems(serverPlayer);
+        }
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public boolean supportsMaintenanceDurationAdjustment() {
+        return isConfigurable;
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public void adjustMaintenanceDuration(int direction) {
+        adjustDurationMultiplier(direction);
+    }
+
+    @Override
+    @ApiStatus.Internal
+    public void fixMaintenanceProblemsForAction(@NotNull ServerPlayer player) {
+        fixMaintenanceProblems(player);
+    }
+
+    private void adjustDurationMultiplier(int direction) {
+        setDurationMultiplier(Mth.clamp(durationMultiplier + direction * DURATION_ACTION_AMOUNT,
+                MIN_DURATION_MULTIPLIER, MAX_DURATION_MULTIPLIER));
+    }
+
+    private void setDurationMultiplier(float durationMultiplier) {
+        this.durationMultiplier = durationMultiplier;
+        syncDataHolder.markClientSyncFieldDirty("durationMultiplier");
+    }
+
+    private static boolean allMaintenanceToolsMatched(List<@Nullable GTToolType> toolsToMatch) {
+        for (GTToolType toolToMatch : toolsToMatch) {
+            if (toolToMatch != null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

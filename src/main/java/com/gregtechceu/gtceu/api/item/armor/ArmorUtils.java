@@ -4,7 +4,7 @@ import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
 import com.gregtechceu.gtceu.common.data.GTSoundEntries;
 import com.gregtechceu.gtceu.config.ConfigHolder;
-import com.gregtechceu.gtceu.core.mixins.ServerGamePacketListenerImplAccessor;
+import com.gregtechceu.gtceu.core.mixins.ServerGamePacketListenerFloatingTickAccessor;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -139,7 +139,7 @@ public class ArmorUtils {
      */
     public static void resetPlayerFloatingTime(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
-            ((ServerGamePacketListenerImplAccessor) serverPlayer.connection).setAboveGroundTickCount(0);
+            ((ServerGamePacketListenerFloatingTickAccessor) serverPlayer.connection).setAboveGroundTickCount(0);
         }
     }
 

@@ -26,3 +26,5 @@ src/generated/resources/.cache/
 *.DS_Store
 
 qodana.yaml
+
+ldlib2-ui-migration-plan/

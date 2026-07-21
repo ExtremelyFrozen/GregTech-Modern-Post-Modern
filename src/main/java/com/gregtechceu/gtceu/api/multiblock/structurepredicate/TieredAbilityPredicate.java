@@ -1,9 +1,8 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 
@@ -52,8 +51,8 @@ public record TieredAbilityPredicate(PartAbility ability, List<Integer> tiers) i
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
-        return blockCandidates().stream().map(BlockInfo::new).toList();
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
+        return blockCandidates().stream().map(MultiblockBlockInfo::new).toList();
     }
 
     @Override

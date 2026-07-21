@@ -6,8 +6,11 @@ import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IMonitorComponent;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.factory.DynamicItemSlotMachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2DynamicItemSlotMachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.item.IComponentItem;
 import com.gregtechceu.gtceu.api.item.component.IItemComponent;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
@@ -18,29 +21,31 @@ import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMa
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.multiblock.*;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
+import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.common.data.GTMachines;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
+import com.gregtechceu.gtceu.common.item.datacomponents.TextLineList;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorGroup;
 import com.gregtechceu.gtceu.common.machine.trait.CentralMonitorLogic;
 import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupDataChange;
-import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternKey;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
-import com.gregtechceu.gtceu.utils.GTStringUtils;
 
-import com.lowdragmc.lowdraglib.gui.texture.*;
-import com.lowdragmc.lowdraglib.gui.widget.*;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -48,14 +53,17 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import com.google.gson.JsonElement;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UTFDataFormatException;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -63,7 +71,20 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
-                                   implements IMonitorComponent, IDataInfoProvider {
+                                   implements IMonitorComponent, IDataInfoProvider,
+                                   LDLib2DynamicItemSlotMachineUIProvider,
+                                   CentralMonitorMembershipActionTarget, CentralMonitorGroupTargetActionHost,
+                                   CentralMonitorImageModuleActionHost, CentralMonitorTextModuleActionHost {
+
+    static {
+        CentralMonitorMembershipActions.initialize();
+        CentralMonitorGroupTargetActions.initialize();
+        CentralMonitorImageModuleActions.initialize();
+        CentralMonitorTextModuleActions.initialize();
+    }
+
+    private static final String MONITOR_GROUPS_SYNC_FIELD = "monitorGroups";
+    private static final String MONITOR_GROUP_MEMBERSHIP_REVISION_SYNC_FIELD = "monitorGroupMembershipRevision";
 
     @SaveField
     @SyncToClient
@@ -74,8 +95,12 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     @Getter
     @RerenderOnChanged
     private List<MonitorGroup> monitorGroups = new ArrayList<>();
-    private final Set<IMonitorComponent> selectedComponents = new HashSet<>();
-    private final List<IMonitorComponent> selectedTargets = new ArrayList<>();
+    @SaveField
+    @SyncToClient
+    private UUID centralMonitorActionIncarnation = UUID.randomUUID();
+    @SaveField
+    @SyncToClient
+    private long monitorGroupMembershipRevision;
 
     private @Nullable MultiblockState patternFindingState;
 
@@ -139,6 +164,12 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
                         new SCPacketMonitorGroupDataChange(stack, group, this));
             }
         }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        monitorGroups.forEach(this::bindMonitorGroupModuleHandler);
     }
 
     @Override
@@ -294,22 +325,505 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
         return GTCapabilityHelper.getMonitorComponent(level, pos, null);
     }
 
-    public boolean isMonitor(int row, int col) {
-        IMonitorComponent component = this.getComponent(row, col);
-        if (component == null) return false;
-        return component.isMonitor();
-    }
-
-    private IGuiTexture getComponentTexture(int row, int col) {
-        if (row < 0 || col < 0 || row > downDist + upDist + 1 || col > leftDist + rightDist + 1)
-            return GuiTextures.BLANK_TRANSPARENT;
-        IMonitorComponent component = getComponent(row, col);
-        if (component == null) return GuiTextures.BLANK_TRANSPARENT;
-        return component.getComponentIcon();
-    }
-
     private boolean isInAnyGroup(IMonitorComponent component) {
         return monitorGroups.stream().anyMatch(group -> group.contains(component.getBlockPos()));
+    }
+
+    @Override
+    public UUID getCentralMonitorActionIncarnation() {
+        return centralMonitorActionIncarnation;
+    }
+
+    @Override
+    public int getCentralMonitorMembershipCapacity() {
+        int width = Math.addExact(Math.addExact(leftDist, rightDist), 1);
+        int height = Math.addExact(Math.addExact(upDist, downDist), 1);
+        return Math.multiplyExact(width, height);
+    }
+
+    @Override
+    public long getCentralMonitorMembershipRevision() {
+        return monitorGroupMembershipRevision;
+    }
+
+    @Override
+    public boolean canCreateCentralMonitorGroup(long expectedRevision, UUID groupIdentity,
+                                                Set<BlockPos> positions) {
+        if (!isMembershipStructureAvailable() || monitorGroupMembershipRevision != expectedRevision ||
+                positions.isEmpty() || positions.size() > getCentralMonitorMembershipCapacity() ||
+                hasMonitorGroupIdentity(groupIdentity)) {
+            return false;
+        }
+        Map<BlockPos, IMonitorComponent> components = resolveMembershipComponents();
+        for (BlockPos position : positions) {
+            IMonitorComponent component = components.get(position);
+            if (component == null || !component.isMonitor() || isInAnyGroup(component)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean createCentralMonitorGroup(long expectedRevision, UUID groupIdentity, Set<BlockPos> positions) {
+        if (!canCreateCentralMonitorGroup(expectedRevision, groupIdentity, positions)) {
+            return false;
+        }
+        long nextRevision = Math.incrementExact(monitorGroupMembershipRevision);
+        MonitorGroup group = MonitorGroup.createWithIdentity(groupIdentity, nextDefaultMonitorGroupName());
+        positions.forEach(group::add);
+        monitorGroups.add(group);
+        bindMonitorGroupModuleHandler(group);
+        completeMonitorGroupMembershipChange(nextRevision);
+        return true;
+    }
+
+    @Override
+    public boolean canRemoveCentralMonitorGroupMembers(long expectedRevision, UUID groupIdentity,
+                                                       Set<BlockPos> positions) {
+        if (!isMembershipStructureAvailable() || monitorGroupMembershipRevision != expectedRevision ||
+                positions.isEmpty() || positions.size() > getCentralMonitorMembershipCapacity()) {
+            return false;
+        }
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null) {
+            return false;
+        }
+        Map<BlockPos, IMonitorComponent> components = resolveMembershipComponents();
+        for (BlockPos position : positions) {
+            IMonitorComponent component = components.get(position);
+            if (component == null || !component.isMonitor() || !group.contains(position)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean removeCentralMonitorGroupMembers(long expectedRevision, UUID groupIdentity,
+                                                    Set<BlockPos> positions) {
+        if (!canRemoveCentralMonitorGroupMembers(expectedRevision, groupIdentity, positions)) {
+            return false;
+        }
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null) {
+            return false;
+        }
+        long nextRevision = Math.incrementExact(monitorGroupMembershipRevision);
+        boolean removesEntireGroup = positions.size() == group.getMonitorPositions().size();
+        if (removesEntireGroup) {
+            dropMonitorGroupInventory(group);
+            monitorGroups.remove(group);
+        } else {
+            positions.forEach(group::remove);
+        }
+        completeMonitorGroupMembershipChange(nextRevision);
+        return true;
+    }
+
+    @Override
+    public boolean canSetCentralMonitorGroupTarget(UUID groupIdentity, CentralMonitorGroupTargetState expected,
+                                                   CentralMonitorGroupTargetState requested) {
+        if (!isMembershipStructureAvailable() || expected.dataSlot() < 0 || requested.dataSlot() < 0 ||
+                expected.equals(requested)) {
+            return false;
+        }
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null || !readMonitorGroupTargetState(group).equals(expected)) {
+            return false;
+        }
+        BlockPos requestedPosition = requested.targetPos();
+        if (requestedPosition == null) {
+            return requested.dataSlot() == 0;
+        }
+        IMonitorComponent component = resolveMembershipComponents().get(requestedPosition);
+        if (component == null) {
+            return false;
+        }
+        IItemHandler dataItems = component.getDataItems();
+        return dataItems == null ? requested.dataSlot() == 0 : requested.dataSlot() < dataItems.getSlots();
+    }
+
+    @Override
+    public boolean setCentralMonitorGroupTarget(UUID groupIdentity, CentralMonitorGroupTargetState expected,
+                                                CentralMonitorGroupTargetState requested) {
+        if (!canSetCentralMonitorGroupTarget(groupIdentity, expected, requested)) {
+            return false;
+        }
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null) {
+            return false;
+        }
+        group.setTargetAndDataSlot(requested.targetPos(), requested.dataSlot());
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        return true;
+    }
+
+    /**
+     * Publishes an in-place monitor group configuration change without treating it as a physical module replacement.
+     */
+    public void markMonitorGroupDataChanged() {
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+    }
+
+    @Override
+    public void resyncCentralMonitorImageModuleState() {
+        markMonitorGroupDataChanged();
+    }
+
+    @Override
+    public void resyncCentralMonitorTextModuleState() {
+        markMonitorGroupDataChanged();
+    }
+
+    /**
+     * Resolves the current synchronized image module for a page opened against one physical module-slot occupant.
+     */
+    public @Nullable ItemStack resolveCentralMonitorImageModuleForOpening(UUID groupIdentity,
+                                                                          UUID moduleSlotIncarnation) {
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation)) {
+            return null;
+        }
+        ItemStack module = group.getItemStackHandler().getStackInSlot(0);
+        return CentralMonitorImageModuleActions.isImageModule(module) ? module : null;
+    }
+
+    /**
+     * Resolves the current synchronized text module for a page opened against one physical module-slot occupant.
+     */
+    public @Nullable ItemStack resolveCentralMonitorTextModuleForOpening(UUID groupIdentity,
+                                                                         UUID moduleSlotIncarnation) {
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation)) {
+            return null;
+        }
+        ItemStack module = group.getItemStackHandler().getStackInSlot(0);
+        return CentralMonitorTextModuleActions.isTextModule(module) ? module : null;
+    }
+
+    @Override
+    public boolean canSetCentralMonitorTextModuleConfiguration(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                               long expectedConfigurationRevision,
+                                                               ItemStack expectedModule,
+                                                               TextLineList requestedConfiguration) {
+        return resolveTextModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedConfigurationRevision,
+                expectedModule, requestedConfiguration) != null;
+    }
+
+    @Override
+    public boolean setCentralMonitorTextModuleConfiguration(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                            long expectedConfigurationRevision,
+                                                            ItemStack expectedModule,
+                                                            TextLineList requestedConfiguration) {
+        MonitorGroup group = resolveTextModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedConfigurationRevision,
+                expectedModule, requestedConfiguration);
+        if (group == null) {
+            return false;
+        }
+        group.applyTextConfiguration(requestedConfiguration);
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        return true;
+    }
+
+    private @Nullable MonitorGroup resolveTextModuleChangeTarget(
+                                                                 UUID groupIdentity,
+                                                                 UUID moduleSlotIncarnation,
+                                                                 long expectedConfigurationRevision,
+                                                                 ItemStack expectedModule,
+                                                                 TextLineList requestedConfiguration) {
+        if (!isMembershipStructureAvailable() ||
+                !CentralMonitorTextModuleActions.isValidScale(requestedConfiguration.scale())) {
+            return null;
+        }
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation) ||
+                group.getTextConfigurationRevision() != expectedConfigurationRevision) {
+            return null;
+        }
+        ItemStack currentModule = group.getItemStackHandler().getStackInSlot(0);
+        if (!CentralMonitorTextModuleActions.isTextModule(currentModule) ||
+                !CentralMonitorTextModuleActions.matchesExpectedModule(currentModule, expectedModule)) {
+            return null;
+        }
+        TextLineList currentConfiguration = currentModule.get(GTDataComponents.FORMAT_STRING_LIST.get());
+        if (requestedConfiguration.equals(currentConfiguration)) {
+            return null;
+        }
+        if (group.getTextConfigurationRevision() == Long.MAX_VALUE) {
+            GTCEu.LOGGER.error("Central Monitor text configuration revision is exhausted for group {} at {}",
+                    group.getIdentity(), getBlockPos());
+            return null;
+        }
+        long nextRevision = Math.incrementExact(group.getTextConfigurationRevision());
+        return canPersistCentralMonitorTextModuleConfiguration(
+                group, currentModule, requestedConfiguration, nextRevision) ? group : null;
+    }
+
+    private boolean canPersistCentralMonitorTextModuleConfiguration(MonitorGroup group, ItemStack currentModule,
+                                                                    TextLineList requestedConfiguration,
+                                                                    long nextRevision) {
+        Level level = getLevel();
+        if (level == null) {
+            GTCEu.LOGGER.error("Central Monitor at {} cannot validate text module save data without a level",
+                    getBlockPos());
+            return false;
+        }
+
+        ItemStack candidate = currentModule.copy();
+        candidate.set(GTDataComponents.FORMAT_STRING_LIST.get(), requestedConfiguration);
+        var stacks = group.getItemStackHandler().getStacks();
+        ItemStack previous = stacks.set(0, candidate);
+        long previousRevision = group.getTextConfigurationRevision();
+        group.setTextConfigurationRevision(nextRevision);
+        try {
+            DataComponentMap savedData = getSyncDataHolder()
+                    .serializeToComponents(level.registryAccess(), false, false);
+            Tag savedTag = DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(NbtOps.INSTANCE), savedData)
+                    .getOrThrow();
+            try (DataOutputStream output = new DataOutputStream(OutputStream.nullOutputStream())) {
+                savedTag.write(output);
+            }
+            JsonElement monitorGroupsData = getSyncDataHolder()
+                    .serializeClientFieldSnapshot(level.registryAccess(), MONITOR_GROUPS_SYNC_FIELD);
+            if (!SyncFieldData.isFieldValueWithinNetworkLimit(monitorGroupsData)) {
+                GTCEu.LOGGER.warn(
+                        "Rejecting Central Monitor text module configuration for group {} at {} because monitorGroups exceeds the network field limit",
+                        group.getIdentity(), getBlockPos());
+                return false;
+            }
+            return true;
+        } catch (UTFDataFormatException exception) {
+            GTCEu.LOGGER.warn(
+                    "Rejecting Central Monitor text module configuration for group {} at {} because its save data exceeds the modified-UTF limit",
+                    group.getIdentity(), getBlockPos());
+            return false;
+        } catch (IOException exception) {
+            GTCEu.LOGGER.error("Failed to validate Central Monitor text module save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw new IllegalStateException("Failed to validate Central Monitor text module save data", exception);
+        } catch (RuntimeException exception) {
+            GTCEu.LOGGER.error("Failed to encode Central Monitor text module save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw exception;
+        } finally {
+            stacks.set(0, previous);
+            group.setTextConfigurationRevision(previousRevision);
+        }
+    }
+
+    @Override
+    public boolean canSetCentralMonitorImageModuleUrl(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                      ItemStack expectedModule, @Nullable String expectedUrl,
+                                                      String requestedUrl) {
+        return resolveImageModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedModule, expectedUrl, requestedUrl) != null;
+    }
+
+    @Override
+    public boolean setCentralMonitorImageModuleUrl(UUID groupIdentity, UUID moduleSlotIncarnation,
+                                                   ItemStack expectedModule, @Nullable String expectedUrl,
+                                                   String requestedUrl) {
+        MonitorGroup group = resolveImageModuleChangeTarget(
+                groupIdentity, moduleSlotIncarnation, expectedModule, expectedUrl, requestedUrl);
+        if (group == null) {
+            return false;
+        }
+        group.getItemStackHandler().getStackInSlot(0).set(GTDataComponents.IMAGE_MODULE_URL.get(), requestedUrl);
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        return true;
+    }
+
+    private @Nullable MonitorGroup resolveImageModuleChangeTarget(
+                                                                  UUID groupIdentity,
+                                                                  UUID moduleSlotIncarnation,
+                                                                  ItemStack expectedModule,
+                                                                  @Nullable String expectedUrl,
+                                                                  String requestedUrl) {
+        if (!isMembershipStructureAvailable() ||
+                !CentralMonitorImageModuleActions.isValidUrl(requestedUrl) ||
+                sameNullableString(expectedUrl, requestedUrl)) {
+            return null;
+        }
+        MonitorGroup group = resolveCentralMonitorGroup(groupIdentity);
+        if (group == null || !group.getModuleSlotIncarnation().equals(moduleSlotIncarnation)) {
+            return null;
+        }
+        ItemStack currentModule = group.getItemStackHandler().getStackInSlot(0);
+        if (!CentralMonitorImageModuleActions.isImageModule(currentModule) ||
+                !CentralMonitorImageModuleActions.matchesExpectedModule(currentModule, expectedModule)) {
+            return null;
+        }
+        String snapshotUrl = expectedModule.get(GTDataComponents.IMAGE_MODULE_URL.get());
+        String currentUrl = currentModule.get(GTDataComponents.IMAGE_MODULE_URL.get());
+        if (!sameNullableString(snapshotUrl, expectedUrl) || !sameNullableString(currentUrl, expectedUrl)) {
+            return null;
+        }
+        return canPersistCentralMonitorImageModuleUrl(group, currentModule, requestedUrl) ? group : null;
+    }
+
+    private boolean canPersistCentralMonitorImageModuleUrl(MonitorGroup group, ItemStack currentModule,
+                                                           String requestedUrl) {
+        Level level = getLevel();
+        if (level == null) {
+            GTCEu.LOGGER.error("Central Monitor at {} cannot validate image module save data without a level",
+                    getBlockPos());
+            return false;
+        }
+
+        ItemStack candidate = currentModule.copy();
+        candidate.set(GTDataComponents.IMAGE_MODULE_URL.get(), requestedUrl);
+        var stacks = group.getItemStackHandler().getStacks();
+        ItemStack previous = stacks.set(0, candidate);
+        try {
+            DataComponentMap savedData = getSyncDataHolder()
+                    .serializeToComponents(level.registryAccess(), false, false);
+            Tag savedTag = DataComponentMap.CODEC
+                    .encodeStart(level.registryAccess().createSerializationContext(NbtOps.INSTANCE), savedData)
+                    .getOrThrow();
+            try (DataOutputStream output = new DataOutputStream(OutputStream.nullOutputStream())) {
+                savedTag.write(output);
+            }
+            return true;
+        } catch (UTFDataFormatException exception) {
+            GTCEu.LOGGER.warn(
+                    "Rejecting Central Monitor image module URL with {} characters for group {} at {} because its save data exceeds the modified-UTF limit",
+                    requestedUrl.length(), group.getIdentity(), getBlockPos());
+            return false;
+        } catch (IOException exception) {
+            GTCEu.LOGGER.error("Failed to validate Central Monitor save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw new IllegalStateException("Failed to validate Central Monitor save data", exception);
+        } catch (RuntimeException exception) {
+            GTCEu.LOGGER.error("Failed to encode Central Monitor save data for group {} at {}",
+                    group.getIdentity(), getBlockPos(), exception);
+            throw exception;
+        } finally {
+            stacks.set(0, previous);
+        }
+    }
+
+    private static boolean sameNullableString(@Nullable String first, @Nullable String second) {
+        return first == null ? second == null : first.equals(second);
+    }
+
+    /**
+     * Returns whether membership actions may resolve components from the currently formed structure.
+     */
+    protected boolean isMembershipStructureAvailable() {
+        return isFormed();
+    }
+
+    /**
+     * Resolves the current Central Monitor grid once for one atomic membership validation.
+     */
+    protected Map<BlockPos, IMonitorComponent> resolveMembershipComponents() {
+        Map<BlockPos, IMonitorComponent> components = new HashMap<>();
+        for (int row = 0; row <= downDist + upDist; row++) {
+            for (int column = 0; column <= leftDist + rightDist; column++) {
+                IMonitorComponent component = getComponent(row, column);
+                if (component == null) {
+                    continue;
+                }
+                IMonitorComponent previous = components.put(component.getBlockPos(), component);
+                if (previous != null) {
+                    throw new IllegalStateException("Central Monitor grid resolved the same position more than once: " +
+                            component.getBlockPos());
+                }
+            }
+        }
+        return components;
+    }
+
+    /**
+     * Drops both inventories exactly once before an empty group is removed.
+     */
+    protected void dropMonitorGroupInventory(MonitorGroup group) {
+        Level level = getLevel();
+        if (level == null) {
+            throw new IllegalStateException("Central Monitor cannot drop group inventory without a level.");
+        }
+        group.getItemStackHandler().dropInventoryInWorld(level, getBlockPos());
+        group.getPlaceholderSlotsHandler().dropInventoryInWorld(level, getBlockPos());
+    }
+
+    private boolean hasMonitorGroupIdentity(UUID identity) {
+        return monitorGroups.stream().anyMatch(group -> group.getIdentity().equals(identity));
+    }
+
+    @Nullable
+    MonitorGroup resolveCentralMonitorGroup(UUID identity) {
+        MonitorGroup match = null;
+        for (MonitorGroup group : monitorGroups) {
+            if (!group.getIdentity().equals(identity)) {
+                continue;
+            }
+            if (match != null) {
+                return null;
+            }
+            match = group;
+        }
+        return match;
+    }
+
+    private CentralMonitorGroupTargetState readMonitorGroupTargetState(MonitorGroup group) {
+        return new CentralMonitorGroupTargetState(group.getTargetRaw(), group.getDataSlot());
+    }
+
+    private String nextDefaultMonitorGroupName() {
+        int suffix = 1;
+        while (true) {
+            String candidate = Component.translatable("gtpm.gui.central_monitor.group_default_name", suffix)
+                    .getString();
+            if (monitorGroups.stream().noneMatch(group -> group.getName().equals(candidate))) {
+                return candidate;
+            }
+            suffix = Math.incrementExact(suffix);
+        }
+    }
+
+    private void bindMonitorGroupModuleHandler(MonitorGroup group) {
+        if (isRemote()) {
+            return;
+        }
+        group.getItemStackHandler().setOnContentsChanged(() -> {
+            group.rotateModuleSlotIncarnation();
+            getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        });
+    }
+
+    private void completeMonitorGroupMembershipChange(long nextRevision) {
+        monitorGroupMembershipRevision = nextRevision;
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUPS_SYNC_FIELD);
+        getSyncDataHolder().markClientSyncFieldDirty(MONITOR_GROUP_MEMBERSHIP_REVISION_SYNC_FIELD);
+    }
+
+    @Override
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder instanceof DynamicItemSlotMachineUIHolder && holder.getMachine() == this &&
+                holder.getMachineDefinitionId().equals(getDefinition().getId()) && isFormed();
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        CentralMonitorElement page = createCentralMonitorElement(player, holder);
+        LDLib2FancyMachineUIElement root = new LDLib2FancyMachineUIElement(
+                page, player.getInventory(), holder, page.getLDLib2PageWidth(), page.getLDLib2PageHeight());
+        root.addChild(page.sessionElement());
+        return UI.of(root);
+    }
+
+    CentralMonitorElement createCentralMonitorElement(Player player, MachineUIHolder holder) {
+        if (!canCreateLDLib2UI(player, holder)) {
+            GTCEu.LOGGER.error("Central Monitor at {} rejected an invalid or unformed LDLib2 opening",
+                    getBlockPos());
+            throw new IllegalArgumentException("Central Monitor UI requires its formed opening machine.");
+        }
+        updateStructureDimensions();
+        return new CentralMonitorElement(this, player, holder);
     }
 
     @Override
@@ -320,347 +834,8 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public Widget createUIWidget() {
-        updateStructureDimensions();
-        selectedComponents.clear();
-        WidgetGroup builder = (WidgetGroup) super.createUIWidget();
-
-        WidgetGroup main = new WidgetGroup();
-        DraggableScrollableWidgetGroup componentSelection = new DraggableScrollableWidgetGroup(0, 10, 200, 110);
-        main.addWidget(componentSelection);
-        WidgetGroup options = new WidgetGroup(-100, 20, 60, 20);
-        WidgetGroup groupConfig = new WidgetGroup(10, 30, 100, 100);
-        groupConfig.setVisible(false);
-
-        ButtonWidget infoWidget = new ButtonWidget(200, 10, 20, 20, null);
-        infoWidget.setButtonTexture(GuiTextures.INFO_ICON);
-        infoWidget.setHoverTooltips(
-                GTStringUtils.toImmutable(LangHandler.getSingleOrMultiLang("gtpm.central_monitor.info_tooltip")));
-        builder.addWidget(infoWidget);
-        List<@Nullable MonitorGroup> configGroup = new ArrayList<>();
-        configGroup.add(null);
-
-        Consumer<@Nullable MonitorGroup> openGroupConfig = (group) -> {
-            configGroup.set(0, group);
-            if (group == null) {
-                main.setVisible(true);
-                groupConfig.setVisible(false);
-                return;
-            }
-            groupConfig.clearAllWidgets();
-            groupConfig.addWidget(new LabelWidget(0, 5, () -> {
-                String currentName = "";
-                if (configGroup.get(0) != null) {
-                    currentName = configGroup.get(0).getName();
-                }
-                return Component.translatable("gtpm.central_monitor.gui.currently_editing", currentName).getString();
-            }));
-            for (int i = 0; i < 8; i++) {
-                SlotWidget slot = new SlotWidget(group.getPlaceholderSlotsHandler(), i, -38, 16 * i + 46);
-                slot.setHoverTooltips(GTStringUtils
-                        .toImmutable(LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.slot_tooltip", i + 1)));
-                groupConfig.addWidget(slot);
-            }
-            SlotWidget slot = new SlotWidget(
-                    group.getItemStackHandler(), 0,
-                    0, 20);
-            WidgetGroup itemUI = new WidgetGroup(40, 20, 100, 100);
-            Runnable changeListener = () -> {
-                if (slot.getLastItem().is(slot.getItem().getItem())) return;
-                itemUI.clearAllWidgets();
-                if (slot.getItem().getItem() instanceof IComponentItem item) {
-                    for (IItemComponent component : item.getComponents()) {
-                        if (component instanceof IMonitorModuleItem module) {
-                            itemUI.addWidget(module.createUIWidget(slot.getItem(), this, group));
-                        }
-                    }
-                }
-            };
-            slot.setChangeListener(changeListener);
-            changeListener.run();
-            groupConfig.addWidget(itemUI);
-            groupConfig.addWidget(slot);
-            main.setVisible(false);
-            groupConfig.setVisible(true);
-        };
-        builder.addWidget(groupConfig);
-        DraggableScrollableWidgetGroup groupList = new DraggableScrollableWidgetGroup(-100, 50, 70, 80);
-
-        List<List<Consumer<Iterator<IMonitorComponent>>>> imageButtons = new ArrayList<>();
-        Map<BlockPos, Runnable> rightClickCallbacks = new HashMap<>();
-        int[] dataSlot = new int[2]; // list to be able to modify it in lambdas
-        dataSlot[0] = 1; // the slot (index starts from 1)
-        dataSlot[1] = 9; // amount of slots
-        IntInputWidget dataSlotInput = new IntInputWidget(120, 20, 60, -20, () -> dataSlot[0],
-                n -> dataSlot[0] = Mth.clamp(n, 1, dataSlot[1]));
-        dataSlotInput.setVisible(false);
-        builder.addWidget(dataSlotInput);
-
-        Consumer<MonitorGroup> addGroupToList = group -> {
-            ButtonWidget label = new ButtonWidget(20, groupList.widgets.size() * 15 + 5, 60, 10, null);
-            TextTexture text = new TextTexture(group.getName());
-            text.setType(TextTexture.TextType.LEFT);
-            label.setButtonTexture(text);
-            label.setOnPressCallback(click -> {
-                group.getMonitorPositions().forEach(pos -> {
-                    BlockPos rel = toRelative(pos);
-                    if (imageButtons.size() - 1 < rel.getY()) return;
-                    if (imageButtons.get(rel.getY()).size() - 1 < rel.getX()) return;
-                    imageButtons.get(rel.getY()).get(rel.getX()).accept(null);
-                });
-                if (group.getTargetRaw() != null) {
-                    rightClickCallbacks.getOrDefault(group.getTargetRaw(), () -> {}).run();
-                }
-            });
-            groupList.addWidget(label);
-
-            ButtonWidget configButton = new ButtonWidget(
-                    0, label.getSelfPositionY() - 3,
-                    16, 16,
-                    GuiTextures.IO_CONFIG_COVER_SETTINGS,
-                    click -> {
-                        if (configGroup.get(0) == null) {
-                            openGroupConfig.accept(group);
-                        } else {
-                            openGroupConfig.accept(null);
-                        }
-                    });
-            groupList.addWidget(configButton);
-        };
-
-        monitorGroups.forEach(addGroupToList);
-        builder.addWidget(groupList);
-        main.addWidget(options);
-        ButtonWidget removeFromGroupButton = new ButtonWidget(0, 0, 60, 20, null);
-        removeFromGroupButton.setButtonTexture(new TextTexture("gtpm.central_monitor.gui.remove_from_group"));
-        removeFromGroupButton.setVisible(false);
-        ButtonWidget setTargetButton = new ButtonWidget(0, 15, 60, 20, null);
-        setTargetButton.setButtonTexture(new TextTexture("gtpm.central_monitor.gui.set_target"));
-        setTargetButton.setVisible(false);
-        ButtonWidget createGroupButton = new ButtonWidget(0, 0, 60, 20, null);
-        createGroupButton.setOnPressCallback(click -> {
-            MonitorGroup group = new MonitorGroup(
-                    Component.translatable("gtpm.gui.central_monitor.group_default_name", monitorGroups.size() + 1)
-                            .getString());
-            for (IMonitorComponent component : selectedComponents) {
-                if (isInAnyGroup(component)) return;
-                group.add(component.getBlockPos());
-            }
-            monitorGroups.add(group);
-            addGroupToList.accept(group);
-
-            createGroupButton.setVisible(false);
-            removeFromGroupButton.setVisible(true);
-            Iterator<IMonitorComponent> it = selectedComponents.iterator();
-            while (it.hasNext()) {
-                IMonitorComponent c = it.next();
-                BlockPos rel = toRelative(c.getBlockPos());
-                imageButtons.get(rel.getY()).get(rel.getX()).accept(it);
-            }
-            if (!selectedTargets.isEmpty()) {
-                rightClickCallbacks.getOrDefault(selectedTargets.get(0).getBlockPos(), () -> {}).run();
-            }
-        });
-        setTargetButton.setOnPressCallback(click -> {
-            MonitorGroup group = null;
-            for (MonitorGroup group2 : monitorGroups) {
-                for (IMonitorComponent component : selectedComponents) {
-                    if (group2.contains(component.getBlockPos())) {
-                        group = group2;
-                        break;
-                    }
-                }
-                if (group != null) break;
-            }
-            if (group == null) return;
-            if (selectedTargets.isEmpty()) group.setTarget(null);
-            else {
-                group.setTarget(selectedTargets.get(0).getBlockPos());
-                group.setDataSlot(dataSlot[0] - 1);
-            }
-        });
-        removeFromGroupButton.setOnPressCallback(click -> {
-            for (MonitorGroup group : monitorGroups) {
-                for (IMonitorComponent component : selectedComponents) group.remove(component.getBlockPos());
-            }
-            Iterator<MonitorGroup> itg = monitorGroups.iterator();
-            while (itg.hasNext()) {
-                MonitorGroup group = itg.next();
-                if (group.isEmpty()) {
-                    group.getItemStackHandler().dropInventoryInWorld(getLevel(), getBlockPos());
-                    group.getPlaceholderSlotsHandler().dropInventoryInWorld(getLevel(), getBlockPos());
-                    itg.remove();
-                }
-            }
-            groupList.clearAllWidgets();
-            monitorGroups.forEach(addGroupToList);
-
-            removeFromGroupButton.setVisible(false);
-            createGroupButton.setVisible(true);
-            Iterator<IMonitorComponent> it = selectedComponents.iterator();
-            while (it.hasNext()) {
-                IMonitorComponent c = it.next();
-                BlockPos rel = toRelative(c.getBlockPos());
-                if (imageButtons.size() - 1 < rel.getY()) continue;
-                if (imageButtons.get(rel.getY()).size() - 1 < rel.getX()) continue;
-                imageButtons.get(rel.getY()).get(rel.getX()).accept(it);
-            }
-            if (!selectedTargets.isEmpty()) {
-                rightClickCallbacks.getOrDefault(selectedTargets.get(0).getBlockPos(), () -> {}).run();
-            }
-        });
-        createGroupButton.setButtonTexture(new TextTexture("gtpm.central_monitor.gui.create_group"));
-        createGroupButton.setVisible(false);
-        options.addWidget(removeFromGroupButton);
-        options.addWidget(createGroupButton);
-        options.addWidget(setTargetButton);
-        int startX = 20;
-        int startY = 30;
-        for (int row = 0; row <= downDist + upDist; row++) {
-            imageButtons.add(new ArrayList<>());
-            for (int col = 0; col <= leftDist + rightDist; col++) {
-                IGuiTexture texture = getComponentTexture(row, col);
-                GuiTextureGroup textures = new GuiTextureGroup(texture, new ColorBorderTexture(2, 0xFFFFFF));
-                IMonitorComponent component = getComponent(row, col);
-                if (component == null) {
-                    imageButtons.getLast().add(it -> {});
-                    continue;
-                }
-                ButtonWidget img = new ButtonWidget(startX + (16 * col), startY + (16 * row), 16, 16, textures, null);
-                Consumer<Iterator<IMonitorComponent>> callback = (it) -> {
-                    if (!component.isMonitor()) return;
-                    if (selectedComponents.contains(component)) {
-                        if (it == null) {
-                            selectedComponents.remove(component);
-                        } else {
-                            it.remove();
-                        }
-
-                        if (!selectedTargets.isEmpty() && selectedTargets.get(0) == component) {
-                            ColorRectTexture rect = new ColorRectTexture(Color.BLUE);
-                            textures.setTextures(rect, texture);
-                        } else {
-                            textures.setTextures(texture);
-                        }
-
-                        createGroupButton.setVisible(selectedComponents.stream().noneMatch(this::isInAnyGroup));
-                        removeFromGroupButton.setVisible(selectedComponents.stream().allMatch(this::isInAnyGroup));
-                        setTargetButton.setVisible(removeFromGroupButton.isVisible());
-
-                        if (selectedComponents.isEmpty()) {
-                            createGroupButton.setVisible(false);
-                            removeFromGroupButton.setVisible(false);
-                            setTargetButton.setVisible(false);
-                        }
-                    } else {
-                        boolean inAnyGroup = isInAnyGroup(component);
-                        // yes I know this is terrible but if it works don't touch it :)
-                        if (selectedComponents.isEmpty() && !inAnyGroup) createGroupButton.setVisible(true);
-                        if (inAnyGroup) createGroupButton.setVisible(false);
-                        if (selectedComponents.isEmpty() && inAnyGroup) {
-                            removeFromGroupButton.setVisible(true);
-                            setTargetButton.setVisible(true);
-                        }
-                        if (!inAnyGroup) {
-                            removeFromGroupButton.setVisible(false);
-                            setTargetButton.setVisible(false);
-                        }
-                        selectedComponents.add(component);
-                        ColorRectTexture rect = new ColorRectTexture(
-                                (selectedTargets.isEmpty() || selectedTargets.get(0) != component) ? Color.RED :
-                                        Color.PINK);
-                        textures.setTextures(rect, texture);
-                    }
-                    if (isInAnyGroup(component)) {
-                        monitorGroups.forEach(group -> {
-                            if (group.contains(component.getBlockPos())) {
-                                img.setHoverTooltips(
-                                        Component.translatable("gtpm.gui.central_monitor.group", group.getName()));
-                            }
-                        });
-                    } else {
-                        img.setHoverTooltips(Component.translatable("gtpm.gui.central_monitor.group",
-                                Component.translatable("gtpm.gui.central_monitor.none")));
-                    }
-                };
-                Runnable rightClickCallback = () -> {
-                    if (!selectedTargets.isEmpty()) {
-                        if (selectedTargets.get(0).getBlockPos() == component.getBlockPos()) {
-                            selectedTargets.clear();
-                            if (selectedComponents.contains(component)) {
-                                ColorRectTexture rect = new ColorRectTexture(Color.RED);
-                                textures.setTextures(rect, texture);
-                            } else {
-                                textures.setTextures(texture);
-                            }
-                            dataSlotInput.setVisible(false);
-                            return;
-                        } else {
-                            try {
-                                rightClickCallbacks.get(selectedTargets.get(0).getBlockPos()).run();
-                            } catch (StackOverflowError e) {
-                                GTCEu.LOGGER.error(
-                                        "Stack overflow when right-clicking monitor component {} at {} (selectedTarget is {} at {})",
-                                        component, component.getBlockPos(), selectedTargets.get(0),
-                                        selectedTargets.get(0).getBlockPos());
-                            }
-                        }
-                    }
-                    selectedTargets.add(component);
-                    ColorRectTexture rect;
-                    if (selectedComponents.contains(component)) {
-                        rect = new ColorRectTexture(Color.PINK);
-                    } else {
-                        rect = new ColorRectTexture(Color.BLUE);
-                    }
-                    textures.setTextures(rect, texture);
-                    if (component.getDataItems() != null) {
-                        IItemHandler dataItems = component.getDataItems();
-                        MonitorGroup selectedGroup = null;
-                        for (MonitorGroup group : monitorGroups) {
-                            for (IMonitorComponent c : selectedComponents) {
-                                if (group.contains(c.getBlockPos())) {
-                                    if (selectedGroup == null || selectedGroup == group) {
-                                        selectedGroup = group;
-                                    } else {
-                                        selectedGroup = null;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (selectedGroup != null) {
-                            dataSlot[0] = selectedGroup.getDataSlot() + 1;
-                        }
-                        dataSlot[1] = dataItems.getSlots();
-                        dataSlotInput.setVisible(true);
-                    }
-                };
-                if (isInAnyGroup(component)) {
-                    monitorGroups.forEach(group -> {
-                        if (group.contains(component.getBlockPos())) img.setHoverTooltips(
-                                Component.translatable("gtpm.gui.central_monitor.group", group.getName()));
-                    });
-                } else {
-                    img.setHoverTooltips(Component.translatable("gtpm.gui.central_monitor.group",
-                            Component.translatable("gtpm.gui.central_monitor.none")));
-                }
-                img.setOnPressCallback(click -> {
-                    if (click.button == 0) callback.accept(null);
-                    else if (click.button == 1) rightClickCallback.run();
-                });
-                componentSelection.addWidget(img);
-                imageButtons.getLast().add(callback);
-                rightClickCallbacks.put(component.getBlockPos(), rightClickCallback);
-            }
-        }
-        builder.addWidget(main);
-        return builder;
-    }
-
-    @Override
     public IGuiTexture getComponentIcon() {
-        return ResourceTexture.fromSpirit(GTCEu.id("block/multiblock/network_switch/overlay_front_active"));
+        return GuiTextures.spirit(GTCEu.id("block/multiblock/network_switch/overlay_front_active"));
     }
 
     @Override

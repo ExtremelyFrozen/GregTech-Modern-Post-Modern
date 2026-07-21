@@ -1,12 +1,12 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.IBatteryData;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.common.block.BatteryBlock;
 import com.gregtechceu.gtceu.common.machine.multiblock.electric.PowerSubstationMachine;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -63,9 +63,9 @@ public enum PowerSubstationBatteryPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return sortedBatteries().stream()
-                .map(entry -> new BlockInfo(entry.getValue().get().defaultBlockState(), null))
+                .map(entry -> new MultiblockBlockInfo(entry.getValue().get().defaultBlockState(), null))
                 .toList();
     }
 
@@ -74,6 +74,15 @@ public enum PowerSubstationBatteryPredicate implements StructurePredicate {
         return sortedBatteries().stream()
                 .map(entry -> (Block) entry.getValue().get())
                 .toList();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        List<MultiblockBlockInfo> batteries = sortedBatteries().stream()
+                .filter(entry -> entry.getKey().getTier() >= 0 && entry.getKey().getCapacity() > 0)
+                .map(entry -> new MultiblockBlockInfo(entry.getValue().get().defaultBlockState(), null))
+                .toList();
+        return List.of(StructurePreviewChoice.unrestricted(batteries));
     }
 
     private List<Map.Entry<IBatteryData, Supplier<BatteryBlock>>> sortedBatteries() {

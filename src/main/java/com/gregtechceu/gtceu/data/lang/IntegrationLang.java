@@ -19,7 +19,7 @@ public class IntegrationLang {
         initOwnershipLang(provider);
     }
 
-    /** JEI, REI, EMI */
+    /** JEI, EMI */
     private static void initRecipeViewerLang(RegistrateLangProvider provider) {
         provider.add("gtpm.jei.multiblock_info", "Multiblock Info");
         provider.add("gtpm.jei.ore_processing_diagram", "Ore Processing Diagram");
@@ -43,8 +43,6 @@ public class IntegrationLang {
             String name = id.getPath();
             provider.add(id.toLanguageKey("bedrock_fluid"), RegistrateLangProvider.toEnglishName(name));
         }
-
-        provider.add("gtpm.rei.group.potion_fluids", "Potion Fluids");
     }
 
     /** Jade */

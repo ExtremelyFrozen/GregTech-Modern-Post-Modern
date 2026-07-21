@@ -1,14 +1,35 @@
 package com.gregtechceu.gtceu.common.machine.multiblock.generator;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.fluids.store.FluidStorageKeys;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2VoidingModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.ITieredMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockDisplayText;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -24,19 +45,31 @@ import com.gregtechceu.gtceu.data.recipe.builder.GTRecipeBuilder;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 import com.gregtechceu.gtceu.utils.GTMath;
 
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.fluids.FluidStack;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMachine implements ITieredMachine {
+public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMachine
+                                          implements ITieredMachine, LDLib2MachineUIProvider,
+                                          LDLib2FancyActionMachine {
 
     private static final FluidStack OXYGEN_STACK = GTMaterials.Oxygen.getFluid(1);
     private static final FluidStack LIQUID_OXYGEN_STACK = GTMaterials.Oxygen.getFluid(FluidStorageKeys.LIQUID, 4);
@@ -48,13 +81,23 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
     @SyncToClient
     private boolean isOxygenBoosted = false;
     private int runningTimer = 0;
+    @Getter(AccessLevel.PACKAGE)
+    private final ConditionalSubscriptionHandler displaySnapshotSubscription;
+    @Getter(AccessLevel.PACKAGE)
+    @SyncToClient
+    private List<Component> displaySnapshot = List.of();
+    @Getter(AccessLevel.PACKAGE)
+    @SyncToClient
+    private boolean intakeObstructionSnapshot;
 
     public LargeCombustionEngineMachine(BlockEntityCreationInfo info, int tier) {
         super(info);
         this.tier = tier;
+        displaySnapshotSubscription = new ConditionalSubscriptionHandler(this, this::refreshDisplaySnapshot,
+                this::isFormed);
     }
 
-    private boolean isIntakesObstructed() {
+    protected boolean isIntakesObstructed() {
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
                 // Skip the controller block itself
@@ -68,6 +111,49 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
             }
         }
         return false;
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (!isRemote()) {
+            refreshDisplaySnapshot();
+            displaySnapshotSubscription.initialize(getLevel());
+        }
+    }
+
+    @Override
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName) || isRemote()) return;
+        refreshDisplaySnapshot();
+        displaySnapshotSubscription.updateSubscription();
+    }
+
+    @Override
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName) || isRemote()) return;
+        refreshDisplaySnapshot();
+        displaySnapshotSubscription.updateSubscription();
+    }
+
+    @Override
+    public void onUnload() {
+        super.onUnload();
+        resetDisplaySnapshot();
+    }
+
+    @Override
+    public void onPartUnload() {
+        super.onPartUnload();
+        resetDisplaySnapshot();
+    }
+
+    private void resetDisplaySnapshot() {
+        displaySnapshot = List.of();
+        intakeObstructionSnapshot = false;
+        displaySnapshotSubscription.unsubscribe();
     }
 
     private boolean isExtreme() {
@@ -102,6 +188,11 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
     protected double getProductionBoost() {
         if (!isOxygenBoosted) return 1;
         return isExtreme() ? 2.0 : 1.5;
+    }
+
+    void setOxygenBoosted(boolean oxygenBoosted) {
+        if (this.isOxygenBoosted == oxygenBoosted) return;
+        this.isOxygenBoosted = oxygenBoosted;
     }
 
     /**
@@ -153,10 +244,9 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
         // check boost fluid
         if (isBoostAllowed()) {
             var boosterRecipe = getBoostRecipe();
-            this.isOxygenBoosted = RecipeHelper.matchRecipe(this, boosterRecipe).isSuccess() &&
+            setOxygenBoosted(RecipeHelper.matchRecipe(this, boosterRecipe).isSuccess() &&
                     RecipeHelper.handleRecipeIO(this, boosterRecipe, IO.IN, this.recipeLogic.getChanceCaches())
-                            .isSuccess();
-            syncDataHolder.markClientSyncFieldDirty("isOxygenBoosted");
+                            .isSuccess());
         }
 
         runningTimer++;
@@ -176,32 +266,62 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
 
     @Override
     public void addDisplayText(List<Component> textList) {
+        textList.addAll(displaySnapshot);
+    }
+
+    void refreshDisplaySnapshot() {
+        List<Component> nextSnapshot = createDisplaySnapshot(captureDisplayState());
+        if (!displaySnapshot.equals(nextSnapshot)) {
+            displaySnapshot = nextSnapshot;
+        }
+
+        boolean nextIntakeObstruction = isFormed() && isIntakesObstructed();
+        if (intakeObstructionSnapshot != nextIntakeObstruction) {
+            intakeObstructionSnapshot = nextIntakeObstruction;
+        }
+    }
+
+    protected DisplayState captureDisplayState() {
         var workLogic = getWorkLogic();
-        MultiblockDisplayText.Builder builder = MultiblockDisplayText.builder(textList, isFormed())
-                .setWorkingStatus(workLogic.isWorkingEnabled(), workLogic.isActive());
+        GTRecipe lastRecipe = recipeLogic.getLastRecipe();
+        long lastEUt = lastRecipe == null ? 0 : lastRecipe.getOutputEUt();
+        boolean active = workLogic.isActive();
+        return new DisplayState(
+                isFormed(), workLogic.isWorkingEnabled(), active, tier, lastEUt,
+                isFormed() && active ? getRecipeFluidInputInfo() : null,
+                recipeLogic.getDuration(), isOxygenBoosted);
+    }
 
-        long lastEUt = recipeLogic.getLastRecipe() != null ?
-                recipeLogic.getLastRecipe().getOutputEUt() : 0;
-        if (isExtreme()) {
-            builder.addEnergyProductionLine(GTValues.V[tier + 1], lastEUt);
+    static List<Component> createDisplaySnapshot(DisplayState state) {
+        List<Component> text = new ArrayList<>();
+        MultiblockDisplayText.Builder builder = MultiblockDisplayText.builder(text, state.formed())
+                .setWorkingStatus(state.workingEnabled(), state.active());
+
+        if (state.tier() > GTValues.EV) {
+            builder.addEnergyProductionLine(GTValues.V[state.tier() + 1], state.lastEUt());
         } else {
-            builder.addEnergyProductionAmpsLine(GTValues.V[tier] * 3, 3);
+            builder.addEnergyProductionAmpsLine(GTValues.V[state.tier()] * 3, 3);
         }
 
-        if (workLogic.isActive() && workLogic.isWorkingEnabled()) {
-            builder.addCurrentEnergyProductionLine(lastEUt);
+        if (state.active() && state.workingEnabled()) {
+            builder.addCurrentEnergyProductionLine(state.lastEUt());
         }
 
-        builder.addFuelNeededLine(getRecipeFluidInputInfo(), recipeLogic.getDuration());
+        builder.addFuelNeededLine(state.requiredFuel(), state.recipeDuration());
 
-        if (isFormed && isOxygenBoosted) {
-            final var key = isExtreme() ? "gtpm.multiblock.large_combustion_engine.liquid_oxygen_boosted" :
+        if (state.formed() && state.oxygenBoosted()) {
+            String key = state.tier() > GTValues.EV ?
+                    "gtpm.multiblock.large_combustion_engine.liquid_oxygen_boosted" :
                     "gtpm.multiblock.large_combustion_engine.oxygen_boosted";
             builder.addCustom(tl -> tl.add(Component.translatable(key).withStyle(ChatFormatting.AQUA)));
         }
 
         builder.addWorkingStatusLine();
+        return List.copyOf(text);
     }
+
+    record DisplayState(boolean formed, boolean workingEnabled, boolean active, int tier, long lastEUt,
+                        @Nullable String requiredFuel, int recipeDuration, boolean oxygenBoosted) {}
 
     @Nullable
     public String getRecipeFluidInputInfo() {
@@ -222,13 +342,150 @@ public class LargeCombustionEngineMachine extends WorkableElectricMultiblockMach
     }
 
     @Override
-    public void attachTooltips(TooltipsPanel tooltipsPanel) {
-        super.attachTooltips(tooltipsPanel);
-        tooltipsPanel.attachTooltips(new IFancyTooltip.Basic(
-                () -> GuiTextures.INDICATOR_NO_STEAM.get(false),
-                () -> List.of(Component.translatable("gtpm.multiblock.large_combustion_engine.obstructed")
-                        .setStyle(Style.EMPTY.withColor(ChatFormatting.RED))),
-                this::isIntakesObstructed,
-                () -> null));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        requireMatchingHolder(holder);
+        LargeCombustionEngineFancyPage page = new LargeCombustionEngineFancyPage(player, holder);
+        return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    private void requireMatchingHolder(MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            GTCEu.LOGGER.error("Large Combustion Engine UI holder no longer resolves controller at {}",
+                    getBlockPos());
+            throw new IllegalArgumentException(
+                    "Large Combustion Engine UI holder must resolve the opened controller.");
+        }
+    }
+
+    private final class LargeCombustionEngineFancyPage implements LDLib2FancyUIProvider {
+
+        private static final int PAGE_WIDTH = 190;
+        private static final int PAGE_HEIGHT = 125;
+
+        private final MachineUIHolder holder;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+        private final List<LDLib2FancyUIProvider> partPages;
+
+        private LargeCombustionEngineFancyPage(Player player, MachineUIHolder holder) {
+            requireMatchingHolder(holder);
+            this.holder = holder;
+            directionalPage = new LDLib2DirectionalFancyConfigurator(LargeCombustionEngineMachine.this,
+                    player, holder);
+
+            List<LDLib2FancyUIProvider> pages = new ArrayList<>();
+            for (IMultiPart part : getParts()) {
+                if (!(part instanceof LDLib2FancyPartUIProvider pageProvider)) {
+                    GTCEu.LOGGER.error("Large Combustion Engine part {} has no LDLib2 Fancy page",
+                            part.self().getDefinition().getId());
+                    throw new IllegalStateException("Large Combustion Engine part has no LDLib2 Fancy page: " +
+                            part.self().getDefinition().getId());
+                }
+                pages.add(pageProvider.createLDLib2FancyPage(
+                        player, new MachineUIHolderContext(player, part.self())));
+            }
+            partPages = List.copyOf(pages);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != LargeCombustionEngineMachine.this) {
+                GTCEu.LOGGER.error("Large Combustion Engine page holder changed after opening at {}",
+                        getBlockPos());
+                throw new IllegalStateException(
+                        "Large Combustion Engine page holder no longer resolves its controller.");
+            }
+
+            UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+            root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
+
+            GTScrollerViewElement screen = new GTScrollerViewElement(4, 4, 182, 117);
+            screen.style(style -> style.backgroundTexture(getScreenTexture()));
+            screen.viewPort(viewPort -> viewPort
+                    .layout(layout -> layout.paddingAll(0))
+                    .style(style -> style.backgroundTexture(getScreenTexture())));
+            screen.scrollerStyle(style -> style
+                    .mode(ScrollerMode.VERTICAL)
+                    .verticalScrollDisplay(ScrollDisplay.AUTO)
+                    .horizontalScrollDisplay(ScrollDisplay.NEVER));
+
+            GTLabelElement title = new GTLabelElement(4, 5, 174, 10,
+                    getBlockState().getBlock().getDescriptionId(), true);
+            title.textStyle(style -> style
+                    .textColor(0x404040)
+                    .textShadow(false)
+                    .textAlignHorizontal(Horizontal.LEFT)
+                    .textAlignVertical(Vertical.CENTER));
+            screen.addScrollViewChild(title);
+            screen.addScrollViewChild(new GTComponentPanelElement(4, 17,
+                    LargeCombustionEngineMachine.this::addDisplayText)
+                    .setMaxWidthLimit(200)
+                    .clickHandler(LargeCombustionEngineMachine.this::handleDisplayClick));
+            root.addChild(screen);
+            return root;
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return PAGE_WIDTH;
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return PAGE_HEIGHT;
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+            LDLib2VoidingModeFancyConfigurator.attachConfigurators(
+                    configuratorPanel, LargeCombustionEngineMachine.this);
+            configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(
+                    LargeCombustionEngineMachine.this, holder));
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            for (IMultiPart part : getParts()) {
+                if (part instanceof IMaintenanceMachine maintenanceMachine) {
+                    maintenanceMachine.attachLDLib2MaintenanceTooltips(tooltipsPanel);
+                }
+            }
+            tooltipsPanel.attachTooltips(new IFancyTooltip.Basic(
+                    () -> GuiTextures.INDICATOR_NO_STEAM.get(false),
+                    () -> List.of(Component.translatable("gtpm.multiblock.large_combustion_engine.obstructed")
+                            .setStyle(Style.EMPTY.withColor(ChatFormatting.RED))),
+                    LargeCombustionEngineMachine.this::isIntakeObstructionSnapshot,
+                    () -> null));
+        }
+
+        @Override
+        public List<LDLib2FancyUIProvider> getSubTabs() {
+            return partPages;
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(Component.translatable(getDefinition().getDescriptionId()));
+        }
     }
 }

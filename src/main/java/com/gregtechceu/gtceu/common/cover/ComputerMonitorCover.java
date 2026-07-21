@@ -4,8 +4,17 @@ import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverBehavior;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
+import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
+import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.feature.IDataStickInteractable;
 import com.gregtechceu.gtceu.api.placeholder.IPlaceholderInfoProviderCover;
@@ -24,8 +33,10 @@ import com.gregtechceu.gtceu.integration.create.GTCreateIntegration;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.widget.*;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.Direction;
@@ -38,7 +49,10 @@ import net.minecraft.world.item.ItemStack;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -46,25 +60,41 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public class ComputerMonitorCover extends CoverBehavior
-                                  implements IUICover, IDataStickInteractable, IPlaceholderInfoProviderCover {
+                                  implements LDLib2CoverUIProvider, IDataStickInteractable,
+                                  IPlaceholderInfoProviderCover, ComputerMonitorCoverConfigActionTarget {
+
+    private static final int FORMAT_LINE_COUNT = 8;
+    private static final int TEXT_FIELD_WIDTH = 160;
+    private static final int TEXT_FIELD_HEIGHT = 15;
+    private static final int HORIZONTAL_PADDING = 10;
+    private static final int VERTICAL_PADDING = 2;
+    private static final int UPDATE_INTERVAL_MIN = 1;
+    private static final int UPDATE_INTERVAL_MAX = 60 * 20;
+    private static final int ROOT_WIDTH = 390;
+    private static final int CONTENT_HEIGHT = 195;
+
+    static {
+        ComputerMonitorCoverConfigActions.initialize();
+    }
 
     private TickableSubscription subscription;
     private final CoverTextRenderer renderer;
     @SaveField
+    @SyncToClient
     @Getter
-    private List<String> formatStringArgs = new ArrayList<>(8);
+    private List<String> formatStringArgs = new ArrayList<>(FORMAT_LINE_COUNT);
     @SaveField
+    @SyncToClient
     @Getter
-    private List<String> formatStringLines = new ArrayList<>(8);
+    private List<String> formatStringLines = new ArrayList<>(FORMAT_LINE_COUNT);
     @SaveField
     @SyncToClient
     @Getter
     private List<MutableComponent> text = new ArrayList<>();
     @SaveField
-    public CustomItemStackHandler itemStackHandler = new CustomItemStackHandler(8);
+    public CustomItemStackHandler itemStackHandler = new CustomItemStackHandler(FORMAT_LINE_COUNT);
     @Setter
     private String placeholderSearch = "";
-    @Setter
     @Getter
     @SaveField
     private int updateInterval = 100;
@@ -122,84 +152,192 @@ public class ComputerMonitorCover extends CoverBehavior
     }
 
     @Override
-    public Widget createUIWidget() {
-        int textFieldWidth = 160, horizontalPadding = 10, verticalPadding = 2;
-        final WidgetGroup group = new WidgetGroup(0, 0, 2 * textFieldWidth + 3 * horizontalPadding, 150);
-        final WidgetGroup mainPage = new WidgetGroup(0, 0, 2 * textFieldWidth + 3 * horizontalPadding, 150);
-        final WidgetGroup formatStringArgsPage = new WidgetGroup(0, 0, 2 * textFieldWidth + 3 * horizontalPadding, 150);
-        for (int i = 0; i < 8; i++) {
-            TextFieldWidget formatStringInput = new TextFieldWidget();
-            formatStringInput.setSize(textFieldWidth, 15);
-            formatStringInput.setSelfPosition(horizontalPadding + textFieldWidth / 2,
-                    10 + verticalPadding + i * (15 + verticalPadding));
-            formatStringInput.setHoverTooltips(GTStringUtils.toImmutable(
-                    LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.main_textbox_tooltip", i + 1)));
-            int finalI = i;
-            if (i >= formatStringLines.size()) formatStringLines.add("");
-            formatStringInput.setCurrentString(formatStringLines.get(i));
-            formatStringInput.setTextResponder((s) -> formatStringLines.set(finalI, s));
-            mainPage.addWidget(formatStringInput);
-            SlotWidget slot = new com.gregtechceu.gtceu.api.gui.widget.SlotWidget(
-                    itemStackHandler,
-                    i,
-                    horizontalPadding + 50,
-                    20 * i);
-            slot.setBackgroundTexture(SlotWidget.ITEM_SLOT_TEXTURE);
-            slot.setHoverTooltips(GTStringUtils
-                    .toImmutable(LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.slot_tooltip", i + 1)));
-            mainPage.addWidget(slot);
-        }
-        for (int i = 0; i < 8; i++) {
-            TextFieldWidget formatStringArgsInput = new TextFieldWidget();
-            formatStringArgsInput.setSize(textFieldWidth, 15);
-            formatStringArgsInput.setSelfPosition(textFieldWidth / 2 + horizontalPadding,
-                    10 + verticalPadding + i * (15 + verticalPadding));
-            formatStringArgsInput.setHoverTooltips(GTStringUtils.toImmutable(
-                    LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.second_page_textbox_tooltip",
-                            GTStringUtils.getIntOrderingSuffix(i + 1))));
+    public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+        return holder.getCover() == this;
+    }
 
-            int finalI = i;
-            if (i >= formatStringArgs.size()) formatStringArgs.add("");
-            formatStringArgsInput.setCurrentString(formatStringArgs.get(i));
-            formatStringArgsInput.setTextResponder((s) -> formatStringArgs.set(finalI, s));
-            formatStringArgsPage.addWidget(formatStringArgsInput);
+    @Override
+    public UI createLDLib2UI(Player player, UICoverHolder holder) {
+        ensureFormatStringSlots();
+
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, ROOT_WIDTH, CONTENT_HEIGHT + 82);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
+
+        UIElement mainPage = new UIElement();
+        UITemplate.setLDLib2Bounds(mainPage, 0, 0, ROOT_WIDTH, CONTENT_HEIGHT);
+        UIElement formatStringArgsPage = new UIElement();
+        UITemplate.setLDLib2Bounds(formatStringArgsPage, 0, 0, ROOT_WIDTH, CONTENT_HEIGHT);
+        formatStringArgsPage.setVisible(false);
+
+        for (int i = 0; i < FORMAT_LINE_COUNT; i++) {
+            mainPage.addChild(createLDLib2FormatStringLineField(player, holder, i));
+            mainPage.addChild(createLDLib2ItemSlot(i));
+            formatStringArgsPage.addChild(createLDLib2FormatStringArgField(player, holder, i));
         }
-        ButtonWidget switchToFormatStringArgsPageButton = new ButtonWidget(
-                horizontalPadding + 50,
-                10 * (15 + verticalPadding) + verticalPadding,
+
+        mainPage.addChild(createLDLib2PlaceholderReference(placeholderSearch));
+        mainPage.addChild(createLDLib2UpdateIntervalInput(player, holder));
+
+        GTButtonElement switchToFormatStringArgsPageButton = new GTButtonElement(
+                HORIZONTAL_PADDING + 50,
+                10 * (TEXT_FIELD_HEIGHT + VERTICAL_PADDING) + VERTICAL_PADDING,
                 20, 20,
-                new ResourceBorderTexture(),
-                clickData -> {
-                    group.clearAllWidgets();
-                    group.addWidget(formatStringArgsPage);
+                GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_RIGHT),
+                event -> {
+                    mainPage.setVisible(false);
+                    formatStringArgsPage.setVisible(true);
                 });
-        ButtonWidget switchBack = new ButtonWidget(
-                horizontalPadding + 50,
-                10 * (15 + verticalPadding) + verticalPadding,
+        switchToFormatStringArgsPageButton.noText();
+        switchToFormatStringArgsPageButton.style(style -> style.tooltips(
+                Component.translatable("gtpm.gui.computer_monitor_cover.edit_blank_placeholders")));
+
+        GTButtonElement switchBack = new GTButtonElement(
+                HORIZONTAL_PADDING + 50,
+                10 * (TEXT_FIELD_HEIGHT + VERTICAL_PADDING) + VERTICAL_PADDING,
                 20, 20,
-                new ResourceBorderTexture(),
-                clickData -> {
-                    group.clearAllWidgets();
-                    group.addWidget(mainPage);
+                GuiTextures.group(GuiTextures.VANILLA_BUTTON, GuiTextures.BUTTON_LEFT),
+                event -> {
+                    formatStringArgsPage.setVisible(false);
+                    mainPage.setVisible(true);
                 });
-        mainPage.addWidget(PlaceholderHandler.getPlaceholderHandlerUI(""));
-        // TextFieldWidget searchBox = new TextFieldWidget(280, 0, 80, 15, null, onSearch);
-        // searchBox.setHoverTooltips("Search");
-        // mainPage.addWidget(searchBox);
-        IntInputWidget updateIntervalInput = new IntInputWidget(0, 0, 60, 20, this::getUpdateInterval,
-                this::setUpdateInterval);
-        updateIntervalInput.setMin(1);
-        updateIntervalInput.setMax(60 * 20);
-        updateIntervalInput
-                .setHoverTooltips(Component.translatable("gtpm.gui.computer_monitor_cover.update_interval"));
-        mainPage.addWidget(updateIntervalInput);
-        switchToFormatStringArgsPageButton
-                .setHoverTooltips(Component.translatable("gtpm.gui.computer_monitor_cover.edit_blank_placeholders"));
-        switchBack.setHoverTooltips(Component.translatable("gtpm.gui.computer_monitor_cover.edit_displayed_text"));
-        mainPage.addWidget(switchToFormatStringArgsPageButton);
-        formatStringArgsPage.addWidget(switchBack);
-        group.addWidget(mainPage);
-        return group;
+        switchBack.noText();
+        switchBack.style(style -> style.tooltips(
+                Component.translatable("gtpm.gui.computer_monitor_cover.edit_displayed_text")));
+
+        mainPage.addChild(switchToFormatStringArgsPageButton);
+        formatStringArgsPage.addChild(switchBack);
+        root.addChild(mainPage);
+        root.addChild(formatStringArgsPage);
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7,
+                CONTENT_HEIGHT, true));
+        return UI.of(root);
+    }
+
+    private GTTextFieldElement createLDLib2FormatStringLineField(Player player, UICoverHolder holder, int index) {
+        GTTextFieldElement field = createLDLib2FormatTextField(index);
+        field.setText(formatStringLines.get(index), false);
+        field.setTextResponder(value -> setLDLib2FormatStringLine(player, holder, index, value));
+        field.style(style -> style.tooltips(tooltips(
+                LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.main_textbox_tooltip", index + 1))));
+        return field;
+    }
+
+    private GTTextFieldElement createLDLib2FormatStringArgField(Player player, UICoverHolder holder, int index) {
+        GTTextFieldElement field = createLDLib2FormatTextField(index);
+        field.setText(formatStringArgs.get(index), false);
+        field.setTextResponder(value -> setLDLib2FormatStringArg(player, holder, index, value));
+        field.style(style -> style.tooltips(tooltips(
+                LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.second_page_textbox_tooltip",
+                        GTStringUtils.getIntOrderingSuffix(index + 1)))));
+        return field;
+    }
+
+    private static GTTextFieldElement createLDLib2FormatTextField(int index) {
+        GTTextFieldElement field = new GTTextFieldElement(
+                HORIZONTAL_PADDING + TEXT_FIELD_WIDTH / 2,
+                10 + VERTICAL_PADDING + index * (TEXT_FIELD_HEIGHT + VERTICAL_PADDING),
+                TEXT_FIELD_WIDTH,
+                TEXT_FIELD_HEIGHT);
+        field.setAnyString();
+        field.textFieldStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false));
+        return field;
+    }
+
+    private GTItemSlotElement createLDLib2ItemSlot(int index) {
+        GTItemSlotElement slot = new GTItemSlotElement(itemStackHandler, index)
+                .setBackgroundTexture(GuiTextures.SLOT);
+        UITemplate.setLDLib2Bounds(slot, HORIZONTAL_PADDING + 50, 20 * index, 18, 18);
+        slot.style(style -> style.tooltips(tooltips(
+                LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.slot_tooltip", index + 1))));
+        return slot;
+    }
+
+    private UIElement createLDLib2PlaceholderReference(String filter) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 280, 0, 110, CONTENT_HEIGHT);
+
+        root.addChild(createLDLib2Label(0, 0, 110, 15, Component.literal(GTStringUtils.componentsToString(
+                LangHandler.getMultiLang("gtpm.gui.computer_monitor_cover.placeholder_reference")))));
+
+        GTScrollerViewElement placeholderReference = new GTScrollerViewElement(0, 15, 100, CONTENT_HEIGHT - 15);
+        int y = 2;
+        List<String> placeholders = new ArrayList<>(PlaceholderHandler.getAllPlaceholderNames());
+        placeholders.removeIf(placeholder -> placeholder == null || !placeholder.contains(filter));
+        placeholders.sort(Comparator.naturalOrder());
+        for (String placeholder : placeholders) {
+            GTLabelElement placeholderName = createLDLib2Label(0, y, 100, 15, Component.literal(placeholder));
+            placeholderName.style(style -> style.tooltips(tooltips(
+                    LangHandler.getSingleOrMultiLang("gtpm.placeholder_info." + placeholder))));
+            placeholderReference.addChild(placeholderName);
+            y += 15;
+        }
+        root.addChild(placeholderReference);
+        return root;
+    }
+
+    private GTIntInputElement createLDLib2UpdateIntervalInput(Player player, UICoverHolder holder) {
+        GTIntInputElement input = new GTIntInputElement(0, 0, 60, 20, this::getUpdateInterval,
+                value -> setLDLib2UpdateInterval(player, holder, value))
+                .setMin(UPDATE_INTERVAL_MIN)
+                .setMax(UPDATE_INTERVAL_MAX);
+        input.style(style -> style.tooltips(
+                Component.translatable("gtpm.gui.computer_monitor_cover.update_interval")));
+        return input;
+    }
+
+    private static GTLabelElement createLDLib2Label(int x, int y, int width, int height, Component text) {
+        GTLabelElement label = new GTLabelElement(x, y, width, height, text);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private void setLDLib2FormatStringLine(Player player, UICoverHolder holder, int index, String value) {
+        setFormatStringEntry(formatStringLines, index, value);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2FormatStringArg(Player player, UICoverHolder holder, int index, String value) {
+        setFormatStringEntry(formatStringArgs, index, value);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2UpdateInterval(Player player, UICoverHolder holder, int value) {
+        setUpdateInterval(value);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
+        if (player.level().isClientSide()) {
+            CoverUIHelper.sendAction(holder, ComputerMonitorCoverConfigActions.createSetConfigAction(
+                    formatStringLines, formatStringArgs, getUpdateInterval()));
+        }
+    }
+
+    private void ensureFormatStringSlots() {
+        ensureListSize(formatStringLines, FORMAT_LINE_COUNT);
+        ensureListSize(formatStringArgs, FORMAT_LINE_COUNT);
+    }
+
+    private static void setFormatStringEntry(List<String> values, int index, String value) {
+        ensureListSize(values, index + 1);
+        values.set(index, value);
+    }
+
+    private static void ensureListSize(List<String> values, int size) {
+        while (values.size() < size) {
+            values.add("");
+        }
+    }
+
+    private static Component[] tooltips(List<MutableComponent> tooltips) {
+        return GTStringUtils.toImmutable(tooltips).toArray(Component[]::new);
     }
 
     @Override
@@ -266,5 +404,24 @@ public class ComputerMonitorCover extends CoverBehavior
         dataStick.set(GTDataComponents.COMPUTER_MONITOR_CONFIG,
                 new ComputerMonitorConfig(formatStringLines, formatStringArgs, updateInterval));
         return InteractionResult.sidedSuccess(player.level().isClientSide);
+    }
+
+    @Override
+    public void replaceFormatStringLines(List<String> lines) {
+        formatStringLines.clear();
+        formatStringLines.addAll(lines);
+        ensureListSize(formatStringLines, FORMAT_LINE_COUNT);
+    }
+
+    @Override
+    public void replaceFormatStringArgs(List<String> args) {
+        formatStringArgs.clear();
+        formatStringArgs.addAll(args);
+        ensureListSize(formatStringArgs, FORMAT_LINE_COUNT);
+    }
+
+    @Override
+    public void setUpdateInterval(int updateInterval) {
+        this.updateInterval = updateInterval;
     }
 }

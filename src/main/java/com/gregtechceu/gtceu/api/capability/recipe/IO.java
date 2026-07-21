@@ -1,16 +1,15 @@
 package com.gregtechceu.gtceu.api.capability.recipe;
 
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
-
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
 import lombok.Getter;
 
 /**
  * The capability can be input or output or both
  */
-public enum IO implements EnumSelectorWidget.SelectableEnum {
+public enum IO implements SelectableEnum {
 
     IN("gtpm.io.import", "import"),
     OUT("gtpm.io.export", "export"),
@@ -24,7 +23,7 @@ public enum IO implements EnumSelectorWidget.SelectableEnum {
 
     IO(String tooltip, String textureName) {
         this.tooltip = tooltip;
-        this.icon = new ResourceTexture("gtpm:textures/gui/icon/io_mode/" + textureName + ".png");
+        this.icon = GuiTextures.resource("gtpm:textures/gui/icon/io_mode/" + textureName + ".png");
     }
 
     public boolean support(IO io) {

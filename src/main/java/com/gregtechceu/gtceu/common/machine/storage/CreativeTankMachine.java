@@ -1,22 +1,44 @@
 package com.gregtechceu.gtceu.common.machine.storage;
 
+import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.PhantomFluidWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTButtonElement;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTPhantomFluidSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTTextFieldElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyConfiguratorButton;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.item.datacomponents.CreativeMachineInfo;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.transfer.fluid.CustomFluidTank;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
-import com.lowdragmc.lowdraglib.gui.widget.*;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
@@ -26,13 +48,24 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-public class CreativeTankMachine extends QuantumTankMachine {
+import java.util.List;
+
+public class CreativeTankMachine extends QuantumTankMachine
+                                 implements LDLib2MachineUIProvider, CreativeTankFluidActionTarget {
+
+    private static final int PAGE_WIDTH = 176;
+    private static final int PAGE_HEIGHT = 131;
+    static {
+        CreativeTankMachineActions.initialize();
+    }
 
     @Getter
     @SaveField
+    @SyncBoth
     private int mBPerCycle = 1000;
     @Getter
     @SaveField
+    @SyncBoth
     private int ticksPerCycle = 1;
 
     public CreativeTankMachine(BlockEntityCreationInfo info) {
@@ -46,7 +79,9 @@ public class CreativeTankMachine extends QuantumTankMachine {
     @Override
     public void onLoad() {
         super.onLoad();
-        if (!isRemote()) autoOutput.setTicksPerCycle(ticksPerCycle);
+        if (!isRemote()) {
+            autoOutput.setTicksPerCycle(ticksPerCycle);
+        }
     }
 
     @Override
@@ -54,21 +89,53 @@ public class CreativeTankMachine extends QuantumTankMachine {
         return (long) Math.ceil(1d * mBPerCycle / ticksPerCycle);
     }
 
-    private InteractionResult updateStored(FluidStack fluid) {
-        stored = fluid.copyWithAmount(FluidType.BUCKET_VOLUME);
+    @Override
+    public void setCreativeTankFluid(FluidStack fluid) {
+        stored = fluid.isEmpty() ? FluidStack.EMPTY : fluid.copyWithAmount(FluidType.BUCKET_VOLUME);
         onFluidChanged();
+    }
+
+    private InteractionResult updateStored(FluidStack fluid) {
+        setCreativeTankFluid(fluid);
         return InteractionResult.SUCCESS;
     }
 
-    private void setTicksPerCycle(String value) {
-        if (value.isEmpty()) return;
-        ticksPerCycle = Integer.parseInt(value);
+    private void setTicksPerCycle(int ticksPerCycle) {
+        int normalizedTicksPerCycle = normalizeTicksPerCycle(ticksPerCycle);
+        this.ticksPerCycle = normalizedTicksPerCycle;
+        autoOutput.setTicksPerCycle(normalizedTicksPerCycle);
         onFluidChanged();
     }
 
-    private void setmBPerCycle(String value) {
-        if (value.isEmpty()) return;
-        mBPerCycle = Integer.parseInt(value);
+    private void setMillibucketsPerCycle(int mBPerCycle) {
+        this.mBPerCycle = normalizeMillibucketsPerCycle(mBPerCycle);
+        onFluidChanged();
+    }
+
+    @ServerFieldNormalizer(fieldName = "mBPerCycle")
+    private int normalizeMillibucketsPerCycle(int candidate) {
+        if (candidate <= 0) {
+            throw new IllegalArgumentException("Millibuckets per cycle must be positive: " + candidate);
+        }
+        return candidate;
+    }
+
+    @ServerFieldNormalizer(fieldName = "ticksPerCycle")
+    private int normalizeTicksPerCycle(int candidate) {
+        if (candidate <= 0) {
+            throw new IllegalArgumentException("Ticks per cycle must be positive: " + candidate);
+        }
+        return candidate;
+    }
+
+    @ServerFieldChangeListener(fieldName = "mBPerCycle")
+    private void onMillibucketsPerCycleChanged(int oldValue, int newValue) {
+        onFluidChanged();
+    }
+
+    @ServerFieldChangeListener(fieldName = "ticksPerCycle")
+    private void onTicksPerCycleChanged(int oldValue, int newValue) {
+        autoOutput.setTicksPerCycle(newValue);
         onFluidChanged();
     }
 
@@ -77,14 +144,12 @@ public class CreativeTankMachine extends QuantumTankMachine {
         var heldItem = context.getItemInHand();
         var player = context.getPlayer();
         if (context.getClickedFace() == getFrontFacing() && !isRemote()) {
-            // If no fluid set and held-item has fluid, set fluid
             if (stored.isEmpty()) {
                 return FluidUtil.getFluidContained(heldItem)
                         .map(this::updateStored)
                         .orElse(InteractionResult.PASS);
             }
 
-            // Need to make a fake source to fully fill held-item since our cache only allows mbPerTick extraction
             CustomFluidTank source = new CustomFluidTank(stored.copyWithAmount(Integer.MAX_VALUE));
             ItemStack result = FluidUtil.tryFillContainer(heldItem, source, Integer.MAX_VALUE, player, true)
                     .getResult();
@@ -97,11 +162,10 @@ public class CreativeTankMachine extends QuantumTankMachine {
             if (!result.isEmpty()) {
                 player.setItemInHand(context.getHand(), result);
                 return InteractionResult.SUCCESS;
-            } else {
-                return FluidUtil.getFluidContained(heldItem)
-                        .map(this::updateStored)
-                        .orElse(InteractionResult.PASS);
             }
+            return FluidUtil.getFluidContained(heldItem)
+                    .map(this::updateStored)
+                    .orElse(InteractionResult.PASS);
         }
         return super.onUseWithItem(context);
     }
@@ -109,7 +173,6 @@ public class CreativeTankMachine extends QuantumTankMachine {
     @Override
     public InteractionResult onUse(ExtendedUseOnContext context) {
         if (context.getClickedFace() == getFrontFacing() && !isRemote()) {
-            // Clear fluid if empty + shift-rclick
             if (context.getPlayer().isCrouching() && !stored.isEmpty()) {
                 return updateStored(FluidStack.EMPTY);
             }
@@ -119,31 +182,188 @@ public class CreativeTankMachine extends QuantumTankMachine {
     }
 
     @Override
-    public WidgetGroup createUIWidget() {
-        var group = new WidgetGroup(0, 0, 176, 131);
-        group.addWidget(new PhantomFluidWidget(cache, 0, 36, 6, 18, 18, this::getStored, this::updateStored)
-                .setShowAmount(false)
-                .setBackground(GuiTextures.FLUID_SLOT));
-        group.addWidget(new LabelWidget(7, 9, "gtpm.creative.tank.fluid"));
-        group.addWidget(new ImageWidget(7, 45, 154, 14, GuiTextures.DISPLAY));
-        group.addWidget(new TextFieldWidget(9, 47, 152, 10, () -> String.valueOf(mBPerCycle), this::setmBPerCycle)
-                .setMaxStringLength(11)
-                .setNumbersOnly(1, Integer.MAX_VALUE));
-        group.addWidget(new LabelWidget(7, 28, "gtpm.creative.tank.mbpc"));
-        group.addWidget(new ImageWidget(7, 82, 154, 14, GuiTextures.DISPLAY));
-        group.addWidget(new TextFieldWidget(9, 84, 152, 10, () -> String.valueOf(ticksPerCycle), this::setTicksPerCycle)
-                .setMaxStringLength(11)
-                .setNumbersOnly(1, Integer.MAX_VALUE));
-        group.addWidget(new LabelWidget(7, 65, "gtpm.creative.tank.tpc"));
-        group.addWidget(new SwitchWidget(7, 101, 162, 20, (clickData, value) -> setWorkingEnabled(value))
-                .setTexture(
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtpm.creative.activity.off")),
-                        new GuiTextureGroup(ResourceBorderTexture.BUTTON_COMMON,
-                                new TextTexture("gtpm.creative.activity.on")))
-                .setPressed(isWorkingEnabled()));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
 
-        return group;
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        return UI.of(new LDLib2FancyMachineUIElement(new CreativeTankLDLib2Page(player, holder),
+                player.getInventory(), holder, PAGE_WIDTH, PAGE_HEIGHT));
+    }
+
+    private UIElement createLDLib2MainPage(Player player, MachineUIHolder holder) {
+        UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+        root.addChild(createLDLib2StoredFluidSlot(player, holder));
+        root.addChild(createLDLib2Label(7, 9, 162, 10, "gtpm.creative.tank.fluid"));
+        root.addChild(new GTImageElement(7, 45, 154, 14, GuiTextures.DISPLAY));
+        root.addChild(createLDLib2MillibucketsPerCycleField());
+        root.addChild(createLDLib2Label(7, 28, 162, 10, "gtpm.creative.tank.mbpc"));
+        root.addChild(new GTImageElement(7, 82, 154, 14, GuiTextures.DISPLAY));
+        root.addChild(createLDLib2TicksPerCycleField());
+        root.addChild(createLDLib2Label(7, 65, 162, 10, "gtpm.creative.tank.tpc"));
+        root.addChild(createLDLib2ActivityButton());
+        return root;
+    }
+
+    private GTPhantomFluidSlotElement createLDLib2StoredFluidSlot(Player player, MachineUIHolder holder) {
+        GTPhantomFluidSlotElement slot = new GTPhantomFluidSlotElement(this::getStored,
+                fluid -> setLDLib2StoredFluid(player, holder, fluid), () -> FluidType.BUCKET_VOLUME) {
+
+            @Override
+            public void screenTick() {
+                refreshFromSupplier();
+                setShowAmount(false);
+                super.screenTick();
+            }
+        };
+        slot.setBackgroundTexture(GuiTextures.FLUID_SLOT);
+        slot.setShowAmount(false);
+        UITemplate.setLDLib2Bounds(slot, 36, 6, 18, 18);
+        slot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+            if (!player.level().isClientSide()) {
+                return;
+            }
+            if (event.button == 0 || event.button == 1) {
+                FluidStack fluid = FluidUtil.getFluidContained(player.containerMenu.getCarried())
+                        .map(stack -> stack.copyWithAmount(FluidType.BUCKET_VOLUME))
+                        .orElse(FluidStack.EMPTY);
+                slot.setFluid(fluid);
+                event.stopImmediatePropagation();
+                event.hasHandler = true;
+            }
+        });
+        return slot;
+    }
+
+    private GTLabelElement createLDLib2Label(int x, int y, int width, int height, String translationKey) {
+        GTLabelElement label = new GTLabelElement(x, y, width, height, translationKey, true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    GTTextFieldElement createLDLib2MillibucketsPerCycleField() {
+        GTTextFieldElement field = new GTTextFieldElement(9, 47, 152, 10) {
+
+            @Override
+            public void screenTick() {
+                if (!isFocused()) {
+                    setText(Integer.toString(mBPerCycle), false);
+                }
+                super.screenTick();
+            }
+        };
+        field.setNumbersOnlyInt(1, Integer.MAX_VALUE);
+        field.setText(Integer.toString(mBPerCycle), false);
+        field.textFieldStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false));
+        field.setTextResponder(this::setLDLib2MillibucketsPerCycle);
+        return field;
+    }
+
+    GTTextFieldElement createLDLib2TicksPerCycleField() {
+        GTTextFieldElement field = new GTTextFieldElement(9, 84, 152, 10) {
+
+            @Override
+            public void screenTick() {
+                if (!isFocused()) {
+                    setText(Integer.toString(ticksPerCycle), false);
+                }
+                super.screenTick();
+            }
+        };
+        field.setNumbersOnlyInt(1, Integer.MAX_VALUE);
+        field.setText(Integer.toString(ticksPerCycle), false);
+        field.textFieldStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false));
+        field.setTextResponder(this::setLDLib2TicksPerCycle);
+        return field;
+    }
+
+    private GTButtonElement createLDLib2ActivityButton() {
+        return new GTButtonElement(7, 101, 162, 20, createLDLib2ActivityButtonTexture(),
+                event -> setLDLib2WorkingEnabled(!isWorkingEnabled())) {
+
+            @Override
+            public void screenTick() {
+                setButtonTexture(createLDLib2ActivityButtonTexture());
+                super.screenTick();
+            }
+        };
+    }
+
+    private IGuiTexture createLDLib2ActivityButtonTexture() {
+        return GuiTextures.group(GuiTextures.BUTTON,
+                GuiTextures.text(isWorkingEnabled() ? "gtpm.creative.activity.on" : "gtpm.creative.activity.off"));
+    }
+
+    LDLib2FancyConfiguratorButton.Toggle createLDLib2WorkingEnabledConfigurator() {
+        return new LDLib2FancyConfiguratorButton.Toggle(
+                GuiTextures.BUTTON_POWER.getSubTexture(0, 0, 1, 0.5),
+                GuiTextures.BUTTON_POWER.getSubTexture(0, 0.5, 1, 0.5),
+                this::isWorkingEnabled,
+                (event, pressed) -> {
+                    setLDLib2WorkingEnabled(pressed);
+                    event.stopImmediatePropagation();
+                    event.hasHandler = true;
+                })
+                .setTooltipsSupplier(pressed -> List.of(Component.translatable(
+                        pressed ? "behaviour.soft_hammer.enabled" : "behaviour.soft_hammer.disabled")));
+    }
+
+    private void setLDLib2StoredFluid(Player player, MachineUIHolder holder, FluidStack fluid) {
+        setCreativeTankFluid(fluid);
+        if (player.level().isClientSide()) {
+            MachineUIHelper.sendAction(holder, CreativeTankMachineActions.createSetFluidAction(fluid));
+        }
+    }
+
+    private void setLDLib2MillibucketsPerCycle(String value) {
+        if (value.isEmpty()) {
+            return;
+        }
+        int parsedValue = parsePositiveInteger(value, "creative tank millibuckets per cycle");
+        setMillibucketsPerCycle(parsedValue);
+        if (isRemote()) {
+            sendServerSyncChanges();
+        }
+    }
+
+    private void setLDLib2TicksPerCycle(String value) {
+        if (value.isEmpty()) {
+            return;
+        }
+        int parsedValue = parsePositiveInteger(value, "creative tank ticks per cycle");
+        setTicksPerCycle(parsedValue);
+        if (isRemote()) {
+            sendServerSyncChanges();
+        }
+    }
+
+    private void setLDLib2WorkingEnabled(boolean workingEnabled) {
+        setWorkingEnabled(workingEnabled);
+        if (isRemote()) {
+            sendServerSyncChanges();
+        }
+    }
+
+    private static int parsePositiveInteger(String value, String fieldName) {
+        try {
+            int parsedValue = Integer.parseInt(value);
+            if (parsedValue <= 0) {
+                throw new IllegalArgumentException(fieldName + " must be positive: " + parsedValue);
+            }
+            return parsedValue;
+        } catch (NumberFormatException e) {
+            GTCEu.LOGGER.error("Invalid {} input: {}", fieldName, value, e);
+            throw e;
+        }
     }
 
     @Override
@@ -162,6 +382,61 @@ public class CreativeTankMachine extends QuantumTankMachine {
         components.set(GTDataComponents.CREATIVE_MACHINE_INFO, new CreativeMachineInfo(mBPerCycle, ticksPerCycle));
     }
 
+    private final class CreativeTankLDLib2Page implements LDLib2FancyUIProvider {
+
+        private final Player player;
+        private final MachineUIHolder holder;
+
+        private CreativeTankLDLib2Page(Player player, MachineUIHolder holder) {
+            this.player = player;
+            this.holder = holder;
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            return CreativeTankMachine.this.createLDLib2MainPage(player, holder);
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return PAGE_WIDTH;
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return PAGE_HEIGHT;
+        }
+
+        @Override
+        public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+            configuratorPanel.attachConfigurators(createLDLib2WorkingEnabledConfigurator());
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            tooltipsPanel.attachTooltips(CreativeTankMachine.this);
+            getTraitHolder().getAllTraits().stream()
+                    .filter(IFancyTooltip.class::isInstance)
+                    .map(IFancyTooltip.class::cast)
+                    .forEach(tooltipsPanel::attachTooltips);
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(Component.translatable(getDefinition().getDescriptionId()));
+        }
+    }
+
     private class InfiniteCache extends FluidCache {
 
         public InfiniteCache() {
@@ -175,21 +450,25 @@ public class CreativeTankMachine extends QuantumTankMachine {
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            if (!stored.isEmpty() && FluidStack.isSameFluidSameComponents(stored, resource))
+            if (!stored.isEmpty() && FluidStack.isSameFluidSameComponents(stored, resource)) {
                 return resource.getAmount();
+            }
             return 0;
         }
 
         @Override
         public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
-            if (!stored.isEmpty()) return stored.copyWithAmount(mBPerCycle);
+            if (!stored.isEmpty()) {
+                return stored.copyWithAmount(mBPerCycle);
+            }
             return FluidStack.EMPTY;
         }
 
         @Override
         public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
-            if (!stored.isEmpty() && FluidStack.isSameFluidSameComponents(stored, resource))
+            if (!stored.isEmpty() && FluidStack.isSameFluidSameComponents(stored, resource)) {
                 return resource.copyWithAmount(mBPerCycle);
+            }
             return FluidStack.EMPTY;
         }
 
@@ -200,7 +479,7 @@ public class CreativeTankMachine extends QuantumTankMachine {
 
         @Override
         public int getTankCapacity(int tank) {
-            return 1000;
+            return FluidType.BUCKET_VOLUME;
         }
     }
 }

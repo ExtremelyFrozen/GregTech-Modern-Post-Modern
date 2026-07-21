@@ -1,10 +1,86 @@
 package com.gregtechceu.gtceu.api.gui;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceBorderTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ColorRectTexture;
+import com.gregtechceu.gtceu.api.gui.texture.GuiTextureGroup;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ItemStackTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ProgressTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceBorderTexture;
+import com.gregtechceu.gtceu.api.gui.texture.ResourceTexture;
+import com.gregtechceu.gtceu.api.gui.texture.TextTexture;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 public class GuiTextures {
+
+    public static ResourceTexture resource(String texture) {
+        return new ResourceTexture(texture);
+    }
+
+    public static ResourceTexture resource(ResourceLocation texture) {
+        return new ResourceTexture(texture);
+    }
+
+    public static IGuiTexture group(IGuiTexture... textures) {
+        return new GuiTextureGroup(textures);
+    }
+
+    public static ResourceTexture spirit(ResourceLocation texture) {
+        return ResourceTexture.fromSpirit(texture);
+    }
+
+    public static ProgressTexture progressBar() {
+        return new ProgressTexture();
+    }
+
+    public static ProgressTexture progressBar(IGuiTexture emptyBar, IGuiTexture filledBar) {
+        return new ProgressTexture(emptyBar, filledBar);
+    }
+
+    public static ProgressTexture progressBar(ResourceTexture texture) {
+        return progressBar(texture.getSubTexture(0, 0, 1, 0.5),
+                texture.getSubTexture(0, 0.5, 1, 0.5));
+    }
+
+    public static ProgressTexture progressBar(ResourceTexture texture, ProgressTexture.FillDirection moveType) {
+        return progressBar(texture).setFillDirection(moveType);
+    }
+
+    public static IGuiTexture buttonState(IGuiTexture texture, boolean pressed) {
+        if (texture instanceof ResourceTexture resourceTexture) {
+            return resourceTexture.getSubTexture(0, pressed ? 0.5 : 0, 1, 0.5);
+        }
+        return texture;
+    }
+
+    public static ColorRectTexture colorRect(int color) {
+        return new ColorRectTexture(color);
+    }
+
+    public static ItemStackTexture itemStack(ItemStack... itemStacks) {
+        return new ItemStackTexture(itemStacks);
+    }
+
+    public static ItemStackTexture itemStack(Item... items) {
+        return new ItemStackTexture(items);
+    }
+
+    public static TextTexture text(String text) {
+        return new TextTexture(text);
+    }
+
+    public static TextTexture text(String text, int color) {
+        return new TextTexture(text, color);
+    }
+
+    public static TextTexture text(Supplier<String> text) {
+        return new TextTexture(text);
+    }
 
     // GREGTECH
     public static final ResourceTexture GREGTECH_LOGO = new ResourceTexture(
@@ -153,7 +229,7 @@ public class GuiTextures {
     public static final ResourceTexture SWITCH_HORIZONTAL = new ResourceTexture(
             "gtpm:textures/gui/widget/switch_horizontal.png");
     public static final ResourceTexture VANILLA_BUTTON = new ResourceBorderTexture(
-            "ldlib:textures/gui/button_common.png", 198, 18, 1, 1);
+            "ldlib2:textures/gui/button_common.png", 198, 18, 1, 1);
 
     public static final ResourceTexture ENERGY_DETECTOR_COVER_MODE_BUTTON = new ResourceTexture(
             "gtpm:textures/gui/widget/button_detector_cover_energy_mode.png");

@@ -3,6 +3,10 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredIOPartMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
@@ -15,11 +19,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 
 import lombok.Getter;
 
-public class DiodePartMachine extends TieredIOPartMachine {
+public class DiodePartMachine extends TieredIOPartMachine implements LDLib2FancyPartUIProvider {
 
     // spotless:off
     public enum AmpMode implements StringRepresentable {
@@ -81,10 +86,23 @@ public class DiodePartMachine extends TieredIOPartMachine {
         reinitializeEnergyContainer();
     }
 
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2FancyPreviewPage(this, player, holder,
+                new LDLib2FancyUIProvider.PageGroupingData(
+                        "gtpm.multiblock.page_switcher.io.both", 3));
+    }
+
     private void cycleAmpMode() {
-        amps = amps == getMaxAmperage() ? 1 : amps << 1;
+        setAmps(amps == getMaxAmperage() ? 1 : amps << 1);
+    }
+
+    void setAmps(int amps) {
+        if (this.amps == amps) {
+            return;
+        }
+        this.amps = amps;
         if (!isRemote()) {
-            syncDataHolder.markClientSyncFieldDirty("amps");
             reinitializeEnergyContainer();
             notifyBlockUpdate();
         }

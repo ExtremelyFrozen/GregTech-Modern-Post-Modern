@@ -6,31 +6,38 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.cover.filter.SimpleItemFilter;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
+import com.gregtechceu.gtceu.api.gui.element.GTEnumSelectorElement;
+import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.cover.data.TransferMode;
 import com.gregtechceu.gtceu.common.pipelike.item.ItemNetHandler;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.IItemHandler;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Map;
 
 public class RobotArmCover extends ConveyorCover {
+
+    static {
+        RobotArmCoverConfigActions.initialize();
+    }
 
     @SaveField
     @SyncToClient
@@ -38,12 +45,12 @@ public class RobotArmCover extends ConveyorCover {
     protected TransferMode transferMode;
 
     @SaveField
+    @SyncToClient
     @Getter
-    @Setter
     protected int globalTransferLimit;
     protected int itemsTransferBuffered;
 
-    private IntInputWidget stackSizeInput;
+    private @Nullable GTIntInputElement stackSizeLDLib2Input;
 
     public RobotArmCover(CoverDefinition definition, ICoverable coverHolder, Direction attachedSide, int tier,
                          int maxTransferRate) {
@@ -153,6 +160,15 @@ public class RobotArmCover extends ConveyorCover {
         itemsTransferBuffered = 0;
     }
 
+    public void setGlobalTransferLimit(int globalTransferLimit) {
+        int clamped = Math.min(Math.max(globalTransferLimit, 1), transferMode.maxStackSize);
+        if (this.globalTransferLimit != clamped) {
+            this.globalTransferLimit = clamped;
+            syncDataHolder.markClientSyncFieldDirty("globalTransferLimit");
+        }
+        configureStackSizeInput();
+    }
+
     //////////////////////////////////////
     // *********** GUI ***********//
     //////////////////////////////////////
@@ -164,23 +180,26 @@ public class RobotArmCover extends ConveyorCover {
     }
 
     @Override
-    protected void buildAdditionalUI(WidgetGroup group) {
-        group.addWidget(
-                new EnumSelectorWidget<>(146, 45, 20, 20, TransferMode.values(), transferMode, this::setTransferMode));
+    protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {
+        root.addChild(GTEnumSelectorElement.selectable(146, 45, 20, 20, TransferMode.values(),
+                this::getTransferMode, mode -> setLDLib2TransferMode(player, holder, mode)));
 
-        this.stackSizeInput = new IntInputWidget(64, 45, 80, 20,
-                () -> globalTransferLimit, val -> globalTransferLimit = val);
+        this.stackSizeLDLib2Input = new GTIntInputElement(64, 45, 80, 20,
+                this::getGlobalTransferLimit, value -> setLDLib2GlobalTransferLimit(player, holder, value));
         configureStackSizeInput();
-
-        group.addWidget(this.stackSizeInput);
+        root.addChild(this.stackSizeLDLib2Input);
     }
 
     public void setTransferMode(TransferMode transferMode) {
+        if (this.transferMode == transferMode) {
+            configureStackSizeInput();
+            return;
+        }
         this.transferMode = transferMode;
 
         configureStackSizeInput();
 
-        if (!this.isRemote()) {
+        if (!coverHolder.isRemote()) {
             syncDataHolder.markClientSyncFieldDirty("transferMode");
             configureFilter();
         }
@@ -196,12 +215,12 @@ public class RobotArmCover extends ConveyorCover {
     }
 
     private void configureStackSizeInput() {
-        if (this.stackSizeInput == null)
+        if (this.stackSizeLDLib2Input == null)
             return;
 
-        this.stackSizeInput.setVisible(shouldShowStackSize());
-        this.stackSizeInput.setMin(1);
-        this.stackSizeInput.setMax(this.transferMode.maxStackSize);
+        this.stackSizeLDLib2Input.setVisible(shouldShowStackSize());
+        this.stackSizeLDLib2Input.setMin(1);
+        this.stackSizeLDLib2Input.setMax(this.transferMode.maxStackSize);
     }
 
     private boolean shouldShowStackSize() {
@@ -212,6 +231,23 @@ public class RobotArmCover extends ConveyorCover {
             return true;
 
         return !this.filterHandler.getFilter().supportsAmounts();
+    }
+
+    private void setLDLib2TransferMode(Player player, UICoverHolder holder, TransferMode mode) {
+        setTransferMode(mode);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2GlobalTransferLimit(Player player, UICoverHolder holder, int value) {
+        setGlobalTransferLimit(value);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
+        if (player.level().isClientSide()) {
+            CoverUIHelper.sendAction(holder, RobotArmCoverConfigActions.createSetConfigAction(getTransferMode(),
+                    getGlobalTransferLimit()));
+        }
     }
 
     @Override

@@ -1,12 +1,10 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.fluids.FluidStack;
-
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,13 +51,13 @@ public interface FluidFilter extends Filter<FluidStack, FluidFilter> {
         }
 
         @Override
-        public WidgetGroup openConfigurator(int x, int y) {
-            throw new NotImplementedException("Not available for empty fluid filter");
+        public UIElement openLDLib2Configurator(int x, int y) {
+            throw new UnsupportedOperationException("Not available for empty fluid filter");
         }
 
         @Override
         public void setOnUpdated(Consumer<FluidFilter> onUpdated) {
-            throw new NotImplementedException("Not available for empty fluid filter");
+            throw new UnsupportedOperationException("Not available for empty fluid filter");
         }
     };
 }

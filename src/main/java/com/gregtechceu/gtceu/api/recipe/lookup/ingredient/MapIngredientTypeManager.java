@@ -81,7 +81,8 @@ public final class MapIngredientTypeManager {
             }
         }
         // if the ingredient is not of the base type, and we didn't find any specific ones for it, return a default
-        return Objects.requireNonNullElseGet(cap.getDefaultMapIngredient(object), Collections::emptyList);
+        List<AbstractMapIngredient> defaultIngredients = cap.getDefaultMapIngredient(object);
+        return defaultIngredients == null ? Collections.emptyList() : defaultIngredients;
     }
 
     private static final Map<Class<?>, Class<?>> WRAPPERS = Util.make(new HashMap<>(9), map -> {

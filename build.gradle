@@ -74,6 +74,7 @@ apply from: "$rootDir/gradle/scripts/resources.gradle"
 apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/spotless.gradle"
 apply from: "$rootDir/gradle/scripts/docs.gradle"
+apply from: "$rootDir/gradle/scripts/ldlib2-migration.gradle"
 
 tasks.named('compileJava', JavaCompile) {
     dependsOn tasks.named('compileKotlin')
@@ -87,6 +88,7 @@ tasks.named('delombok') {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
+    options.compilerArgs << '-Xmaxerrs' << '2000'
     options.compilerArgs << "-Xlint:-removal"
 }
 

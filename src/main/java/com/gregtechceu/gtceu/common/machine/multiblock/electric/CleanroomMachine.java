@@ -6,16 +6,37 @@ import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IEnergyContainer;
 import com.gregtechceu.gtceu.api.capability.recipe.EURecipeCapability;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTComponentPanelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTScrollerViewElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolderContext;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2ConfiguratorPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.ConditionalSubscriptionHandler;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2VoidingModeFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2WorkingEnabledFancyConfigurator;
 import com.gregtechceu.gtceu.api.machine.feature.IDataInfoProvider;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyActionMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IDisplayUIMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMaintenanceMachine;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.CleanroomType;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
 import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
 import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.item.behavior.PortableScannerBehavior;
 import com.gregtechceu.gtceu.common.machine.electric.HullMachine;
@@ -28,6 +49,13 @@ import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollDisplay;
+import com.lowdragmc.lowdraglib2.gui.ui.data.ScrollerMode;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -35,6 +63,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -42,6 +71,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import lombok.AccessLevel;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +80,8 @@ import java.util.*;
 import static com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection.*;
 
 public class CleanroomMachine extends WorkableElectricMultiblockMachine
-                              implements IDisplayUIMachine, IDataInfoProvider {
+                              implements IDisplayUIMachine, IDataInfoProvider, LDLib2MachineUIProvider,
+                              LDLib2FancyActionMachine {
 
     public static final int CLEAN_AMOUNT_THRESHOLD = 95;
     public static final int MIN_CLEAN_AMOUNT = 0;
@@ -73,10 +104,19 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     private Collection<CleanroomReceiverTrait> cleanroomReceivers;
 
     private final CleanroomProviderTrait cleanroomProviderTrait;
+    @Getter(AccessLevel.PACKAGE)
+    private final ConditionalSubscriptionHandler displaySnapshotSubscription;
+    @Getter(AccessLevel.PACKAGE)
+    @SyncToClient
+    private List<Component> displaySnapshot = List.of();
+    private boolean displayControllerLoaded;
+    private boolean displayStructureAvailable;
 
     public CleanroomMachine(BlockEntityCreationInfo info) {
         super(info, new CleanroomLogic());
         this.cleanroomProviderTrait = attachTrait(new CleanroomProviderTrait());
+        this.displaySnapshotSubscription = new ConditionalSubscriptionHandler(this, this::refreshDisplaySnapshot,
+                () -> displayControllerLoaded && displayStructureAvailable && isFormed());
     }
 
     @Override
@@ -87,6 +127,17 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
     //////////////////////////////////////
     // *** Multiblock LifeCycle ***//
     //////////////////////////////////////
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (!isRemote()) {
+            displayControllerLoaded = true;
+            displayStructureAvailable = isFormed();
+            refreshDisplaySnapshot();
+            displaySnapshotSubscription.initialize(getLevel());
+        }
+    }
 
     @Override
     public void formStructure(String structureName) {
@@ -120,6 +171,11 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
         var area = (lDist + rDist + 1) * (bDist + fDist + 1);
         var duration = Math.pow(area, 0.8) * (hDist + 1);
         this.getRecipeLogic().setDuration(Math.max(100, (int) duration));
+        if (!isRemote()) {
+            displayStructureAvailable = true;
+            refreshDisplaySnapshot();
+            displaySnapshotSubscription.updateSubscription();
+        }
     }
 
     @Override
@@ -133,6 +189,30 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
             this.cleanroomReceivers.forEach(CleanroomReceiverTrait::removeCleanroom);
             this.cleanroomReceivers = null;
         }
+        if (!isRemote()) {
+            displayStructureAvailable = false;
+            refreshDisplaySnapshot();
+            displaySnapshotSubscription.updateSubscription();
+        }
+    }
+
+    @Override
+    public void onUnload() {
+        super.onUnload();
+        displayControllerLoaded = false;
+        suspendDisplayRuntimeState();
+    }
+
+    @Override
+    public void onPartUnload() {
+        super.onPartUnload();
+        suspendDisplayRuntimeState();
+    }
+
+    private void suspendDisplayRuntimeState() {
+        displayStructureAvailable = false;
+        displaySnapshot = List.of();
+        displaySnapshotSubscription.unsubscribe();
     }
 
     @Override
@@ -340,7 +420,7 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
             c[i] = ceilingLayer[i].toString();
         }
 
-        BlockPattern baseline = FactoryBlockPattern.start(LEFT, FRONT, UP)
+        BlockPattern baseline = FactoryBlockPattern.start(this.getDefinition(), LEFT, FRONT, UP)
                 .aisle("~")
                 .build();
         return StructurePatternResolver.rebuildRuntimeStringArrayPattern(
@@ -369,53 +449,213 @@ public class CleanroomMachine extends WorkableElectricMultiblockMachine
 
     @Override
     public void addDisplayText(List<Component> textList) {
-        if (isFormed()) {
-            var workLogic = getWorkLogic();
-            var maxVoltage = getMaxVoltage();
-            if (maxVoltage > 0) {
-                String voltageName = GTValues.VNF[GTUtil.getFloorTierByVoltage(maxVoltage)];
-                textList.add(Component.translatable("gtpm.multiblock.max_energy_per_tick", maxVoltage, voltageName));
+        textList.addAll(displaySnapshot);
+    }
+
+    void refreshDisplaySnapshot() {
+        List<Component> nextSnapshot = new ArrayList<>();
+        collectServerDisplayText(nextSnapshot);
+        nextSnapshot = List.copyOf(nextSnapshot);
+        if (!displaySnapshot.equals(nextSnapshot)) {
+            displaySnapshot = nextSnapshot;
+        }
+    }
+
+    protected void collectServerDisplayText(List<Component> textList) {
+        textList.addAll(createDisplaySnapshot(captureDisplayState()));
+    }
+
+    protected DisplayState captureDisplayState() {
+        var workLogic = getWorkLogic();
+        return new DisplayState(isFormed(), getMaxVoltage(), cleanroomType, workLogic.isWorkingEnabled(),
+                workLogic.isActive(), workLogic.isWaiting(), recipeLogic.getProgress(), recipeLogic.getDuration(),
+                (int) (recipeLogic.getProgressPercent() * 100), cleanroomProviderTrait.isActive(), cleanAmount,
+                lDist + rDist + 1, hDist + 1, fDist + bDist + 1);
+    }
+
+    static List<Component> createDisplaySnapshot(DisplayState state) {
+        List<Component> text = new ArrayList<>();
+        if (state.formed()) {
+            if (state.maxVoltage() > 0) {
+                String voltageName = GTValues.VNF[GTUtil.getFloorTierByVoltage(state.maxVoltage())];
+                text.add(Component.translatable("gtpm.multiblock.max_energy_per_tick", state.maxVoltage(),
+                        voltageName));
             }
 
-            if (cleanroomType != null) {
-                textList.add(Component.translatable(cleanroomType.translationKey()));
+            if (state.cleanroomType() != null) {
+                text.add(Component.translatable(state.cleanroomType().translationKey()));
             }
 
-            if (!workLogic.isWorkingEnabled()) {
-                textList.add(Component.translatable("gtpm.multiblock.work_paused"));
-
-            } else if (workLogic.isActive()) {
-                textList.add(Component.translatable("gtpm.multiblock.running"));
-                int currentProgress = (int) (recipeLogic.getProgressPercent() * 100);
-                double maxInSec = (float) recipeLogic.getDuration() / 20.0f;
-                double currentInSec = (float) recipeLogic.getProgress() / 20.0f;
-                textList.add(
-                        Component.translatable("gtpm.multiblock.progress", String.format("%.2f", (float) currentInSec),
-                                String.format("%.2f", (float) maxInSec), currentProgress));
+            if (!state.workingEnabled()) {
+                text.add(Component.translatable("gtpm.multiblock.work_paused"));
+            } else if (state.active()) {
+                text.add(Component.translatable("gtpm.multiblock.running"));
+                float currentInSec = (float) state.progress() / 20.0f;
+                float maxInSec = (float) state.duration() / 20.0f;
+                text.add(Component.translatable("gtpm.multiblock.progress",
+                        String.format(Locale.ROOT, "%.2f", currentInSec),
+                        String.format(Locale.ROOT, "%.2f", maxInSec), state.progressPercent()));
             } else {
-                textList.add(Component.translatable("gtpm.multiblock.idling"));
+                text.add(Component.translatable("gtpm.multiblock.idling"));
             }
 
-            if (workLogic.isWaiting()) {
-                textList.add(Component.translatable("gtpm.multiblock.waiting")
+            if (state.waiting()) {
+                text.add(Component.translatable("gtpm.multiblock.waiting")
                         .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
             }
 
-            if (cleanroomProviderTrait.isActive()) {
-                textList.add(Component.translatable("gtpm.multiblock.cleanroom.clean_state"));
-            } else {
-                textList.add(Component.translatable("gtpm.multiblock.cleanroom.dirty_state"));
-            }
-            textList.add(Component.translatable("gtpm.multiblock.cleanroom.clean_amount", this.cleanAmount));
-            textList.add(Component.translatable("gtpm.multiblock.dimensions.0"));
-            textList.add(Component.translatable("gtpm.multiblock.dimensions.1", lDist + rDist + 1, hDist + 1,
-                    fDist + bDist + 1));
+            text.add(Component.translatable(state.clean() ? "gtpm.multiblock.cleanroom.clean_state" :
+                    "gtpm.multiblock.cleanroom.dirty_state"));
+            text.add(Component.translatable("gtpm.multiblock.cleanroom.clean_amount", state.cleanAmount()));
+            text.add(Component.translatable("gtpm.multiblock.dimensions.0"));
+            text.add(Component.translatable("gtpm.multiblock.dimensions.1", state.width(), state.height(),
+                    state.depth()));
         } else {
             Component tooltip = Component.translatable("gtpm.multiblock.invalid_structure.tooltip")
                     .withStyle(ChatFormatting.GRAY);
-            textList.add(Component.translatable("gtpm.multiblock.invalid_structure")
+            text.add(Component.translatable("gtpm.multiblock.invalid_structure")
                     .withStyle(Style.EMPTY.withColor(ChatFormatting.RED)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, tooltip))));
+        }
+        return List.copyOf(text);
+    }
+
+    record DisplayState(boolean formed, long maxVoltage, @Nullable CleanroomType cleanroomType,
+                        boolean workingEnabled, boolean active, boolean waiting,
+                        int progress, int duration, int progressPercent,
+                        boolean clean, int cleanAmount, int width, int height, int depth) {}
+
+    @Override
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        LDLib2FancyUIProvider page = createLDLib2Page(player, holder);
+        return UI.of(new LDLib2FancyMachineUIElement(page, player.getInventory(), holder,
+                page.getLDLib2PageWidth(), page.getLDLib2PageHeight()));
+    }
+
+    LDLib2FancyUIProvider createLDLib2Page(Player player, MachineUIHolder holder) {
+        requireMatchingHolder(holder);
+        return new CleanroomFancyPage(player, holder);
+    }
+
+    private void requireMatchingHolder(MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException("Cleanroom UI holder must resolve the opened controller.");
+        }
+    }
+
+    private final class CleanroomFancyPage implements LDLib2FancyUIProvider {
+
+        private static final int PAGE_WIDTH = 190;
+        private static final int PAGE_HEIGHT = 125;
+
+        private final MachineUIHolder holder;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+        private final List<LDLib2FancyUIProvider> partPages;
+
+        private CleanroomFancyPage(Player player, MachineUIHolder holder) {
+            requireMatchingHolder(holder);
+            this.holder = holder;
+            this.directionalPage = new LDLib2DirectionalFancyConfigurator(CleanroomMachine.this, player, holder);
+
+            List<LDLib2FancyUIProvider> pages = new ArrayList<>();
+            for (IMultiPart part : getParts()) {
+                if (!(part instanceof LDLib2FancyPartUIProvider pageProvider)) {
+                    throw new IllegalStateException("Cleanroom part has no LDLib2 Fancy page: " +
+                            part.self().getDefinition().getId());
+                }
+                MachineUIHolder partHolder = new MachineUIHolderContext(player, part.self());
+                pages.add(pageProvider.createLDLib2FancyPage(player, partHolder));
+            }
+            this.partPages = List.copyOf(pages);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != CleanroomMachine.this) {
+                throw new IllegalStateException("Cleanroom page holder no longer resolves its controller.");
+            }
+
+            UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+            UITemplate.setLDLib2BackgroundTexture(root, GuiTextures.BACKGROUND_INVERSE);
+
+            GTScrollerViewElement screen = new GTScrollerViewElement(4, 4, 182, 117);
+            UITemplate.setLDLib2BackgroundTexture(screen, getScreenTexture());
+            screen.viewPort.layout(layout -> layout.paddingAll(0));
+            UITemplate.setLDLib2BackgroundTexture(screen.viewPort, getScreenTexture());
+            screen.scrollerStyle(style -> style
+                    .mode(ScrollerMode.VERTICAL)
+                    .verticalScrollDisplay(ScrollDisplay.AUTO)
+                    .horizontalScrollDisplay(ScrollDisplay.NEVER));
+
+            GTLabelElement title = new GTLabelElement(4, 5, 174, 10,
+                    getBlockState().getBlock().getDescriptionId(), true);
+            title.textStyle(style -> style
+                    .textColor(0x404040)
+                    .textShadow(false)
+                    .textAlignHorizontal(Horizontal.LEFT)
+                    .textAlignVertical(Vertical.CENTER));
+            screen.addScrollViewChild(title);
+            screen.addScrollViewChild(new GTComponentPanelElement(4, 17, CleanroomMachine.this::addDisplayText)
+                    .setMaxWidthLimit(200)
+                    .clickHandler(CleanroomMachine.this::handleDisplayClick));
+            root.addChild(screen);
+            return root;
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return PAGE_WIDTH;
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return PAGE_HEIGHT;
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachConfigurators(LDLib2ConfiguratorPanelElement configuratorPanel) {
+            LDLib2VoidingModeFancyConfigurator.attachConfigurators(configuratorPanel, CleanroomMachine.this);
+            configuratorPanel.attachConfigurators(new LDLib2WorkingEnabledFancyConfigurator(
+                    CleanroomMachine.this, holder));
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            for (IMultiPart part : getParts()) {
+                if (part instanceof IMaintenanceMachine maintenanceMachine) {
+                    maintenanceMachine.attachLDLib2MaintenanceTooltips(tooltipsPanel);
+                }
+            }
+        }
+
+        @Override
+        public List<LDLib2FancyUIProvider> getSubTabs() {
+            return partPages;
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(Component.translatable(getDefinition().getDescriptionId()));
         }
     }
 

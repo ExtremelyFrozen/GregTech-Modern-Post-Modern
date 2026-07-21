@@ -3,28 +3,32 @@ package com.gregtechceu.gtceu.common.cover.detector;
 import com.gregtechceu.gtceu.api.blockentity.ConfigCopyHelper;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandler;
 import com.gregtechceu.gtceu.api.cover.filter.FilterHandlers;
 import com.gregtechceu.gtceu.api.cover.filter.FluidFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2CoverUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.sync_system.SyncFieldData;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.TextBoxWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.LocalizationUtils;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -36,11 +40,16 @@ import java.util.List;
 import static com.gregtechceu.gtceu.utils.RedstoneUtil.computeLatchedRedstoneBetweenValues;
 import static com.gregtechceu.gtceu.utils.RedstoneUtil.computeRedstoneBetweenValues;
 
-public class AdvancedFluidDetectorCover extends FluidDetectorCover implements IUICover {
+public class AdvancedFluidDetectorCover extends FluidDetectorCover implements LDLib2CoverUIProvider {
 
     private static final int DEFAULT_MIN = 64;
     private static final int DEFAULT_MAX = 512;
+    static {
+        AdvancedFluidDetectorConfigActions.initialize();
+    }
+
     @SaveField
+    @SyncToClient
     @Getter
     private int minValue, maxValue;
 
@@ -64,7 +73,6 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements IU
 
     public void setLatched(boolean latched) {
         isLatched = latched;
-        syncDataHolder.markClientSyncFieldDirty("isLatched");
     }
 
     @Override
@@ -104,11 +112,18 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements IU
     }
 
     public void setMinValue(int minValue) {
-        this.minValue = Mth.clamp(minValue, 0, maxValue - 1);
+        int upperBound = Math.max(0, maxValue - 1);
+        int clamped = Mth.clamp(minValue, 0, upperBound);
+        if (this.minValue != clamped) {
+            this.minValue = clamped;
+        }
     }
 
     public void setMaxValue(int maxValue) {
-        this.maxValue = Math.max(maxValue, 0);
+        int clamped = Math.max(maxValue, 0);
+        if (this.maxValue != clamped) {
+            this.maxValue = clamped;
+        }
     }
 
     //////////////////////////////////////
@@ -116,36 +131,73 @@ public class AdvancedFluidDetectorCover extends FluidDetectorCover implements IU
     //////////////////////////////////////
 
     @Override
-    public Widget createUIWidget() {
-        WidgetGroup group = new WidgetGroup(0, 0, 176, 170);
-        group.addWidget(new LabelWidget(10, 5, "cover.advanced_fluid_detector.label"));
+    public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+        return holder.getCover() == this;
+    }
 
-        group.addWidget(new TextBoxWidget(10, 55, 65,
-                List.of(LocalizationUtils.format("cover.advanced_fluid_detector.min"))));
+    @Override
+    public UI createLDLib2UI(Player player, UICoverHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 252);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
 
-        group.addWidget(new TextBoxWidget(10, 80, 65,
-                List.of(LocalizationUtils.format("cover.advanced_fluid_detector.max"))));
-
-        group.addWidget(new IntInputWidget(80, 50, 176 - 80 - 10, 20, this::getMinValue, this::setMinValue));
-        group.addWidget(new IntInputWidget(80, 75, 176 - 80 - 10, 20, this::getMaxValue, this::setMaxValue));
-
-        // Invert Redstone Output Toggle:
-        group.addWidget(new ToggleButtonWidget(
-                9, 20, 20, 20,
-                GuiTextures.INVERT_REDSTONE_BUTTON, this::isInverted, this::setInverted)
+        root.addChild(createLDLib2Label(10, 5, 156, 10, "cover.advanced_fluid_detector.label"));
+        root.addChild(createLDLib2Label(10, 55, 65, 10, "cover.advanced_fluid_detector.min"));
+        root.addChild(createLDLib2Label(10, 80, 65, 10, "cover.advanced_fluid_detector.max"));
+        root.addChild(new GTIntInputElement(80, 50, 86, 20, this::getMinValue,
+                value -> setLDLib2MinValue(player, holder, value)));
+        root.addChild(new GTIntInputElement(80, 75, 86, 20, this::getMaxValue,
+                value -> setLDLib2MaxValue(player, holder, value)));
+        root.addChild(new GTToggleButtonElement(9, 20, 20, 20, GuiTextures.INVERT_REDSTONE_BUTTON,
+                this::isInverted, inverted -> setLDLib2Inverted(player, holder, inverted))
                 .isMultiLang()
                 .setTooltipText("cover.advanced_fluid_detector.invert"));
+        root.addChild(new GTToggleButtonElement(31, 21, 18, 18, GuiTextures.BUTTON_LOCK,
+                this::isLatched, latched -> setLDLib2Latched(player, holder, latched))
+                .setShouldUseBaseBackground()
+                .isMultiLang()
+                .setTooltipText("cover.advanced_detector.latch"));
+        root.addChild(filterHandler.createFilterSlotLDLib2UI(148, 100));
+        root.addChild(filterHandler.createFilterConfigLDLib2UI(10, 100, 156, 60));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 170, true));
+        return UI.of(root);
+    }
 
-        group.addWidget(
-                new ToggleButtonWidget(31, 21, 18, 18, GuiTextures.BUTTON_LOCK, this::isLatched, this::setLatched)
-                        .setShouldUseBaseBackground()
-                        .isMultiLang()
-                        .setTooltipText("cover.advanced_detector.latch"));
+    private GTLabelElement createLDLib2Label(int x, int y, int width, int height, String text) {
+        GTLabelElement label = new GTLabelElement(x, y, width, height, text, true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
 
-        group.addWidget(filterHandler.createFilterSlotUI(148, 100));
-        group.addWidget(filterHandler.createFilterConfigUI(10, 100, 156, 60));
+    private void setLDLib2MinValue(Player player, UICoverHolder holder, int value) {
+        setMinValue(value);
+        sendLDLib2ConfigAction(player, holder);
+    }
 
-        return group;
+    private void setLDLib2MaxValue(Player player, UICoverHolder holder, int value) {
+        setMaxValue(value);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2Latched(Player player, UICoverHolder holder, boolean latched) {
+        setLatched(latched);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void setLDLib2Inverted(Player player, UICoverHolder holder, boolean inverted) {
+        setInverted(inverted);
+        sendLDLib2ConfigAction(player, holder);
+    }
+
+    private void sendLDLib2ConfigAction(Player player, UICoverHolder holder) {
+        if (player.level().isClientSide()) {
+            CoverUIHelper.sendAction(holder, AdvancedFluidDetectorConfigActions.createSetConfigAction(
+                    getMinValue(), getMaxValue(), isLatched(), isInverted()));
+        }
     }
 
     @Override

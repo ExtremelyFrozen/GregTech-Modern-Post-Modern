@@ -3,7 +3,20 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.BlockableSlotWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTImageElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTabsElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.fancyconfigurator.LDLib2DirectionalFancyConfigurator;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.MultiblockPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
@@ -14,12 +27,14 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
 
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
@@ -28,7 +43,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ObjectHolderMachine extends MultiblockPartMachine {
+public class ObjectHolderMachine extends MultiblockPartMachine
+                                 implements LDLib2MachineUIProvider, LDLib2FancyPartUIProvider {
+
+    private static final int SLOT_LOCKED_OVERLAY_COLOR = 0x80404040;
+    private static final int UI_WIDTH = 176;
+    private static final int STANDALONE_UI_HEIGHT = 166;
+    private static final int CONTEXTUAL_PAGE_HEIGHT = 84;
 
     @SaveField
     private final ObjectInputHandler inputItemHandler;
@@ -46,7 +67,6 @@ public class ObjectHolderMachine extends MultiblockPartMachine {
 
     public void setLocked(boolean locked) {
         isLocked = locked;
-        syncDataHolder.markClientSyncFieldDirty("isLocked");
     }
 
     public boolean isLocked() {
@@ -78,15 +98,134 @@ public class ObjectHolderMachine extends MultiblockPartMachine {
     }
 
     @Override
-    public Widget createUIWidget() {
-        return new WidgetGroup(new Position(0, 0))
-                .addWidget(new ImageWidget(46, 15, 84, 60, GuiTextures.PROGRESS_BAR_RESEARCH_STATION_BASE))
-                .addWidget(new BlockableSlotWidget(inputItemHandler, 0, 79, 36)
-                        .setIsBlocked(this::isLocked)
-                        .setBackground(GuiTextures.SLOT, GuiTextures.RESEARCH_STATION_OVERLAY))
-                .addWidget(new BlockableSlotWidget(dataItemHandler, 0, 15, 36)
-                        .setIsBlocked(this::isLocked)
-                        .setBackground(GuiTextures.SLOT, GuiTextures.DATA_ORB_OVERLAY));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        requireMatchingLDLib2Holder(holder);
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, UI_WIDTH, STANDALONE_UI_HEIGHT);
+        UITemplate.setLDLib2BackgroundTexture(root, GuiTextures.BACKGROUND);
+        root.addChild(createLDLib2TitleLabel());
+        addLDLib2ObjectHolderBody(root);
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 84, true));
+        return UI.of(root);
+    }
+
+    /** Creates a new holder-scoped page for one surrounding multiblock UI opening. */
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        requireMatchingLDLib2Holder(holder);
+        return new ObjectHolderLDLib2Page(player, holder);
+    }
+
+    private UIElement createLDLib2ContextualBody() {
+        UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0, UI_WIDTH, CONTEXTUAL_PAGE_HEIGHT);
+        addLDLib2ObjectHolderBody(root);
+        return root;
+    }
+
+    private void addLDLib2ObjectHolderBody(UIElement root) {
+        root.addChild(new GTImageElement(46, 15, 84, 60, GuiTextures.PROGRESS_BAR_RESEARCH_STATION_BASE));
+        root.addChild(createLDLib2ItemSlot(inputItemHandler, 79, 36, GuiTextures.RESEARCH_STATION_OVERLAY));
+        root.addChild(createLDLib2LockedOverlay(79, 36));
+        root.addChild(createLDLib2ItemSlot(dataItemHandler, 15, 36, GuiTextures.DATA_ORB_OVERLAY));
+        root.addChild(createLDLib2LockedOverlay(15, 36));
+    }
+
+    private void requireMatchingLDLib2Holder(MachineUIHolder holder) {
+        if (holder.getMachine() != this) {
+            throw new IllegalArgumentException("Object Holder page holder must resolve the opened machine.");
+        }
+    }
+
+    private GTLabelElement createLDLib2TitleLabel() {
+        GTLabelElement label = new GTLabelElement(10, 5, 156, 10,
+                getBlockState().getBlock().getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private GTItemSlotElement createLDLib2ItemSlot(NotifiableItemStackHandler handler, int x, int y,
+                                                   IGuiTexture overlay) {
+        GTItemSlotElement slot = new GTItemSlotElement(handler, 0)
+                .setBackgroundTexture(GuiTextures.SLOT)
+                .setContentOverlay(overlay)
+                .setCanPut(stack -> !isLocked())
+                .setCanTake(player -> !isLocked());
+        UITemplate.setLDLib2Bounds(slot, x, y, 18, 18);
+        return slot;
+    }
+
+    private GTImageElement createLDLib2LockedOverlay(int slotX, int slotY) {
+        return new GTImageElement(slotX + 1, slotY + 1, 16, 16, GuiTextures.colorRect(SLOT_LOCKED_OVERLAY_COLOR))
+                .setVisibleSupplier(this::isLocked);
+    }
+
+    /** Owns the contextual Object Holder page state for exactly one menu opening. */
+    private final class ObjectHolderLDLib2Page implements LDLib2FancyUIProvider {
+
+        private final MachineUIHolder holder;
+        private final LDLib2DirectionalFancyConfigurator directionalPage;
+
+        private ObjectHolderLDLib2Page(Player player, MachineUIHolder holder) {
+            requireMatchingLDLib2Holder(holder);
+            this.holder = holder;
+            directionalPage = new LDLib2DirectionalFancyConfigurator(ObjectHolderMachine.this, player, holder);
+        }
+
+        @Override
+        public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+            if (holder.getMachine() != ObjectHolderMachine.this) {
+                throw new IllegalStateException("Object Holder page holder no longer resolves its opened machine.");
+            }
+            return createLDLib2ContextualBody();
+        }
+
+        @Override
+        public IGuiTexture getTabIcon() {
+            return GuiTextures.itemStack(getDefinition().getItem());
+        }
+
+        @Override
+        public Component getTitle() {
+            return Component.translatable(getDefinition().getDescriptionId());
+        }
+
+        @Override
+        public int getLDLib2PageWidth() {
+            return UI_WIDTH;
+        }
+
+        @Override
+        public int getLDLib2PageHeight() {
+            return CONTEXTUAL_PAGE_HEIGHT;
+        }
+
+        @Override
+        public void attachSideTabs(LDLib2FancyTabsElement tabs) {
+            tabs.attachSubTab(directionalPage);
+        }
+
+        @Override
+        public void attachTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+            tooltipsPanel.attachTooltips(ObjectHolderMachine.this);
+            getTraitHolder().getAllTraits().stream()
+                    .filter(IFancyTooltip.class::isInstance)
+                    .map(IFancyTooltip.class::cast)
+                    .forEach(tooltipsPanel::attachTooltips);
+        }
+
+        @Override
+        public List<Component> getTabTooltips() {
+            return List.of(getTitle());
+        }
     }
 
     @Override

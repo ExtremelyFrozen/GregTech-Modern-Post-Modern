@@ -7,6 +7,7 @@ import com.gregtechceu.gtceu.client.renderer.GTRenderTypes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -25,7 +26,7 @@ import static com.gregtechceu.gtceu.client.bloom.BloomRenderer.BLOOM_RENDER_LOCK
 @UtilityClass
 public class BloomHandler {
 
-    @EventBusSubscriber(modid = GTCEu.MOD_ID)
+    @EventBusSubscriber(modid = GTCEu.MOD_ID, value = Dist.CLIENT)
     @UtilityClass
     public static class RenderStage {
 
@@ -57,7 +58,9 @@ public class BloomHandler {
      */
     public static BloomRenderTicket registerBloomRender(@Nullable IRenderSetup setup, IBloomEffect render,
                                                         BlockEntity blockEntity) {
-        Objects.requireNonNull(blockEntity, "blockEntity == null");
+        if (blockEntity == null) {
+            throw new NullPointerException("blockEntity == null");
+        }
         return registerBloomRender(setup,
                 new IBloomEffect() {
 
@@ -94,7 +97,9 @@ public class BloomHandler {
      */
     public static BloomRenderTicket registerBloomRender(@Nullable IRenderSetup setup, IBloomEffect render,
                                                         GTParticle particle) {
-        Objects.requireNonNull(particle, "particle == null");
+        if (particle == null) {
+            throw new NullPointerException("particle == null");
+        }
         return registerBloomRender(setup, render, t -> particle.isAlive());
     }
 
@@ -162,7 +167,9 @@ public class BloomHandler {
      * @param level the level that was unloaded
      */
     static void invalidateLevelData(LevelAccessor level) {
-        Objects.requireNonNull(level, "level == null");
+        if (level == null) {
+            throw new NullPointerException("level == null");
+        }
         BLOOM_RENDER_LOCK.readLock().lock();
         try {
             for (BloomRenderTicket ticket : BloomHandler.SCHEDULED_BLOOM_RENDERS) {
@@ -215,7 +222,9 @@ public class BloomHandler {
 
             for (BloomRenderTicket ticket : this) {
                 ticket.checkValidity();
-                if (!ticket.isValid() || !ticket.render.shouldRenderBloomEffect(context)) continue;
+                if (!ticket.isValid()) continue;
+                IBloomEffect render = ticket.requireValidRender();
+                if (!render.shouldRenderBloomEffect(context)) continue;
 
                 if (!initialized) {
                     initialized = true;
@@ -225,7 +234,7 @@ public class BloomHandler {
                 }
 
                 poseStack.pushPose();
-                ticket.render.renderBloomEffect(poseStack, buffer, context);
+                render.renderBloomEffect(poseStack, buffer, context);
                 poseStack.popPose();
             }
 

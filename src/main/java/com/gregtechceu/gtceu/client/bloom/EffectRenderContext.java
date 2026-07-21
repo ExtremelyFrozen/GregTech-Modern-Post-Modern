@@ -12,8 +12,6 @@ import lombok.experimental.Accessors;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
-import java.util.Objects;
-
 /**
  * Collection of various information for rendering purposes.
  */
@@ -69,6 +67,9 @@ public final class EffectRenderContext {
      * @return render view entity
      */
     public Entity getRenderViewEntity() {
-        return Objects.requireNonNull(renderViewEntity, "renderViewEntity not available yet");
+        if (renderViewEntity == null) {
+            throw new IllegalStateException("renderViewEntity not available yet");
+        }
+        return renderViewEntity;
     }
 }

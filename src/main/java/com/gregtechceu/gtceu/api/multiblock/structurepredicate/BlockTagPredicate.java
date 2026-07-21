@@ -1,8 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -45,8 +44,8 @@ public final class BlockTagPredicate implements StructurePredicate {
     }
 
     @Override
-    public List<BlockInfo> candidates() {
-        return candidates.get().stream().map(BlockInfo::new).toList();
+    public List<MultiblockBlockInfo> candidates() {
+        return candidates.get().stream().map(MultiblockBlockInfo::new).toList();
     }
 
     @Override

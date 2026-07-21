@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public abstract class LongDistanceEndpointMachine extends MetaMachine implements ILDEndpoint, IDataInfoProvider {
 
@@ -40,7 +39,7 @@ public abstract class LongDistanceEndpointMachine extends MetaMachine implements
 
     public LongDistanceEndpointMachine(BlockEntityCreationInfo info, LongDistancePipeType pipeType) {
         super(info);
-        this.pipeType = Objects.requireNonNull(pipeType);
+        this.pipeType = pipeType;
     }
 
     protected void updateRefreshNetSubscription() {

@@ -9,6 +9,7 @@ import com.gregtechceu.gtceu.api.item.component.IItemComponent;
 import com.gregtechceu.gtceu.api.item.component.IMonitorModuleItem;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTDataComponents;
+import com.gregtechceu.gtceu.common.item.datacomponents.TextLineList;
 import com.gregtechceu.gtceu.utils.GlobalPosWithRot;
 
 import net.minecraft.core.BlockPos;
@@ -19,8 +20,6 @@ import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -28,21 +27,16 @@ import java.util.function.UnaryOperator;
 
 public class MonitorGroup {
 
-    @Getter
+    private final UUID identity;
+    private final UUID dynamicItemSlotIncarnation;
+    private UUID moduleSlotIncarnation;
+    private long textConfigurationRevision;
     private final Set<BlockPos> monitorPositions = new HashSet<>();
-    @Getter
     private final String name;
-    @Getter
     private final CustomItemStackHandler itemStackHandler;
-    @Getter
     private final CustomItemStackHandler placeholderSlotsHandler;
-    @Setter
     private @Nullable BlockPos target;
-    @Setter
-    @Getter
     private @Nullable Direction targetCoverSide;
-    @Setter
-    @Getter
     private int dataSlot = 0;
 
     public static boolean isModule(ItemStack stack) {
@@ -57,18 +51,157 @@ public class MonitorGroup {
     public static CustomItemStackHandler createModuleHandler() {
         CustomItemStackHandler customItemStackHandler = new CustomItemStackHandler(1);
         customItemStackHandler.setFilter(MonitorGroup::isModule);
+        customItemStackHandler.setNonMutatingEmptySlotCapacityQueryEnabled(true);
         return customItemStackHandler;
     }
 
+    /** Creates the fixed placeholder inventory used by new and codec-restored groups. */
+    public static CustomItemStackHandler createPlaceholderHandler() {
+        CustomItemStackHandler placeholderHandler = new CustomItemStackHandler(
+                CentralMonitorGroupItemHandler.PLACEHOLDER_SLOT_COUNT);
+        placeholderHandler.setNonMutatingEmptySlotCapacityQueryEnabled(true);
+        return placeholderHandler;
+    }
+
     public MonitorGroup(String name) {
-        this(name, createModuleHandler(), new CustomItemStackHandler(8));
+        this(name, createModuleHandler(), createPlaceholderHandler());
     }
 
     public MonitorGroup(String name, CustomItemStackHandler handler, CustomItemStackHandler placeholderSlotsHandler) {
+        this(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), 0, name, handler, placeholderSlotsHandler);
+    }
+
+    private MonitorGroup(UUID identity, UUID dynamicItemSlotIncarnation, UUID moduleSlotIncarnation,
+                         long textConfigurationRevision,
+                         String name, CustomItemStackHandler handler,
+                         CustomItemStackHandler placeholderSlotsHandler) {
+        this.identity = identity;
+        this.dynamicItemSlotIncarnation = dynamicItemSlotIncarnation;
+        this.moduleSlotIncarnation = moduleSlotIncarnation;
+        setTextConfigurationRevision(textConfigurationRevision);
         this.name = name;
         this.itemStackHandler = handler;
         this.itemStackHandler.setFilter(MonitorGroup::isModule);
         this.placeholderSlotsHandler = placeholderSlotsHandler;
+    }
+
+    /**
+     * Restores a group with the stable identities carried by saved or synchronized data.
+     */
+    public static MonitorGroup restore(UUID identity, UUID dynamicItemSlotIncarnation, UUID moduleSlotIncarnation,
+                                       String name,
+                                       CustomItemStackHandler handler,
+                                       CustomItemStackHandler placeholderSlotsHandler) {
+        return restore(identity, dynamicItemSlotIncarnation, moduleSlotIncarnation, 0, name, handler,
+                placeholderSlotsHandler);
+    }
+
+    /**
+     * Restores a group with its stable identities and text configuration revision.
+     */
+    public static MonitorGroup restore(UUID identity, UUID dynamicItemSlotIncarnation, UUID moduleSlotIncarnation,
+                                       long textConfigurationRevision,
+                                       String name,
+                                       CustomItemStackHandler handler,
+                                       CustomItemStackHandler placeholderSlotsHandler) {
+        return new MonitorGroup(identity, dynamicItemSlotIncarnation, moduleSlotIncarnation,
+                textConfigurationRevision, name, handler, placeholderSlotsHandler);
+    }
+
+    /**
+     * Creates a new empty group with an identity already validated by the owning Central Monitor.
+     */
+    public static MonitorGroup createWithIdentity(UUID identity, String name) {
+        return new MonitorGroup(identity, UUID.randomUUID(), UUID.randomUUID(), 0, name, createModuleHandler(),
+                createPlaceholderHandler());
+    }
+
+    public Set<BlockPos> getMonitorPositions() {
+        return monitorPositions;
+    }
+
+    public UUID getIdentity() {
+        return identity;
+    }
+
+    public UUID getDynamicItemSlotIncarnation() {
+        return dynamicItemSlotIncarnation;
+    }
+
+    public UUID getModuleSlotIncarnation() {
+        return moduleSlotIncarnation;
+    }
+
+    public long getTextConfigurationRevision() {
+        return textConfigurationRevision;
+    }
+
+    /**
+     * Invalidates actions opened for the previous physical module-slot occupant.
+     */
+    public void rotateModuleSlotIncarnation() {
+        moduleSlotIncarnation = UUID.randomUUID();
+        textConfigurationRevision = 0;
+    }
+
+    /**
+     * Restores the authoritative revision carried by save data or server synchronization.
+     */
+    public void setTextConfigurationRevision(long revision) {
+        if (revision < 0) {
+            throw new IllegalArgumentException("Monitor group text configuration revision must be non-negative");
+        }
+        textConfigurationRevision = revision;
+    }
+
+    /**
+     * Applies one validated text configuration without replacing the physical module-slot occupant.
+     */
+    public void applyTextConfiguration(TextLineList configuration) {
+        long nextRevision = Math.incrementExact(textConfigurationRevision);
+        itemStackHandler.getStackInSlot(0).set(GTDataComponents.FORMAT_STRING_LIST.get(), configuration);
+        textConfigurationRevision = nextRevision;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public CustomItemStackHandler getItemStackHandler() {
+        return itemStackHandler;
+    }
+
+    public CustomItemStackHandler getPlaceholderSlotsHandler() {
+        return placeholderSlotsHandler;
+    }
+
+    public void setTarget(@Nullable BlockPos target) {
+        this.target = target;
+    }
+
+    public @Nullable Direction getTargetCoverSide() {
+        return targetCoverSide;
+    }
+
+    public void setTargetCoverSide(@Nullable Direction targetCoverSide) {
+        this.targetCoverSide = targetCoverSide;
+    }
+
+    public int getDataSlot() {
+        return dataSlot;
+    }
+
+    public void setDataSlot(int dataSlot) {
+        this.dataSlot = dataSlot;
+    }
+
+    /**
+     * Atomically replaces the raw target configuration and invalidates the cover side derived from its old target.
+     */
+    public void setTargetAndDataSlot(@Nullable BlockPos target, int dataSlot) {
+        this.target = target;
+        this.dataSlot = dataSlot;
+        this.targetCoverSide = null;
     }
 
     public void add(BlockPos pos) {

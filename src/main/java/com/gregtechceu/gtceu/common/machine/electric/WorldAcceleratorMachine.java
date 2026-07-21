@@ -5,8 +5,8 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.blockentity.PipeBlockEntity;
 import com.gregtechceu.gtceu.api.capability.IControllable;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
@@ -18,8 +18,6 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTUtil;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
@@ -95,20 +93,18 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
     public void updateSubscription() {
         if (isWorkingEnabled && drainEnergy(true)) {
             tickSubs = subscribeServerTick(tickSubs, this::update);
-            setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_ACTIVE, true));
-            if (!active) {
-                active = true;
-                syncDataHolder.markClientSyncFieldDirty("active");
-            }
+            setActive(true);
         } else if (tickSubs != null) {
             tickSubs.unsubscribe();
             tickSubs = null;
-            setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_ACTIVE, false));
-            if (active) {
-                active = false;
-                syncDataHolder.markClientSyncFieldDirty("active");
-            }
+            setActive(false);
         }
+    }
+
+    private void setActive(boolean active) {
+        if (this.active == active) return;
+        setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_ACTIVE, active));
+        this.active = active;
     }
 
     public void update() {
@@ -211,17 +207,23 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
     }
 
     public void setWorkingEnabled(boolean workingEnabled) {
+        if (isWorkingEnabled == workingEnabled) return;
         isWorkingEnabled = workingEnabled;
         setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_WORKING_ENABLED, isWorkingEnabled));
-        syncDataHolder.markClientSyncFieldDirty("isWorkingEnabled");
         updateSubscription();
     }
 
+    void setRandomTickMode(boolean randomTickMode) {
+        if (isRandomTickMode == randomTickMode) return;
+        isRandomTickMode = randomTickMode;
+        setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_RANDOM_TICK_MODE, randomTickMode));
+    }
+
     @Override
-    public ResourceTexture sideTips(Player player, BlockPos pos, BlockState state, Set<GTToolType> toolTypes,
-                                    ItemStack held, Direction side) {
+    public GridHighlightTexture sideTips(Player player, BlockPos pos, BlockState state, Set<GTToolType> toolTypes,
+                                         ItemStack held, Direction side) {
         if (toolTypes.contains(GTToolType.SOFT_MALLET)) {
-            return isWorkingEnabled ? GuiTextures.TOOL_PAUSE : GuiTextures.TOOL_START;
+            return isWorkingEnabled ? GridHighlightTexture.TOOL_PAUSE : GridHighlightTexture.TOOL_START;
         }
         return super.sideTips(player, pos, state, toolTypes, held, side);
     }
@@ -229,9 +231,7 @@ public class WorldAcceleratorMachine extends TieredEnergyMachine implements ICon
     @Override
     protected InteractionResult onScrewdriverClick(ExtendedUseOnContext context) {
         if (!isRemote()) {
-            isRandomTickMode = !isRandomTickMode;
-            setRenderState(getRenderState().setValue(GTMachineModelProperties.IS_RANDOM_TICK_MODE, isRandomTickMode));
-            syncDataHolder.markClientSyncFieldDirty("isRandomTickMode");
+            setRandomTickMode(!isRandomTickMode);
             context.getPlayer().sendSystemMessage(Component.translatable(isRandomTickMode ?
                     "gtpm.machine.world_accelerator.mode_entity" : "gtpm.machine.world_accelerator.mode_tile"));
             scheduleRenderUpdate();

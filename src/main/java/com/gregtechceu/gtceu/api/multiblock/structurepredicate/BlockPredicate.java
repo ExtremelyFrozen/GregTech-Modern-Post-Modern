@@ -1,8 +1,7 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -34,8 +33,7 @@ public final class BlockPredicate implements StructurePredicate {
     }
 
     public BlockPredicate(Supplier<List<ResourceLocation>> blockIds) {
-        this.blockIds = Lazy.of(() -> List.copyOf(Objects.requireNonNull(blockIds.get(),
-                "Structure block predicate id supplier returned null")));
+        this.blockIds = Lazy.of(() -> List.copyOf(blockIds.get()));
         this.blocks = Lazy.of(() -> blockIds().stream()
                 .map(BlockPredicate::resolveBlock)
                 .toList());
@@ -47,8 +45,8 @@ public final class BlockPredicate implements StructurePredicate {
     }
 
     @Override
-    public List<BlockInfo> candidates() {
-        return blocks().stream().map(BlockInfo::new).toList();
+    public List<MultiblockBlockInfo> candidates() {
+        return blocks().stream().map(MultiblockBlockInfo::new).toList();
     }
 
     @Override
@@ -70,8 +68,7 @@ public final class BlockPredicate implements StructurePredicate {
     }
 
     private static Supplier<List<ResourceLocation>> constantBlockIds(List<ResourceLocation> blockIds) {
-        List<ResourceLocation> copy = List.copyOf(Objects.requireNonNull(blockIds,
-                "Structure block predicate id list cannot be null"));
+        List<ResourceLocation> copy = List.copyOf(blockIds);
         return () -> copy;
     }
 

@@ -1,6 +1,6 @@
 package com.gregtechceu.gtceu.api.multiblock.predicates;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
@@ -29,7 +29,7 @@ public class PredicateFluids extends SimplePredicate {
                 .map(fluid -> fluid.defaultFluidState().createLegacyBlock().getBlock())
                 .toArray(Block[]::new);
         candidates = () -> blocks;
-        var info = BlockInfo.fromBlockState(fluids[0].defaultFluidState().createLegacyBlock());
+        var info = MultiblockBlockInfo.fromBlockState(fluids[0].defaultFluidState().createLegacyBlock());
         blockInfo = () -> info;
         return this;
     }

@@ -3,7 +3,7 @@ package com.gregtechceu.gtceu.api.machine.feature.multiblock;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.fancy.IFancyTooltip;
-import com.gregtechceu.gtceu.api.gui.fancy.TooltipsPanel;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyTooltipsPanelElement;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.recipe.GTRecipe;
@@ -154,38 +154,50 @@ public interface IMaintenanceMachine extends IMultiPart {
     //////////////////////////////////////
 
     @Override
-    default void attachFancyTooltipsToController(MultiblockControllerMachine controller, TooltipsPanel tooltipsPanel) {
-        attachTooltips(tooltipsPanel);
+    default void attachLDLib2FancyTooltipsToController(MultiblockControllerMachine controller,
+                                                       LDLib2FancyTooltipsPanelElement tooltipsPanel) {
+        attachLDLib2MaintenanceTooltips(tooltipsPanel);
     }
 
-    @Override
-    default void attachTooltips(TooltipsPanel tooltipsPanel) {
+    /**
+     * Registers the maintenance warning on an LDLib2 Fancy surface without adding a generic machine tooltip.
+     *
+     * @param tooltipsPanel tooltip panel owned by the current LDLib2 Fancy shell
+     */
+    default void attachLDLib2MaintenanceTooltips(LDLib2FancyTooltipsPanelElement tooltipsPanel) {
         if (ConfigHolder.INSTANCE.machines.enableMaintenance) {
-            tooltipsPanel.attachTooltips(new IFancyTooltip.Basic(() -> GuiTextures.MAINTENANCE_ICON, () -> {
-                var tooltips = new ArrayList<Component>();
-                tooltips.add(Component.translatable("gtpm.multiblock.universal.has_problems_header")
-                        .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
-
-                if ((getMaintenanceProblems() & 1) == 0)
-                    tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.wrench"));
-
-                if (((getMaintenanceProblems() >> 1) & 1) == 0)
-                    tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.screwdriver"));
-
-                if (((getMaintenanceProblems() >> 2) & 1) == 0)
-                    tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.soft_mallet"));
-
-                if (((getMaintenanceProblems() >> 3) & 1) == 0)
-                    tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.hard_hammer"));
-
-                if (((getMaintenanceProblems() >> 4) & 1) == 0)
-                    tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.wire_cutter"));
-
-                if (((getMaintenanceProblems() >> 5) & 1) == 0)
-                    tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.crowbar"));
-
-                return tooltips;
-            }, this::hasMaintenanceProblems, () -> null));
+            tooltipsPanel.attachTooltips(createMaintenanceFancyTooltip());
         }
+    }
+
+    /**
+     * Creates the lazy maintenance warning used by LDLib2 Fancy tooltip panels.
+     */
+    private IFancyTooltip.Basic createMaintenanceFancyTooltip() {
+        return new IFancyTooltip.Basic(() -> GuiTextures.MAINTENANCE_ICON, () -> {
+            var tooltips = new ArrayList<Component>();
+            tooltips.add(Component.translatable("gtpm.multiblock.universal.has_problems_header")
+                    .setStyle(Style.EMPTY.withColor(ChatFormatting.RED)));
+
+            if ((getMaintenanceProblems() & 1) == 0)
+                tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.wrench"));
+
+            if (((getMaintenanceProblems() >> 1) & 1) == 0)
+                tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.screwdriver"));
+
+            if (((getMaintenanceProblems() >> 2) & 1) == 0)
+                tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.soft_mallet"));
+
+            if (((getMaintenanceProblems() >> 3) & 1) == 0)
+                tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.hard_hammer"));
+
+            if (((getMaintenanceProblems() >> 4) & 1) == 0)
+                tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.wire_cutter"));
+
+            if (((getMaintenanceProblems() >> 5) & 1) == 0)
+                tooltips.add(Component.translatable("gtpm.multiblock.universal.problem.crowbar"));
+
+            return tooltips;
+        }, this::hasMaintenanceProblems, () -> null);
     }
 }

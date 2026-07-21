@@ -5,6 +5,11 @@ import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.IMonitorComponent;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyPreviewPage;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyUIProvider;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
+import com.gregtechceu.gtceu.api.machine.feature.multiblock.LDLib2FancyPartUIProvider;
 import com.gregtechceu.gtceu.api.machine.multiblock.part.TieredPartMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableEnergyContainer;
 import com.gregtechceu.gtceu.api.sync_system.ClassSyncData;
@@ -12,11 +17,10 @@ import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.codecs.GridNodeHostCodec;
 import com.gregtechceu.gtceu.integration.ae2.machine.trait.GridNodeHostTrait;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.player.Player;
 
-public class HullMachine extends TieredPartMachine implements IMonitorComponent {
+public class HullMachine extends TieredPartMachine implements IMonitorComponent, LDLib2FancyPartUIProvider {
 
     @SaveField(nbtKey = "grid_node")
     private final Object gridNodeHost;
@@ -62,6 +66,11 @@ public class HullMachine extends TieredPartMachine implements IMonitorComponent 
                 connectedBlockEntity.init();
             }
         }
+    }
+
+    @Override
+    public LDLib2FancyUIProvider createLDLib2FancyPage(Player player, MachineUIHolder holder) {
+        return new LDLib2FancyPreviewPage(this, player, holder, null);
     }
 
     //////////////////////////////////////

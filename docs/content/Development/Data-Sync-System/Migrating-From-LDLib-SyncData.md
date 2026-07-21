@@ -46,8 +46,6 @@ class CustomMachine extends SimpleTieredMachine {
     
     public void setCustomIntValue(int newValue) {
         this.customIntValue = newValue;
-        ////// IMPORTANT: markClientSyncFieldDirty must be called to update client synced fields.
-        getSyncDataHolder().markClientSyncFieldDirty("customIntValue");
     }
 }
 
@@ -60,10 +58,22 @@ class CustomMachine extends SimpleTieredMachine {
 - Replace `IEnhancedManaged` objects with `ISyncManaged`.
 - Replace `IAsyncAutoSyncBlockEntity`, `IAutoPersistBlockEntity`, `IAutoSyncBlockEntity` and `IManagedBlockEntity` by extending `ManagedSyncBlockEntity`.
 
+### LDLib2 UI migration rule
+
+UI migration must not replace LDLib SyncData with LDLib2 syncdata or RPC. UI state changes must continue through GTM's sync system and its automatic synchronization path. New LDLib2 UI code must not introduce `@RPCMethod`, `RPCEmitter`, `setOnServerClick`, or manual dirty-marking calls as the business synchronization path.
+
+LDLib2 UI events are split into three categories:
+
+- Local UI state, such as selected tabs or temporary filters, stays client-local.
+- Field changes use GTM automatic sync fields and the existing field packets.
+- One-shot commands use GTM action packets for machine, cover, or held-item holders.
+
+Action handlers run only on the server. They must validate the holder identity, player permissions, action id, and payload type before applying changes. Cover UIs must keep their close notification path, and held-item UIs must validate both the opened hand and the opened stack identity before accepting actions.
+
 ### Annotations
 
-!!! warning
-Client sync fields **do not** automatically detect changes. When changing a client sync field, call `ISyncManaged.syncDataHolder.markClientSyncFieldDirty(FIELD_NAME)`
+!!! note
+Client sync fields are scanned for value changes automatically. Use sync-managed child state or contextual codecs for mutable holders whose internal state changes without replacing the field value.
 
 - `@DescSynced` -> `@SyncToClient`
 - `@RequireRerender` -> `@RerenderOnChanged`

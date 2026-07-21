@@ -15,8 +15,6 @@ import snownee.jade.api.IServerDataProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.config.IPluginConfig;
 
-import java.util.Objects;
-
 /**
  * Jade provider which provides info for a specific machine type.
  *
@@ -40,7 +38,7 @@ public abstract class MachineInfoProvider<T extends MetaMachine, TagType extends
     public void appendTooltip(ITooltip iTooltip, BlockAccessor block, IPluginConfig iPluginConfig) {
         var be = block.getBlockEntity();
         if (be == null || !block.getServerData().contains(uid.toString())) return;
-        addTooltip((TagType) Objects.requireNonNull(block.getServerData().get(uid.toString())), iTooltip,
+        addTooltip((TagType) block.getServerData().get(uid.toString()), iTooltip,
                 block.getPlayer(), block, be, iPluginConfig);
     }
 

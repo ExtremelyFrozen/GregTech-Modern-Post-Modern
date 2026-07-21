@@ -1,12 +1,12 @@
 package com.gregtechceu.gtceu.common.cover.data;
 
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
-import com.gregtechceu.gtceu.api.gui.widget.EnumSelectorWidget;
+import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.SelectableEnum;
 
-import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 
-public enum FilterMode implements EnumSelectorWidget.SelectableEnum {
+public enum FilterMode implements SelectableEnum {
 
     FILTER_INSERT("filter_insert"),
     FILTER_EXTRACT("filter_extract"),
@@ -27,7 +27,7 @@ public enum FilterMode implements EnumSelectorWidget.SelectableEnum {
 
     @Override
     public IGuiTexture getIcon() {
-        return new ResourceTexture("gtpm:textures/gui/icon/filter_mode/" + localeName + ".png");
+        return GuiTextures.resource("gtpm:textures/gui/icon/filter_mode/" + localeName + ".png");
     }
 
     public boolean filters(IO io) {

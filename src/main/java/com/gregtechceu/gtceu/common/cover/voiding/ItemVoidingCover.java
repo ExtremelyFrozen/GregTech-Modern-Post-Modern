@@ -3,19 +3,23 @@ package com.gregtechceu.gtceu.common.cover.voiding;
 import com.gregtechceu.gtceu.api.capability.IControllable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
 import com.gregtechceu.gtceu.api.cover.CoverDefinition;
-import com.gregtechceu.gtceu.api.cover.IUICover;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.ToggleButtonWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTToggleButtonElement;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.UICoverHolder;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.common.cover.ConveyorCover;
 import com.gregtechceu.gtceu.common.data.item.GTItemAbilities;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,7 +35,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class ItemVoidingCover extends ConveyorCover implements IUICover, IControllable {
+public class ItemVoidingCover extends ConveyorCover implements IControllable {
+
+    static {
+        ItemVoidingCoverConfigActions.initialize();
+    }
 
     public ItemVoidingCover(CoverDefinition definition, ICoverable coverHolder, Direction attachedSide) {
         super(definition, coverHolder, attachedSide, 0);
@@ -81,20 +89,43 @@ public class ItemVoidingCover extends ConveyorCover implements IUICover, IContro
     //////////////////////////////////////
 
     @Override
-    public Widget createUIWidget() {
-        final var group = new WidgetGroup(0, 0, 176, 120);
-        group.addWidget(new LabelWidget(10, 5, getUITitle()));
+    public boolean canCreateLDLib2UI(Player player, UICoverHolder holder) {
+        return holder.getCover() == this;
+    }
 
-        group.addWidget(new ToggleButtonWidget(10, 20, 20, 20,
-                GuiTextures.BUTTON_POWER, this::isWorkingEnabled, this::setWorkingEnabled));
+    @Override
+    public UI createLDLib2UI(Player player, UICoverHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 202);
+        root.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND));
 
-        // group.addWidget(filterHandler.createFilterSlotUI(36, 21));
-        group.addWidget(filterHandler.createFilterSlotUI(148, 91));
-        group.addWidget(filterHandler.createFilterConfigUI(10, 50, 126, 60));
+        root.addChild(createLDLib2Label());
+        root.addChild(new GTToggleButtonElement(10, 20, 20, 20, GuiTextures.BUTTON_POWER,
+                this::isWorkingEnabled, enabled -> setLDLib2WorkingEnabled(player, holder, enabled)));
+        buildAdditionalLDLib2UI(root, player, holder);
+        root.addChild(filterHandler.createFilterSlotLDLib2UI(148, 91));
+        root.addChild(filterHandler.createFilterConfigLDLib2UI(10, 50, 126, 60));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(), GuiTextures.SLOT, 7, 120, true));
+        return UI.of(root);
+    }
 
-        buildAdditionalUI(group);
+    protected void buildAdditionalLDLib2UI(UIElement root, Player player, UICoverHolder holder) {}
 
-        return group;
+    private GTLabelElement createLDLib2Label() {
+        GTLabelElement label = new GTLabelElement(10, 5, 156, 10, getUITitle(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private void setLDLib2WorkingEnabled(Player player, UICoverHolder holder, boolean enabled) {
+        setWorkingEnabled(enabled);
+        if (player.level().isClientSide()) {
+            CoverUIHelper.sendAction(holder, ItemVoidingCoverConfigActions.createSetWorkingEnabledAction(enabled));
+        }
     }
 
     @NotNull
@@ -107,12 +138,12 @@ public class ItemVoidingCover extends ConveyorCover implements IUICover, IContro
         if (!context.getItemInHand().canPerformAction(GTItemAbilities.MALLET_PAUSE)) {
             return InteractionResult.PASS;
         }
-        if (!isRemote()) {
+        if (!coverHolder.isRemote()) {
             setWorkingEnabled(!isWorkingEnabled);
             context.getPlayer().sendSystemMessage(Component.translatable(isWorkingEnabled() ?
                     "cover.voiding.message.enabled" : "cover.voiding.message.disabled"));
         }
-        return InteractionResult.sidedSuccess(isRemote());
+        return InteractionResult.sidedSuccess(coverHolder.isRemote());
     }
 
     // TODO: Decide grid behavior
@@ -123,12 +154,12 @@ public class ItemVoidingCover extends ConveyorCover implements IUICover, IContro
     }
 
     @Override
-    public @Nullable ResourceTexture sideTips(Player player, BlockPos pos, BlockState state, Set<GTToolType> toolTypes,
-                                              ItemStack held, Direction side) {
+    public @Nullable GridHighlightTexture sideTips(Player player, BlockPos pos, BlockState state,
+                                                   Set<GTToolType> toolTypes, ItemStack held, Direction side) {
         var superTips = super.sideTips(player, pos, state, toolTypes, held, side);
         if (superTips != null) return superTips;
         if (toolTypes.contains(GTToolType.SOFT_MALLET)) {
-            return isWorkingEnabled() ? GuiTextures.TOOL_START : GuiTextures.TOOL_PAUSE;
+            return isWorkingEnabled() ? GridHighlightTexture.TOOL_START : GridHighlightTexture.TOOL_PAUSE;
         }
         return null;
     }

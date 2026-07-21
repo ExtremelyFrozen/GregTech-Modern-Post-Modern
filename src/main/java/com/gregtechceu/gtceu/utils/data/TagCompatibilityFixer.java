@@ -27,15 +27,4 @@ public final class TagCompatibilityFixer {
             machineTag.put("autoOutput", outputTag);
         }
     }
-
-    public static Tag stripLDLibPayloadWrapper(Tag t) {
-        if (!(t instanceof CompoundTag tag)) return t;
-        if (tag.contains("p") && tag.contains("t")) {
-            return tag.getCompound("p");
-        }
-        if (tag.contains("t", Tag.TAG_COMPOUND)) {
-            return tag.getCompound("t").getCompound("p");
-        }
-        return tag;
-    }
 }

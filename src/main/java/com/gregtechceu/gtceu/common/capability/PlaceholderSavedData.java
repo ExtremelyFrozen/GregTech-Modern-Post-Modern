@@ -14,7 +14,6 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -86,8 +85,7 @@ public class PlaceholderSavedData extends SavedData {
             CompoundTag placeholderTag = tag.getCompound(placeholderName);
             Map<UUID, DataComponentMap> entries = new HashMap<>();
             for (String uuidKey : placeholderTag.getAllKeys()) {
-                Tag componentsTag = Objects.requireNonNull(placeholderTag.get(uuidKey),
-                        () -> "Missing placeholder component data for " + placeholderName + "/" + uuidKey);
+                Tag componentsTag = placeholderTag.get(uuidKey);
                 entries.put(UUID.fromString(uuidKey), loadComponents(componentsTag, provider));
             }
             if (!entries.isEmpty()) {

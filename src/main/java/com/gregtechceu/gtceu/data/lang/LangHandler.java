@@ -31,16 +31,10 @@ public class LangHandler {
         ConfigurationLang.init(provider);
         RecipeLogicLang.init(provider);
 
-        provider.add("gtpm.gui.editor.tips.citation", "Number of citations");
-        provider.add("gtpm.gui.editor.group.recipe_type", "cap");
-        provider.add("ldlib.gui.editor.register.editor.gtpm.rtui", "RecipeType UI Project");
-        provider.add("ldlib.gui.editor.register.editor.gtpm.mui", "Machine UI Project");
-        provider.add("ldlib.gui.editor.register.editor.gtpm.template_tab", "templates");
-        provider.add("ldlib.gui.editor.group.widget.gtm_container", "GTM Container Widgets");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_item_slot", "GTM Item Slot");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_fluid_slot", "GTM Fluid Slot");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_phantom_item_slot", "GTM Phantom Item Slot");
-        provider.add("ldlib.gui.editor.register.widget.container.gtm_phantom_fluid_slot", "GTM Phantom Fluid Slot");
+        provider.add("gtpm.gui.editor.project.xml", "GTPM XML UI Project");
+        provider.add("gtpm.gui.editor.templates", "Templates");
+        provider.add("gtpm.gui.editor.templates.machine", "Machine UI Templates");
+        provider.add("gtpm.gui.editor.templates.recipe_type", "Recipe Type UI Templates");
 
         provider.add("curios.identifier.gtpm_magnet", "GTCEu Magnet");
         // capabilities
@@ -136,6 +130,7 @@ public class LangHandler {
         provider.add("command.gtpm.place_vein.failure", "Failed to place vein %s at position %s");
         provider.add("command.gtpm.place_vein.success", "Placed vein %s at position %s");
         provider.add("command.gtpm.share_prospection_data.notification", "%s is sharing prospecting data with you!");
+        provider.add("command.gtpm.ui_editor.open.failed", "Failed to open the GT UI editor");
         provider.add("command.gtpm.cape.failure.does_not_exist", "Cape %s does not exist");
         provider.add("command.gtpm.cape.give.failed", "No new capes were unlocked");
         provider.add("command.gtpm.cape.give.success.multiple", "Unlocked %s capes for %s players");
@@ -1843,6 +1838,7 @@ public class LangHandler {
         provider.add("gtpm.computer_monitor_cover.error.not_supported",
                 "This feature is not supported by this block/cover!");
         provider.add("gtpm.central_monitor.gui.create_group", "Create group");
+        provider.add("gtpm.central_monitor.gui.data_slot", "Data slot");
         provider.add("gtpm.central_monitor.gui.remove_from_group", "Remove from group");
         provider.add("gtpm.central_monitor.gui.set_target", "Set target");
         provider.add("gtpm.central_monitor.gui.currently_editing", "Currently editing: %s");

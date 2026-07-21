@@ -1,8 +1,8 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -29,8 +29,13 @@ public interface StructurePredicate {
                             DataResult.error(() -> "Unknown structure predicate type: " + id) :
                             DataResult.success(type);
                 },
-                type -> Objects.requireNonNull(StructurePredicateType.id(type),
-                        "Unregistered structure predicate type"));
+                type -> {
+                    ResourceLocation id = StructurePredicateType.id(type);
+                    if (id == null) {
+                        throw new IllegalStateException("Unregistered structure predicate type");
+                    }
+                    return id;
+                });
     }
 
     private static MapCodec<? extends StructurePredicate> dispatchCodec(StructurePredicateType<?> type) {
@@ -38,12 +43,31 @@ public interface StructurePredicate {
     }
 
     @Unmodifiable
-    default List<BlockInfo> candidates() {
+    default List<MultiblockBlockInfo> candidates() {
         return List.of();
     }
 
     @Unmodifiable
     default List<Block> blockCandidates() {
+        return List.of();
+    }
+
+    /**
+     * Expands this predicate into definition-aware choices used to build a representative preview structure.
+     * Composite predicates override this method so nested count restrictions remain attached to their candidates.
+     *
+     * @param definition machine definition owning the pattern being previewed
+     * @return ordered preview choices, or an empty list when this predicate cannot provide a representative block
+     */
+    @Unmodifiable
+    default List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        List<MultiblockBlockInfo> previewCandidates = candidates();
+        if (!previewCandidates.isEmpty()) {
+            return List.of(StructurePreviewChoice.unrestricted(previewCandidates));
+        }
+        if (isAny() || isAir()) {
+            return List.of(StructurePreviewChoice.unrestricted(List.of(MultiblockBlockInfo.EMPTY)));
+        }
         return List.of();
     }
 

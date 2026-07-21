@@ -12,9 +12,9 @@ import com.gregtechceu.gtceu.api.multiblock.error.SinglePredicateError;
 import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 import com.gregtechceu.gtceu.api.multiblock.structurepredicate.RestrictedPredicate;
 import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicate;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePreviewChoice;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePreviewConstraint;
 import com.gregtechceu.gtceu.api.multiblock.util.PatternMatchContext;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,19 +33,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -415,10 +416,11 @@ public class BlockPattern {
         });
     }
 
-    public BlockInfo[][][] getPreview(int[] repetition) {
-        Reference2IntOpenHashMap<SimplePredicate> cacheGlobal = new Reference2IntOpenHashMap<>();
-        Long2ObjectOpenHashMap<BlockInfo> blocks = new Long2ObjectOpenHashMap<>(1024, 0.5F);
-        Long2ObjectOpenHashMap<BlockInfo> machines = new Long2ObjectOpenHashMap<>();
+    public MultiblockBlockInfo[][][] getPreview(MultiblockMachineDefinition definition, int[] repetition) {
+        Object2IntOpenHashMap<Object> cacheGlobal = new Object2IntOpenHashMap<>();
+        Map<Object, PreviewLimit> globalLimits = new LinkedHashMap<>();
+        Long2ObjectOpenHashMap<MultiblockBlockInfo> blocks = new Long2ObjectOpenHashMap<>(1024, 0.5F);
+        Long2ObjectOpenHashMap<MultiblockBlockInfo> machines = new Long2ObjectOpenHashMap<>();
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
         int minZ = Integer.MAX_VALUE;
@@ -430,8 +432,8 @@ public class BlockPattern {
             int unitDepth = this.unitDepths[unit];
             for (int r = 0; r < repetition[unit]; r++) {
                 for (int inner = 0; inner < unitDepth; inner++, x++) {
-                    // Checking single slice
-                    Reference2IntOpenHashMap<SimplePredicate> cacheLayer = new Reference2IntOpenHashMap<>();
+                    Object2IntOpenHashMap<Object> cacheLayer = new Object2IntOpenHashMap<>();
+                    Map<Object, PreviewLimit> layerLimits = new LinkedHashMap<>();
                     for (int y = 0; y < this.thumbLength; y++) {
                         for (int z = 0; z < this.palmLength; z++) {
                             var bl = this.blockMatches[unitStart + inner];
@@ -440,106 +442,20 @@ public class BlockPattern {
                             if (by == null) continue;
                             TraceabilityPredicate predicate = by[z];
                             if (predicate == null) continue;
-                            BlockInfo info = null;
-                            boolean find = false;
-                            for (SimplePredicate limit : predicate.limited) {
-                                // check layer and previewCount
-                                if (limit.minLayerCount > 0) {
-                                    if (cacheLayer.getInt(limit) < limit.minLayerCount) {
-                                        cacheLayer.addTo(limit, 1);
-                                    } else {
-                                        continue;
-                                    }
-                                    if (cacheGlobal.getInt(limit) < limit.previewCount) {
-                                        cacheGlobal.addTo(limit, 1);
-                                    } else {
-                                        continue;
-                                    }
-                                } else {
-                                    continue;
-                                }
-                                info = limit.blockInfo.get();
-                                if (info != null) {
-                                    find = true;
-                                    break;
-                                }
+                            List<PreviewOption> options = previewOptions(predicate, definition);
+                            registerLimits(options, globalLimits, layerLimits);
+                            PreviewOption option = selectPreviewOption(options, cacheGlobal, cacheLayer);
+                            if (option == null) {
+                                if (predicate.isAny() || predicate.hasAir()) continue;
+                                throw previewGenerationError(definition,
+                                        "no candidate remained at pattern cell " + x + "," + y + "," + z);
                             }
-                            if (!find) {
-                                // check global and previewCount
-                                for (SimplePredicate limit : predicate.limited) {
-                                    if (limit.minCount == -1 && limit.previewCount == -1) continue;
-                                    if (cacheGlobal.getInt(limit) < limit.previewCount) {
-                                        cacheGlobal.addTo(limit, 1);
-                                    } else if (limit.minCount > 0) {
-                                        if (cacheGlobal.getInt(limit) < limit.minCount) {
-                                            cacheGlobal.addTo(limit, 1);
-                                        } else {
-                                            continue;
-                                        }
-                                    } else {
-                                        continue;
-                                    }
-                                    info = limit.blockInfo.get();
-                                    if (info != null) {
-                                        find = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!find) {
-                                // check common with previewCount
-                                for (SimplePredicate common : predicate.common) {
-                                    if (common.previewCount > 0) {
-                                        if (cacheGlobal.getInt(common) < common.previewCount) {
-                                            cacheGlobal.addTo(common, 1);
-                                        } else {
-                                            continue;
-                                        }
-                                    } else {
-                                        continue;
-                                    }
-                                    info = common.blockInfo.get();
-                                    if (info != null) {
-                                        find = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!find) {
-                                // check without previewCount
-                                for (SimplePredicate common : predicate.common) {
-                                    if (common.previewCount == -1) {
-                                        info = common.blockInfo.get();
-                                        if (info != null) {
-                                            find = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            if (!find) {
-                                // check max
-                                for (SimplePredicate limit : predicate.limited) {
-                                    if (limit.previewCount != -1) continue;
-                                    if (limit.maxCount != -1 || limit.maxLayerCount != -1) {
-                                        if (cacheGlobal.getOrDefault(limit, 0) < limit.maxCount) {
-                                            cacheGlobal.addTo(limit, 1);
-                                        } else if (cacheLayer.getOrDefault(limit, 0) < limit.maxLayerCount) {
-                                            cacheLayer.addTo(limit, 1);
-                                        } else {
-                                            continue;
-                                        }
-                                    }
-                                    info = limit.blockInfo.get();
-                                    if (info != null) {
-                                        break;
-                                    }
-                                }
-                            }
-                            if (info != null && info.getBlockState().getBlock() != Blocks.AIR) {
+                            incrementCounts(option, cacheGlobal, cacheLayer);
+                            MultiblockBlockInfo info = option.blockInfo();
+                            if (info.getBlockState().getBlock() != Blocks.AIR) {
                                 Direction direction = predicate.getPreviewDirection();
                                 if (direction != null) {
-                                    info = BlockInfo.fromBlockState(setDirectionalState(info.getBlockState(),
+                                    info = MultiblockBlockInfo.fromBlockState(setDirectionalState(info.getBlockState(),
                                             direction));
                                 }
                                 BlockPos pos = gerPreviewOffset(z, y, x);
@@ -557,11 +473,15 @@ public class BlockPattern {
                             }
                         }
                     }
+                    verifyMinimums(definition, layerLimits, cacheLayer, true);
                 }
             }
         }
-        BlockInfo[][][] result = (BlockInfo[][][]) Array.newInstance(BlockInfo.class, maxX - minX + 1, maxY - minY + 1,
-                maxZ - minZ + 1);
+        verifyMinimums(definition, globalLimits, cacheGlobal, false);
+        if (blocks.isEmpty() && machines.isEmpty()) {
+            throw previewGenerationError(definition, "the generated page did not contain any visible blocks");
+        }
+        MultiblockBlockInfo[][][] result = new MultiblockBlockInfo[maxX - minX + 1][maxY - minY + 1][maxZ - minZ + 1];
         int finalMinX = minX;
         int finalMinY = minY;
         int finalMinZ = minZ;
@@ -592,6 +512,179 @@ public class BlockPattern {
             result[pos.getX() - finalMinX][pos.getY() - finalMinY][pos.getZ() - finalMinZ] = info;
         });
         return result;
+    }
+
+    private List<PreviewOption> previewOptions(TraceabilityPredicate predicate,
+                                               MultiblockMachineDefinition definition) {
+        List<PreviewOption> options = new ArrayList<>();
+        for (SimplePredicate simplePredicate : predicate.limited) {
+            MultiblockBlockInfo info = simplePredicate.blockInfo.get();
+            if (info == null) continue;
+            PreviewLimit limit = PreviewLimit.fromSimple(simplePredicate);
+            boolean fallback = simplePredicate.previewCount == -1;
+            options.add(new PreviewOption(info, List.of(limit), fallback, 1));
+        }
+        for (SimplePredicate simplePredicate : predicate.common) {
+            MultiblockBlockInfo info = simplePredicate.blockInfo.get();
+            if (info == null) continue;
+            PreviewLimit limit = PreviewLimit.fromSimple(simplePredicate);
+            options.add(new PreviewOption(info, List.of(limit), simplePredicate.previewCount == -1, 0));
+        }
+        for (StructurePredicate structurePredicate : predicate.structurePredicates) {
+            for (StructurePreviewChoice choice : structurePredicate.previewChoices(definition)) {
+                if (choice.candidates().isEmpty()) continue;
+                List<PreviewLimit> limits = choice.constraints().stream().map(PreviewLimit::fromStructure).toList();
+                boolean fallback = limits.stream().noneMatch(PreviewLimit::hasPreviewTarget);
+                int fallbackPriority = limits.isEmpty() ? 0 : 1;
+                options.add(new PreviewOption(choice.candidates().getFirst(), limits, fallback, fallbackPriority));
+            }
+        }
+        return options;
+    }
+
+    private static void registerLimits(List<PreviewOption> options, Map<Object, PreviewLimit> globalLimits,
+                                       Map<Object, PreviewLimit> layerLimits) {
+        for (PreviewOption option : options) {
+            for (PreviewLimit limit : option.limits()) {
+                globalLimits.putIfAbsent(limit.key(), limit);
+                if (limit.minCountByLayer() >= 0 || limit.maxCountByLayer() >= 0) {
+                    layerLimits.putIfAbsent(limit.key(), limit);
+                }
+            }
+        }
+    }
+
+    private static PreviewOption selectPreviewOption(List<PreviewOption> options,
+                                                     Object2IntMap<Object> globalCounts,
+                                                     Object2IntMap<Object> layerCounts) {
+        PreviewOption selected = selectTarget(options, globalCounts, layerCounts, PreviewTarget.LAYER_MINIMUM);
+        if (selected == null) {
+            selected = selectTarget(options, globalCounts, layerCounts, PreviewTarget.GLOBAL);
+        }
+        if (selected != null) return selected;
+
+        for (int priority = 0; priority <= 1; priority++) {
+            for (PreviewOption option : options) {
+                if (option.fallback() && option.fallbackPriority() == priority &&
+                        canSelect(option, globalCounts, layerCounts)) {
+                    return option;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static PreviewOption selectTarget(List<PreviewOption> options, Object2IntMap<Object> globalCounts,
+                                              Object2IntMap<Object> layerCounts, PreviewTarget target) {
+        PreviewOption selected = null;
+        int smallestRemaining = Integer.MAX_VALUE;
+        for (PreviewOption option : options) {
+            if (!canSelect(option, globalCounts, layerCounts)) continue;
+            int remaining = target.remaining(option, globalCounts, layerCounts);
+            if (remaining > 0 && remaining < smallestRemaining) {
+                selected = option;
+                smallestRemaining = remaining;
+            }
+        }
+        return selected;
+    }
+
+    private static boolean canSelect(PreviewOption option, Object2IntMap<Object> globalCounts,
+                                     Object2IntMap<Object> layerCounts) {
+        for (PreviewLimit limit : option.limits()) {
+            if (limit.maxCount() >= 0 && globalCounts.getInt(limit.key()) >= limit.maxCount()) return false;
+            if (limit.maxCountByLayer() >= 0 &&
+                    layerCounts.getInt(limit.key()) >= limit.maxCountByLayer())
+                return false;
+        }
+        return true;
+    }
+
+    private static void incrementCounts(PreviewOption option, Object2IntMap<Object> globalCounts,
+                                        Object2IntMap<Object> layerCounts) {
+        for (PreviewLimit limit : option.limits()) {
+            globalCounts.put(limit.key(), globalCounts.getInt(limit.key()) + 1);
+            layerCounts.put(limit.key(), layerCounts.getInt(limit.key()) + 1);
+        }
+    }
+
+    private static void verifyMinimums(MultiblockMachineDefinition definition, Map<Object, PreviewLimit> limits,
+                                       Object2IntMap<Object> counts, boolean layer) {
+        for (PreviewLimit limit : limits.values()) {
+            int minimum = layer ? limit.minCountByLayer() : limit.minCount();
+            if (minimum >= 0 && counts.getInt(limit.key()) < minimum) {
+                String scope = layer ? "layer" : "global";
+                throw previewGenerationError(definition,
+                        scope + " minimum " + minimum + " could not be satisfied for " + limit.key());
+            }
+        }
+    }
+
+    private static IllegalStateException previewGenerationError(MultiblockMachineDefinition definition,
+                                                                String detail) {
+        return new IllegalStateException("Unable to generate multiblock preview for " + definition.getId() + ": " +
+                detail);
+    }
+
+    private enum PreviewTarget {
+
+        LAYER_MINIMUM {
+
+            @Override
+            int remaining(PreviewOption option, Object2IntMap<Object> globalCounts,
+                          Object2IntMap<Object> layerCounts) {
+                return option.limits().stream()
+                        .mapToInt(limit -> limit.minCountByLayer() - layerCounts.getInt(limit.key()))
+                        .filter(value -> value > 0)
+                        .min()
+                        .orElse(0);
+            }
+        },
+        GLOBAL {
+
+            @Override
+            int remaining(PreviewOption option, Object2IntMap<Object> globalCounts,
+                          Object2IntMap<Object> layerCounts) {
+                return option.limits().stream()
+                        .mapToInt(limit -> smallestPositive(
+                                limit.minCount() - globalCounts.getInt(limit.key()),
+                                limit.previewCount() - globalCounts.getInt(limit.key())))
+                        .filter(value -> value > 0)
+                        .min()
+                        .orElse(0);
+            }
+        };
+
+        abstract int remaining(PreviewOption option, Object2IntMap<Object> globalCounts,
+                               Object2IntMap<Object> layerCounts);
+
+        private static int smallestPositive(int first, int second) {
+            if (first <= 0) return Math.max(second, 0);
+            if (second <= 0) return first;
+            return Math.min(first, second);
+        }
+    }
+
+    private record PreviewOption(MultiblockBlockInfo blockInfo, List<PreviewLimit> limits, boolean fallback,
+                                 int fallbackPriority) {}
+
+    private record PreviewLimit(Object key, int minCount, int maxCount, int minCountByLayer,
+                                int maxCountByLayer, int previewCount) {
+
+        private static PreviewLimit fromSimple(SimplePredicate predicate) {
+            return new PreviewLimit(predicate, predicate.minCount, predicate.maxCount, predicate.minLayerCount,
+                    predicate.maxLayerCount, predicate.previewCount);
+        }
+
+        private static PreviewLimit fromStructure(StructurePreviewConstraint constraint) {
+            return new PreviewLimit(constraint.key(), constraint.minCount().orElse(-1),
+                    constraint.maxCount().orElse(-1), constraint.minCountByLayer().orElse(-1),
+                    constraint.maxCountByLayer().orElse(-1), constraint.previewCount().orElse(-1));
+        }
+
+        private boolean hasPreviewTarget() {
+            return previewCount >= 0;
+        }
     }
 
     private void resetFacing(BlockPos pos, BlockState blockState, Direction facing,
@@ -669,8 +762,8 @@ public class BlockPattern {
     }
 
     protected BlockPos gerPreviewOffset(int x, int y, int z) {
-        int[] c0 = new int[] { x, y, z };
-        int[] c1 = new int[3];
-        return new BlockPos(c1[0], c1[1], c1[2]);
+        return new RelativeOffset(
+                x, y, z, structureDir,
+                Direction.NORTH, Direction.NORTH, false).toBlockPos();
     }
 }

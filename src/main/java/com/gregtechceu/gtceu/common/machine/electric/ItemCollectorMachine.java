@@ -7,18 +7,20 @@ import com.gregtechceu.gtceu.api.capability.IWorkable;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.cover.filter.ItemFilter;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.WidgetUtils;
-import com.gregtechceu.gtceu.api.gui.editor.EditableMachineUI;
-import com.gregtechceu.gtceu.api.gui.editor.EditableUI;
-import com.gregtechceu.gtceu.api.gui.widget.IntInputWidget;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTIntInputElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.TieredEnergyMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.api.transfer.item.CustomItemStackHandler;
 import com.gregtechceu.gtceu.common.data.GTItems;
@@ -27,13 +29,9 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
 import com.gregtechceu.gtceu.utils.ISubscription;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import com.lowdragmc.lowdraglib.utils.Position;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -45,7 +43,6 @@ import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.BiFunction;
 
 /**
  * @author h3tr
@@ -53,8 +50,27 @@ import java.util.function.BiFunction;
  * @implNote FisherMachine
  */
 public class ItemCollectorMachine extends TieredEnergyMachine
-                                  implements IFancyUIMachine, IWorkable {
+                                  implements LDLib2FancyUIMachine, IWorkable {
 
+    private static final int MIN_RANGE = 1;
+    private static final int SLOT_SIZE = 18;
+    private static final int TEMPLATE_PADDING = 8;
+    private static final int TEMPLATE_CONTROL_COLUMN_WIDTH = 25;
+    private static final int OUTPUT_SLOT_X_OFFSET = 24;
+    private static final int TEMPLATE_SLOT_OFFSET = 4;
+    private static final int FILTER_SLOT_X = 4;
+    private static final int RANGE_INPUT_WIDTH = 80;
+    private static final int RANGE_INPUT_HEIGHT = 20;
+    private static final int RANGE_INPUT_Y = 5;
+    private static final int ENERGY_GROUP_WIDTH = 18;
+    private static final int ENERGY_GROUP_HEIGHT = 80;
+    private static final int ENERGY_GROUP_X = 3;
+    private static final int BATTERY_SLOT_X = 0;
+    private static final int BATTERY_SLOT_Y = 61;
+    private static final int PAGE_MIN_WIDTH = 172;
+    private static final int PAGE_ENERGY_TEMPLATE_GAP = 4;
+    private static final int PAGE_RANGE_INPUT_RESERVED_HEIGHT = 30;
+    private static final int TEMPLATE_PAGE_Y_OFFSET = 15;
     @Getter
     private static final int[] INVENTORY_SIZES = { 4, 9, 16, 25, 25 };
     private static final double MOTION_MULTIPLIER = 0.04;
@@ -81,7 +97,7 @@ public class ItemCollectorMachine extends TieredEnergyMachine
 
     @SaveField
     @Getter
-    @SyncToClient
+    @SyncBoth
     private int range;
 
     private boolean rangeDirty = false;
@@ -290,15 +306,35 @@ public class ItemCollectorMachine extends TieredEnergyMachine
     }
 
     public void setRange(int range) {
-        this.range = range;
-        syncDataHolder.markClientSyncFieldDirty("range");
+        int normalizedRange = normalizeRange(range);
+        if (this.range == normalizedRange) {
+            return;
+        }
+        this.range = normalizedRange;
+        invalidateCollectionBounds();
+    }
+
+    @ServerFieldNormalizer(fieldName = "range")
+    private int normalizeRange(int range) {
+        if (range < MIN_RANGE || range > maxRange) {
+            throw new IllegalArgumentException("Item collector range must be between " + MIN_RANGE + " and " +
+                    maxRange + ": " + range);
+        }
+        return range;
+    }
+
+    @ServerFieldChangeListener(fieldName = "range")
+    private void onRangeChanged(int oldRange, int newRange) {
+        invalidateCollectionBounds();
+    }
+
+    protected void invalidateCollectionBounds() {
         rangeDirty = true;
     }
 
     @Override
     public void setWorkingEnabled(boolean workingEnabled) {
         isWorkingEnabled = workingEnabled;
-        syncDataHolder.markClientSyncFieldDirty("isWorkingEnabled");
         updateCollectionSubscription();
     }
 
@@ -306,99 +342,125 @@ public class ItemCollectorMachine extends TieredEnergyMachine
     // ********** GUI ***********//
     //////////////////////////////////////
 
-    public static BiFunction<ResourceLocation, Integer, EditableMachineUI> EDITABLE_UI_CREATOR = Util
-            .memoize((path, inventorySize) -> new EditableMachineUI("misc", path, () -> {
-                var template = createTemplate(inventorySize).createDefault();
-                var energyBar = createEnergyBar().createDefault();
-                var batterySlot = createBatterySlot().createDefault();
+    @Override
+    public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
+        UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0,
+                getLDLib2PageWidth(), getLDLib2PageHeight());
 
-                var energyGroup = new WidgetGroup(0, 0, energyBar.getSize().width, energyBar.getSize().height + 20);
-                batterySlot.setSelfPosition(
-                        new Position((energyBar.getSize().width - 18) / 2, energyBar.getSize().height + 1));
-                energyGroup.addWidget(energyBar);
-                energyGroup.addWidget(batterySlot);
-                var group = new WidgetGroup(0, 0,
-                        Math.max(energyGroup.getSize().width + template.getSize().width + 4 + 8, 172),
-                        Math.max(template.getSize().height + 8 + 30, energyGroup.getSize().height + 8));
-                var size = group.getSize();
-                energyGroup.setSelfPosition(new Position(3, (size.height - energyGroup.getSize().height) / 2));
+        UIElement energyGroup = UITemplate.setLDLib2Bounds(new UIElement(), ENERGY_GROUP_X, getLDLib2EnergyGroupY(),
+                getLDLib2EnergyGroupWidth(), getLDLib2EnergyGroupHeight());
+        energyGroup.addChild(createLDLib2EnergyBar());
+        energyGroup.addChild(createLDLib2BatterySlot(BATTERY_SLOT_X, BATTERY_SLOT_Y));
+        root.addChild(energyGroup);
 
-                template.setSelfPosition(new Position(
-                        (size.width - energyGroup.getSize().width - 4 - template.getSize().width) / 2 + 2 +
-                                energyGroup.getSize().width + 2,
-                        (size.height - template.getSize().height) / 2 + 15));
+        UIElement template = UITemplate.setLDLib2Bounds(new UIElement(), getLDLib2TemplateX(), getLDLib2TemplateY(),
+                getLDLib2TemplateWidth(), getLDLib2TemplateHeight());
+        template.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
 
-                group.addWidget(energyGroup);
-                group.addWidget(template);
-                return group;
-            }, (template, machine) -> {
-                if (machine instanceof ItemCollectorMachine itemCollectorMachine) {
-                    createTemplate(inventorySize).setupUI(template, itemCollectorMachine);
-                    createEnergyBar().setupUI(template, itemCollectorMachine);
-                    createBatterySlot().setupUI(template, itemCollectorMachine);
-                    var rangeSelector = new IntInputWidget((template.getSize().width - 80) / 2, 5, 80, 20,
-                            itemCollectorMachine::getRange, itemCollectorMachine::setRange);
-                    rangeSelector.setMin(1);
-                    rangeSelector.setMax(itemCollectorMachine.maxRange);
-                    template.addWidget(rangeSelector);
-                }
-            }));
+        int rowSize = getLDLib2TemplateRowSize();
+        for (int y = 0; y < rowSize; y++) {
+            for (int x = 0; x < rowSize; x++) {
+                int index = y * rowSize + x;
+                template.addChild(createLDLib2OutputSlot(index, OUTPUT_SLOT_X_OFFSET + x * SLOT_SIZE,
+                        TEMPLATE_SLOT_OFFSET + y * SLOT_SIZE));
+            }
+        }
 
-    protected static EditableUI<SlotWidget, ItemCollectorMachine> createBatterySlot() {
-        return new EditableUI<>("battery_slot", SlotWidget.class, () -> {
-            var slotWidget = new SlotWidget();
-            slotWidget.setBackground(GuiTextures.SLOT, GuiTextures.CHARGER_OVERLAY);
-            return slotWidget;
-        }, (slotWidget, machine) -> {
-            slotWidget.setHandlerSlot(machine.chargerInventory, 0);
-            slotWidget.setCanPutItems(true);
-            slotWidget.setCanTakeItems(true);
-            slotWidget.setHoverTooltips(LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
-                    GTValues.VNF[machine.getTier()], GTValues.VNF[machine.getTier()]).toArray(new MutableComponent[0]));
-        });
+        template.addChild(createLDLib2FilterSlot(FILTER_SLOT_X, getLDLib2FilterSlotY()));
+        root.addChild(template);
+        root.addChild(createLDLib2RangeInput(getLDLib2RangeInputX(), RANGE_INPUT_Y));
+        return root;
     }
 
-    protected static EditableUI<WidgetGroup, ItemCollectorMachine> createTemplate(int inventorySize) {
-        return new EditableUI<>("functional_container", WidgetGroup.class, () -> {
-            int rowSize = (int) Math.sqrt(inventorySize);
-            WidgetGroup main = new WidgetGroup(0, 0, rowSize * 18 + 8 + 25, rowSize * 18 + 8);
+    @Override
+    public int getLDLib2PageWidth() {
+        return Math.max(getLDLib2EnergyGroupWidth() + getLDLib2TemplateWidth() +
+                PAGE_ENERGY_TEMPLATE_GAP + TEMPLATE_PADDING, PAGE_MIN_WIDTH);
+    }
 
-            for (int y = 0; y < rowSize; y++) {
-                for (int x = 0; x < rowSize; x++) {
-                    int index = y * rowSize + x;
-                    SlotWidget slotWidget = new SlotWidget();
-                    slotWidget.initTemplate();
-                    slotWidget.setSelfPosition(new Position(24 + x * 18, 4 + y * 18));
-                    slotWidget.setBackground(GuiTextures.SLOT);
-                    slotWidget.setId("slot_" + index);
-                    main.addWidget(slotWidget);
-                }
-            }
+    @Override
+    public int getLDLib2PageHeight() {
+        return Math.max(getLDLib2TemplateHeight() + TEMPLATE_PADDING + PAGE_RANGE_INPUT_RESERVED_HEIGHT,
+                getLDLib2EnergyGroupHeight() + TEMPLATE_PADDING);
+    }
 
-            SlotWidget filterSlotWidget = new SlotWidget();
-            filterSlotWidget.initTemplate();
-            filterSlotWidget
-                    .setSelfPosition(new Position(4, (main.getSize().height - filterSlotWidget.getSize().height) / 2));
-            filterSlotWidget.setBackground(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY);
-            filterSlotWidget.setId("filter_slot");
-            main.addWidget(filterSlotWidget);
-            main.setBackground(GuiTextures.BACKGROUND_INVERSE);
-            return main;
-        }, (group, machine) -> {
-            WidgetUtils.widgetByIdForEach(group, "^slot_[0-9]+$", SlotWidget.class, slot -> {
-                var index = WidgetUtils.widgetIdIndex(slot);
-                if (index >= 0 && index < machine.output.getSlots()) {
-                    slot.setHandlerSlot(machine.output, index);
-                    slot.setCanTakeItems(true);
-                    slot.setCanPutItems(false);
-                }
-            });
-            WidgetUtils.widgetByIdForEach(group, "^filter_slot$", SlotWidget.class, slot -> {
-                slot.setHandlerSlot(machine.filterInventory, 0);
-                slot.setCanTakeItems(true);
-                slot.setCanPutItems(true);
-            });
+    private GTItemSlotElement createLDLib2OutputSlot(int index, int x, int y) {
+        GTItemSlotElement slot = new GTItemSlotElement(output.storage, index)
+                .setCanTakeItems(true)
+                .setCanPutItems(false)
+                .setBackgroundTexture(GuiTextures.SLOT);
+        return UITemplate.setLDLib2Bounds(slot, x, y, SLOT_SIZE, SLOT_SIZE);
+    }
 
-        });
+    private GTItemSlotElement createLDLib2FilterSlot(int x, int y) {
+        GTItemSlotElement slot = new GTItemSlotElement(filterInventory, 0)
+                .setCanTakeItems(true)
+                .setCanPutItems(true)
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.FILTER_SLOT_OVERLAY));
+        return UITemplate.setLDLib2Bounds(slot, x, y, SLOT_SIZE, SLOT_SIZE);
+    }
+
+    private GTItemSlotElement createLDLib2BatterySlot(int x, int y) {
+        GTItemSlotElement slot = new GTItemSlotElement(chargerInventory, 0)
+                .setCanPutItems(true)
+                .setCanTakeItems(true)
+                .setBackgroundTexture(GuiTextures.group(GuiTextures.SLOT, GuiTextures.CHARGER_OVERLAY))
+                .setOnAddedTooltips((slotElement, tooltips) -> tooltips.addAll(
+                        LangHandler.getMultiLang("gtpm.gui.charger_slot.tooltip",
+                                GTValues.VNF[getTier()], GTValues.VNF[getTier()])));
+        return UITemplate.setLDLib2Bounds(slot, x, y, SLOT_SIZE, SLOT_SIZE);
+    }
+
+    private GTIntInputElement createLDLib2RangeInput(int x, int y) {
+        return new GTIntInputElement(x, y, RANGE_INPUT_WIDTH, RANGE_INPUT_HEIGHT, this::getRange,
+                this::setLDLib2Range)
+                .setMin(MIN_RANGE)
+                .setMax(maxRange);
+    }
+
+    private void setLDLib2Range(int value) {
+        setRange(value);
+        sendServerSyncChanges();
+    }
+
+    private int getLDLib2EnergyGroupWidth() {
+        return ENERGY_GROUP_WIDTH;
+    }
+
+    private int getLDLib2EnergyGroupHeight() {
+        return ENERGY_GROUP_HEIGHT;
+    }
+
+    private int getLDLib2EnergyGroupY() {
+        return (getLDLib2PageHeight() - getLDLib2EnergyGroupHeight()) / 2;
+    }
+
+    private int getLDLib2TemplateX() {
+        return (getLDLib2PageWidth() - getLDLib2EnergyGroupWidth() - PAGE_ENERGY_TEMPLATE_GAP -
+                getLDLib2TemplateWidth()) / 2 + 2 + getLDLib2EnergyGroupWidth() + 2;
+    }
+
+    private int getLDLib2TemplateY() {
+        return (getLDLib2PageHeight() - getLDLib2TemplateHeight()) / 2 + TEMPLATE_PAGE_Y_OFFSET;
+    }
+
+    private int getLDLib2TemplateWidth() {
+        return getLDLib2TemplateRowSize() * SLOT_SIZE + TEMPLATE_PADDING + TEMPLATE_CONTROL_COLUMN_WIDTH;
+    }
+
+    private int getLDLib2TemplateHeight() {
+        return getLDLib2TemplateRowSize() * SLOT_SIZE + TEMPLATE_PADDING;
+    }
+
+    private int getLDLib2TemplateRowSize() {
+        return (int) Math.sqrt(inventorySize);
+    }
+
+    private int getLDLib2FilterSlotY() {
+        return (getLDLib2TemplateHeight() - SLOT_SIZE) / 2;
+    }
+
+    private int getLDLib2RangeInputX() {
+        return (getLDLib2PageWidth() - RANGE_INPUT_WIDTH) / 2;
     }
 }

@@ -3,26 +3,46 @@ package com.gregtechceu.gtceu.common.machine.storage;
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
-import com.gregtechceu.gtceu.api.gui.widget.TankWidget;
+import com.gregtechceu.gtceu.api.gui.UITemplate;
+import com.gregtechceu.gtceu.api.gui.element.GTFluidSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.fancy.LDLib2FancyMachineUIElement;
 import com.gregtechceu.gtceu.api.machine.TieredMachine;
-import com.gregtechceu.gtceu.api.machine.feature.IFancyUIMachine;
+import com.gregtechceu.gtceu.api.machine.feature.LDLib2FancyUIMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableFluidTank;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.machine.trait.AutoOutputTrait;
+import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.widget.Widget;
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
+
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.common.SoundActions;
+import net.neoforged.neoforge.fluids.FluidActionResult;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 import lombok.Getter;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
-public class BufferMachine extends TieredMachine implements IFancyUIMachine {
+public class BufferMachine extends TieredMachine implements LDLib2FancyUIMachine, BufferFluidSlotActionTarget {
 
     public static final int TANK_SIZE = 64000;
+
+    static {
+        BufferMachineActions.initialize();
+    }
 
     @SaveField
     @Getter
@@ -33,7 +53,6 @@ public class BufferMachine extends TieredMachine implements IFancyUIMachine {
     protected final NotifiableFluidTank tank;
     @SaveField
     @SyncToClient
-
     public final AutoOutputTrait autoOutput;
 
     public BufferMachine(BlockEntityCreationInfo info, int tier) {
@@ -60,29 +79,184 @@ public class BufferMachine extends TieredMachine implements IFancyUIMachine {
     ////////////////////////////////
 
     @Override
-    public Widget createUIWidget() {
+    public UIElement createLDLib2MainPage(LDLib2FancyMachineUIElement shell) {
         int invTier = getTankSize(tier);
-        var group = new WidgetGroup(0, 0, 18 * (invTier + 1) + 16, 18 * invTier + 16);
-        var container = new WidgetGroup(4, 4, 18 * (invTier + 1) + 8, 18 * invTier + 8);
+        UIElement root = UITemplate.setLDLib2Bounds(new UIElement(), 0, 0,
+                getLDLib2PageWidth(), getLDLib2PageHeight());
+        UIElement container = UITemplate.setLDLib2Bounds(new UIElement(), 4, 4,
+                18 * (invTier + 1) + 8, 18 * invTier + 8);
+        container.style(style -> style.backgroundTexture(GuiTextures.BACKGROUND_INVERSE));
 
         int index = 0;
         for (int y = 0; y < invTier; y++) {
             for (int x = 0; x < invTier; x++) {
-                container.addWidget(new SlotWidget(
-                        getInventory().storage, index++, 4 + x * 18, 4 + y * 18, true, true)
-                        .setBackgroundTexture(GuiTextures.SLOT));
+                container.addChild(createLDLib2ItemSlot(index++, 4 + x * 18, 4 + y * 18));
             }
         }
 
         index = 0;
         for (int y = 0; y < invTier; y++) {
-            container.addWidget(new TankWidget(
-                    tank.getStorages()[index++], 4 + invTier * 18, 4 + y * 18, true, true)
-                    .setBackground(GuiTextures.FLUID_SLOT));
+            container.addChild(createLDLib2FluidSlot(shell, index++, 4 + invTier * 18, 4 + y * 18));
         }
 
-        container.setBackground(GuiTextures.BACKGROUND_INVERSE);
-        group.addWidget(container);
-        return group;
+        root.addChild(container);
+        return root;
+    }
+
+    @Override
+    public int getLDLib2PageWidth() {
+        return 18 * (getTankSize(tier) + 1) + 16;
+    }
+
+    @Override
+    public int getLDLib2PageHeight() {
+        return 18 * getTankSize(tier) + 16;
+    }
+
+    private GTItemSlotElement createLDLib2ItemSlot(int slot, int x, int y) {
+        GTItemSlotElement slotElement = new GTItemSlotElement(getInventory().storage, slot)
+                .setCanPutItems(true)
+                .setCanTakeItems(true)
+                .setBackgroundTexture(GuiTextures.SLOT);
+        return UITemplate.setLDLib2Bounds(slotElement, x, y, 18, 18);
+    }
+
+    private GTFluidSlotElement createLDLib2FluidSlot(LDLib2FancyMachineUIElement shell, int tankIndex, int x, int y) {
+        GTFluidSlotElement fluidSlot = new GTFluidSlotElement()
+                .setFluidTank(tank.getStorages()[tankIndex], 0)
+                .setShowAmount(true)
+                .setAllowClickFilled(true)
+                .setAllowClickDrained(true)
+                .setBackgroundTexture(GuiTextures.FLUID_SLOT);
+        var openingPlayer = shell.getOpeningPlayer();
+        fluidSlot.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+            ItemStack carried = openingPlayer.containerMenu.getCarried();
+            if (canSendFluidSlotAction(event.button, openingPlayer.level().isClientSide(), carried)) {
+                MachineUIHelper.sendAction(shell.getHolder(),
+                        BufferMachineActions.createClickFluidSlotAction(tankIndex, GTUtil.isShiftDown()));
+                event.stopImmediatePropagation();
+                event.hasHandler = true;
+            }
+        });
+        return UITemplate.setLDLib2Bounds(fluidSlot, x, y, 18, 18);
+    }
+
+    @Override
+    public void clickBufferFluidSlot(ServerPlayer player, int tankIndex, boolean shiftDown) {
+        if (tankIndex < 0 || tankIndex >= tank.getStorages().length) {
+            throw new IllegalArgumentException("Invalid buffer fluid tank index: " + tankIndex);
+        }
+        new LDLib2FluidClickTarget(tank.getStorages()[tankIndex], true, true).click(player, shiftDown);
+    }
+
+    static boolean canSendFluidSlotAction(int button, boolean clientSide, ItemStack carried) {
+        return button == GLFW.GLFW_MOUSE_BUTTON_LEFT && clientSide && hasFluidContainer(carried);
+    }
+
+    private static boolean hasFluidContainer(ItemStack stack) {
+        return FluidUtil.getFluidHandler(stack).isPresent();
+    }
+
+    private record LDLib2FluidClickTarget(IFluidHandler fluidTank, boolean allowClickFilled,
+                                          boolean allowClickDrained) {
+
+        private void click(ServerPlayer player, boolean shiftDown) {
+            ItemStack currentStack = player.containerMenu.getCarried();
+            if (!hasFluidContainer(currentStack)) {
+                return;
+            }
+            int maxAttempts = shiftDown ? currentStack.getCount() : 1;
+            FluidStack initialFluid = fluidTank.getFluidInTank(0).copy();
+            if (allowClickFilled && initialFluid.getAmount() > 0 && fillContainer(player, currentStack,
+                    maxAttempts, initialFluid)) {
+                return;
+            }
+            if (allowClickDrained) {
+                emptyContainer(player, currentStack, maxAttempts);
+            }
+        }
+
+        private boolean fillContainer(ServerPlayer player, ItemStack currentStack, int maxAttempts,
+                                      FluidStack initialFluid) {
+            boolean performedFill = false;
+            ItemStack filledResult = ItemStack.EMPTY;
+            for (int i = 0; i < maxAttempts; i++) {
+                FluidActionResult result = FluidUtil.tryFillContainer(currentStack, fluidTank,
+                        Integer.MAX_VALUE, null, false);
+                if (!result.isSuccess()) {
+                    break;
+                }
+                ItemStack remainingStack = FluidUtil.tryFillContainer(currentStack, fluidTank,
+                        Integer.MAX_VALUE, null, true).getResult();
+                performedFill = true;
+                currentStack.shrink(1);
+                filledResult = mergeOrStoreResult(player, filledResult, remainingStack);
+            }
+            if (!performedFill) {
+                return false;
+            }
+            SoundEvent sound = initialFluid.getFluid().getFluidType().getSound(initialFluid,
+                    SoundActions.BUCKET_FILL);
+            if (sound == null) {
+                sound = SoundEvents.BUCKET_FILL;
+            }
+            player.level().playSound(null, player, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
+            finishContainerClick(player, currentStack, filledResult);
+            return true;
+        }
+
+        private void emptyContainer(ServerPlayer player, ItemStack currentStack, int maxAttempts) {
+            boolean performedEmptying = false;
+            ItemStack drainedResult = ItemStack.EMPTY;
+            for (int i = 0; i < maxAttempts; i++) {
+                int remainingCapacity = fluidTank.getTankCapacity(0) - fluidTank.getFluidInTank(0).getAmount();
+                FluidActionResult result = FluidUtil.tryEmptyContainer(currentStack, fluidTank,
+                        remainingCapacity, null, false);
+                if (!result.isSuccess()) {
+                    break;
+                }
+                ItemStack remainingStack = FluidUtil.tryEmptyContainer(currentStack, fluidTank,
+                        remainingCapacity, null, true).getResult();
+                performedEmptying = true;
+                currentStack.shrink(1);
+                drainedResult = mergeOrStoreResult(player, drainedResult, remainingStack);
+            }
+            FluidStack filledFluid = fluidTank.getFluidInTank(0);
+            if (performedEmptying) {
+                SoundEvent sound = filledFluid.getFluid().getFluidType().getSound(filledFluid,
+                        SoundActions.BUCKET_EMPTY);
+                if (sound == null) {
+                    sound = SoundEvents.BUCKET_EMPTY;
+                }
+                player.level().playSound(null, player, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
+                finishContainerClick(player, currentStack, drainedResult);
+            }
+        }
+
+        private ItemStack mergeOrStoreResult(ServerPlayer player, ItemStack storedResult, ItemStack remainingStack) {
+            if (storedResult.isEmpty()) {
+                return remainingStack.copy();
+            }
+            if (ItemStack.isSameItemSameComponents(storedResult, remainingStack)) {
+                if (storedResult.getCount() < storedResult.getMaxStackSize()) {
+                    storedResult.grow(1);
+                } else {
+                    player.getInventory().placeItemBackInInventory(remainingStack);
+                }
+                return storedResult;
+            }
+            player.getInventory().placeItemBackInInventory(storedResult);
+            return remainingStack.copy();
+        }
+
+        private void finishContainerClick(ServerPlayer player, ItemStack currentStack, ItemStack resultStack) {
+            if (currentStack.isEmpty()) {
+                player.containerMenu.setCarried(resultStack);
+            } else {
+                player.containerMenu.setCarried(currentStack);
+                player.getInventory().placeItemBackInInventory(resultStack);
+            }
+            player.containerMenu.broadcastChanges();
+        }
     }
 }

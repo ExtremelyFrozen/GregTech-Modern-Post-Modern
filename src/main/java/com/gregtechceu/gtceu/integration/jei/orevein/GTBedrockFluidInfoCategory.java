@@ -5,15 +5,15 @@ import com.gregtechceu.gtceu.api.data.worldgen.bedrockfluid.BedrockFluidDefiniti
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.data.GTMaterials;
-import com.gregtechceu.gtceu.integration.xei.widgets.GTOreVeinWidget;
+import com.gregtechceu.gtceu.integration.xei.widgets.GTBedrockFluidWidget;
 
-import com.lowdragmc.lowdraglib.jei.ModularUIRecipeCategory;
+import com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 
-import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
@@ -24,17 +24,17 @@ import java.util.function.Function;
 
 public class GTBedrockFluidInfoCategory extends ModularUIRecipeCategory<Holder<BedrockFluidDefinition>> {
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public final static RecipeType<Holder<BedrockFluidDefinition>> RECIPE_TYPE = new RecipeType(
             GTCEu.id("bedrock_fluid_diagram"), Holder.class);
     private final int width;
     private final int height;
-    private final mezz.jei.api.gui.drawable.IDrawable icon;
+    private final IDrawable icon;
 
     public GTBedrockFluidInfoCategory(IJeiHelpers helpers) {
-        super(GTBedrockFluidInfoWrapper::new);
-        IGuiHelper guiHelper = helpers.getGuiHelper();
-        this.width = GTOreVeinWidget.width;
-        this.height = 120;
+        super(fluid -> GTBedrockFluidWidget.createModularUI(fluid, GTBedrockFluidWidget.JEI_HEIGHT));
+        this.width = GTBedrockFluidWidget.WIDTH;
+        this.height = GTBedrockFluidWidget.JEI_HEIGHT;
         this.icon = helpers.getGuiHelper()
                 .createDrawableItemStack(GTMaterials.Oil.getBucket().getDefaultInstance());
     }
@@ -60,7 +60,7 @@ public class GTBedrockFluidInfoCategory extends ModularUIRecipeCategory<Holder<B
 
     @NotNull
     @Override
-    public mezz.jei.api.gui.drawable.IDrawable getIcon() {
+    public IDrawable getIcon() {
         return icon;
     }
 
@@ -75,7 +75,7 @@ public class GTBedrockFluidInfoCategory extends ModularUIRecipeCategory<Holder<B
     }
 
     @Override
-    public Component getTitle() {
+    public @NotNull Component getTitle() {
         return Component.translatable("gtpm.jei.bedrock_fluid_diagram");
     }
 }

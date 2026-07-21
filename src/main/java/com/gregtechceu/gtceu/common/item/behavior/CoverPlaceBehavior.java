@@ -64,4 +64,27 @@ public record CoverPlaceBehavior(CoverDefinition coverDefinition) implements IIn
         // spotless:on
         return false;
     }
+
+    /**
+     * Finds the cover definition carried by a component item so server actions can validate the actual player stack
+     * without trusting a client-supplied definition id.
+     *
+     * @param itemStack stack whose item components are inspected
+     * @return the first attached cover definition, or {@code null} when the stack is not a placeable cover item
+     */
+    @Nullable
+    public static CoverDefinition findCoverDefinition(ItemStack itemStack) {
+        if (itemStack.isEmpty()) {
+            return null;
+        }
+        Item item = itemStack.getItem();
+        if (item instanceof IComponentItem componentItem) {
+            for (IItemComponent component : componentItem.getComponents()) {
+                if (component instanceof CoverPlaceBehavior(CoverDefinition definition)) {
+                    return definition;
+                }
+            }
+        }
+        return null;
+    }
 }

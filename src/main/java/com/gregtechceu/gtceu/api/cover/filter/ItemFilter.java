@@ -1,11 +1,9 @@
 package com.gregtechceu.gtceu.api.cover.filter;
 
-import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,13 +50,13 @@ public interface ItemFilter extends Filter<ItemStack, ItemFilter> {
         }
 
         @Override
-        public WidgetGroup openConfigurator(int x, int y) {
-            throw new NotImplementedException("Not available for empty item filter");
+        public UIElement openLDLib2Configurator(int x, int y) {
+            throw new UnsupportedOperationException("Not available for empty item filter");
         }
 
         @Override
         public void setOnUpdated(Consumer<ItemFilter> onUpdated) {
-            throw new NotImplementedException("Not available for empty item filter");
+            throw new UnsupportedOperationException("Not available for empty item filter");
         }
     };
 }

@@ -2,10 +2,9 @@ package com.gregtechceu.gtceu.api.cover;
 
 import com.gregtechceu.gtceu.api.blockentity.ICopyable;
 import com.gregtechceu.gtceu.api.capability.ICoverable;
-import com.gregtechceu.gtceu.api.gui.GuiTextures;
-import com.gregtechceu.gtceu.api.gui.factory.CoverUIFactory;
-import com.gregtechceu.gtceu.api.gui.fancy.IFancyConfigurator;
+import com.gregtechceu.gtceu.api.gui.factory.CoverUIHelper;
 import com.gregtechceu.gtceu.api.item.tool.GTToolType;
+import com.gregtechceu.gtceu.api.item.tool.GridHighlightTexture;
 import com.gregtechceu.gtceu.api.item.tool.IToolGridHighlight;
 import com.gregtechceu.gtceu.api.machine.MetaMachine;
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder;
@@ -16,8 +15,6 @@ import com.gregtechceu.gtceu.api.transfer.fluid.IFluidHandlerModifiable;
 import com.gregtechceu.gtceu.client.renderer.cover.ICoverRenderer;
 import com.gregtechceu.gtceu.client.renderer.cover.IDynamicCoverRenderer;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -147,9 +144,9 @@ public abstract class CoverBehavior implements ISyncManaged, IToolGridHighlight,
     }
 
     public InteractionResult onScrewdriverClick(ExtendedUseOnContext context) {
-        if (this instanceof IUICover) {
+        if (hasCoverUI()) {
             if (context.getPlayer() instanceof ServerPlayer serverPlayer) {
-                CoverUIFactory.INSTANCE.openUI(this, serverPlayer);
+                CoverUIHelper.open(this, serverPlayer);
             }
             return InteractionResult.sidedSuccess(coverHolder.isRemote());
         }
@@ -179,27 +176,27 @@ public abstract class CoverBehavior implements ISyncManaged, IToolGridHighlight,
         return coverDefinition.getCoverRenderer();
     }
 
-    public @Nullable IFancyConfigurator getConfigurator() {
-        return null;
-    }
-
     @Override
     public boolean shouldRenderGrid(Player player, BlockPos pos, BlockState state, ItemStack held,
                                     Set<GTToolType> toolTypes) {
         return toolTypes.contains(GTToolType.CROWBAR) ||
-                ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && this instanceof IUICover);
+                ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && hasCoverUI());
     }
 
     @Override
-    public @Nullable ResourceTexture sideTips(Player player, BlockPos pos, BlockState state, Set<GTToolType> toolTypes,
-                                              ItemStack held, Direction side) {
+    public @Nullable GridHighlightTexture sideTips(Player player, BlockPos pos, BlockState state,
+                                                   Set<GTToolType> toolTypes, ItemStack held, Direction side) {
         if (toolTypes.contains(GTToolType.CROWBAR)) {
-            return GuiTextures.TOOL_REMOVE_COVER;
+            return GridHighlightTexture.TOOL_REMOVE_COVER;
         }
-        if ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && this instanceof IUICover) {
-            return GuiTextures.TOOL_COVER_SETTINGS;
+        if ((toolTypes.isEmpty() || toolTypes.contains(GTToolType.SCREWDRIVER)) && hasCoverUI()) {
+            return GridHighlightTexture.TOOL_COVER_SETTINGS;
         }
         return null;
+    }
+
+    private boolean hasCoverUI() {
+        return CoverUIHelper.hasUI(this);
     }
 
     /**

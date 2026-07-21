@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Accessors(fluent = true, chain = true)
 public class ShapedEnergyTransferRecipeBuilder {
@@ -89,7 +88,7 @@ public class ShapedEnergyTransferRecipeBuilder {
     }
 
     public ShapedEnergyTransferRecipe build() {
-        return new ShapedEnergyTransferRecipe(Objects.requireNonNullElse(this.group, ""), this.category,
+        return new ShapedEnergyTransferRecipe(this.group == null ? "" : this.group, this.category,
                 ShapedRecipePattern.of(this.key, this.rows), this.chargeIngredient, this.overrideCharge,
                 this.transferMaxCharge, this.output, false);
     }

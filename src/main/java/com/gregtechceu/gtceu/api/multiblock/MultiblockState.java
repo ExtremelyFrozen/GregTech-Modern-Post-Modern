@@ -26,7 +26,6 @@ import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class MultiblockState {
@@ -66,7 +65,7 @@ public class MultiblockState {
     public MultiblockState(Level world, BlockPos controllerPos, String structureName) {
         this.world = world;
         this.controllerPos = controllerPos;
-        this.structureName = Objects.requireNonNull(structureName);
+        this.structureName = structureName;
         this.error = UNINIT_ERROR;
         this.matchContext = new PatternMatchContext();
     }

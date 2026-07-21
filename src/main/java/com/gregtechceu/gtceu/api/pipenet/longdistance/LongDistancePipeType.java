@@ -9,8 +9,6 @@ import net.minecraft.world.level.Level;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * This class defines a long distance pipe type. This class MUST be a singleton class!
  */
@@ -21,7 +19,7 @@ public abstract class LongDistancePipeType {
     private final String name;
 
     protected LongDistancePipeType(String name) {
-        this.name = Objects.requireNonNull(name);
+        this.name = name;
         if (PIPE_TYPES.containsKey(name)) {
             throw new IllegalArgumentException("Pipe Type with name " + name + " already exists!");
         }

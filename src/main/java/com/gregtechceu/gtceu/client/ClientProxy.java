@@ -33,6 +33,7 @@ import com.gregtechceu.gtceu.common.CommonEventListener;
 import com.gregtechceu.gtceu.common.data.GTEntityTypes;
 import com.gregtechceu.gtceu.common.data.GTFluids;
 import com.gregtechceu.gtceu.common.data.GTMaterialBlocks;
+import com.gregtechceu.gtceu.common.data.GTMenuTypes;
 import com.gregtechceu.gtceu.common.data.GTParticleTypes;
 import com.gregtechceu.gtceu.common.data.models.GTModels;
 import com.gregtechceu.gtceu.common.item.DrumMachineItem;
@@ -42,6 +43,7 @@ import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.model.builder.PipeModelBuilder;
 import com.gregtechceu.gtceu.data.pack.event.RegisterDynamicResourcesEvent;
 import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
+import com.gregtechceu.gtceu.integration.ae2.machine.MEPatternBufferProxyUIMenuType;
 import com.gregtechceu.gtceu.integration.map.ClientCacheManager;
 import com.gregtechceu.gtceu.integration.map.cache.client.GTClientCache;
 import com.gregtechceu.gtceu.integration.map.ftbchunks.FTBChunksPlugin;
@@ -50,6 +52,8 @@ import com.gregtechceu.gtceu.integration.map.layer.builtin.FluidRenderLayer;
 import com.gregtechceu.gtceu.integration.map.layer.builtin.OreRenderLayer;
 import com.gregtechceu.gtceu.utils.data.RuntimeBlockstateProvider;
 import com.gregtechceu.gtceu.utils.input.SyncedKeyMapping;
+
+import com.lowdragmc.lowdraglib2.gui.holder.ModularUIContainerScreen;
 
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.core.component.DataComponents;
@@ -84,6 +88,14 @@ public class ClientProxy {
         ModelEventHelper.initInternalAssetReloadListeners();
 
         NeoForge.EVENT_BUS.register(GTParticleManager.INSTANCE);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
+        event.register(GTMenuTypes.COVER_UI.get(), ModularUIContainerScreen::new);
+        if (GTCEu.Mods.isAE2Loaded()) {
+            event.register(MEPatternBufferProxyUIMenuType.MENU_TYPE.get(), ModularUIContainerScreen::new);
+        }
     }
 
     @SubscribeEvent

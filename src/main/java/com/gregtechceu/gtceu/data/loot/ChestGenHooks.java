@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class ChestGenHooks {
@@ -88,7 +87,7 @@ public final class ChestGenHooks {
     public static void addItem(@NotNull ResourceKey<LootTable> lootTable, @NotNull ItemStack stack, int minAmount,
                                int maxAmount, int weight) {
         RandomWeightLootFunction lootFunction = new RandomWeightLootFunction(stack, minAmount, maxAmount);
-        String modid = Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(stack.getItem())).getNamespace();
+        String modid = BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace();
         String entryName = createEntryName(stack, modid, weight, lootFunction);
         GTLootEntryItem itemEntry = new GTLootEntryItem(stack, weight, lootFunction, entryName);
         lootEntryItems.computeIfAbsent(lootTable.location(), $ -> new ArrayList<>()).add(itemEntry);

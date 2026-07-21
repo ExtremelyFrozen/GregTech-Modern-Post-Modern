@@ -1,14 +1,16 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTMachines;
+import com.gregtechceu.gtceu.common.machine.multiblock.electric.CleanroomMachine;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
-
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.util.Lazy;
 
@@ -77,13 +79,18 @@ public record CleanroomBasePredicate(boolean allowFloorBlocks, boolean allowDoor
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         return predicates(null).stream().flatMap(predicate -> predicate.candidates().stream()).toList();
     }
 
     @Override
     public @Unmodifiable List<Block> blockCandidates() {
         return predicates(null).stream().flatMap(predicate -> predicate.blockCandidates().stream()).toList();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        return predicates(null).stream().flatMap(predicate -> predicate.previewChoices(definition).stream()).toList();
     }
 
     private List<StructurePredicate> predicates(MultiblockState multiblockState) {
@@ -108,7 +115,7 @@ public record CleanroomBasePredicate(boolean allowFloorBlocks, boolean allowDoor
 
     private static StructurePredicate passthroughPredicate(MultiblockState multiblockState) {
         var controller = multiblockState.getController();
-        if (!(controller instanceof com.gregtechceu.gtceu.common.machine.multiblock.electric.CleanroomMachine cleanroom)) {
+        if (!(controller instanceof CleanroomMachine cleanroom)) {
             throw new IllegalStateException("Cleanroom base predicate can only be used by cleanroom structures");
         }
         return RestrictedPredicate.builder()
@@ -117,13 +124,13 @@ public record CleanroomBasePredicate(boolean allowFloorBlocks, boolean allowDoor
                 .build();
     }
 
-    private static List<net.minecraft.resources.ResourceLocation> wallBlocks() {
+    private static List<ResourceLocation> wallBlocks() {
         return List.of(
                 GTBlocks.PLASTCRETE.getId(),
                 GTBlocks.CLEANROOM_GLASS.getId());
     }
 
-    private static List<net.minecraft.resources.ResourceLocation> maintenanceBlocks() {
+    private static List<ResourceLocation> maintenanceBlocks() {
         return List.of(
                 GTMachines.MAINTENANCE_HATCH.getId(),
                 GTMachines.AUTO_MAINTENANCE_HATCH.getId());

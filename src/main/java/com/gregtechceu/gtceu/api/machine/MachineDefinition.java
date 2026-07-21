@@ -11,7 +11,7 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.modifier.RecipeModifier;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 
-import com.lowdragmc.lowdraglib.utils.ShapeUtils;
+import com.lowdragmc.lowdraglib2.utils.ShapeUtils;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.IdMapper;
@@ -46,7 +46,6 @@ public class MachineDefinition implements Supplier<MetaMachineBlock> {
 
     public static final IdMapper<MachineRenderState> RENDER_STATE_REGISTRY = new IdMapper<>(512);
 
-    @Getter
     private final ResourceLocation id;
     // This is only stored here for KJS use.
     @Getter
@@ -136,6 +135,15 @@ public class MachineDefinition implements Supplier<MetaMachineBlock> {
 
     public MachineDefinition(ResourceLocation id) {
         this.id = id;
+    }
+
+    /**
+     * Exposes the machine identifier to callers compiled before Lombok-generated methods are available.
+     *
+     * @return the machine identifier
+     */
+    public ResourceLocation getId() {
+        return id;
     }
 
     public final void registerDefaultState(MachineRenderState state) {

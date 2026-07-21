@@ -1,0 +1,782 @@
+tasks.register('verifyGradleUserHomeOnE') {
+    group = 'verification'
+    description = 'Verifies Gradle user home is configured on the E: drive.'
+
+    doLast {
+        var gradleUserHome = gradle.gradleUserHomeDir.toPath().toAbsolutePath().normalize().toString()
+        if (!gradleUserHome.replace('\\', '/').startsWith('E:/')) {
+            throw new GradleException("Gradle user home must be on E: drive, but was: ${gradleUserHome}")
+        }
+    }
+}
+
+tasks.register('verifyDescriptiveTypeNames') {
+    group = 'verification'
+    description = 'Rejects full Implementation name segments and non-terminal Impl name segments in GTM source types and files.'
+
+    doLast {
+        var sourceRoots = [
+                file('src/main/java'),
+                file('src/main/kotlin'),
+                file('src/test/java'),
+                file('src/test/kotlin')
+        ]
+        var sourceFiles = files(sourceRoots.findAll { it.exists() }).asFileTree.matching {
+            include '**/*.java'
+            include '**/*.kt'
+            exclude 'src/generated/**'
+        }
+        var typeDeclaration = ~/(?m)^[\t ]*(?:(?:public|protected|private|abstract|static|final|strictfp|sealed|non-sealed|data|value|internal|open|expect|actual|fun|companion|inner|inline)\s+|@[A-Za-z_$][A-Za-z0-9_$.]*(?:\([^\r\n]*\))?\s+)*(?:@interface|enum\s+class|annotation\s+class|class|interface|record|enum|object|typealias)\s+(?:([A-Za-z_$][A-Za-z0-9_$]*)|`([^`\r\n]+)`)(?=\s|[<(:={]|$)/
+        var genericNameSegment = ~/(Implementation(?=$|[A-Z0-9_$])|Impl(?=[A-Z0-9_$]))/
+        var matches = []
+
+        sourceFiles.each { sourceFile ->
+            var relativePath = rootProject.relativePath(sourceFile)
+            var fileStem = sourceFile.name.substring(0, sourceFile.name.lastIndexOf('.'))
+            if (genericNameSegment.matcher(fileStem).find()) {
+                matches.add("${relativePath}: forbidden implementation file name segment")
+            }
+            var sourceText = sourceFile.getText('UTF-8')
+            var declarationMatcher = typeDeclaration.matcher(sourceText)
+            while (declarationMatcher.find()) {
+                var typeNameGroup = declarationMatcher.group(1) == null ? 2 : 1
+                var typeName = declarationMatcher.group(typeNameGroup)
+                if (genericNameSegment.matcher(typeName).find()) {
+                    var lineNumber = sourceText.substring(0, declarationMatcher.start(typeNameGroup)).count('\n') + 1
+                    matches.add("${relativePath}:${lineNumber}: forbidden implementation type name segment (${typeName})")
+                }
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('Forbidden implementation name segments found in GTM source:')
+            matches.each { logger.lifecycle(" - ${it}") }
+            throw new GradleException("Use terminal Impl only for interface implementations; replace Implementation and non-terminal Impl name segments.")
+        }
+    }
+}
+
+tasks.register('verifyLdlib2MigratedSurfaces') {
+    group = 'verification'
+    description = 'Verifies migrated LDLib2 UI bridge and facade surfaces do not regress to legacy LDLib or disabled sync paths.'
+
+    doLast {
+        var migratedSurfacePaths = [
+                'src/main/java/com/gregtechceu/gtceu/api/GTCEuAPI.java',
+                'src/main/java/com/gregtechceu/gtceu/api/block/MetaMachineBlock.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/EditableMachineUI.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIEditor.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIXmlProject.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIXmlProjectType.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/GTUIXmlTarget.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/MachineUIXmlTemplates.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/editor/TemplateTab.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTButtonElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTComponentPanelElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTDualProgressElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTDynamicItemSlotBundle.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTDynamicItemSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTDynamicItemSlotSessionElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTEnumSelectorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTFluidSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTImageElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTIntInputElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTItemSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTLabelElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTLongInputElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTPhantomFluidSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTPhantomItemSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTProgressBarElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTSceneElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTScrollerViewElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTStringSelectorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTTextFieldElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/GTToggleButtonElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/element/ProspectingMapElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/CoverUIHelper.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/DynamicItemSlotMachineUIHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/DynamicItemSlotMachineUIMenuType.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/GTCoverUIMenuType.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/GTDynamicItemSlotContainerMenu.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/GTUIEditorMenu.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/HeldItemUIHelper.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/HeldItemUIHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/HeldItemUIHolderContext.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/LDLib2CoverUIHolderContext.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/LDLib2CoverUIProvider.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/LDLib2DynamicItemSlotMachineUIProvider.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/LDLib2HeldItemUIProvider.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/LDLib2MachineUIProvider.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineBlockUIHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHelper.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/MachineUIHolderContext.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/factory/UICoverHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemHandlerRoute.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotBinding.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotClientOpening.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotDefinition.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotManifest.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotManifestProgression.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotManifestSequence.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotOpeningToken.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotSelection.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotServerOpening.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/slot/DynamicItemSlotTransition.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2ConfiguratorPanelElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyConfiguratorButton.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyCustomMiddleClickAction.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyCustomMouseWheelAction.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyMachineUIElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyPageSwitcher.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyTabsElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyTitleBarElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyTooltipsPanelElement.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyUIProvider.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/fancy/LDLib2FancyPreviewPage.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ColorBorderTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ColorRectTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/GTGuiTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/IGuiTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ItemStackTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ProspectingTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/ResourceBorderTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/texture/TextTexture.java',
+                'src/main/java/com/gregtechceu/gtceu/api/gui/util/FluidContainerSlotInteraction.java',
+                'src/main/java/com/gregtechceu/gtceu/api/item/ComponentItem.java',
+                'src/main/java/com/gregtechceu/gtceu/api/item/IGTTool.java',
+                'src/main/java/com/gregtechceu/gtceu/api/item/component/IItemUIFactory.java',
+                'src/main/java/com/gregtechceu/gtceu/api/item/component/IMonitorModuleItem.java',
+                'src/main/java/com/gregtechceu/gtceu/api/item/tool/behavior/IToolUIBehavior.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/SimpleGeneratorMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/SimpleTieredMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/TieredEnergyMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2FancyActionMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2FancyUIMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2PreviewFancyUIMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/feature/LDLib2RecipeFancyUIMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/feature/multiblock/IMaintenanceMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/feature/multiblock/LDLib2FancyPartUIProvider.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2AutoOutputFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2AutoStockingFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2BatchModeFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2ButtonConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2CircuitFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2DirectionalFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2DistinctPartFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2FancyInvConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2FancyTankConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2FancySelectorConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2MachineModeFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2VoidingModeFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/fancyconfigurator/LDLib2WorkingEnabledFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/multiblock/WorkableElectricMultiblockMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SimpleSteamMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/machine/steam/SteamBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/api/recipe/ui/GTRecipeTypeUI.java',
+                'src/main/java/com/gregtechceu/gtceu/api/recipe/ui/RecipeUIXmlTemplate.java',
+                'src/main/java/com/gregtechceu/gtceu/client/gui/fancy/LDLib2PreviewSceneElement.java',
+                'src/main/java/com/gregtechceu/gtceu/common/CommonProxy.java',
+                'src/main/java/com/gregtechceu/gtceu/common/commands/GTCommands.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/ComputerMonitorCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/ConveyorCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/FluidFilterCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/ItemFilterCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/MachineControllerCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/PumpCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/StorageCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/detector/AdvancedEnergyDetectorCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/detector/AdvancedFluidDetectorCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/detector/AdvancedItemDetectorCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/ender/AbstractEnderLinkCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/voiding/FluidVoidingCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/cover/voiding/ItemVoidingCover.java',
+                'src/main/java/com/gregtechceu/gtceu/common/data/GTMenuTypes.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/behavior/FluidFilterBehaviour.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/behavior/IntCircuitBehaviour.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/behavior/ItemFilterBehaviour.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/behavior/ItemMagnetBehavior.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/behavior/ProspectorScannerBehavior.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/modules/ImageModuleBehaviour.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/modules/TextModuleBehaviour.java',
+                'src/main/java/com/gregtechceu/gtceu/common/item/tool/behavior/AOEConfigUIBehavior.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/BatteryBufferMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/BlockBreakerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/FisherMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/HullMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/ItemCollectorMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/MinerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/electric/PumpMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/ActiveTransformerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/BedrockOreMinerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/CentralMonitorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/CentralMonitorMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/CleanroomMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/DistillationTowerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/FluidDrillMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/FusionReactorMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/LargeMinerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/MultiblockTankMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/PowerSubstationMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/gcym/LargeChemicalBathMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/gcym/LargeMacerationTowerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/gcym/LargeMixerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/research/DataBankMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/research/HPCAMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/research/NetworkSwitchMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/electric/research/ResearchStationMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/generator/LargeCombustionEngineMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/AutoMaintenanceHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/CleaningMaintenanceHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/DataAccessHatchMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/DualHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/EnergyHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/LaserHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MaintenanceHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/MufflerPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ObjectHolderMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/OpticalComputationHatchMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/OpticalDataHatchMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ParallelHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/PumpHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/ReservoirHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/RotorHolderPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/StandardFluidHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/StandardItemBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/SteamItemBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/part/hpca/HPCAComponentPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/primitive/CokeOvenMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/primitive/PrimitiveBlastFurnaceMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/steam/LargeBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/multiblock/steam/SteamParallelMultiblockMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamLiquidBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamMinerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamSolarBoiler.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/steam/SteamSolidBoilerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/BufferMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CrateMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeChestMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeComputationProviderMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeEnergyContainerMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/CreativeTankMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/QuantumChestMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/machine/storage/QuantumTankMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/GTNetwork.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/CPacketDynamicItemSlotActivatedToServer.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/CPacketDynamicItemSlotPreparedToServer.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/CPacketDynamicItemSlotSelectionToServer.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/DynamicItemSlotPacketRoute.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/SPacketDynamicItemSlotActivationToClient.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/SPacketDynamicItemSlotManifestToClient.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/SPacketDynamicItemSlotSelectionToClient.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/SPacketMEOutputWaitingListSessionToClient.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/SPacketMEOutputWaitingListToClient.java',
+                'src/main/java/com/gregtechceu/gtceu/common/network/packets/SPacketMEPatternBufferProxyViewToClient.kt',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEFluidConfigAmountEditorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEFluidConfigAmountProjection.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEFluidConfigElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEFluidConfigSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEItemConfigAmountEditorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEItemConfigAmountProjection.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEItemConfigElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEItemConfigSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/AEPatternViewSlotElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEFluidOutputWaitingListElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEItemOutputWaitingListElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEOutputWaitingListElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEPatternBufferNameEditorElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/element/MEPatternBufferPageElement.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/fancy/LDLib2MEFluidAutoPullFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/gui/fancy/LDLib2MEItemAutoPullFancyConfigurator.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/AEFluidConfigSnapshot.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/AEItemConfigSnapshot.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEFluidConfigActions.kt',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEItemConfigActions.kt',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEInputBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEInputHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListActions.kt',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListActionTarget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListClientState.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListEntry.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListMenuSession.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListPublisher.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListReceiver.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListRoute.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListSessionReceiver.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEOutputWaitingListUpdate.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferActions.kt',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferProxyActions.kt',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferProxyPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferProxyUIContainerMenu.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferProxyUIContext.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferProxyUIHolder.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferProxyUIMenuType.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEPatternBufferProxyViewSnapshot.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEStockingHatchPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/machine/MEStockingBusPartMachine.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/slot/ExportOnlyAEFluidList.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/slot/ExportOnlyAEFluidSlot.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/slot/ExportOnlyAEItemList.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/slot/ExportOnlyAEItemSlot.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/utils/AE2SyncCodecs.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/ae2/utils/KeyStorage.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIHelper.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIIngredientRole.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTLDLib2RecipeUI.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/GTXEIIngredientRoleLDLib2Adapter.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTBedrockFluidWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTBedrockOreWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTOreByProductWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTOreVeinWidget.java',
+                'src/main/java/com/gregtechceu/gtceu/integration/xei/widgets/GTProgrammedCircuitWidget.java',
+                'src/main/resources/assets/gtpm/ui/recipe_type/assembly_line.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/distillation_tower.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/forge_hammer.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/lathe.xml',
+                'src/main/resources/assets/gtpm/ui/recipe_type/research_station.xml'
+        ]
+        var missingFiles = migratedSurfacePaths.findAll { !file(it).isFile() }
+        if (!missingFiles.isEmpty()) {
+            throw new GradleException("LDLib2 migrated surface files are missing: ${missingFiles.join(', ')}")
+        }
+
+        var transitionalLegacyLinesBySurface = [:]
+        var transitionalLegacyTypesBySurface = [:]
+
+        var patterns = [
+                'com.lowdragmc.lowdraglib.',
+                'IngredientIO.RENDER_ONLY',
+                'IngredientIO.valueOf("RENDER_ONLY")',
+                'IngredientIO.BOTH',
+                'setXEIRecipeSlot',
+                '@RPCMethod',
+                'RPCEmitter',
+                'RPCEventBuilder',
+                'PacketUIRPCEvent',
+                'PacketUIRPCEventReturn',
+                'setOnServerClick',
+                'addRPCEvent(',
+                'addServerEventListener(',
+                'getBuffer().createUI(',
+                '.markAsDirty(',
+                'com.lowdragmc.lowdraglib2.syncdata.',
+                'com.lowdragmc.lowdraglib2.gui.sync.',
+                '.rtui',
+                '<ldlib-ui',
+                'ldlib:'
+        ]
+
+        var matches = []
+        migratedSurfacePaths.each { surfacePath ->
+            var scannedFile = file(surfacePath)
+            var relativePath = rootProject.relativePath(scannedFile)
+            var remainingAllowedLegacyLines = [:]
+            (transitionalLegacyLinesBySurface[surfacePath] ?: []).each { allowedLine ->
+                remainingAllowedLegacyLines[allowedLine] =
+                        (remainingAllowedLegacyLines.containsKey(allowedLine) ?
+                                remainingAllowedLegacyLines[allowedLine] : 0) + 1
+            }
+            scannedFile.eachLine('UTF-8') { line, number ->
+                var reasons = patterns.findAll { pattern -> line.contains(pattern) }
+                var transitionalLegacyType = transitionalLegacyTypesBySurface[surfacePath]
+                if (transitionalLegacyType != null && transitionalLegacyType.matcher(line).find()) {
+                    reasons.add('transitional legacy UI type')
+                }
+                if (!reasons.isEmpty()) {
+                    var trimmedLine = line.trim()
+                    var remaining = remainingAllowedLegacyLines.containsKey(trimmedLine) ?
+                            remainingAllowedLegacyLines[trimmedLine] : 0
+                    if (remaining > 0) {
+                        remainingAllowedLegacyLines[trimmedLine] = remaining - 1
+                    } else {
+                        reasons.each { reason -> matches.add("${relativePath}:${number}: ${reason}") }
+                    }
+                }
+            }
+            remainingAllowedLegacyLines.findAll { line, remaining -> remaining > 0 }.each { line, remaining ->
+                matches.add("${relativePath}: missing ${remaining} transitional legacy baseline occurrence: ${line}")
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('LDLib2 migrated surface guardrail matches:')
+            matches.take(200).each { logger.lifecycle(" - ${it}") }
+            if (matches.size() > 200) {
+                logger.lifecycle(" - ... ${matches.size() - 200} more")
+            }
+            throw new GradleException("LDLib2 migrated surface guardrails found ${matches.size()} regression references.")
+        }
+    }
+}
+
+tasks.register('verifyLdlib2RecipeCapabilitySurface') {
+    group = 'verification'
+    description = 'Verifies recipe capability LDLib2 element paths do not regress to legacy XEI roles or disabled sync paths.'
+
+    doLast {
+        var recipeCapabilitySurfacePaths = [
+                'src/main/java/com/gregtechceu/gtceu/api/capability/recipe/RecipeCapability.java',
+                'src/main/java/com/gregtechceu/gtceu/api/capability/recipe/ItemRecipeCapability.java',
+                'src/main/java/com/gregtechceu/gtceu/api/capability/recipe/FluidRecipeCapability.java'
+        ]
+        var missingFiles = recipeCapabilitySurfacePaths.findAll { !file(it).isFile() }
+        if (!missingFiles.isEmpty()) {
+            throw new GradleException("LDLib2 recipe capability surface files are missing: ${missingFiles.join(', ')}")
+        }
+
+        var patterns = [
+                'IngredientIO.RENDER_ONLY',
+                'IngredientIO.valueOf("RENDER_ONLY")',
+                'IngredientIO.BOTH',
+                'setXEIRecipeSlot',
+                '@RPCMethod',
+                'RPCEmitter',
+                'RPCEventBuilder',
+                'PacketUIRPCEvent',
+                'PacketUIRPCEventReturn',
+                'setOnServerClick',
+                'addRPCEvent(',
+                'addServerEventListener(',
+                '.markAsDirty(',
+                'com.lowdragmc.lowdraglib2.syncdata.',
+                'com.lowdragmc.lowdraglib2.gui.sync.'
+        ]
+
+        var matches = []
+        recipeCapabilitySurfacePaths.each { surfacePath ->
+            var scannedFile = file(surfacePath)
+            var relativePath = rootProject.relativePath(scannedFile)
+            scannedFile.eachLine('UTF-8') { line, number ->
+                patterns.each { pattern ->
+                    if (line.contains(pattern)) {
+                        matches.add("${relativePath}:${number}: ${pattern}")
+                    }
+                }
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('LDLib2 recipe capability surface guardrail matches:')
+            matches.take(200).each { logger.lifecycle(" - ${it}") }
+            if (matches.size() > 200) {
+                logger.lifecycle(" - ... ${matches.size() - 200} more")
+            }
+            throw new GradleException("LDLib2 recipe capability guardrails found ${matches.size()} regression references.")
+        }
+    }
+}
+
+tasks.register('verifyLdlib2MigrationGuardrails') {
+    group = 'verification'
+    description = 'Reports remaining legacy LDLib references that must be removed before migration completion.'
+
+    doLast {
+        var excludedRoots = [
+                layout.buildDirectory.get().asFile,
+                file('.gradle'),
+                file('.git')
+        ].collect { excludedRoot -> excludedRoot.toPath().toAbsolutePath().normalize() }
+        var sourceRoots = sourceSets.collectMany { sourceSet -> sourceSet.allSource.srcDirs }
+                .findAll { sourceRoot ->
+                    var sourcePath = sourceRoot.toPath().toAbsolutePath().normalize()
+                    sourceRoot.exists() && !excludedRoots.any { excludedRoot -> sourcePath.startsWith(excludedRoot) }
+                }
+        sourceRoots.add(file('src/main/templates'))
+        sourceRoots = sourceRoots.unique { sourceRoot -> sourceRoot.toPath().toAbsolutePath().normalize() }
+
+        var sourceFilesToScan = files(sourceRoots).asFileTree.matching {
+            include '**/*.java'
+            include '**/*.kt'
+            include '**/*.json'
+            include '**/*.toml'
+            include '**/*.mcmeta'
+            include '**/*.md'
+            include '**/*.rtui'
+            include '**/*.xml'
+            exclude '**/build/**'
+            exclude '**/.gradle/**'
+            exclude '**/.git/**'
+        }
+        var projectMetadataFilesToScan = fileTree(rootDir) {
+            include '**/*.gradle'
+            include '**/*.gradle.kts'
+            include '**/*.versions.toml'
+            include 'gradle/**/*.toml'
+            include '*.toml'
+            include '**/gradle.properties'
+            exclude '**/build/**'
+            exclude '**/.gradle/**'
+            exclude '**/.git/**'
+            exclude 'gradle/scripts/ldlib2-migration.gradle'
+        }
+        var filesToScan = sourceFilesToScan + projectMetadataFilesToScan
+        var ldlib2RpcCall = ~/.*\baddRPCEvent\s*\(.*/
+        var manualMarkAsDirtyCall = ~/.*\.markAsDirty\s*\(.*/
+        var ldlib2FluidClickAttribute = ~/.*(?<!legacy-)allow-click-(filled|drained)=.*/
+        var reiCompatibilityReference = ~/.*\b(REI|rei)\b.*/
+        var legacyFluidXeiSlotEntry = 'setXEIRecipe' + 'Slot'
+
+        var patterns = [
+                'com.lowdragmc.lowdraglib.',
+                'LDLib2.isEmiLoaded(',
+                'IngredientIO.RENDER_ONLY',
+                'IngredientIO.valueOf("RENDER_ONLY")',
+                'IngredientIO.BOTH',
+                legacyFluidXeiSlotEntry,
+                '@RPCMethod',
+                'RPCEmitter',
+                'RPCEventBuilder',
+                'PacketUIRPCEvent',
+                'PacketUIRPCEventReturn',
+                'setOnServerClick',
+                'com.lowdragmc.lowdraglib2.integration.xei.rei',
+                'ModularUIDisplay',
+                'ModularUIDisplayCategory',
+                'RoughlyEnoughItems',
+                'REIPlugin',
+                'isREILoaded',
+                'com.lowdragmc.lowdraglib2.syncdata.',
+                'com.lowdragmc.lowdraglib2.gui.sync.',
+                'compileOnly(forge.ldlib)',
+                'api(forge.ldlib)',
+                'jarJar(api(forge.ldlib))',
+                'jarJar(api(forge.ldlib.get()))',
+                'forge.versions.ldlib.get()',
+                'version.ref = "ldlib"',
+                'com.lowdragmc.ldlib:ldlib-neoforge',
+                'ldlib_version',
+                'modId = "ldlib"',
+                '"ldlib":',
+                '"ldlib.',
+                'ldlib:'
+        ]
+
+        var matches = []
+        filesToScan.each { scannedFile ->
+            var relativePath = rootProject.relativePath(scannedFile)
+            if (relativePath.endsWith('.rtui')) {
+                matches.add("${relativePath}: legacy LDLib1 .rtui file")
+            } else {
+                scannedFile.eachLine('UTF-8') { line, number ->
+                    patterns.each { pattern ->
+                        if (line.contains(pattern)) {
+                            matches.add("${relativePath}:${number}: ${pattern}")
+                        }
+                    }
+                    if (ldlib2RpcCall.matcher(line).matches()) {
+                        matches.add("${relativePath}:${number}: LDLib2 RPC must not be used for GTM business UI actions")
+                    }
+                    if (manualMarkAsDirtyCall.matcher(line).matches()) {
+                        matches.add("${relativePath}:${number}: Manual markAsDirty calls must not be used for GTM sync")
+                    }
+                    if (ldlib2FluidClickAttribute.matcher(line).matches()) {
+                        matches.add("${relativePath}:${number}: LDLib2 fluid click attributes must stay legacy metadata")
+                    }
+                    if (reiCompatibilityReference.matcher(line).matches()) {
+                        matches.add("${relativePath}:${number}: REI compatibility is not part of the LDLib2 migration")
+                    }
+                }
+            }
+        }
+
+        if (!matches.isEmpty()) {
+            logger.lifecycle('Remaining LDLib migration guardrail matches:')
+            matches.take(200).each { logger.lifecycle(" - ${it}") }
+            if (matches.size() > 200) {
+                logger.lifecycle(" - ... ${matches.size() - 200} more")
+            }
+            throw new GradleException("LDLib2 migration guardrails found ${matches.size()} remaining legacy references.")
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn(
+            tasks.named('verifyGradleUserHomeOnE'),
+            tasks.named('verifyDescriptiveTypeNames'),
+            tasks.named('verifyLdlib2MigratedSurfaces'),
+            tasks.named('verifyLdlib2RecipeCapabilitySurface'),
+            tasks.named('verifyLdlib2MigrationGuardrails')
+    )
+}
+
+tasks.register('reportLdlib2MigrationInventory') {
+    group = 'verification'
+    description = 'Generates the LDLib2 migration baseline inventory without failing on remaining matches.'
+
+    doLast {
+        var sourceRoots = [
+                file('src/main/java'),
+                file('src/test/java'),
+                file('src/main/resources'),
+                file('src/main/templates')
+        ]
+        var sourceFilesToScan = files(sourceRoots.findAll { it.exists() }).asFileTree.matching {
+            include '**/*.java'
+            include '**/*.kt'
+            include '**/*.json'
+            include '**/*.toml'
+            include '**/*.mcmeta'
+            include '**/*.md'
+            include '**/*.rtui'
+            include '**/*.xml'
+            exclude 'src/generated/**'
+        }
+        var gradleFilesToScan = files([
+                file('dependencies.gradle'),
+                file('gradle/forge.versions.toml'),
+                file('gradle/scripts/resources.gradle')
+        ].findAll { it.exists() })
+        var filesToScan = (sourceFilesToScan + gradleFilesToScan).files.sort { left, right ->
+            rootProject.relativePath(left) <=> rootProject.relativePath(right)
+        }
+        var legacyFluidXeiSlotEntry = 'setXEIRecipe' + 'Slot'
+        var legacyModularUIReference = 'com.lowdragmc.lowdraglib.gui.modular.ModularUI'
+        var legacyModularUIWildcard = 'com.lowdragmc.lowdraglib.gui.modular.*'
+        var ldlib2ModularUIReferences = [
+                'com.lowdragmc.lowdraglib2.gui.ui.ModularUI',
+                'com.lowdragmc.lowdraglib2.integration.xei.emi.ModularUIEMIRecipe',
+                'com.lowdragmc.lowdraglib2.integration.xei.jei.ModularUIRecipeCategory'
+        ]
+        var standaloneModularUI = ~/(?<![A-Za-z0-9_$])ModularUI(?![A-Za-z0-9_$])/
+        var createModularUI = ~/(?<![A-Za-z0-9_$])createModularUI(?![A-Za-z0-9_$])/
+
+        var stringPatterns = [
+                [category: 'legacy-package', snippet: 'com.lowdragmc.lowdraglib.'],
+                [category: 'legacy-ui-model', snippet: 'WidgetGroup'],
+                [category: 'legacy-ui-model', snippet: 'Widget'],
+                [category: 'legacy-xei-role', snippet: 'IngredientIO.RENDER_ONLY'],
+                [category: 'legacy-xei-role', snippet: 'IngredientIO.valueOf("RENDER_ONLY")'],
+                [category: 'legacy-xei-role', snippet: 'IngredientIO.BOTH'],
+                [category: 'legacy-xei-role', snippet: legacyFluidXeiSlotEntry],
+                [category: 'legacy-resource', snippet: '"ldlib":'],
+                [category: 'legacy-resource', snippet: '"ldlib.'],
+                [category: 'legacy-resource', snippet: 'ldlib:'],
+                [category: 'disabled-ldlib2-sync', snippet: '@RPCMethod'],
+                [category: 'disabled-ldlib2-sync', snippet: 'RPCEmitter'],
+                [category: 'disabled-ldlib2-sync', snippet: 'RPCEventBuilder'],
+                [category: 'disabled-ldlib2-sync', snippet: 'PacketUIRPCEvent'],
+                [category: 'disabled-ldlib2-sync', snippet: 'PacketUIRPCEventReturn'],
+                [category: 'disabled-ldlib2-sync', snippet: 'setOnServerClick'],
+                [category: 'disabled-ldlib2-sync', snippet: 'com.lowdragmc.lowdraglib2.syncdata.'],
+                [category: 'disabled-ldlib2-sync', snippet: 'com.lowdragmc.lowdraglib2.gui.sync.'],
+                [category: 'legacy-dependency', snippet: 'compileOnly(forge.ldlib)'],
+                [category: 'legacy-dependency', snippet: 'api(forge.ldlib)'],
+                [category: 'legacy-dependency', snippet: 'jarJar(api(forge.ldlib))'],
+                [category: 'legacy-dependency', snippet: 'jarJar(api(forge.ldlib.get()))'],
+                [category: 'legacy-dependency', snippet: 'forge.versions.ldlib.get()'],
+                [category: 'legacy-dependency', snippet: 'version.ref = "ldlib"'],
+                [category: 'legacy-dependency', snippet: 'com.lowdragmc.ldlib:ldlib-neoforge'],
+                [category: 'legacy-dependency', snippet: 'ldlib_version'],
+                [category: 'legacy-dependency', snippet: 'modId = "ldlib"']
+        ]
+        var regexPatterns = [
+                [category: 'legacy-ui-model', pattern: ~/.*\bgetModularUIContainer\b.*/,
+                 snippet: 'getModularUIContainer'],
+                [category: 'legacy-ui-model', pattern: ~/.*\bgetModularUIGui\b.*/, snippet: 'getModularUIGui'],
+                [category: 'disabled-ldlib2-sync', pattern: ~/.*\baddRPCEvent\s*\(.*/, snippet: 'addRPCEvent('],
+                [category: 'disabled-ldlib2-sync', pattern: ~/.*\.markAsDirty\s*\(.*/, snippet: '.markAsDirty(']
+        ]
+
+        var matches = []
+        filesToScan.each { scannedFile ->
+            var relativePath = rootProject.relativePath(scannedFile)
+            if (relativePath.endsWith('.rtui')) {
+                matches.add([path: relativePath, line: 1, category: 'legacy-rtui', snippet: 'legacy LDLib1 .rtui file'])
+            } else {
+                var fileContent = scannedFile.getText('UTF-8')
+                var hasLegacyModularUI = fileContent.contains(legacyModularUIReference) ||
+                        fileContent.contains(legacyModularUIWildcard)
+                var hasLdlib2ModularUI = ldlib2ModularUIReferences.any { fileContent.contains(it) }
+                scannedFile.eachLine('UTF-8') { line, number ->
+                    stringPatterns.each { inventoryPattern ->
+                        if (line.contains(inventoryPattern.snippet)) {
+                            matches.add([
+                                    path    : relativePath,
+                                    line    : number,
+                                    category: inventoryPattern.category,
+                                    snippet : inventoryPattern.snippet
+                            ])
+                        }
+                    }
+                    regexPatterns.each { inventoryPattern ->
+                        if (inventoryPattern.pattern.matcher(line).matches()) {
+                            matches.add([
+                                    path    : relativePath,
+                                    line    : number,
+                                    category: inventoryPattern.category,
+                                    snippet : inventoryPattern.snippet
+                            ])
+                        }
+                    }
+                    var referencesModularUI = standaloneModularUI.matcher(line).find()
+                    var callsCreateModularUI = createModularUI.matcher(line).find()
+                    if (referencesModularUI && hasLegacyModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'legacy-ui-model',
+                                snippet : 'ModularUI'
+                        ])
+                    } else if (callsCreateModularUI && hasLegacyModularUI && !hasLdlib2ModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'legacy-ui-model',
+                                snippet : 'createModularUI'
+                        ])
+                    } else if ((referencesModularUI || callsCreateModularUI) &&
+                            !hasLegacyModularUI && !hasLdlib2ModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'unresolved-modular-ui-origin',
+                                snippet : referencesModularUI ? 'ModularUI' : 'createModularUI'
+                        ])
+                    } else if (callsCreateModularUI && hasLegacyModularUI && hasLdlib2ModularUI) {
+                        matches.add([
+                                path    : relativePath,
+                                line    : number,
+                                category: 'unresolved-modular-ui-origin',
+                                snippet : 'createModularUI'
+                        ])
+                    }
+                }
+            }
+        }
+        matches = matches.sort { left, right ->
+            var pathComparison = left.path <=> right.path
+            if (pathComparison != 0) {
+                return pathComparison
+            }
+            var lineComparison = left.line <=> right.line
+            if (lineComparison != 0) {
+                return lineComparison
+            }
+            var categoryComparison = left.category <=> right.category
+            if (categoryComparison != 0) {
+                return categoryComparison
+            }
+            left.snippet <=> right.snippet
+        }
+
+        var reportFile = layout.buildDirectory.file('reports/ldlib2-migration/inventory.txt').get().asFile
+        reportFile.parentFile.mkdirs()
+        reportFile.withWriter('UTF-8') { writer ->
+            writer.writeLine('# LDLib2 migration inventory')
+            writer.writeLine('# Format: relative-path:line: category: matching-snippet')
+            writer.writeLine("# Matches: ${matches.size()}")
+            writer.writeLine('')
+            matches.each { match ->
+                writer.writeLine("${match.path}:${match.line}: ${match.category}: ${match.snippet}")
+            }
+        }
+
+        logger.lifecycle("LDLib2 migration inventory written to ${reportFile.absolutePath} with ${matches.size()} matches.")
+    }
+}

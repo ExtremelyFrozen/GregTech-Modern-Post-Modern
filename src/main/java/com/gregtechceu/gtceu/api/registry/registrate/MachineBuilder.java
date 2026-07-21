@@ -705,7 +705,6 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
                             MachineModelBuilder<BlockModelBuilder> builder);
 
         default ModelInitializer andThen(ModelInitializer after) {
-            Objects.requireNonNull(after);
             return (ctx, prov, builder) -> {
                 this.configureModel(ctx, prov, builder);
                 after.configureModel(ctx, prov, builder);
@@ -713,7 +712,6 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
         }
 
         default ModelInitializer andThen(Consumer<MachineModelBuilder<BlockModelBuilder>> after) {
-            Objects.requireNonNull(after);
             return (ctx, prov, builder) -> {
                 this.configureModel(ctx, prov, builder);
                 after.accept(builder);
@@ -721,7 +719,6 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
         }
 
         default ModelInitializer compose(ModelInitializer before) {
-            Objects.requireNonNull(before);
             return (ctx, prov, builder) -> {
                 before.configureModel(ctx, prov, builder);
                 this.configureModel(ctx, prov, builder);
@@ -729,7 +726,6 @@ public class MachineBuilder<DEFINITION extends MachineDefinition, TYPE extends M
         }
 
         default ModelInitializer compose(UnaryOperator<MachineModelBuilder<BlockModelBuilder>> before) {
-            Objects.requireNonNull(before);
             return (ctx, prov, builder) -> this.configureModel(ctx, prov, before.apply(builder));
         }
     }

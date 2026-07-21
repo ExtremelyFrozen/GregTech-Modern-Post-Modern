@@ -6,9 +6,13 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.gui.UITemplate;
-import com.gregtechceu.gtceu.api.gui.widget.SlotWidget;
+import com.gregtechceu.gtceu.api.gui.element.GTItemSlotElement;
+import com.gregtechceu.gtceu.api.gui.element.GTLabelElement;
+import com.gregtechceu.gtceu.api.gui.element.GTProgressBarElement;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
-import com.gregtechceu.gtceu.api.machine.feature.IUIMachine;
 import com.gregtechceu.gtceu.api.machine.trait.NotifiableItemStackHandler;
 import com.gregtechceu.gtceu.api.machine.trait.WorkLogic;
 import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
@@ -18,10 +22,10 @@ import com.gregtechceu.gtceu.common.machine.trait.multiblock.MultiblockFluidRend
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.utils.GTUtil;
 
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
-import com.lowdragmc.lowdraglib.gui.texture.GuiTextureGroup;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
-import com.lowdragmc.lowdraglib.gui.widget.ProgressWidget;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
+import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Horizontal;
+import com.lowdragmc.lowdraglib2.gui.ui.data.Vertical;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
@@ -46,7 +50,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class PrimitiveBlastFurnaceMachine extends PrimitiveWorkableMachine implements IUIMachine {
+public class PrimitiveBlastFurnaceMachine extends PrimitiveWorkableMachine implements LDLib2MachineUIProvider {
 
     private @Nullable TickableSubscription hurtSubscription;
 
@@ -128,32 +132,69 @@ public class PrimitiveBlastFurnaceMachine extends PrimitiveWorkableMachine imple
     }
 
     @Override
-    public ModularUI createUI(Player entityPlayer) {
-        return new ModularUI(176, 166, this, entityPlayer)
-                .background(GuiTextures.PRIMITIVE_BACKGROUND)
-                .widget(new LabelWidget(5, 5, getBlockState().getBlock().getDescriptionId()))
-                .widget(new SlotWidget(importItems.storage, 0, 52, 20, true, true)
-                        .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_INGOT_OVERLAY)))
-                .widget(new SlotWidget(importItems.storage, 1, 52, 38, true, true)
-                        .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_DUST_OVERLAY)))
-                .widget(new SlotWidget(importItems.storage, 2, 52, 56, true, true)
-                        .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_FURNACE_OVERLAY)))
-                .widget(new ProgressWidget(recipeLogic::getProgressPercent, 77, 39, 20, 15,
-                        GuiTextures.PRIMITIVE_BLAST_FURNACE_PROGRESS_BAR))
-                .widget(new SlotWidget(exportItems.storage, 0, 104, 38, true, false)
-                        .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_INGOT_OVERLAY)))
-                .widget(new SlotWidget(exportItems.storage, 1, 122, 38, true, false)
-                        .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_DUST_OVERLAY)))
-                .widget(new SlotWidget(exportItems.storage, 2, 140, 38, true, false)
-                        .setBackgroundTexture(
-                                new GuiTextureGroup(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_DUST_OVERLAY)))
-                .widget(UITemplate.bindPlayerInventory(entityPlayer.getInventory(),
-                        GuiTextures.PRIMITIVE_SLOT, 7, 84, true));
+    public boolean canCreateLDLib2UI(Player player, MachineUIHolder holder) {
+        return holder.getMachine() == this;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player player, MachineUIHolder holder) {
+        UIElement root = new UIElement();
+        UITemplate.setLDLib2Bounds(root, 0, 0, 176, 166);
+        root.style(style -> style.backgroundTexture(GuiTextures.PRIMITIVE_BACKGROUND));
+        root.addChild(createLDLib2TitleLabel());
+        root.addChild(createLDLib2ImportSlot(0, 20,
+                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_INGOT_OVERLAY)));
+        root.addChild(createLDLib2ImportSlot(1, 38,
+                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_DUST_OVERLAY)));
+        root.addChild(createLDLib2ImportSlot(2, 56,
+                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_FURNACE_OVERLAY)));
+        root.addChild(createLDLib2ProgressBar());
+        root.addChild(createLDLib2ExportSlot(0, 104,
+                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_INGOT_OVERLAY)));
+        root.addChild(createLDLib2ExportSlot(1, 122,
+                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_DUST_OVERLAY)));
+        root.addChild(createLDLib2ExportSlot(2, 140,
+                GuiTextures.group(GuiTextures.PRIMITIVE_SLOT, GuiTextures.PRIMITIVE_DUST_OVERLAY)));
+        root.addChild(UITemplate.bindPlayerInventoryLDLib2(player.getInventory(),
+                GuiTextures.PRIMITIVE_SLOT, 7, 84, true));
+        return UI.of(root);
+    }
+
+    private GTLabelElement createLDLib2TitleLabel() {
+        GTLabelElement label = new GTLabelElement(5, 5, 166, 10,
+                getBlockState().getBlock().getDescriptionId(), true);
+        label.textStyle(style -> style
+                .textColor(0x404040)
+                .textShadow(false)
+                .textAlignHorizontal(Horizontal.LEFT)
+                .textAlignVertical(Vertical.CENTER));
+        return label;
+    }
+
+    private GTItemSlotElement createLDLib2ImportSlot(int slotIndex, int y, IGuiTexture backgroundTexture) {
+        GTItemSlotElement slot = new GTItemSlotElement(importItems.storage, slotIndex)
+                .setBackgroundTexture(backgroundTexture)
+                .setCanTakeItems(true)
+                .setCanPutItems(true);
+        UITemplate.setLDLib2Bounds(slot, 52, y, 18, 18);
+        return slot;
+    }
+
+    private GTItemSlotElement createLDLib2ExportSlot(int slotIndex, int x, IGuiTexture backgroundTexture) {
+        GTItemSlotElement slot = new GTItemSlotElement(exportItems.storage, slotIndex)
+                .setBackgroundTexture(backgroundTexture)
+                .setCanTakeItems(true)
+                .setCanPutItems(false);
+        UITemplate.setLDLib2Bounds(slot, x, 38, 18, 18);
+        return slot;
+    }
+
+    private GTProgressBarElement createLDLib2ProgressBar() {
+        var progressTexture = GuiTextures.progressBar(GuiTextures.PRIMITIVE_BLAST_FURNACE_PROGRESS_BAR);
+        GTProgressBarElement progressBar = new GTProgressBarElement(recipeLogic::getProgressPercent)
+                .setProgressTexture(progressTexture.getEmptyBarArea(), progressTexture.getFilledBarArea());
+        UITemplate.setLDLib2Bounds(progressBar, 77, 39, 20, 15);
+        return progressBar;
     }
 
     @Override

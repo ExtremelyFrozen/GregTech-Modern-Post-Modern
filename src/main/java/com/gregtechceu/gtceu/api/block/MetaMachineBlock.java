@@ -6,6 +6,10 @@ import com.gregtechceu.gtceu.api.capability.*;
 import com.gregtechceu.gtceu.api.capability.compat.EnergyStorageList;
 import com.gregtechceu.gtceu.api.computation.ComputationPort;
 import com.gregtechceu.gtceu.api.data.RotationState;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2MachineUIProvider;
+import com.gregtechceu.gtceu.api.gui.factory.MachineBlockUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHelper;
+import com.gregtechceu.gtceu.api.gui.factory.MachineUIHolder;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.api.item.MetaMachineItem;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
@@ -23,6 +27,10 @@ import com.gregtechceu.gtceu.common.data.GTItems;
 import com.gregtechceu.gtceu.common.machine.owner.MachineOwner;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 import com.gregtechceu.gtceu.utils.GTUtil;
+
+import com.lowdragmc.lowdraglib2.gui.factory.BlockUIMenuType;
+import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
@@ -62,6 +70,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 
 import appeng.api.AECapabilities;
 import appeng.api.networking.IInWorldGridNodeHost;
+import dev.vfyjxf.taffy.style.TaffyPosition;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +82,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
+public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock, BlockUIMenuType.BlockUI {
 
     @Getter
     public final MachineDefinition definition;
@@ -95,6 +104,53 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
         return getDefinition().getBlockEntityType().create(blockPos, blockState);
+    }
+
+    @Override
+    public BlockUIMenuType.BlockUIHolder createUIHolder(Player player, BlockPos pos, BlockState blockState) {
+        return new MachineBlockUIHolder(this, player, pos, blockState, definition.getId());
+    }
+
+    @Override
+    public ModularUI createUI(BlockUIMenuType.BlockUIHolder holder) {
+        if (!(holder instanceof MachineUIHolder machineHolder)) {
+            throw new IllegalStateException("Machine block UI holder must implement MachineUIHolder.");
+        }
+
+        MetaMachine machine = machineHolder.getMachine();
+        if (machine == null || !machine.getDefinition().getId().equals(machineHolder.getMachineDefinitionId())) {
+            throw new IllegalStateException("Machine no longer matches the opened LDLib2 UI holder.");
+        }
+        if (!(machine instanceof LDLib2MachineUIProvider uiProvider)) {
+            throw new IllegalStateException("Machine does not expose an LDLib2 UI for the opened holder.");
+        }
+        if (!uiProvider.canCreateLDLib2UI(holder.player, machineHolder)) {
+            throw new IllegalStateException("Machine rejected the opened LDLib2 UI holder.");
+        }
+
+        UI ui = uiProvider.createLDLib2UI(holder.player, machineHolder);
+        if (ui == null) {
+            throw new IllegalStateException("Machine LDLib2 UI provider returned null.");
+        }
+        centerMachineUIRoot(ui);
+        return ModularUI.of(ui, holder.player);
+    }
+
+    static void centerMachineUIRoot(UI ui) {
+        ui.getRootElement().getLayout().positionType(TaffyPosition.RELATIVE);
+    }
+
+    @Override
+    public boolean stillValid(BlockUIMenuType.BlockUIHolder holder) {
+        if (!(holder instanceof MachineUIHolder machineHolder)) {
+            return false;
+        }
+
+        MetaMachine machine = machineHolder.getMachine();
+        return machine != null &&
+                machine.getDefinition().getId().equals(machineHolder.getMachineDefinitionId()) &&
+                machine instanceof LDLib2MachineUIProvider uiProvider &&
+                uiProvider.canCreateLDLib2UI(holder.player, machineHolder);
     }
 
     @Override
@@ -291,9 +347,13 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
             shouldOpenUi = gtToolItem.definition$shouldOpenUIAfterUse(new UseOnContext(player, hand, hit));
         }
 
-        if (shouldOpenUi && machine instanceof IUIMachine uiMachine &&
-                MachineOwner.canOpenOwnerMachine(player, machine)) {
-            return uiMachine.tryToOpenUI(player, hand, hit);
+        if (shouldOpenUi && MachineOwner.canOpenOwnerMachine(player, machine)) {
+            if (machine instanceof LDLib2MachineUIProvider) {
+                if (player instanceof ServerPlayer serverPlayer) {
+                    MachineUIHelper.open(machine, serverPlayer);
+                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            }
         }
         return shouldOpenUi ? ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION : ItemInteractionResult.CONSUME;
     }
@@ -303,9 +363,12 @@ public class MetaMachineBlock extends Block implements ManagedSyncEntityBlock {
                                                Player player, BlockHitResult hit) {
         var machine = MetaMachine.getMachine(level, pos);
         if (machine == null) return InteractionResult.PASS;
-        if (machine instanceof IUIMachine uiMachine &&
-                MachineOwner.canOpenOwnerMachine(player, machine)) {
-            uiMachine.tryToOpenUI(player, InteractionHand.MAIN_HAND, hit).result();
+        if (MachineOwner.canOpenOwnerMachine(player, machine)) {
+            if (machine instanceof LDLib2MachineUIProvider) {
+                if (player instanceof ServerPlayer serverPlayer) {
+                    MachineUIHelper.open(machine, serverPlayer);
+                }
+            }
         }
         return machine.onUse(new ExtendedUseOnContext(player, InteractionHand.MAIN_HAND, hit));
     }

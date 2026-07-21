@@ -2,9 +2,8 @@ package com.gregtechceu.gtceu.common.machine.multiblock.part.hpca;
 
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
+import com.gregtechceu.gtceu.api.gui.texture.IGuiTexture;
 import com.gregtechceu.gtceu.common.machine.trait.hpca.HPCAComponentTrait;
-
-import com.lowdragmc.lowdraglib.gui.texture.ResourceTexture;
 
 public class HPCAEmptyPartMachine extends HPCAComponentPartMachine {
 
@@ -18,7 +17,7 @@ public class HPCAEmptyPartMachine extends HPCAComponentPartMachine {
     }
 
     @Override
-    public ResourceTexture getComponentIcon() {
+    public IGuiTexture getComponentIcon() {
         return GuiTextures.HPCA_ICON_EMPTY_COMPONENT;
     }
 }

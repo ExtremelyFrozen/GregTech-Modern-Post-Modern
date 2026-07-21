@@ -2,13 +2,14 @@ package com.gregtechceu.gtceu.api.item;
 
 import com.gregtechceu.gtceu.api.capability.GTCapabilityHelper;
 import com.gregtechceu.gtceu.api.capability.IElectricItem;
+import com.gregtechceu.gtceu.api.gui.factory.HeldItemUIHolder;
+import com.gregtechceu.gtceu.api.gui.factory.LDLib2HeldItemUIProvider;
 import com.gregtechceu.gtceu.api.item.capability.ElectricItem;
 import com.gregtechceu.gtceu.api.item.component.*;
 
-import com.lowdragmc.lowdraglib.client.renderer.IItemRendererProvider;
-import com.lowdragmc.lowdraglib.client.renderer.IRenderer;
-import com.lowdragmc.lowdraglib.gui.factory.HeldItemUIFactory;
-import com.lowdragmc.lowdraglib.gui.modular.ModularUI;
+import com.lowdragmc.lowdraglib2.client.renderer.IItemRendererProvider;
+import com.lowdragmc.lowdraglib2.client.renderer.IRenderer;
+import com.lowdragmc.lowdraglib2.gui.ui.UI;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -42,7 +43,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ComponentItem extends Item
-                           implements HeldItemUIFactory.IHeldItemUIHolder, IItemRendererProvider, IComponentItem {
+                           implements LDLib2HeldItemUIProvider, IItemRendererProvider,
+                           IComponentItem {
 
     @Getter
     protected List<IItemComponent> components;
@@ -293,14 +295,36 @@ public class ComponentItem extends Item
     }
 
     @Override
-    @Nullable
-    public ModularUI createUI(Player entityPlayer, HeldItemUIFactory.HeldItemHolder holder) {
+    public boolean canCreateLDLib2UI(Player entityPlayer, HeldItemUIHolder holder) {
         for (IItemComponent component : components) {
             if (component instanceof IItemUIFactory uiFactory) {
-                return uiFactory.createUI(holder, entityPlayer);
+                return uiFactory.canCreateLDLib2UI(holder, entityPlayer);
             }
         }
-        return null;
+        return false;
+    }
+
+    @Override
+    public UI createLDLib2UI(Player entityPlayer, HeldItemUIHolder holder) {
+        for (IItemComponent component : components) {
+            if (component instanceof IItemUIFactory uiFactory) {
+                if (!uiFactory.canCreateLDLib2UI(holder, entityPlayer)) {
+                    break;
+                }
+                return uiFactory.createLDLib2UI(holder, entityPlayer);
+            }
+        }
+        throw new IllegalStateException("No item component exposes an LDLib2 UI for the opened stack.");
+    }
+
+    @Override
+    public boolean isLDLib2UIStillValid(Player entityPlayer, HeldItemUIHolder holder) {
+        for (IItemComponent component : components) {
+            if (component instanceof IItemUIFactory uiFactory) {
+                return uiFactory.isLDLib2UIStillValid(holder, entityPlayer);
+            }
+        }
+        return LDLib2HeldItemUIProvider.super.isLDLib2UIStillValid(entityPlayer, holder);
     }
 
     @Nullable

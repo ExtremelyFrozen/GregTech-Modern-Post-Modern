@@ -2,6 +2,7 @@ package com.gregtechceu.gtceu.api.sync_system.managed
 
 import com.gregtechceu.gtceu.GTCEu
 import com.gregtechceu.gtceu.api.blockentity.BlockEntityCreationInfo
+import com.gregtechceu.gtceu.api.machine.MetaMachine
 import com.gregtechceu.gtceu.api.sync_system.SyncDataHolder
 import com.gregtechceu.gtceu.common.network.packets.CPacketMachineSyncToServer
 import com.gregtechceu.gtceu.common.network.packets.SPacketMachineSyncToClient
@@ -9,6 +10,7 @@ import com.gregtechceu.gtceu.common.network.packets.SPacketMachineSyncToClient
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.component.DataComponentMap
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
 import net.minecraft.network.Connection
@@ -25,8 +27,6 @@ import net.neoforged.neoforge.network.PacketDistributor
 
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.jetbrains.annotations.Nullable
-
-import java.util.*
 
 /**
  * A BlockEntity that manages sync and save data via the `ISyncManaged` syncdata system.
@@ -123,33 +123,52 @@ abstract class ManagedSyncBlockEntity :
 	open fun serverTick() {
 		setChanged()
 		val serverLevel = level as? ServerLevel
+		val fullSync = syncDataHolder.isFullSyncPending()
 		if (serverLevel != null && syncDataHolder.scanAndMarkChanges(serverLevel.registryAccess())) {
 			val changes = syncDataHolder.collectClientNetworkChanges(serverLevel.registryAccess(), false)
 			if (!changes.isEmpty) {
 				PacketDistributor.sendToPlayersTrackingChunk(
 					serverLevel,
 					ChunkPos(blockPos),
-					SPacketMachineSyncToClient(blockPos, changes),
+					SPacketMachineSyncToClient(blockPos, changes, fullSync),
 				)
+				try {
+					onClientNetworkChanges(changes)
+				} catch (exception: RuntimeException) {
+					GTCEu.LOGGER.error("Failed to publish collected client sync changes for block entity at {}", blockPos, exception)
+				}
 			}
 			dirty = true
 		}
 		if (dirty) {
-			Objects.requireNonNull(level)!!.sendBlockUpdated(blockPos, blockState, blockState, Block.UPDATE_CLIENTS)
+			level!!.sendBlockUpdated(blockPos, blockState, blockState, Block.UPDATE_CLIENTS)
 			dirty = false
 		}
 	}
 
 	open fun clientTick() {}
 
+	/** Publishes the exact GT client-sync delta after it has been sent to ordinary chunk observers. */
+	protected open fun onClientNetworkChanges(changes: DataComponentMap) {}
+
 	open fun sendServerSyncChanges() {
 		if (level == null || !level!!.isClientSide) {
 			return
 		}
 
-		val changes = syncDataHolder.collectServerNetworkChanges(level!!.registryAccess())
-		if (!changes.isEmpty) {
-			PacketDistributor.sendToServer(CPacketMachineSyncToServer(blockPos, changes))
+		val registryAccess = level!!.registryAccess()
+		val rootChanges = syncDataHolder.collectServerNetworkChanges(registryAccess)
+		if (!rootChanges.isEmpty) {
+			PacketDistributor.sendToServer(CPacketMachineSyncToServer(blockPos, BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type)!!, rootChanges))
+		}
+
+		if (this is MetaMachine) {
+			for (trait in getSyncTraits()) {
+				val traitChanges = trait.getSyncDataHolder().collectServerNetworkChanges(registryAccess)
+				if (!traitChanges.isEmpty) {
+					PacketDistributor.sendToServer(CPacketMachineSyncToServer.forMachineTrait(this, trait, traitChanges))
+				}
+			}
 		}
 	}
 }

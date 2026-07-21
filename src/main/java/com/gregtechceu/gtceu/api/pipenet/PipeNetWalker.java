@@ -161,9 +161,8 @@ public abstract class PipeNetWalker<T extends IPipeNode<?, ?>, NodeDataType, Net
             walkers = new ArrayList<>();
             for (int i = 0; i < nextPipeFacings.size(); i++) {
                 Direction side = nextPipeFacings.get(i);
-                PipeNetWalker<T, NodeDataType, Net> walker = Objects.requireNonNull(
-                        createSubWalker(pipeNet, side, currentPos.relative(side), walkedBlocks + 1),
-                        "Walker can't be null");
+                PipeNetWalker<T, NodeDataType, Net> walker = createSubWalker(pipeNet, side,
+                        currentPos.relative(side), walkedBlocks + 1);
                 walker.root = root;
                 walker.currentPipe = nextPipes.get(i);
                 walker.from = side.getOpposite();

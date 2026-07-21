@@ -91,7 +91,7 @@ GTCEuStartupEvents.registry('gtceu:machine', event => {
 
 ### Shape Info
 
-Shape Info is used to manually define how your multiblock appears in the JEI/REI/EMI multiblock preview tab.
+Shape Info is used to manually define how your multiblock appears in the JEI/EMI multiblock preview tab.
 
 ```js title="shape_info_test.js"
 GTCEuStartupEvents.registry('gtceu:machine', event => {

@@ -15,6 +15,9 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipe;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.recipe.handler.RecipeHandlerList;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldChangeListener;
+import com.gregtechceu.gtceu.api.sync_system.annotations.ServerFieldNormalizer;
+import com.gregtechceu.gtceu.api.sync_system.annotations.SyncBoth;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.client.model.machine.MachineRenderState;
 import com.gregtechceu.gtceu.common.machine.trait.CleanroomReceiverTrait;
@@ -50,6 +53,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     @Getter
     @Setter
     @SaveField
+    @SyncBoth
     private int activeRecipeType;
     @Getter
     protected final Map<IO, List<RecipeHandlerList>> capabilitiesProxy;
@@ -67,7 +71,7 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
 
     @Getter
     @SaveField
-    @SyncToClient
+    @SyncBoth
     protected VoidingMode voidingMode = VoidingMode.VOID_NONE;
 
     public WorkableMultiblockMachine(BlockEntityCreationInfo info,
@@ -87,8 +91,8 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
     }
 
     public void setMuffled(boolean muffled) {
+        if (isMuffled == muffled) return;
         isMuffled = muffled;
-        syncDataHolder.markClientSyncFieldDirty("isMuffled");
     }
 
     @Override
@@ -345,9 +349,39 @@ public abstract class WorkableMultiblockMachine extends MultiblockControllerMach
         recipeLogic.updateTickSubscription();
     }
 
+    @ServerFieldNormalizer(fieldName = "activeRecipeType")
+    private int normalizeActiveRecipeType(int candidate) {
+        if (candidate < 0 || candidate >= recipeTypes.length) {
+            throw new IllegalArgumentException("Active recipe type index is out of range.");
+        }
+        return candidate;
+    }
+
+    @ServerFieldChangeListener(fieldName = "activeRecipeType")
+    private void onActiveRecipeTypeChanged(int oldIndex, int newIndex) {
+        if (!keepSubscribing()) {
+            recipeLogic.updateTickSubscription();
+        }
+    }
+
     @Override
     public void setVoidingMode(VoidingMode mode) {
         voidingMode = mode;
+        getRecipeLogic().updateTickSubscription();
+    }
+
+    @ServerFieldNormalizer(fieldName = "voidingMode")
+    private VoidingMode normalizeVoidingMode(VoidingMode candidate) {
+        for (VoidingMode allowed : VoidingMode.VALUES) {
+            if (allowed == candidate) {
+                return candidate;
+            }
+        }
+        throw new IllegalArgumentException("Unsupported voiding mode.");
+    }
+
+    @ServerFieldChangeListener(fieldName = "voidingMode")
+    private void onVoidingModeChanged(VoidingMode oldMode, VoidingMode newMode) {
         getRecipeLogic().updateTickSubscription();
     }
 }

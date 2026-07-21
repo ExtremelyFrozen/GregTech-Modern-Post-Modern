@@ -1,6 +1,5 @@
 {
-	"ldlib": {
-		"emissive": true,
+	"gtpm": {
 		"bloom": true
 	}
 }

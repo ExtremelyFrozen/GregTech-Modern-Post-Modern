@@ -1,10 +1,10 @@
 package com.gregtechceu.gtceu.api.multiblock.structurepredicate;
 
+import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockBlockInfo;
 import com.gregtechceu.gtceu.api.multiblock.MultiblockState;
 import com.gregtechceu.gtceu.config.ConfigHolder;
-
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
 
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.util.Lazy;
@@ -14,7 +14,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -52,7 +51,7 @@ public final class DataHatchOrPredicate implements StructurePredicate {
     private final Lazy<RestrictedPredicate> dataHatches;
 
     public DataHatchOrPredicate(StructurePredicate alternative) {
-        this.alternative = Objects.requireNonNull(alternative, "alternative");
+        this.alternative = alternative;
         this.dataHatches = Lazy.of(DataHatchOrPredicate::createDataHatches);
     }
 
@@ -81,7 +80,7 @@ public final class DataHatchOrPredicate implements StructurePredicate {
     }
 
     @Override
-    public @Unmodifiable List<BlockInfo> candidates() {
+    public @Unmodifiable List<MultiblockBlockInfo> candidates() {
         if (!ConfigHolder.INSTANCE.machines.enableResearch) {
             return alternative.candidates();
         }
@@ -96,6 +95,15 @@ public final class DataHatchOrPredicate implements StructurePredicate {
         }
         return Stream.concat(dataHatches.get().blockCandidates().stream(), alternative.blockCandidates().stream())
                 .toList();
+    }
+
+    @Override
+    public @Unmodifiable List<StructurePreviewChoice> previewChoices(MultiblockMachineDefinition definition) {
+        if (!ConfigHolder.INSTANCE.machines.enableResearch) {
+            return alternative.previewChoices(definition);
+        }
+        return Stream.concat(dataHatches.get().previewChoices(definition).stream(),
+                alternative.previewChoices(definition).stream()).toList();
     }
 
     @Override

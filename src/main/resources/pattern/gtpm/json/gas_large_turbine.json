@@ -20,13 +20,27 @@
 			"blocks": "gtpm:stainless_steel_gearbox"
 		},
 		"R": {
-			"type": "gtpm:restricted",
-			"predicate": {
-				"type": "gtpm:abilities",
-				"abilities": ["rotor_holder", "output_energy"]
-			},
-			"minCount": 1,
-			"maxCount": 1
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:rotor_holder",
+						"tier": 4
+					},
+					"minCount": 1,
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "output_energy"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				}
+			]
 		},
 		"H": {
 			"type": "gtpm:concatenated",

@@ -35,7 +35,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.gregtechceu.gtceu.common.data.GTRecipeTypes.ELECTRIC;
 
@@ -280,7 +279,9 @@ public class TestUtils {
 
     public static MetaMachine setMachine(GameTestHelper helper, BlockPos pos, MachineDefinition machineDefinition) {
         helper.setBlock(pos, machineDefinition.getBlock());
-        return ((MetaMachine) Objects.requireNonNull(helper.getBlockEntity(pos)));
+        var blockEntity = helper.getBlockEntity(pos);
+        helper.assertTrue(blockEntity instanceof MetaMachine, "expected a meta machine block entity");
+        return (MetaMachine) blockEntity;
     }
 
     public static void assertEqual(GameTestHelper helper, List<MutableComponent> text, String s) {
