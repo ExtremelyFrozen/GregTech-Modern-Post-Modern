@@ -1,0 +1,12 @@
+{
+	"aisles": [
+		{
+			"slices": [["B~B", "BBB", "BBB", "BBB"]]
+		}
+	],
+	"predicates": {
+		"B": {
+			"type": "gtpm:central_monitor_components"
+		}
+	}
+}

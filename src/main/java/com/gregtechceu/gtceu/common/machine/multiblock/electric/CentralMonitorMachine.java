@@ -16,8 +16,8 @@ import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockDisplayText;
 import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
 import com.gregtechceu.gtceu.api.misc.EnergyContainerList;
-import com.gregtechceu.gtceu.api.pattern.*;
-import com.gregtechceu.gtceu.api.pattern.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.multiblock.*;
+import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 import com.gregtechceu.gtceu.api.sync_system.annotations.RerenderOnChanged;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SaveField;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
@@ -28,6 +28,8 @@ import com.gregtechceu.gtceu.common.machine.multiblock.electric.monitor.MonitorG
 import com.gregtechceu.gtceu.common.machine.trait.CentralMonitorLogic;
 import com.gregtechceu.gtceu.common.network.packets.SCPacketMonitorGroupNBTChange;
 import com.gregtechceu.gtceu.data.lang.LangHandler;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternKey;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
 import com.gregtechceu.gtceu.utils.GTStringUtils;
 
 import com.lowdragmc.lowdraglib.gui.texture.*;
@@ -100,9 +102,11 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
-        this.clearPatternFindingState();
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            this.clearPatternFindingState();
+        }
     }
 
     @Override
@@ -151,7 +155,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
 
     protected MultiblockState getPatternFindingState() {
         if (this.patternFindingState == null) {
-            this.patternFindingState = new MultiblockState(getLevel(), getBlockPos());
+            this.patternFindingState = new MultiblockState(getLevel(), getBlockPos(), DEFAULT_STRUCTURE);
             this.patternFindingState.clean();
         }
         return this.patternFindingState;
@@ -220,7 +224,10 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public BlockPattern getPattern() {
+    public BlockPattern getPattern(String structureName) {
+        if (!DEFAULT_STRUCTURE.equals(structureName)) {
+            return super.getPattern(structureName);
+        }
         updateStructureDimensions();
         if (leftDist + rightDist < 1 || upDist + downDist < 1) {
             leftDist = 3;
@@ -234,7 +241,7 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             pattern[i] = new StringBuilder(leftDist + rightDist + 1);
             for (int j = 0; j < leftDist + rightDist + 1; j++) {
                 if (i == downDist && j == rightDist)
-                    pattern[i].append('C'); // controller
+                    pattern[i].append('~'); // controller
                 else
                     pattern[i].append('B'); // any valid block
             }
@@ -245,11 +252,14 @@ public class CentralMonitorMachine extends WorkableElectricMultiblockMachine
             aisle[i] = pattern[i].toString();
         }
 
-        return FactoryBlockPattern.start()
-                .aisle(aisle)
-                .where('B', getMultiPredicate())
-                .where('C', Predicates.controller(Predicates.blocks(this.getDefinition().get())))
+        BlockPattern baseline = FactoryBlockPattern.start()
+                .aisle("~")
                 .build();
+        return StructurePatternResolver.rebuildRuntimeStringArrayPattern(
+                this.getDefinition(),
+                StructurePatternKey.main(this.getDefinition().getId()),
+                baseline,
+                List.of(new StructurePatternResolver.Unit(Collections.singletonList(aisle), 1, 1)));
     }
 
     public BlockPos toRelative(BlockPos pos) {

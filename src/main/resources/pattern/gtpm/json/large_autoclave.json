@@ -1,0 +1,69 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "XXX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "XTX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "XTX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "XTX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "X~X", "XXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:watertight_casing"
+					},
+					"minCount": 30
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2,
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_fluids"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"T": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:steel_pipe_casing"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

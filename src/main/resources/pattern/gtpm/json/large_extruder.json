@@ -1,0 +1,61 @@
+{
+	"aisles": [
+		{
+			"slices": [["##XXX", "##XXX", "##XXX"]]
+		},
+		{
+			"repeat": {
+				"min": 2,
+				"max": 2
+			},
+			"slices": [["##XXX", "##XPX", "##XGX"]]
+		},
+		{
+			"slices": [["XXXXX", "XXXPX", "XXXGX"]]
+		},
+		{
+			"slices": [["XXXXX", "XAXPX", "XXXGX"]]
+		},
+		{
+			"slices": [["XXXXX", "X~XXX", "XXXXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:stress_proof_casing"
+					},
+					"minCount": 40
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:titanium_pipe_casing"
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tempered_glass"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

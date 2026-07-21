@@ -5,10 +5,10 @@ import com.gregtechceu.gtceu.api.block.MetaMachineBlock;
 import com.gregtechceu.gtceu.api.gui.GuiTextures;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.pattern.BlockPattern;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
-import com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate;
-import com.gregtechceu.gtceu.api.pattern.predicates.SimplePredicate;
+import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
+import com.gregtechceu.gtceu.api.multiblock.TraceabilityPredicate;
+import com.gregtechceu.gtceu.api.multiblock.predicates.SimplePredicate;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.integration.xei.handlers.item.CycleItemEntryHandler;
 
@@ -169,14 +169,16 @@ public class PatternPreviewWidget extends WidgetGroup {
                         .setWidth(170)
                         .setDropShadow(true)));
 
-        this.patterns = CACHE.computeIfAbsent(controllerDefinition, definition -> {
-            HashSet<ItemStackKey> drops = new HashSet<>();
-            drops.add(new ItemStackKey(this.controllerDefinition.asStack()));
-            return controllerDefinition.getMatchingShapes().stream()
-                    .map(it -> initializePattern(it, drops))
-                    .filter(Objects::nonNull)
-                    .toArray(MBPattern[]::new);
-        });
+        synchronized (CACHE) {
+            this.patterns = CACHE.computeIfAbsent(controllerDefinition, definition -> {
+                HashSet<ItemStackKey> drops = new HashSet<>();
+                drops.add(new ItemStackKey(this.controllerDefinition.asStack()));
+                return controllerDefinition.getMatchingShapes().stream()
+                        .map(it -> initializePattern(it, drops))
+                        .filter(Objects::nonNull)
+                        .toArray(MBPattern[]::new);
+            });
+        }
 
         addWidget(new ButtonWidget(138, 30, 18, 18, new GuiTextureGroup(
                 ColorPattern.T_GRAY.rectTexture(),
@@ -213,9 +215,10 @@ public class PatternPreviewWidget extends WidgetGroup {
         Stream<BlockPos> stream = pattern.blockMap.keySet().stream()
                 .filter(pos -> layer == -1 || layer + pattern.minY == pos.getY());
         if (pattern.controllerBase.isFormed()) {
-            LongSet modelDisabled = pattern.controllerBase.getMultiblockState().getMatchContext().getOrDefault(
-                    "renderMask",
-                    LongSets.EMPTY_SET);
+            LongSet modelDisabled = pattern.controllerBase
+                    .getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                    .getMatchContext()
+                    .getOrDefault("renderMask", LongSets.EMPTY_SET);
             if (!modelDisabled.isEmpty()) {
                 stream = stream.filter(pos -> !modelDisabled.contains(pos.asLong()));
             }
@@ -232,6 +235,12 @@ public class PatternPreviewWidget extends WidgetGroup {
             LEVEL = new TrackedDummyWorld();
         }
         return new PatternPreviewWidget(controllerDefinition);
+    }
+
+    public static void clearCache() {
+        synchronized (CACHE) {
+            CACHE.clear();
+        }
     }
 
     public void setPage(int index) {
@@ -274,7 +283,7 @@ public class PatternPreviewWidget extends WidgetGroup {
             loadControllerFormed(pattern.blockMap.keySet(), controllerBase);
         } else {
             sceneWidget.setRenderedCore(pattern.blockMap.keySet(), null);
-            controllerBase.onStructureInvalid();
+            controllerBase.invalidateStructure(MultiblockControllerMachine.DEFAULT_STRUCTURE);
         }
     }
 
@@ -406,7 +415,9 @@ public class PatternPreviewWidget extends WidgetGroup {
         Map<BlockPos, TraceabilityPredicate> predicateMap = new HashMap<>();
         if (controllerBase != null) {
             loadControllerFormed(predicateMap.keySet(), controllerBase);
-            predicateMap = controllerBase.getMultiblockState().getMatchContext().get("predicates");
+            predicateMap = controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                    .getMatchContext()
+                    .get("predicates");
         }
         return controllerBase == null ? null : new MBPattern(blockMap, parts.values().stream().sorted((one, two) -> {
             if (one.isController) return -1;
@@ -420,13 +431,16 @@ public class PatternPreviewWidget extends WidgetGroup {
     }
 
     private void loadControllerFormed(Collection<BlockPos> positions, MultiblockControllerMachine controllerBase) {
-        BlockPattern pattern = controllerBase.getPattern();
-        if (pattern != null && pattern.checkPatternAt(controllerBase.getMultiblockState(), true)) {
-            controllerBase.onStructureFormed();
+        BlockPattern pattern = controllerBase.getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE);
+        if (pattern != null &&
+                pattern.checkPatternAt(controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE),
+                        true)) {
+            controllerBase.formStructure(MultiblockControllerMachine.DEFAULT_STRUCTURE);
         }
         if (controllerBase.isFormed()) {
-            LongSet modelDisabled = controllerBase.getMultiblockState().getMatchContext().getOrDefault("renderMask",
-                    LongSets.EMPTY_SET);
+            LongSet modelDisabled = controllerBase.getMultiblockState(MultiblockControllerMachine.DEFAULT_STRUCTURE)
+                    .getMatchContext()
+                    .getOrDefault("renderMask", LongSets.EMPTY_SET);
             if (!modelDisabled.isEmpty()) {
                 positions = new HashSet<>(positions);
                 positions.removeIf(pos -> modelDisabled.contains(pos.asLong()));

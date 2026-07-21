@@ -1,0 +1,33 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "XXX", "XXX", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "X&X", "X#X", "X#X"]]
+		},
+		{
+			"slices": [["XXX", "X~X", "XXX", "XXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:firebricks"
+		},
+		"#": {
+			"type": "gtpm:air"
+		},
+		"&": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:air"
+				},
+				{
+					"type": "gtpm:snow"
+				}
+			]
+		}
+	}
+}

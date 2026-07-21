@@ -554,7 +554,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
             onContentsChanged();
         }
 
-        public @Nullable List<SizedIngredient> handleItemInternal(List<SizedIngredient> left, boolean simulate) {
+        public List<SizedIngredient> handleItemInternal(List<SizedIngredient> left, boolean simulate) {
             boolean changed = false;
             for (var it = left.listIterator(); it.hasNext();) {
                 var ingredient = it.next();
@@ -599,11 +599,11 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
                 }
             }
             if (changed) onContentsChanged();
-            return left.isEmpty() ? null : left;
+            return left;
         }
 
-        public @Nullable List<SizedFluidIngredient> handleFluidInternal(List<SizedFluidIngredient> left,
-                                                                        boolean simulate) {
+        public List<SizedFluidIngredient> handleFluidInternal(List<SizedFluidIngredient> left,
+                                                              boolean simulate) {
             boolean changed = false;
             for (var it = left.listIterator(); it.hasNext();) {
                 var ingredient = it.next();
@@ -649,7 +649,7 @@ public class MEPatternBufferPartMachine extends MEBusPartMachine
             }
 
             if (changed) onContentsChanged();
-            return left.isEmpty() ? null : left;
+            return left;
         }
 
         @Override

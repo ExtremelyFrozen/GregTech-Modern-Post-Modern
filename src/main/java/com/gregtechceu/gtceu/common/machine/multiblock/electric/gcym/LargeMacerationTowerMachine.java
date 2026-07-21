@@ -5,7 +5,7 @@ import com.gregtechceu.gtceu.api.capability.recipe.IO;
 import com.gregtechceu.gtceu.api.capability.recipe.ItemRecipeCapability;
 import com.gregtechceu.gtceu.api.machine.TickableSubscription;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableElectricMultiblockMachine;
-import com.gregtechceu.gtceu.api.pattern.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -32,8 +32,9 @@ public class LargeMacerationTowerMachine extends WorkableElectricMultiblockMachi
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         updateBounds();
         for (var holder : getCapabilitiesFlat(IO.IN, ItemRecipeCapability.CAP)) {
             if (holder instanceof IItemHandler ih) {
@@ -44,8 +45,9 @@ public class LargeMacerationTowerMachine extends WorkableElectricMultiblockMachi
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         unsubscribe(hurtSub);
         hurtSub = null;
         handlers.clear();

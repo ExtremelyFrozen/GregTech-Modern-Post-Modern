@@ -1,0 +1,87 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "CCC", "CCC", "CCC"]]
+		},
+		{
+			"slices": [["XXX", "CPC", "CPC", "CCC"]]
+		},
+		{
+			"slices": [["XXX", "C~C", "CCC", "CCC"]]
+		}
+	],
+	"predicates": {
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:tungstensteel_pipe_casing"
+		},
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:tungstensteel_firebox_casing"
+					},
+					"minCount": 3
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "import_fluids"
+					},
+					"minCount": 1,
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "import_items"
+					},
+					"maxCount": 1,
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "muffler"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": false
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:robust_machine_casing"
+					},
+					"minCount": 20
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "export_fluids"
+					},
+					"minCount": 1,
+					"previewCount": 1
+				}
+			]
+		}
+	}
+}

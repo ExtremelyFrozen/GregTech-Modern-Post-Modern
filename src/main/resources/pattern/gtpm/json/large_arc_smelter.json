@@ -1,0 +1,57 @@
+{
+	"aisles": [
+		{
+			"slices": [["#XXX#", "#XXX#", "#XXX#", "#XXX#"]]
+		},
+		{
+			"slices": [["XXXXX", "XCACX", "XCACX", "XXXXX"]]
+		},
+		{
+			"slices": [["XXXXX", "XAAAX", "XAAAX", "XXMXX"]]
+		},
+		{
+			"slices": [["XXXXX", "XACAX", "XACAX", "XXXXX"]]
+		},
+		{
+			"slices": [["#XXX#", "#X~X#", "#XXX#", "#XXX#"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:high_temperature_smelting_casing"
+					},
+					"minCount": 45
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:molybdenum_disilicide_coil_block"
+		},
+		"M": {
+			"type": "gtpm:abilities",
+			"abilities": "muffler"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

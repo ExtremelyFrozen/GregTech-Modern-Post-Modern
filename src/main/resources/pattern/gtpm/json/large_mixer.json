@@ -1,0 +1,61 @@
+{
+	"aisles": [
+		{
+			"slices": [["#XXX#", "#XXX#", "#XXX#", "#XXX#", "#XXX#", "##F##"]]
+		},
+		{
+			"slices": [["XXXXX", "XAPAX", "XAAAX", "XAPAX", "XAAAX", "##F##"]]
+		},
+		{
+			"slices": [["XXXXX", "XPPPX", "XAPAX", "XPPPX", "XAGAX", "FFGFF"]]
+		},
+		{
+			"slices": [["XXXXX", "XAPAX", "XAAAX", "XAPAX", "XAAAX", "##F##"]]
+		},
+		{
+			"slices": [["#XXX#", "#X~X#", "#XXX#", "#XXX#", "#XXX#", "##F##"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:reaction_safe_mixing_casing"
+					},
+					"minCount": 50
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"F": {
+			"type": "gtpm:frames",
+			"materials": "gtpm:hastelloy_x"
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:stainless_steel_gearbox"
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:titanium_pipe_casing"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

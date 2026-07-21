@@ -1,0 +1,44 @@
+{
+	"aisles": [
+		{
+			"slices": [["AAAAA", "AEEEA", "AEEEA", "AEEEA", "AAAAA"]]
+		},
+		{
+			"repeat": {
+				"min": 3,
+				"max": 13
+			},
+			"slices": [["WWWWW", "WIIIW", "WIIIW", "WIIIW", "WWWWW"]]
+		},
+		{
+			"slices": [["DDDDD", "DFFFD", "DF~FD", "DFFFD", "DDDDD"]]
+		}
+	],
+	"predicates": {
+		"A": {
+			"type": "gtpm:cleanroom_base",
+			"allowFloorBlocks": false,
+			"allowDoors": false
+		},
+		"W": {
+			"type": "gtpm:cleanroom_base",
+			"allowFloorBlocks": false,
+			"allowDoors": true
+		},
+		"E": {
+			"type": "gtpm:cleanroom_base",
+			"allowFloorBlocks": true,
+			"allowDoors": false
+		},
+		"D": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:plascrete"
+		},
+		"F": {
+			"type": "gtpm:cleanroom_filters"
+		},
+		"I": {
+			"type": "gtpm:cleanroom_inner"
+		}
+	}
+}

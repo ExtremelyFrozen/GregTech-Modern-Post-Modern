@@ -1,0 +1,80 @@
+{
+	"aisles": [
+		{
+			"slices": [["#XXX#", "#XXX#", "#XXX#", "#XXX#", "#####"]]
+		},
+		{
+			"slices": [["XXXXX", "XCCCX", "XAAAX", "XXAXX", "##X##"]]
+		},
+		{
+			"slices": [["XXXXX", "XCPCX", "XAPAX", "XAPAX", "#XXX#"]]
+		},
+		{
+			"slices": [["XXXXX", "XCCCX", "XAAAX", "XXAXX", "##X##"]]
+		},
+		{
+			"slices": [["#XXX#", "#X~X#", "#XXX#", "#XXX#", "#####"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:corrosion_proof_casing"
+					},
+					"minCount": 50
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2,
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_fluids"
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_fluids"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:steel_pipe_casing"
+		},
+		"C": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:molybdenum_disilicide_coil_block"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

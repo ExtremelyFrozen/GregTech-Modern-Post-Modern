@@ -66,14 +66,16 @@ public class LargeBoilerMachine extends WorkableMultiblockMachine implements IDi
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         updateSteamSubscription();
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         updateSteamSubscription();
     }
 

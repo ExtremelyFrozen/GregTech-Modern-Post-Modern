@@ -1,0 +1,53 @@
+{
+	"aisles": [
+		{
+			"slices": [["#X#X#", "#X#X#", "#XXX#", "XXXXX", "#XXX#"]]
+		},
+		{
+			"slices": [["XXXXX", "XAXAX", "XKKKX", "XKKKX", "X###X"]]
+		},
+		{
+			"slices": [["#XXX#", "#XAX#", "XKKKX", "XKKKX", "X###X"]]
+		},
+		{
+			"slices": [["XXXXX", "XAXAX", "XKKKX", "XKKKX", "X###X"]]
+		},
+		{
+			"slices": [["#X#X#", "#X#X#", "#X~X#", "XXXXX", "#XXX#"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:vibration_safe_casing"
+					},
+					"minCount": 50
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": true
+				}
+			]
+		},
+		"K": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:assembly_line_grating"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

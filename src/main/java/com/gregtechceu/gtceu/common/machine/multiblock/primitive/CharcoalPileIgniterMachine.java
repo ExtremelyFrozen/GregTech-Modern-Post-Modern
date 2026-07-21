@@ -6,45 +6,37 @@ import com.gregtechceu.gtceu.api.capability.IWorkable;
 import com.gregtechceu.gtceu.api.item.ComponentItem;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
 import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
-import com.gregtechceu.gtceu.api.pattern.BlockPattern;
-import com.gregtechceu.gtceu.api.pattern.FactoryBlockPattern;
-import com.gregtechceu.gtceu.api.pattern.Predicates;
-import com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate;
-import com.gregtechceu.gtceu.api.pattern.util.RelativeDirection;
+import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.FactoryBlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection;
 import com.gregtechceu.gtceu.api.sync_system.annotations.SyncToClient;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.item.behavior.LighterBehavior;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternKey;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternResolver;
 import com.gregtechceu.gtceu.data.recipe.CustomTags;
 import com.gregtechceu.gtceu.utils.ExtendedUseOnContext;
 
-import com.lowdragmc.lowdraglib.utils.BlockInfo;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.common.ItemAbilities;
 
 import it.unimi.dsi.fastutil.longs.Long2BooleanMap;
-import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.util.*;
 
-import static com.gregtechceu.gtceu.api.pattern.util.RelativeDirection.*;
+import static com.gregtechceu.gtceu.api.multiblock.util.RelativeDirection.*;
 
 public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implements IWorkable {
 
@@ -71,20 +63,22 @@ public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implem
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
-        hasAir = false;
-        if (getMultiblockState().getMatchContext().containsKey("logPos")) {
-            Long2BooleanMap logPositions = getMultiblockState().getMatchContext().get("logPos");
-            for (var entry : logPositions.long2BooleanEntrySet()) {
-                if (entry.getBooleanValue()) {
-                    logPos.add(BlockPos.of(entry.getLongKey()));
-                } else {
-                    hasAir = true;
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            hasAir = false;
+            if (getMultiblockState(structureName).getMatchContext().containsKey("logPos")) {
+                Long2BooleanMap logPositions = getMultiblockState(structureName).getMatchContext().get("logPos");
+                for (var entry : logPositions.long2BooleanEntrySet()) {
+                    if (entry.getBooleanValue()) {
+                        logPos.add(BlockPos.of(entry.getLongKey()));
+                    } else {
+                        hasAir = true;
+                    }
                 }
             }
+            this.getRecipeLogic().setDuration(Math.max(1, (int) Math.sqrt(logPos.size() * 240_000)));
         }
-        this.getRecipeLogic().setDuration(Math.max(1, (int) Math.sqrt(logPos.size() * 240_000)));
     }
 
     @Override
@@ -106,7 +100,10 @@ public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implem
     public void setWorkingEnabled(boolean isWorkingAllowed) {}
 
     @Override
-    public BlockPattern getPattern() {
+    public BlockPattern getPattern(String structureName) {
+        if (!DEFAULT_STRUCTURE.equals(structureName)) {
+            return super.getPattern(structureName);
+        }
         updateDimensions();
 
         if (lDist < MIN_RADIUS) lDist = MIN_RADIUS;
@@ -156,7 +153,7 @@ public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implem
                         wallLayers.get(k)[j].append('L'); // log or air
                     }
                     if (i == lDist && j == fDist) { // very center
-                        ceilingLayer[j].append('S'); // controller
+                        ceilingLayer[j].append('~'); // controller
                     } else {
                         ceilingLayer[j].append('W'); // grass top
                     }
@@ -177,35 +174,18 @@ public class CharcoalPileIgniterMachine extends WorkableMultiblockMachine implem
             c[i] = ceilingLayer[i].toString();
         }
 
-        return FactoryBlockPattern.start(LEFT, FRONT, UP)
-                .aisle(f)
-                .aisle(m).setRepeatable(wallLayers.size())
-                .aisle(c)
-                .where('S', Predicates.controller(Predicates.blocks(this.getDefinition().get())))
-                .where('B', Predicates.blocks(Blocks.BRICKS))
-                .where('W', Predicates.blockTag(CustomTags.CHARCOAL_PILE_IGNITER_WALLS))
-                .where('L', logPredicate())
-                .where('A', Predicates.any())
+        BlockPattern baseline = FactoryBlockPattern.start(LEFT, FRONT, UP)
+                .aisle("~")
                 .build();
-    }
-
-    protected static TraceabilityPredicate logPredicate() {
-        return new TraceabilityPredicate(multiblockState -> {
-            BlockState state = multiblockState.getBlockState();
-            long pos = multiblockState.getPos().asLong();
-            boolean log = state.is(BlockTags.LOGS_THAT_BURN);
-            if (log || state.isAir()) {
-                multiblockState.getMatchContext().getOrCreate("logPos", Long2BooleanOpenHashMap::new).put(pos, log);
-                return true;
-            }
-            return false;
-            // copied from PredicateBlockTag to display the preview logs properly
-        }, () -> BuiltInRegistries.BLOCK.getTag(BlockTags.LOGS_THAT_BURN)
-                .stream()
-                .flatMap(HolderSet.Named::stream)
-                .map(Holder::value)
-                .map(BlockInfo::fromBlock)
-                .toArray(BlockInfo[]::new));
+        return StructurePatternResolver.rebuildRuntimeStringArrayPattern(
+                this.getDefinition(),
+                StructurePatternKey.main(this.getDefinition().getId()),
+                baseline,
+                List.of(
+                        new StructurePatternResolver.Unit(Collections.singletonList(f), 1, 1),
+                        new StructurePatternResolver.Unit(Collections.singletonList(m), wallLayers.size(),
+                                wallLayers.size()),
+                        new StructurePatternResolver.Unit(Collections.singletonList(c), 1, 1)));
     }
 
     public void updateDimensions() {

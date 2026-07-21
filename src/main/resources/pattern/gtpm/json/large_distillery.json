@@ -1,0 +1,117 @@
+{
+	"aisles": [
+		{
+			"slices": [["#YYY#", "YYYYY", "YYYYY", "YYYYY", "#YYY#"]]
+		},
+		{
+			"slices": [["#Y~Y#", "YAAAY", "YAAAY", "YAAAY", "#YYY#"]]
+		},
+		{
+			"repeat": {
+				"min": 1,
+				"max": 12
+			},
+			"slices": [["##X##", "#XAX#", "XAPAX", "#XAX#", "##X##"]]
+		},
+		{
+			"slices": [["#####", "#ZZZ#", "#ZZZ#", "#ZZZ#", "#####"]]
+		}
+	],
+	"predicates": {
+		"#": {
+			"type": "gtpm:any"
+		},
+		"A": {
+			"type": "gtpm:air"
+		},
+		"P": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:steel_pipe_casing"
+		},
+		"Z": {
+			"type": "gtpm:restricted",
+			"predicate": {
+				"type": "gtpm:blocks",
+				"blocks": "gtpm:watertight_casing"
+			},
+			"minCount": 40
+		},
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:watertight_casing"
+					},
+					"minCount": 40
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": ["export_fluids_1x", "export_fluids"]
+					},
+					"maxCountByLayer": 1
+				}
+			]
+		},
+		"Y": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:watertight_casing"
+					},
+					"minCount": 40
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "import_items"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "import_fluids"
+					},
+					"minCount": 1
+				},
+				{
+					"type": "gtpm:abilities",
+					"abilities": "export_items"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "maintenance"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "parallel_hatch"
+					},
+					"maxCount": 1,
+					"previewCount": 1
+				}
+			]
+		}
+	}
+}

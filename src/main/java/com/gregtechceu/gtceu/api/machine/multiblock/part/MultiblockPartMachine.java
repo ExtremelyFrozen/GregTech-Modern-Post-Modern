@@ -20,6 +20,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
@@ -36,7 +37,7 @@ public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
 
     @SyncToClient
     @RerenderOnChanged
-    protected final Set<BlockPos> controllerPositions = new ObjectOpenHashSet<>(8);
+    protected final Map<BlockPos, Set<String>> controllerStructures = new Object2ObjectOpenHashMap<>(8);
     protected final SortedSet<MultiblockControllerMachine> controllers = new ReferenceLinkedOpenHashSet<>(8);
 
     private @Nullable RecipeHandlerList handlerList;
@@ -50,20 +51,23 @@ public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
     //////////////////////////////////////
 
     @Override
-    public boolean hasController(BlockPos controllerPos) {
-        return controllerPositions.contains(controllerPos);
+    public boolean hasController(BlockPos controllerPos, String structureName) {
+        Objects.requireNonNull(controllerPos, "controllerPos");
+        Objects.requireNonNull(structureName, "structureName");
+        Set<String> structures = controllerStructures.get(controllerPos);
+        return structures != null && structures.contains(structureName);
     }
 
     @Override
     public boolean isFormed() {
-        return !controllerPositions.isEmpty();
+        return controllerStructures.values().stream().anyMatch(structures -> !structures.isEmpty());
     }
 
     // Not sure if necessary, but added to match the Controller class
-    @ClientFieldChangeListener(fieldName = "controllerPositions")
+    @ClientFieldChangeListener(fieldName = "controllerStructures")
     public void onControllersUpdated() {
         controllers.clear();
-        for (BlockPos blockPos : controllerPositions) {
+        for (BlockPos blockPos : controllerStructures.keySet()) {
             if (MetaMachine.getMachine(getLevel(), blockPos) instanceof MultiblockControllerMachine controller) {
                 controllers.add(controller);
             }
@@ -74,7 +78,7 @@ public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
     @UnmodifiableView
     public SortedSet<MultiblockControllerMachine> getControllers() {
         // Necessary to rebuild the set of controllers on client-side
-        if (controllers.size() != controllerPositions.size()) {
+        if (controllers.size() != controllerStructures.size()) {
             onControllersUpdated();
         }
         return Collections.unmodifiableSortedSet(controllers);
@@ -113,12 +117,17 @@ public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
                     controllers;
             for (MultiblockControllerMachine controller : toIter) {
                 if (serverLevel.isLoaded(controller.self().getBlockPos())) {
-                    removedFromController(controller);
+                    Set<String> structureNames = controllerStructures.get(controller.self().getBlockPos());
+                    if (structureNames != null) {
+                        for (String structureName : new ArrayList<>(structureNames)) {
+                            removedFromController(controller, structureName);
+                        }
+                    }
                     controller.onPartUnload();
                 }
             }
         }
-        controllerPositions.clear();
+        controllerStructures.clear();
         controllers.clear();
     }
 
@@ -128,30 +137,51 @@ public class MultiblockPartMachine extends MetaMachine implements IMultiPart {
 
     @MustBeInvokedByOverriders
     @Override
-    public void removedFromController(MultiblockControllerMachine controller) {
-        controllerPositions.remove(controller.self().getBlockPos());
-        controllers.remove(controller);
+    public void removedFromController(MultiblockControllerMachine controller, String structureName) {
+        BlockPos controllerPos = controller.self().getBlockPos();
+        Set<String> structures = controllerStructures.get(controllerPos);
+        if (structures != null) {
+            structures.remove(structureName);
+            if (structures.isEmpty()) {
+                controllerStructures.remove(controllerPos);
+                controllers.remove(controller);
+            }
+        }
 
-        if (controllers.isEmpty()) {
+        if (!isFormed()) {
             MachineRenderState renderState = getRenderState();
             if (renderState.hasProperty(GTMachineModelProperties.IS_FORMED)) {
                 setRenderState(renderState.setValue(GTMachineModelProperties.IS_FORMED, false));
             }
         }
-        syncDataHolder.markClientSyncFieldDirty("controllerPositions");
+        syncDataHolder.markClientSyncFieldDirty("controllerStructures");
     }
 
     @MustBeInvokedByOverriders
     @Override
-    public void addedToController(MultiblockControllerMachine controller) {
-        controllerPositions.add(controller.self().getBlockPos());
+    public void addedToController(MultiblockControllerMachine controller, String structureName) {
+        controllerStructures.computeIfAbsent(controller.self().getBlockPos().immutable(), $ -> new LinkedHashSet<>())
+                .add(structureName);
         controllers.add(controller);
 
-        syncDataHolder.markClientSyncFieldDirty("controllerPositions");
+        syncDataHolder.markClientSyncFieldDirty("controllerStructures");
         MachineRenderState renderState = getRenderState();
         if (renderState.hasProperty(GTMachineModelProperties.IS_FORMED)) {
             setRenderState(renderState.setValue(GTMachineModelProperties.IS_FORMED, true));
         }
+    }
+
+    @Override
+    @Nullable
+    public String getSubstructureName(MultiblockControllerMachine controller) {
+        Set<String> structures = controllerStructures.get(controller.self().getBlockPos());
+        if (structures == null || structures.isEmpty()) {
+            return null;
+        }
+        if (structures.contains(MultiblockControllerMachine.DEFAULT_STRUCTURE)) {
+            return MultiblockControllerMachine.DEFAULT_STRUCTURE;
+        }
+        return structures.stream().min(Comparator.naturalOrder()).orElse(null);
     }
 
     @Override

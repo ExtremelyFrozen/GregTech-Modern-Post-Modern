@@ -21,7 +21,7 @@ public abstract class MultiblockMachineTrait extends MachineTrait {
         return List.of(MultiblockControllerMachine.class);
     }
 
-    public void onStructureFormed() {}
+    public void onStructureFormed(String structureName) {}
 
-    public void onStructureInvalid() {}
+    public void onStructureInvalid(String structureName) {}
 }

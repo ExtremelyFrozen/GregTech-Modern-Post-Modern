@@ -11,11 +11,20 @@ jetbrains-annotations = "26.1.0"
 renderNurse = "0.0.26"
 mixin = "0.8.7"
 
+jackson = "2.21.1"
+jackson-annotations = "2.21"
+zstd = "1.5.7-8"
+
 [libraries]
 minecraft               = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 neoForge                = { module = "net.neoforged:neoforge", version.ref = "neoForge" }
 testframework           = { module = "net.neoforged:testframework", version.ref = "neoForge" }
 jetbrains-annotations   = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
+jackson-dataformat      = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor", version.ref = "jackson" }
+jackson-core            = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+jackson-databind        = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-annotations     = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
+zstd                    = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }
 renderNurse             = { module = "net.neoforged:render-nurse", version.ref = "renderNurse" }
 mixin                   = { module = "org.spongepowered:mixin", version.ref = "mixin" }
 

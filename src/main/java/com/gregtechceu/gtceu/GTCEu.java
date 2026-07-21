@@ -2,9 +2,11 @@ package com.gregtechceu.gtceu;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.GTValues;
+import com.gregtechceu.gtceu.api.multiblock.structurepredicate.StructurePredicateType;
 import com.gregtechceu.gtceu.common.CommonProxy;
 import com.gregtechceu.gtceu.common.network.GTNetwork;
 import com.gregtechceu.gtceu.config.ConfigHolder;
+import com.gregtechceu.gtceu.data.pattern.StructureCache;
 import com.gregtechceu.gtceu.utils.FormattingUtil;
 
 import net.minecraft.client.Minecraft;
@@ -45,6 +47,8 @@ public class GTCEu {
     public static IEventBus gtModBus;
 
     public GTCEu(IEventBus modBus, FMLModContainer container) {
+        StructurePredicateType.init();
+        StructureCache.loadAsync();
         GTCEuAPI.instance = this;
         GTCEu.gtModBus = modBus;
         ConfigHolder.init();

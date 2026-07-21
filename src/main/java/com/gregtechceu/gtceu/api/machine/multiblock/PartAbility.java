@@ -14,6 +14,8 @@ import java.util.function.Supplier;
 
 public class PartAbility {
 
+    private static final Map<String, PartAbility> REGISTRY = new LinkedHashMap<>();
+
     public static final PartAbility EXPORT_ITEMS = new PartAbility("export_items");
     public static final PartAbility IMPORT_ITEMS = new PartAbility("import_items");
     public static final PartAbility EXPORT_FLUIDS = new PartAbility("export_fluids");
@@ -35,6 +37,7 @@ public class PartAbility {
     public static final PartAbility STEAM = new PartAbility("steam");
     public static final PartAbility STEAM_IMPORT_ITEMS = new PartAbility("steam_import_items");
     public static final PartAbility STEAM_EXPORT_ITEMS = new PartAbility("steam_export_items");
+    public static final PartAbility COKE_OVEN_HATCH = new PartAbility("coke_oven_hatch");
     public static final PartAbility MAINTENANCE = new PartAbility("maintenance");
     public static final PartAbility MUFFLER = new PartAbility("muffler");
     public static final PartAbility TANK_VALVE = new PartAbility("tank_valve");
@@ -66,6 +69,18 @@ public class PartAbility {
 
     public PartAbility(String name) {
         this.name = name;
+        PartAbility previous = REGISTRY.putIfAbsent(name, this);
+        if (previous != null) {
+            throw new IllegalArgumentException("Duplicate part ability name: " + name);
+        }
+    }
+
+    public static Optional<PartAbility> byName(String name) {
+        return Optional.ofNullable(REGISTRY.get(name));
+    }
+
+    public static Collection<PartAbility> values() {
+        return Collections.unmodifiableCollection(REGISTRY.values());
     }
 
     public void register(int tier, Block block) {

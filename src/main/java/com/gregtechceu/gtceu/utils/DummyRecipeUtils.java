@@ -61,7 +61,7 @@ public class DummyRecipeUtils {
 
             }
 
-            return left.isEmpty() ? null : left;
+            return left;
         }
 
         @Override

@@ -88,7 +88,7 @@ public class OpticalDataHatchMachine extends MultiblockPartMachine implements IO
     }
 
     @Override
-    public boolean canShared() {
+    public boolean canShared(MultiblockControllerMachine controller, String structureName) {
         return false;
     }
 

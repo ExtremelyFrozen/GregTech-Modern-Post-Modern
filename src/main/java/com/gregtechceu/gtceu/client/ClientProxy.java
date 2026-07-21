@@ -3,6 +3,7 @@ package com.gregtechceu.gtceu.client;
 import com.gregtechceu.gtceu.GTCEu;
 import com.gregtechceu.gtceu.api.GTValues;
 import com.gregtechceu.gtceu.api.cosmetics.event.RegisterGTCapesEvent;
+import com.gregtechceu.gtceu.api.gui.widget.PatternPreviewWidget;
 import com.gregtechceu.gtceu.api.item.IComponentItem;
 import com.gregtechceu.gtceu.api.item.IGTTool;
 import com.gregtechceu.gtceu.client.model.item.FacadeUnbakedModel;
@@ -40,6 +41,7 @@ import com.gregtechceu.gtceu.common.item.QuantumTankMachineItem;
 import com.gregtechceu.gtceu.config.ConfigHolder;
 import com.gregtechceu.gtceu.data.model.builder.PipeModelBuilder;
 import com.gregtechceu.gtceu.data.pack.event.RegisterDynamicResourcesEvent;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
 import com.gregtechceu.gtceu.integration.map.ClientCacheManager;
 import com.gregtechceu.gtceu.integration.map.cache.client.GTClientCache;
 import com.gregtechceu.gtceu.integration.map.ftbchunks.FTBChunksPlugin;
@@ -78,6 +80,7 @@ public class ClientProxy {
             CommonEventListener.registerCapes(new RegisterGTCapesEvent());
         }
         initializeDynamicRenders();
+        StructurePatternRegistry.addReloadListener(PatternPreviewWidget::clearCache);
         ModelEventHelper.initInternalAssetReloadListeners();
 
         NeoForge.EVENT_BUS.register(GTParticleManager.INSTANCE);

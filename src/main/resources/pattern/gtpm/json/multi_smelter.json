@@ -1,0 +1,47 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "CCC", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "C#C", "XMX"]]
+		},
+		{
+			"slices": [["X~X", "CCC", "XXX"]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:blocks",
+						"blocks": "gtpm:heatproof_machine_casing"
+					},
+					"minCount": 9
+				},
+				{
+					"type": "gtpm:auto_recipe_abilities"
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": false
+				}
+			]
+		},
+		"M": {
+			"type": "gtpm:abilities",
+			"abilities": "muffler"
+		},
+		"C": {
+			"type": "gtpm:heating_coils"
+		},
+		"#": {
+			"type": "gtpm:air"
+		}
+	}
+}

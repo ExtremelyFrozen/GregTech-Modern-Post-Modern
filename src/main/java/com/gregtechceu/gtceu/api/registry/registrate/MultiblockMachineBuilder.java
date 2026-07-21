@@ -9,8 +9,8 @@ import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
 import com.gregtechceu.gtceu.api.machine.property.GTMachineModelProperties;
-import com.gregtechceu.gtceu.api.pattern.BlockPattern;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
+import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.utils.memoization.GTMemoizer;
 
 import net.minecraft.core.Direction;
@@ -36,7 +36,7 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
         TYPE extends MultiblockMachineBuilder<DEFINITION, TYPE>> extends MachineBuilder<DEFINITION, TYPE> {
 
     private boolean generator;
-    private Function<MultiblockMachineDefinition, BlockPattern> pattern;
+    private final Map<String, Function<MultiblockMachineDefinition, BlockPattern>> patternFactories = new LinkedHashMap<>();
     private final List<Function<MultiblockMachineDefinition, List<MultiblockShapeInfo>>> shapeInfos = new ArrayList<>();
     /**
      * Set this to false only if your multiblock is set up such that it could have a wall-shared controller.
@@ -66,8 +66,8 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
         return getThis();
     }
 
-    public TYPE pattern(Function<MultiblockMachineDefinition, BlockPattern> pattern) {
-        this.pattern = pattern;
+    public TYPE pattern(String structureName, Function<MultiblockMachineDefinition, BlockPattern> pattern) {
+        this.patternFactories.put(Objects.requireNonNull(structureName), Objects.requireNonNull(pattern));
         return getThis();
     }
 
@@ -123,13 +123,12 @@ public class MultiblockMachineBuilder<DEFINITION extends MultiblockMachineDefini
     public DEFINITION register() {
         var definition = super.register();
         definition.setGenerator(generator);
-        // noinspection ConstantValue it can be null by mistake.
-        if (pattern == null) {
+        if (patternFactories.isEmpty()) {
             GTCEu.LOGGER.error(
                     "missing pattern while creating multiblock {}, something's likely gone very wrong! Check the full log.",
                     name);
         }
-        definition.setPatternFactory(GTMemoizer.memoize(() -> pattern.apply(definition)));
+        patternFactories.forEach(definition::setPatternFactory);
         definition.setShapes(() -> shapeInfos.stream().map(factory -> factory.apply(definition))
                 .flatMap(Collection::stream).toList());
         definition.setAllowFlip(allowFlip);

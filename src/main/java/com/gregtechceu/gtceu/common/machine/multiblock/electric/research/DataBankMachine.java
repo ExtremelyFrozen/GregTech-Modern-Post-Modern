@@ -49,10 +49,11 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureFormed() {
-        super.onStructureFormed();
+    public void formStructure(String structureName) {
+        super.formStructure(structureName);
+        if (!DEFAULT_STRUCTURE.equals(structureName)) return;
         List<IEnergyContainer> energyContainers = new ArrayList<>();
-        Long2ObjectMap<IO> ioMap = getMultiblockState().getMatchContext().getOrCreate("ioMap",
+        Long2ObjectMap<IO> ioMap = getMultiblockState(DEFAULT_STRUCTURE).getMatchContext().getOrCreate("ioMap",
                 Long2ObjectMaps::emptyMap);
         for (IMultiPart part : getParts()) {
             IO io = ioMap.getOrDefault(part.self().getBlockPos().asLong(), IO.BOTH);
@@ -73,7 +74,7 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
         this.energyUsage = calculateEnergyUsage();
 
         if (this.maintenance == null) {
-            onStructureInvalid();
+            invalidateStructure(structureName);
             return;
         }
         updateTickSubscription();
@@ -102,10 +103,12 @@ public class DataBankMachine extends WorkableElectricMultiblockMachine
     }
 
     @Override
-    public void onStructureInvalid() {
-        super.onStructureInvalid();
-        this.energyContainer = new EnergyContainerList(new ArrayList<>());
-        this.energyUsage = 0;
+    public void invalidateStructure(String structureName) {
+        super.invalidateStructure(structureName);
+        if (DEFAULT_STRUCTURE.equals(structureName)) {
+            this.energyContainer = new EnergyContainerList(new ArrayList<>());
+            this.energyUsage = 0;
+        }
     }
 
     @Override

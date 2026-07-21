@@ -1,0 +1,92 @@
+{
+	"aisles": [
+		{
+			"slices": [["FIF", "RTR", "~AG", "#Y#"]]
+		},
+		{
+			"repeat": {
+				"min": 3,
+				"max": 15
+			},
+			"slices": [["FIF", "RTR", "DAG", "#Y#"]]
+		},
+		{
+			"slices": [["FOF", "RTR", "DAG", "#Y#"]]
+		}
+	],
+	"predicates": {
+		"F": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:solid_machine_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": [
+							"import_fluids_1x",
+							"import_fluids_4x",
+							"import_fluids_9x"
+						]
+					},
+					"maxCount": 4
+				}
+			]
+		},
+		"O": {
+			"type": "gtpm:abilities",
+			"abilities": "export_items"
+		},
+		"Y": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:solid_machine_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2
+				}
+			]
+		},
+		"I": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:ulv_input_bus"
+		},
+		"G": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:assembly_line_grating"
+		},
+		"A": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:assembly_line_casing"
+		},
+		"R": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:laminated_glass"
+		},
+		"T": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:assembly_line_unit"
+		},
+		"D": {
+			"type": "gtpm:data_hatch_or",
+			"alternative": {
+				"type": "gtpm:blocks",
+				"blocks": "gtpm:assembly_line_grating"
+			}
+		},
+		"#": {
+			"type": "gtpm:any"
+		}
+	}
+}

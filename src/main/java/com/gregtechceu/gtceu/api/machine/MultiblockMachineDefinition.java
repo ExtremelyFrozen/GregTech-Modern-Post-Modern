@@ -2,8 +2,9 @@ package com.gregtechceu.gtceu.api.machine;
 
 import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.pattern.BlockPattern;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
+import com.gregtechceu.gtceu.api.multiblock.BlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.MultiblockShapeInfo;
+import com.gregtechceu.gtceu.data.pattern.StructurePatternRegistry;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -28,14 +29,14 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     @Getter
     @Setter
     private boolean generator;
-    @Setter
-    @Getter
-    @NotNull
-    private Supplier<BlockPattern> patternFactory;
+    private final Map<String, Function<MultiblockMachineDefinition, BlockPattern>> patternFactories = new LinkedHashMap<>();
+    private final Map<String, BlockPattern> patterns = new LinkedHashMap<>();
     @Setter
     @Getter
     private Supplier<List<MultiblockShapeInfo>> shapes;
-    /** Set this to false only if your multiblock is set up such that it could have a wall-shared controller. */
+    /**
+     * Set this to false only if your multiblock is set up such that it could have a wall-shared controller.
+     */
     @Getter
     @Setter
     private boolean allowFlip;
@@ -63,9 +64,58 @@ public class MultiblockMachineDefinition extends MachineDefinition {
     public List<MultiblockShapeInfo> getMatchingShapes() {
         var designs = shapes.get();
         if (!designs.isEmpty()) return designs;
-        var structurePattern = patternFactory.get();
+        var structurePattern = Objects.requireNonNull(getPattern(MultiblockControllerMachine.DEFAULT_STRUCTURE),
+                () -> "Missing main structure pattern for " + getId());
         int[][] aisleRepetitions = structurePattern.aisleRepetitions;
         return repetitionDFS(structurePattern, new ArrayList<>(), aisleRepetitions, new IntArrayList());
+    }
+
+    public void setPatternFactory(@NotNull String structureName,
+                                  @NotNull Function<MultiblockMachineDefinition, BlockPattern> patternFactory) {
+        structureName = validateStructureName(structureName);
+        this.patternFactories.put(structureName, Objects.requireNonNull(patternFactory));
+        StructurePatternRegistry.registerJavaDefinition(this, structureName);
+    }
+
+    public @Nullable BlockPattern getPattern(@NotNull String structureName) {
+        structureName = validateStructureName(structureName);
+        requirePatternFactory(structureName);
+        synchronized (this.patterns) {
+            return this.patterns.get(structureName);
+        }
+    }
+
+    public void reloadPattern(@NotNull String structureName) {
+        structureName = validateStructureName(structureName);
+        requirePatternFactory(structureName);
+        synchronized (this.patterns) {
+            patterns.put(structureName, StructurePatternRegistry.resolvePattern(this, structureName));
+        }
+    }
+
+    public BlockPattern createJavaPattern(@NotNull String structureName) {
+        structureName = validateStructureName(structureName);
+        return requirePatternFactory(structureName).apply(this);
+    }
+
+    public Set<String> getStructureNames() {
+        return Collections.unmodifiableSet(this.patternFactories.keySet());
+    }
+
+    private Function<MultiblockMachineDefinition, BlockPattern> requirePatternFactory(String structureName) {
+        Function<MultiblockMachineDefinition, BlockPattern> factory = this.patternFactories.get(structureName);
+        if (factory == null) {
+            throw new IllegalArgumentException("Unknown multiblock structure '" + structureName + "' for " + getId());
+        }
+        return factory;
+    }
+
+    private static String validateStructureName(String structureName) {
+        Objects.requireNonNull(structureName, "structureName");
+        if (structureName.isBlank()) {
+            throw new IllegalArgumentException("structureName must not be blank");
+        }
+        return structureName;
     }
 
     private List<MultiblockShapeInfo> repetitionDFS(BlockPattern pattern, List<MultiblockShapeInfo> pages,

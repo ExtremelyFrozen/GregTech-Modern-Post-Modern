@@ -187,6 +187,10 @@ public class GTDataComponents {
             .registerComponentType("lighter_open",
                     builder -> builder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
 
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<TerminalAutoBuildConfig>> TERMINAL_AUTO_BUILD = DATA_COMPONENTS
+            .registerComponentType("terminal_auto_build",
+                    builder -> builder.persistent(TerminalAutoBuildConfig.CODEC));
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompoundTag>> BLOCK_ITEM_DATA = DATA_COMPONENTS
             .registerComponentType("block_item_data", builder -> builder.persistent(CompoundTag.CODEC));
 }

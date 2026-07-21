@@ -36,7 +36,7 @@ public class MultiblockFluidRendererTrait extends MultiblockMachineTrait {
     }
 
     @Override
-    public void onStructureInvalid() {
+    public void onStructureInvalid(String structureName) {
         fluidBlockOffsets.clear();
     }
 

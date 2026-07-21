@@ -21,7 +21,6 @@ import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEFluidKey;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -150,7 +149,6 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
         }
 
         @Override
-        @Nullable
         public List<SizedFluidIngredient> handleRecipeInner(IO io, GTRecipe recipe, List<SizedFluidIngredient> left,
                                                             boolean simulate) {
             if (io != IO.OUT) return left;
@@ -173,7 +171,7 @@ public class MEOutputHatchPartMachine extends MEHatchPartMachine {
                 if (remainingAmount > 0) it.set(new SizedFluidIngredient(ingredient.ingredient(), remainingAmount));
                 else it.remove();
             }
-            return left.isEmpty() ? null : left;
+            return left;
         }
     }
 

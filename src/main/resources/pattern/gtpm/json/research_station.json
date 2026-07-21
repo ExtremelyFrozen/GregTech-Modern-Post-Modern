@@ -1,0 +1,80 @@
+{
+	"aisles": [
+		{
+			"slices": [["XXX", "VVV", "PPP", "PPP", "PPP", "VVV", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "VAV", "AAA", "AAA", "AAA", "VAV", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "VAV", "XAX", "X~X", "XAX", "VAV", "XXX"]]
+		},
+		{
+			"slices": [["XXX", "XAX", "---", "---", "---", "XAX", "XXX"]]
+		},
+		{
+			"slices": [[" X ", "XAX", "---", "---", "---", "XAX", " X "]]
+		},
+		{
+			"slices": [[" X ", "XAX", "-A-", "-H-", "-A-", "XAX", " X "]]
+		},
+		{
+			"slices": [["   ", "XXX", "---", "---", "---", "XXX", "   "]]
+		}
+	],
+	"predicates": {
+		"X": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:computer_casing"
+		},
+		"-": {
+			"type": "gtpm:air"
+		},
+		"V": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:computer_heat_vent"
+		},
+		"A": {
+			"type": "gtpm:blocks",
+			"blocks": "gtpm:advanced_computer_casing"
+		},
+		"P": {
+			"type": "gtpm:concatenated",
+			"predicates": [
+				{
+					"type": "gtpm:blocks",
+					"blocks": "gtpm:computer_casing"
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "input_energy"
+					},
+					"minCount": 1,
+					"maxCount": 2,
+					"previewCount": 1
+				},
+				{
+					"type": "gtpm:restricted",
+					"predicate": {
+						"type": "gtpm:abilities",
+						"abilities": "computation_data_reception"
+					},
+					"minCount": 1,
+					"maxCount": 1
+				},
+				{
+					"type": "gtpm:auto_maintenance",
+					"checkMaintenance": true,
+					"checkMuffler": false,
+					"checkParallel": false
+				}
+			]
+		},
+		"H": {
+			"type": "gtpm:abilities",
+			"abilities": "object_holder"
+		}
+	}
+}
